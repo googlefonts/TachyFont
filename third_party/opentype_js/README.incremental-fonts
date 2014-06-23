@@ -1,0 +1,10 @@
+URL: https://github.com/nodebox/opentype.js
+Version: 569f0cb08b6ec3bc0ff1f50035e04a3f6d69b7b0
+License: MIT
+License File: LICENSE
+
+Description:
+opentype.js is a JavaScript parser for TrueType and OpenType fonts.
+
+Local Modifications:
+
