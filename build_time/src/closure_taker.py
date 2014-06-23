@@ -14,44 +14,46 @@
   limitations under the License.
 """
 
-from common import buildDictNameId
+from common import build_dict_name_id
 from fontTools.subset import Options, Subsetter
 
 
 class ClosureTaker(object):
   """Takes closure of given glyph names in the given font file
      Return closure list of glyph ids
-     Glyph Id 0 is always in the closure list 
+     Glyph closure: Adding a glyph might require adding other glyph due to 
+  several reasons:
+       -Composite glyphs
+       -GSUB lookup lists
   """
 
   def __init__(self, font):
     self.font = font
-    self.glyphNames = []
-    self.glyphCodes = []
-    aux = buildDictNameId(self.font)
-    self.glyphNameToId = aux[0]
-    self.glyphIdToName = aux[1]
+    self.glyph_names = []
+    self.glyph_codes = []
+    aux = build_dict_name_id(self.font)
+    self.glyph_name_to_id = aux[0]
+    self.glyph_id_to_name = aux[1]
 
-  def addGlyphNames(self, glyphNames):
-    self.glyphNames.extend(glyphNames)
+  def add_glyph_names(self, glyph_names):
+    self.glyph_names.extend(glyph_names)
 
-  def addGlyphCodes(self, glyphCodes):
-    self.glyphCodes.extend(glyphCodes)
+  def add_glyph_codes(self, glyph_codes):
+    self.glyph_codes.extend(glyph_codes)
 
   def clear(self):
-    self.glyphNames = []
-    self.glyphCodes = []
+    self.glyph_names = []
+    self.glyph_codes = []
 
   def closure(self):
     """
-    After adding some glyphs, this function return GIDs of the closure 
+    Takes closure of glyphs specified by glyph_names and glyph_codes. 
     """
     options = Options()
     options.notdef_glyph = False
     subsetter = Subsetter(options=options)
-    subsetter.populate(glyphs=self.glyphNames, unicodes=self.glyphCodes)
+    subsetter.populate(glyphs=self.glyph_names, unicodes=self.glyph_codes)
     subsetter._closure_glyphs(self.font)
-    gids = sorted(self.glyphNameToId[gg] for gg in subsetter.glyphs_all
+    gids = sorted(self.glyph_name_to_id[gg] for gg in subsetter.glyphs_all
                   if gg != '.notdef')
-    gids.append(0)
     return gids

@@ -15,7 +15,7 @@
 """
 
 from fontTools.subset import Options, load_font, Subsetter, save_font
-from common import reverseCmap
+from common import reverse_cmap
 
 
 class Cleaner(object):
@@ -23,26 +23,25 @@ class Cleaner(object):
      fontfile : full path to font file
      hinting : True if you want to keep hinting
      exception_set : Do not remove these glyph code points
-     pred : Takes glyph object as parameter and return boolean"""
+     predicate : Condition of filter ,takes glyph object as parameter, glyphs 
+     satisfy this condition are filtered out"""
 
-  def __init__(self, fontfile, hinting, exception_set, pred):
+  def __init__(self, fontfile, hinting, exception_set, predicate):
     self.fontfile = fontfile
     self.options = Options()
     self.options.hinting = hinting
     self.font = load_font(fontfile, self.options, lazy=False)
-    assert 'glyf' in self.font, 'TrueType font required'
     self.exception_set = exception_set
-    self.pred = pred
+    self.predicate = predicate
 
   def _invalid_glyphs(self, names):
     glyphs = set()
-    glfy_table = self.font['glyf']
-    rcmap = reverseCmap(self.font)
+    glyf_table = self.font['glyf']
+    rcmap = reverse_cmap(self.font)
     for name in names:
-      if name != '.notdef' and glfy_table[name] and self.pred(glfy_table[name]) and \
+      if name != '.notdef' and glyf_table[name] and self.predicate(glyf_table[name]) and \
         rcmap[name] not in self.exception_set:
         glyphs.add(name)
-    print 'invalid glyphs', glyphs
     return glyphs
 
   def clean(self):

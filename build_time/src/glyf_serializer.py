@@ -24,25 +24,25 @@ class GlyfSerializer(object):
   Serializes 'glyf' table for given font file
   """
   # formats
-  fmt_TOC = '>4sHH'
-  fmt_TOCEntry = '>4sLL'
+  fmt_TOC        = '>4sHH'
+  fmt_TOCEntry   = '>4sLL'
   fmt_GlyphTable = '>HH'
 
   # flags
-  NONE = 0
-  HAS_HMTX = 1
-  HAS_VMTX = 2
-  CMP_NONE = 0
-  CMP_GZIP = 4
-  CMP_BROTLI = 8
-  CMP_LZMA = 12
-  CLEAN = 0
-  DIRTY = 64
+  NONE       = 0
+  HAS_HMTX   = 1 << 0
+  HAS_VMTX   = 1 << 1
+  CMP_NONE   = NONE 
+  CMP_GZIP   = (1 << 2) + NONE
+  CMP_BROTLI = (1 << 2) + (1 << 2)
+  CMP_LZMA   = (1 << 2) + (1 << 3)
+  CLEAN      = NONE
+  DIRTY      = (1 << 6)
 
   def __init__(self, fontfile):
     self.font = TTFont(fontfile)
 
-  def prepareTOC(self):
+  def prepare_TOC(self):
     """
     Prepare TOC header and entries as data
     """
@@ -61,7 +61,7 @@ class GlyfSerializer(object):
       self.TOCEntries.append(TOCEntry)
     self.tocReady = True
 
-  def __determineMtxFmt(self):
+  def __determine_mtx_fmt(self):
     self.fmt_mtx = ''
     self.has_hmtx_ = GlyfSerializer.HAS_HMTX if ('hmtx' in self.font)\
      else GlyfSerializer.NONE
@@ -74,11 +74,11 @@ class GlyfSerializer(object):
       self.fmt_mtx += 'h'
       self.VMTX = self.font['vmtx']
 
-  def prepareGlyf(self):
+  def prepare_glyf(self):
     """
     Prepare Glyf table and table entries along with Glyf data
     """
-    self.__determineMtxFmt()
+    self.__determine_mtx_fmt()
     self.fmt_GlyphEntry = '>H' + self.fmt_mtx + 'LH'
     assert 'maxp' in self.font
     numGlyphs = self.font['maxp'].numGlyphs
@@ -88,28 +88,28 @@ class GlyfSerializer(object):
             (
                 self.has_hmtx_ | self.has_vmtx_ | GlyfSerializer.CLEAN),
             numGlyphs))
-    self.GlyphEntries = []
-    self.GlyphData = []
+    self.glyphs_info = []
+    self.glyphs_data = []
     glyphOrder = self.font.getGlyphOrder()
     assert 'loca' in self.font
-    glyfStart = self.font.reader.tables['glyf'].offset
+    glyf_table_start = self.font.reader.tables['glyf'].offset
     offset_table = self.font['loca'].locations
     for i in xrange(numGlyphs):
       offset = offset_table[i]
       length = offset_table[i + 1] - offset
-      self.font.reader.file.seek(glyfStart + offset)
-      self.GlyphData.append(self.font.reader.file.read(length))
+      self.font.reader.file.seek(glyf_table_start + offset)
+      self.glyphs_data.append(self.font.reader.file.read(length))
       args = [i]
       if self.has_hmtx_: args.append(self.HMTX.metrics[glyphOrder[i]][1])
       if self.has_vmtx_: args.append(self.VMTX.metrics[glyphOrder[i]][1])
       args.append(offset)
       args.append(length)
-      GlyphEntry = pack(self.fmt_GlyphEntry, *args)
-      self.GlyphEntries.append(GlyphEntry)
+      glyph_info = pack(self.fmt_GlyphEntry, *args)
+      self.glyphs_info.append(glyph_info)
 
     self.glyfReady = True
 
-  def serializeTOC(self, output_idx, output_data):
+  def serialize_TOC(self, output_idx, output_data):
     """
     Dump the TOC data to the file
     """
@@ -121,17 +121,17 @@ class GlyfSerializer(object):
       dumper.dumpForEach(self.TOCEntries)
       dumper.close()
 
-  def serializeGlyf(self, output_idx, output_data):
+  def serialize_glyf(self, output_idx, output_data):
     """
     Dump the Glyf data to the file
     """
     if self.glyfReady:
       dumper = Dumper(output_idx)
       dumper.dump(self.GlyphTable)
-      dumper.dumpForEach(self.GlyphEntries)
+      dumper.dump_for_each(self.glyphs_info)
       dumper.close()
       dumper = Dumper(output_data)
-      dumper.dumpForEach(self.GlyphData)
+      dumper.dump_for_each(self.glyphs_data)
       dumper.close()
 
   def close(self):

@@ -42,14 +42,14 @@ class Preprocess(object):
     dumper.dumpObject(metadata)
     dumper.close()    
 
-  def baseFont(self):
+  def base_font(self):
     output = self.folder+'/base'
     baseFonter = BaseFonter(self.fontfile)
     baseFonter.base(output)
     compressor = Compressor(Compressor.LZMA_CMD)
     compressor.compress(output, output + '.xz')
 
-  def cmapDump(self):
+  def cmap_dump(self):
     font = TTFont(self.fontfile)
     cmap = font['cmap'].getcmap(3, 1).cmap  # unicode table
     assert cmap, 'Unicode cmap table required'
@@ -65,15 +65,15 @@ class Preprocess(object):
     font.close()
   
     cp_dumper = Dumper(self.folder+'/codepoints')
-    cp_dumper.dumpArray(codepoints, 'H', '>')
+    cp_dumper.dump_array(codepoints, 'H', '>')
     cp_dumper.close()
   
     gid_dumper = Dumper(self.folder+'/gids')
-    gid_dumper.dumpArray(glyphs, 'H', '>')
+    gid_dumper.dump_array(glyphs, 'H', '>')
     gid_dumper.close()
 
-  def serialGlyf(self):
+  def serial_Glyf(self):
     glyfSerializer = GlyfSerializer(self.fontfile)
-    glyfSerializer.prepareGlyf()
-    glyfSerializer.serializeGlyf(self.folder+'/glyph_table', self.folder+'/glyph_data')
+    glyfSerializer.prepare_glyf()
+    glyfSerializer.serialize_glyf(self.folder+'/glyph_table', self.folder+'/glyph_data')
 

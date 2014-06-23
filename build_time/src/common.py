@@ -14,7 +14,7 @@
   limitations under the License.
 """
 
-def buildDictNameId(font):
+def build_dict_name_id(font):
   """
   Build glyphName to glyphId and vice versa dictionaries
   dicts[0] is name to id
@@ -29,7 +29,7 @@ def buildDictNameId(font):
   return dicts
 
 
-def reverseCmap(font):
+def reverse_cmap(font):
   """
   Build reverse cmap table for unicode
   Returns dict from name to unicode points

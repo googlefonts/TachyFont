@@ -26,30 +26,30 @@ from preprocess import Preprocess
 def main(args):
   """
   Main program to run preprocessing of the font
-  Arguments are font-file and --hinting=(False|True)
-  Default hinting is false
+  Arguments:
+    font-file
+    --hinting=(False|True)  ,default is false
   """
   options = Options()
   args = options.parse_opts(args, ignore_unknown=True)
-
   if len(args) < 1:
     print('usage: ./pyprepfnt font-file [--option=value]...', file=sys.stderr)
     sys.exit(1)
 
   fontfile = args[0]
   args = args[1:]
-  
+
   filename, extension = os.path.splitext(fontfile)
   
   cleanfile = filename + '_clean' + extension
   cleanup.cleanup(fontfile, False, cleanfile)
 
-  closure.dumpClosureMap(cleanfile, '.')   
+  closure.dump_closure_map(cleanfile, '.')   
 
   preprocess = Preprocess(cleanfile, '.')
-  preprocess.baseFont()
-  preprocess.cmapDump()
-  preprocess.serialGlyf()
+  preprocess.base_font()
+  preprocess.cmap_dump()
+  preprocess.serial_Glyf()
 
 
 if __name__ == '__main__':

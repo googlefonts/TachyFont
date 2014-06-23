@@ -24,7 +24,6 @@ class BaseFonter(object):
   def __init__(self, fontfile):
     self.fontfile = fontfile
     self.font = TTFont(fontfile)
-    assert 'glyf' in self.font, 'Truetype font required'
 
   def __zero_mtx(self, mtx):
     if mtx in self.font:
