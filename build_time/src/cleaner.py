@@ -31,6 +31,8 @@ class Cleaner(object):
     self.options = Options()
     self.options.hinting = hinting
     self.font = load_font(fontfile, self.options, lazy=False)
+    assert 'glyf' in self.font, 'only support TrueType (quadratic) fonts \
+    (eg, not CFF) at this time'    
     self.exception_set = exception_set
     self.predicate = predicate
 
