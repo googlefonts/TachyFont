@@ -19,7 +19,7 @@ class IncrementalFonts(webapp2.RequestHandler):
 
     def get(self):
       self.response.headers['Content-Type'] = 'text/plain'
-      self.response.out.write('incremental fonts server under development')
+      self.response.out.write('incremental fonts server under development, try back later')
 
 
 
