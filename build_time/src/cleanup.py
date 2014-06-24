@@ -15,13 +15,12 @@
 """
 
 from cleaner import Cleaner
-from glyph_sets import expand_all_lists
+from glyph_sets import get_whitespace_list
 
 
 def clean_invalid_glyphs_and_remove_hinting(fontfile, hinting, output):
-  exception_set = expand_all_lists()
-  pred = lambda glyph: glyph.numberOfContours == 0
-  cleaner = Cleaner(fontfile, hinting, exception_set, pred)
+  whitespace_list = get_whitespace_list()
+  cleaner = Cleaner(fontfile, hinting, whitespace_list)
   cleaner.clean()
   cleaner.save(output)
   cleaner.close()

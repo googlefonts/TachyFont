@@ -22,34 +22,31 @@ class Cleaner(object):
   """A font cleaner which is initialized with
      fontfile : full path to font file
      hinting : True if you want to keep hinting
-     exception_set : Do not remove these glyph code points
-     predicate : Condition of filter ,takes glyph object as parameter, glyphs 
-     satisfy this condition are filtered out"""
+     whitespace_list : These code points are expected to hve 0 contours.
 
-  def __init__(self, fontfile, hinting, exception_set, predicate):
+  def __init__(self, fontfile, hinting, whitespace_list):
     self.fontfile = fontfile
     self.options = Options()
     self.options.hinting = hinting
     self.font = load_font(fontfile, self.options, lazy=False)
     assert 'glyf' in self.font, 'only support TrueType (quadratic) fonts \
     (eg, not CFF) at this time'    
-    self.exception_set = exception_set
-    self.predicate = predicate
+    self.whitespace_list = whitespace_list
 
   def _invalid_glyphs(self, names):
-    glyphs = set()
+    invalid_glyphs = set()
     glyf_table = self.font['glyf']
     rcmap = reverse_cmap(self.font)
     for name in names:
-      if name != '.notdef' and glyf_table[name] and self.predicate(glyf_table[name]) and \
-        rcmap[name] not in self.exception_set:
-        glyphs.add(name)
-    return glyphs
+      if name != '.notdef' and glyf_table[name] and \
+          glyf_table[name].numberOfContours == 0 and \
+          rcmap[name] not in self.whitespace_list:
+        invalid_glyphs.add(name)
+    return invalid_glyphs
 
   def clean(self):
     """
-    Clean the font from invalid glyphs determined by pred except glyphs in
-    the exception list
+    Remove glyphs that should have outlines but do not.
     """
     names = set(self.font.getGlyphOrder())
     names.difference_update(self._invalid_glyphs(names))

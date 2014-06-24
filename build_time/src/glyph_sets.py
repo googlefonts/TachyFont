@@ -1,13 +1,17 @@
 """
 White space character set.
-Source: http://unicode.org/cldr/utility/list-unicodeset.jsp?a=%5B%3Awhite_space%3A%5D&abb=on&g=
+Source: http://www.unicode.org/faq/unsup_char.html
+See 'White_Space' in http://www.unicode.org/Public/UCD/latest/ucd/PropList.txt
+    TODO(bstell) separate out the patern white space into its own list
 """
-_white_space_glyphs = [ 0x0020, 0x0085,  0x00A0, 0x202F, 0x205F, 0x3000,
+_white_space_glyphs = [ 0x0020, 0x0085,  0x00A0, 0x1680, 0x202F, 0x205F, 0x3000,
                       (0x0009, 0x000D),(0x2000, 0x200A),(0x2028, 0x2029) ]
 
 """
 Default ignorable character set
-Source: http://unicode.org/cldr/utility/list-unicodeset.jsp?a=%5B%3ADI%3Dyes%3A%5D&abb=on&g=
+Source: http://www.unicode.org/L2/L2002/02368-default-ignorable.pdf
+    "Default-ignorable code points ... have no visible glyph"
+    TODO(bstell) separate out the variation selectors into its own list
 """
 _default_ignorable_glyphs = [0x00AD, 0x034F, 0x061C, 0x115F, 0x1160, 0x17B4, 
                             0x17B5, 0x3164, 0xFEFF, 0xFFA0,(0x180B, 0x180E),
@@ -29,7 +33,7 @@ def _expand_ranges(bound_list):
       expanded_list.append(bound)
   return expanded_list
   
-def expand_all_lists():
+def get_whitespace_list():
   exception_set = set()
   for l in _exceptional_glyph_lists:
     exception_set.update(set(_expand_ranges(l)))
