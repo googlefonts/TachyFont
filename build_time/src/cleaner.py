@@ -22,7 +22,7 @@ class Cleaner(object):
   """A font cleaner which is initialized with
      fontfile : full path to font file
      hinting : True if you want to keep hinting
-     whitespace_list : These code points are expected to hve 0 contours.
+     whitespace_list : These code points are expected to hve 0 contours."""
 
   def __init__(self, fontfile, hinting, whitespace_list):
     self.fontfile = fontfile
