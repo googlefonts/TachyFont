@@ -18,7 +18,17 @@ Build and Deployment
 ====================
 
 Incremental Fonts is, unfortunately, pre-alpha and notes for building / deploying 
-have not yet been finalized or written:
+have not yet been finalized or written.
+
+To run unit tests:
+- build_time/test/
+  - run: py.test
+
+- run_time/src/chrome_client_test
+  - **TBD**
+
+- run_time/src/gae_server_test
+  - **TBD**
 
 Feature Requests
 ================
