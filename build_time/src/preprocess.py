@@ -20,12 +20,14 @@ from base_fonter import BaseFonter
 from compressor import Compressor
 from glyf_serializer import GlyfSerializer
 
+
 class Preprocess(object):
   """Generates base font and serialized glyf data, dumps cmap table"""
-  def __init__(self,fontfile,folder):
+
+  def __init__(self, fontfile, folder):
     self.fontfile = fontfile
     self.folder = folder
-  
+
   def metadata(self):
     output = self.folder + '/metadata'
     font = TTFont(self.fontfile)
@@ -37,13 +39,13 @@ class Preprocess(object):
     if 'vmtx' in font:
       metadata['has_vmtx'] = True
       metadata['numberOfVMetrics'] = len(font['vmtx'].metrics)
-  
+
     dumper = Dumper(output)
     dumper.dumpObject(metadata)
-    dumper.close()    
+    dumper.close()
 
   def base_font(self):
-    output = self.folder+'/base'
+    output = self.folder + '/base'
     baseFonter = BaseFonter(self.fontfile)
     baseFonter.base(output)
     compressor = Compressor(Compressor.LZMA_CMD)
@@ -53,27 +55,27 @@ class Preprocess(object):
     font = TTFont(self.fontfile)
     cmap = font['cmap'].getcmap(3, 1).cmap  # unicode table
     assert cmap, 'Unicode cmap table required'
-  
+
     codepoints = []
     glyphs = []
-  
+
     for code, name in cmap.iteritems():
       id = font.getGlyphID(name)
       glyphs.append(id)
       codepoints.append(code)
-      #print id,name,code
+      # print id,name,code
     font.close()
-  
-    cp_dumper = Dumper(self.folder+'/codepoints')
+
+    cp_dumper = Dumper(self.folder + '/codepoints')
     cp_dumper.dump_array(codepoints, 'H', '>')
     cp_dumper.close()
-  
-    gid_dumper = Dumper(self.folder+'/gids')
+
+    gid_dumper = Dumper(self.folder + '/gids')
     gid_dumper.dump_array(glyphs, 'H', '>')
     gid_dumper.close()
 
   def serial_Glyf(self):
     glyfSerializer = GlyfSerializer(self.fontfile)
     glyfSerializer.prepare_glyf()
-    glyfSerializer.serialize_glyf(self.folder+'/glyph_table', self.folder+'/glyph_data')
-
+    glyfSerializer.serialize_glyf(
+        self.folder + '/glyph_table', self.folder + '/glyph_data')

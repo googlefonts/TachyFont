@@ -18,8 +18,7 @@ from os import system
 
 
 class Compressor(object):
-  """
-  Runs external executable with given input file and produce output file
+  """Runs external executable with given input file and produce output file
   """
 
   LZMA_CMD = 'lzma -e -c %s > %s'

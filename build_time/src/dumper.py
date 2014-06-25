@@ -19,41 +19,35 @@ from json import dumps
 
 
 class Dumper(object):
-  """
-  Dumps the given object or array of objects to the file
+  """Dumps the given object or array of objects to the file
   """
 
   def __init__(self, filename):
     self.file = open(filename, 'wb')
 
   def dump(self, data):
-    """
-    Dump given binary string to the file
+    """Dump given binary string to the file
     """
     self.file.write(data)
 
   def dump_fmt(self, data, fmt):
-    """
-    Dump given data to the file using given format
+    """Dump given data to the file using given format
     """
     self.file.write(pack(fmt, data))
 
   def dump_array(self, arr, fmt_entry, endian):
-    """
-    Dump given array of data to file using format of each entry in array
+    """Dump given array of data to file using format of each entry in array
     """
     self.file.write(pack(endian + fmt_entry * len(arr), *arr))
 
   def dump_for_each(self, arr):
-    """
-    Dump array of data directly to file
+    """Dump array of data directly to file
     """
     for datum in arr:
       self.file.write(datum)
 
   def dump_object(self, obj):
-    """
-    Dump given object as JSON string to the file
+    """Dump given object as JSON string to the file
     """
     self.file.write(dumps(obj))
 

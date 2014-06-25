@@ -35,7 +35,7 @@ class BaseFonter(object):
       self.font[mtx].metrics.clear()
       self.font[mtx].metrics = new
 
-  def __zero_glyf(self,output):
+  def __zero_glyf(self, output):
     glyf_off = self.font.reader.tables['glyf'].offset
     glyf_len = self.font.reader.tables['glyf'].length
     self.font.close()
@@ -44,9 +44,7 @@ class BaseFonter(object):
     filler.close()
 
   def base(self, output):
-    """
-    Call this function get base font
-    Call only once, since given font will be closed
+    """Call this function get base font Call only once, since given font will be closed
     """
     self.__zero_mtx('hmtx')
     self.__zero_mtx('vmtx')

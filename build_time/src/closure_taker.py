@@ -46,8 +46,7 @@ class ClosureTaker(object):
     self.glyph_codes = []
 
   def closure(self):
-    """
-    Takes closure of glyphs specified by glyph_names and glyph_codes. 
+    """Takes closure of glyphs specified by glyph_names and glyph_codes.
     """
     options = Options()
     options.notdef_glyph = False

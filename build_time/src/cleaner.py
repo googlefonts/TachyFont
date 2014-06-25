@@ -30,7 +30,7 @@ class Cleaner(object):
     self.options.hinting = hinting
     self.font = load_font(fontfile, self.options, lazy=False)
     assert 'glyf' in self.font, 'only support TrueType (quadratic) fonts \
-    (eg, not CFF) at this time'    
+    (eg, not CFF) at this time'
     self.whitespace_list = whitespace_list
 
   def _invalid_glyphs(self, names):
@@ -45,8 +45,7 @@ class Cleaner(object):
     return invalid_glyphs
 
   def clean(self):
-    """
-    Remove glyphs that should have outlines but do not.
+    """Remove glyphs that should have outlines but do not.
     """
     names = set(self.font.getGlyphOrder())
     names.difference_update(self._invalid_glyphs(names))
