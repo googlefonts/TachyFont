@@ -24,9 +24,8 @@ from preprocess import Preprocess
 
 
 def main(args):
-  """
-  Main program to run preprocessing of the font
-  Arguments:
+  """Main program to run preprocessing of the font Arguments:
+
     font-file
     --hinting=(False|True)  ,default is false
   """
@@ -40,11 +39,11 @@ def main(args):
   args = args[1:]
 
   filename, extension = os.path.splitext(fontfile)
-  
+
   cleanfile = filename + '_clean' + extension
   cleanup.cleanup(fontfile, False, cleanfile)
 
-  closure.dump_closure_map(cleanfile, '.')   
+  closure.dump_closure_map(cleanfile, '.')
 
   preprocess = Preprocess(cleanfile, '.')
   preprocess.base_font()

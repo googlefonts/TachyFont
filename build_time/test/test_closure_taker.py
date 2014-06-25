@@ -1,6 +1,6 @@
-from build.closure_taker import ClosureTaker
 import unittest
 from fontTools.ttLib import TTFont
+from closure_taker import ClosureTaker
 
 class TestClosureTaker(unittest.TestCase):
   

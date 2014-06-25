@@ -14,6 +14,7 @@
   limitations under the License.
 """
 
+
 class Filler(object):
   """Fills the file with given byte"""
 
@@ -22,7 +23,7 @@ class Filler(object):
 
   def fill(self, start, len, value):
     self.file.seek(start)
-    self.file.write(value*len)
+    self.file.write(value * len)
 
   def close(self):
     self.file.close()
