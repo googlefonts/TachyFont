@@ -19,12 +19,12 @@ import webapp2
 
 class IncrementalFonts(webapp2.RequestHandler):
 
-    def get(self):
-      self.response.headers['Content-Type'] = 'text/plain'
-      self.response.out.write('incremental fonts server under development, try back later')
-
+  def get(self):
+    self.response.headers['Content-Type'] = 'text/plain'
+    self.response.out.write(
+        'incremental fonts server under development, try back later')
 
 
 app = webapp2.WSGIApplication([
-  ('/incremental_fonts/?', IncrementalFonts),
+    ('/incremental_fonts/?', IncrementalFonts),
 ], debug=True)
