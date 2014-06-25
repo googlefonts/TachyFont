@@ -19,13 +19,13 @@ import webapp2
 
 class BrowserRedirector(webapp2.RequestHandler):
 
-    def get(self):
-      ua = self.request.headers.get('User-Agent')
-      self.response.headers['Content-Type'] = 'text/plain'
-      self.response.out.write('browser redirector under development, try back later')
-
+  def get(self):
+    ua = self.request.headers.get('User-Agent')
+    self.response.headers['Content-Type'] = 'text/plain'
+    self.response.out.write(
+        'browser redirector under development, try back later')
 
 
 app = webapp2.WSGIApplication([
-  ('/', BrowserRedirector),
+    ('/', BrowserRedirector),
 ], debug=True)

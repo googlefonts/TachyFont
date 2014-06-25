@@ -31,8 +31,11 @@ handlers:
   script: browser_redirector.app
 
 
-- url: /chrome
-  static_dir: chrome
+- url: /chrome/
+  static_dir: chrome/
+  
+- url: /opentype_js/
+  static_dir: third_party/opentype_js/
 
-- url: /incremental_fonts/?
+- url: /incremental_fonts/.*
   script: incremental_fonts.app

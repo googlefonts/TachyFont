@@ -15,19 +15,22 @@
 """
 
 import webapp2
-from gae_server.help import prepare_bundle
+from os import path
+from help import prepare_bundle
+
+BASE_DIR = path.dirname(__file__)
 
 
 class IncrementalFonts(webapp2.RequestHandler):
 
   def get(self):
     self.response.headers['Content-Type'] = 'text/plain'
-    self.response.out.write(
-        'incremental fonts server under development, try back later')
+    self.response.out.write('Under construction')
 
 
 class GlyphRequest(webapp2.RequestHandler):
   """Service for glyph requests from the server Takes closure of glyphs and returns them as a bundle
+
   """
 
   def post(self):
@@ -36,7 +39,18 @@ class GlyphRequest(webapp2.RequestHandler):
     self.response.write(prepare_bundle(self.request))
 
 
+class BaseRequest(webapp2.RequestHandler):
+  """Service for glyph requests from the server Takes closure of glyphs and returns them as a bundle
+
+  """
+  def get(self):
+    font = self.request.get('font')
+    self.response.headers['Content-Type'] = 'application/octet-binary'
+    self.response.write(open(BASE_DIR + '/data/' + font + '/base').read())
+
+
 app = webapp2.WSGIApplication([
-    ('/incremental_fonts/?', IncrementalFonts),
-    ('/incremental_fonts/request', GlyphRequest)
+    ('/incremental_fonts/request', GlyphRequest),
+    ('/incremental_fonts/base', BaseRequest),
+    ('/incremental_fonts/.*', IncrementalFonts)
 ], debug=True)
