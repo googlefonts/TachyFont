@@ -14,10 +14,11 @@
   limitations under the License.
 """
 
-from fontTools.ttLib import TTFont
+
 import struct
 from closure_taker import ClosureTaker
 from dumper import Dumper
+from fontTools.ttLib import TTFont
 
  
 def dump_closure_map(fontfile, outputfolder):
