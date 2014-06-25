@@ -15,14 +15,19 @@
 """
 
 import webapp2
+import os, sys
 
 
 class BrowserRedirector(webapp2.RequestHandler):
 
     def get(self):
       ua = self.request.headers.get('User-Agent')
-      self.response.headers['Content-Type'] = 'text/plain'
-      self.response.out.write('browser redirector under development, try back later')
+      if not 'Chrome/' in ua:
+        self.response.headers['Content-Type'] = 'text/plain'
+        self.response.out.write('browser redirector under development, try back later')
+        return
+
+      self.redirect('/chrome/sample_timing.html')
 
 
 
