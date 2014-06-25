@@ -1,0 +1,52 @@
+table {
+  border-collapse:collapse;
+}
+table, td, th {
+  border:1px solid gray;
+}
+
+@font-face {
+  font-family: Acme;
+  font-style: normal;
+  src: url(https://themes.googleusercontent.com/static/fonts/acme/v3/ueamsayjg_AE6hBQnsEcc_esZW2xOQ-xsNqO47m55DA.woff) format('woff');
+}
+@font-face {
+  font-family: Geo;
+  font-style: normal;
+  src: url(https://themes.googleusercontent.com/static/fonts/geo/v6/UI8QzXA7yD17NFtVExV-lg.woff) format('woff');
+}
+@font-face {
+  font-family: Roboto;
+  font-style: normal;
+  src: url(https://themes.googleusercontent.com/static/fonts/roboto/v9/MMDEOSa6i6T9gBocjYCJkQ.woff) format('woff');
+}
+@font-face {
+  font-family: Kranky;
+  font-style: normal;
+  src: url(https://themes.googleusercontent.com/static/fonts/kranky/v2/xoWb9ls7gtfC6bcwSS2agA.woff) format('truetype');
+}
+@font-face {
+  font-family: Noto Sans UI;
+  font-style: normal;
+  src: url(https://themes.googleusercontent.com/static/fonts/notosansui/v1/dOQO_yw3RAZ8Oi34Tamht_nZvTSLrt0ODqUY3DjsCVw.woff) format('woff');
+}
+@font-face {
+  font-family: Arimo;
+  font-style: normal;
+  src: url(https://themes.googleusercontent.com/static/fonts/arimo/v6/__nOLWqmeXdhfr0g7GaFePesZW2xOQ-xsNqO47m55DA.ttf) format('truetype');
+}
+@font-face {
+  font-family: Andika;
+  font-style: normal;
+  src: url(https://themes.googleusercontent.com/static/fonts/andika/v4/U3ktHGd7aNMDoALZkNNnKfesZW2xOQ-xsNqO47m55DA.ttf) format('truetype');
+}
+@font-face {
+  font-family: NanumGothic;
+  font-style: normal;
+  src: url(https://themes.googleusercontent.com/static/fonts/earlyaccess/nanumgothic/v3/NanumGothic-Bold.ttf) format('truetype');
+}
+@font-face {
+  font-family: NanumBrushScript;
+  font-style: normal;
+  src: url(https://themes.googleusercontent.com/static/fonts/earlyaccess/nanumbrushscript/v2/NanumBrushScript-Regular.ttf) format('truetype');
+}
