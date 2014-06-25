@@ -15,6 +15,7 @@
 """
 
 import webapp2
+from gae_server.help import prepare_bundle
 
 
 class IncrementalFonts(webapp2.RequestHandler):
@@ -23,8 +24,21 @@ class IncrementalFonts(webapp2.RequestHandler):
     self.response.headers['Content-Type'] = 'text/plain'
     self.response.out.write(
         'incremental fonts server under development, try back later')
+    
+    
+
+class GlyphRequest(webapp2.RequestHandler):
+    """
+    Service for glyph requests from the server
+    Takes closure of glyphs and returns them as a bundle
+    """
+    def post(self):
+      print self.request.body 
+      self.response.headers["Content-Type"]= 'application/octet-binary;charset=latin1'
+      self.response.write(prepare_bundle(self.request))
 
 
 app = webapp2.WSGIApplication([
     ('/incremental_fonts/?', IncrementalFonts),
+    ('/incremental_fonts/request',GlyphRequest)
 ], debug=True)
