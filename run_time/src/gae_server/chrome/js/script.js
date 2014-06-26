@@ -121,7 +121,7 @@ function requestBaseGZFont(name){
 	return requestURL('/fonts/'+name+'/base.gz','GET',null,{},'arraybuffer');
 }
 
-function gunzipBaseFont(array_buffer){
+function gunzipBuffer(array_buffer){
 	var gunzip = new Zlib.Gunzip(new Uint8Array(array_buffer));
 	return gunzip.decompress().buffer;
 }
@@ -257,7 +257,7 @@ function updateFont(font_name)
 
 		function(base_gz){ 
 			START = (new Date()); 
-			return gunzipBaseFont(base_gz);
+			return gunzipBuffer(base_gz);
 		}).then(sanitizeBaseFont);
 
 
@@ -269,7 +269,7 @@ function updateFont(font_name)
 		}
 	);
 
-	var bundleReady = determineCharacters(font_name).then(function(arr){ return requestCharacters(arr[0],arr[1]);});
+	var bundleReady = determineCharacters(font_name).then(function(arr){ return requestCharacters(arr[0],arr[1]);}).then(gunzipBuffer);
 
 
 

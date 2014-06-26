@@ -19,6 +19,9 @@ import sys
 import struct
 import json as JSON
 from os import path
+import StringIO
+import cStringIO
+import gzip
 
 
 def _parse_json(data):
@@ -93,6 +96,15 @@ def _read_region(file, offset, size):
   file.seek(prev)
   return data
 
+def _gzip(binary_string):
+  buffer = cStringIO.StringIO();
+  f = gzip.open(fileobj=buffer,mode='wb');
+  f.write(binary_string);
+  f.close()
+  compressed = buffer.getvalue();
+  buffer.close();
+  return compressed;
+
 
 def prepare_bundle(request):
   """Parse requests, then prepares response bundle for glyphs
@@ -125,7 +137,7 @@ def prepare_bundle(request):
     bundle.extend(_read_region(data, data_offset, data_size))
   table.close()
   data.close()
-  return bundle.decode('latin-1')
+  return _gzip(bundle.decode('latin-1'))
 
 
 class ClosureReader(object):
