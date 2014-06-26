@@ -251,11 +251,13 @@ function updateFont(font_name)
 	
 	//var baseSanitized = requestBaseFont('noto')
 
+
 	var baseSanitized = requestBaseGZFont(font_name).then(
 		function(base_gz){ 
 			START = (new Date()); 
 			return gunzipBaseFont(base_gz);
 		}).then(sanitizeBaseFont);
+
 
 	var fileSystemReady = requestTemporaryFileSystem(32 * 1024);//requestQuota( 32 * 1024).then(requestPersistentFileSystem);
 
