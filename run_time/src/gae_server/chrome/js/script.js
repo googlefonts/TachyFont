@@ -67,7 +67,7 @@ function strToCodeArray(str){
 
 function determineCharacters(){
 	return new Promise(function(resolve,reject){
-		var arr = strToCodeArray(document.body.innerText+document.head.innerText);
+		var arr = strToCodeArray(document.body.innerText);
 		console.log(arr);
 		resolve(arr);
 	});
@@ -114,6 +114,15 @@ function requestPersistentFileSystem(grantedSize){
 
 function requestBaseFont(name){
 	return requestURL('/fonts/'+name+'/base','GET',null,{},'arraybuffer');
+}
+
+function requestBaseGZFont(name){
+	return requestURL('/fonts/'+name+'/base.gz','GET',null,{},'arraybuffer');
+}
+
+function gunzipBaseFont(array_buffer){
+	var gunzip = new Zlib.Gunzip(new Uint8Array(array_buffer));
+	return gunzip.decompress().buffer;
 }
 
 function sanitizeBaseFont(baseFont){
@@ -236,7 +245,9 @@ function persistToTheFilesystem(fs,filename,content,type){
 function updateFont()
 {
 	
-	var baseSanitized = requestBaseFont('noto').then(sanitizeBaseFont);
+	//var baseSanitized = requestBaseFont('noto')
+
+	var baseSanitized = requestBaseGZFont('noto').then(gunzipBaseFont).then(sanitizeBaseFont);
 
 	var fileSystemReady = requestTemporaryFileSystem(32 * 1024);//requestQuota( 32 * 1024).then(requestPersistentFileSystem);
 
