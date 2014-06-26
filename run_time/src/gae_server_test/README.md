@@ -1,5 +1,7 @@
-cd into the run_time/src folder
-to run all server tests:
+To run all server tests:
 
-    ./gae_server_test/test_all 
+    cd into the directory above this one and test_all in this directory; eg,
+
+    cd ..
+    ./gae_server_test/test_all
 
