@@ -1,0 +1,10 @@
+URL: https://github.com/googlei18n/fonttools
+Version: d897eb04863df2424f2e43395d38de735d41f350
+License: Just van Rossum
+License File: LICENSE.txt
+
+Description:
+fonttools is a Python parser for TrueType and OpenType fonts.
+
+Local Modifications:
+
