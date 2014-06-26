@@ -45,7 +45,7 @@ function requestURL(url,method,data,headerParams,responseType){
 	});
 }
 
-var CHAR_ARRAY = [ 97,98,99];
+var CHAR_ARRAY = [ 97,98,231];
 var FILENAME = 'my.ttf';
 
 
@@ -71,8 +71,11 @@ function requestQuota(size){
 }
 
 function setTheFont(font_src){
-	var f = new FontFace("myfont", "url('"+font_src+"'')", {});
-	document.fonts.add(f);
+	console.log(font_src)
+	var font = new FontFace("myfont", "url("+font_src+")", {});
+	document.fonts.add(font);
+	font.load(); 
+
 }
 
 function requestTemporaryFileSystem(grantedSize){
@@ -253,6 +256,7 @@ function updateFont()
 
 	Promise.all([fileUpdated,fileURLReady]).then(
 		function(results){
+
 			setTheFont(results[1]);
 		}
 	);
