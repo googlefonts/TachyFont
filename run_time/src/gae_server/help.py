@@ -20,13 +20,13 @@ import struct
 import json as JSON
 from os import path
 
+
 def _parse_json(data):
   return JSON.loads(data)
 
+
 def _parse_array_from_str(data, type, byteorder):
-  """
-  Using array.fromstring function , parses given binary string and type
-  Returns array of type
+  """Using array.fromstring function , parses given binary string and type Returns array of type
   """
   arr = array.array(type)
   arr.fromstring(data)
@@ -36,9 +36,7 @@ def _parse_array_from_str(data, type, byteorder):
 
 
 def _parse_array_from_file(filename, type, byteorder):
-  """
-  Using _parse_array_from_str, open given filename and parses it
-  Returns array of type
+  """Using _parse_array_from_str, open given filename and parses it Returns array of type
   """
   file = open(filename, 'rb')
   arr = _parse_array_from_str(file.read(), type, byteorder)
@@ -47,8 +45,7 @@ def _parse_array_from_file(filename, type, byteorder):
 
 
 def _parse_array_fmt(fmt, count, data):
-  """
-  Using struct.unpack_from, parses given binary string as array if given fmt
+  """Using struct.unpack_from, parses given binary string as array if given fmt
   """
   pos = 0
   fmt_size = struct.calcsize(fmt)
@@ -60,8 +57,7 @@ def _parse_array_fmt(fmt, count, data):
 
 
 def _build_cmap(cp_file, gid_file):
-  """
-  Build cmap dictionary from codepoints to glyph ids using given files
+  """Build cmap dictionary from codepoints to glyph ids using given files
   """
   keys = _parse_array_from_file(cp_file, 'H', 'big')
   gids = _parse_array_from_file(gid_file, 'H', 'big')
@@ -73,9 +69,7 @@ def _build_cmap(cp_file, gid_file):
 
 
 def _parse_glyf_table(file):
-  """
-  Parses given file as glyf table, where each entry is such tuples
-  (glyph id , [hmtx lsb] ,[vmtx tsb] , offset , size )
+  """Parses given file as glyf table, where each entry is such tuples (glyph id , [hmtx lsb] ,[vmtx tsb] , offset , size )
   """
   fmt_GlyphTable = '>HH'
   HAS_HMTX = (1 << 0)
@@ -99,13 +93,14 @@ def _read_region(file, offset, size):
   file.seek(prev)
   return data
 
+
 def prepare_bundle(request):
   """Parse requests, then prepares response bundle for glyphs
   """
   glyph_request = _parse_json(request.body)
   font = glyph_request['font']
   codepoints = glyph_request['arr']
-  base = path.dirname(path.abspath(__file__)) + '/data/'+font+'/'
+  base = path.dirname(path.abspath(__file__)) + '/data/' + font + '/'
   cmap = _build_cmap(base + 'codepoints', base + '/gids')
   closure_reader = ClosureReader(base + '/closure_idx', base + '/closure_data')
   gids = set()
@@ -134,9 +129,7 @@ def prepare_bundle(request):
 
 
 class ClosureReader(object):
-  """
-  Class to read closure list of a given glyph id
-  Init with serialized closure files
+  """Class to read closure list of a given glyph id Init with serialized closure files
   """
   fmt_idx = '>lH'
   fmt_idx_len = struct.calcsize(fmt_idx)
@@ -148,8 +141,7 @@ class ClosureReader(object):
     self.data_file = open(data_file, 'rb')
 
   def read(self, glyphID):
-    """
-    Return closure list of glyph ids for given glyphID
+    """Return closure list of glyph ids for given glyphID
     """
     closure_set = set([glyphID])
     idx_offset = glyphID * ClosureReader.fmt_idx_len

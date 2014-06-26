@@ -8,3 +8,7 @@ opentype.js is a JavaScript parser for TrueType and OpenType fonts.
 
 Local Modifications:
 
+ - Cleaned unnecessary table parsings
+ - Added ability to modify hmtx table
+
+

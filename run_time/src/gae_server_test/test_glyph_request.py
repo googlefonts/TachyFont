@@ -32,5 +32,6 @@ class AppTest(unittest.TestCase):
   def test_GlyphRequest(self):
     glyph_request = {'font': NOTO_FONT, 'arr': ARRAY_ABC}
     response = self.testapp.post_json('/', glyph_request)
-    self.assertEqual(response.body, a2b_hex(GLYPH_REQUEST_RESPONSE_FOR_NOTO_ABC))
+    self.assertEqual(
+        response.body, a2b_hex(GLYPH_REQUEST_RESPONSE_FOR_NOTO_ABC))
     self.assertEqual(response.status_int, 200)
