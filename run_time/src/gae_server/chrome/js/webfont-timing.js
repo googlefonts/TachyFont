@@ -4,6 +4,7 @@ var fontInfo = [
   { familyName: 'Roboto', fileName: 'MMDEOSa6i6T9gBocjYCJkQ.woff', size: '72.4' },
   { familyName: 'Kranky', fileName: 'xoWb9ls7gtfC6bcwSS2agA.woff', size: '101.1' },
   { familyName: 'NotoSansUI', fileName: 'dOQO_yw3RAZ8Oi34Tamht_nZvTSLrt0ODqUY3DjsCVw.woff', size: '171.2' },
+  { familyName: 'NotoSans', fileName: 'base.gz', size: '15' },
   { familyName: 'Arimo', fileName: '__nOLWqmeXdhfr0g7GaFePesZW2xOQ-xsNqO47m55DA.ttf', size: '435.7' },
   { familyName: 'Andika', fileName: 'U3ktHGd7aNMDoALZkNNnKfesZW2xOQ-xsNqO47m55DA.ttf', size: '1,086.0' },
   { familyName: 'NanumGothic', fileName: 'NanumGothic-Bold.ttf', size: '2,369.6' },
@@ -50,11 +51,13 @@ function appendFontProcessingTimingRow(table,name) {
   var row = table.insertRow(table.rows.length);
   var cell = 0;
   appendTimingCell(row, cell++, name+' processing time', 'left');
+
   appendTimingCell(row, cell++, '--');
   appendTimingCell(row, cell++, '--');
   appendTimingCell(row, cell++, '--');
   appendTimingCell(row, cell++, '--');
   appendTimingCell(row, cell++,window.performance.perf[name]);
+
 }
 
 function appendNavigationTimingRow(table, navTiming) {

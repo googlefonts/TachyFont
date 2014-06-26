@@ -32,6 +32,11 @@ table, td, th {
 }
 
 @font-face {
+  font-family: myfont;
+  font-style: normal;
+  src: url(filesystem:http:/localhost:9999/temporary/my.ttf) format('truetype');
+}
+@font-face {
   font-family: Arimo;
   font-style: normal;
   src: url(https://themes.googleusercontent.com/static/fonts/arimo/v6/__nOLWqmeXdhfr0g7GaFePesZW2xOQ-xsNqO47m55DA.ttf) format('truetype');

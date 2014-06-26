@@ -74,6 +74,7 @@ function determineCharacters(font_name){
 }
 
 function requestCharacters(chars, font_name){
+
 	return requestURL('/incremental_fonts/request','POST',JSON.stringify({'font':font_name,'arr':chars}),{'Content-Type':'application/json'},'arraybuffer');
 }
 
@@ -253,6 +254,7 @@ function updateFont(font_name)
 
 
 	var baseSanitized = requestBaseGZFont(font_name).then(
+
 		function(base_gz){ 
 			START = (new Date()); 
 			return gunzipBaseFont(base_gz);
@@ -268,6 +270,7 @@ function updateFont(font_name)
 	);
 
 	var bundleReady = determineCharacters(font_name).then(function(arr){ return requestCharacters(arr[0],arr[1]);});
+
 
 	var charsInjected = Promise.all([baseFontPersisted,bundleReady,fileSystemReady]).then(
 		function(results){
@@ -300,6 +303,7 @@ function updateFont(font_name)
 
 			window.performance.perf[font_name] = (END-START);
 			setTheFont(font_name, results[1]);
+
 		}
 	);
 
