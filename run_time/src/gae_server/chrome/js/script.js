@@ -272,6 +272,7 @@ function updateFont(font_name)
 	var bundleReady = determineCharacters(font_name).then(function(arr){ return requestCharacters(arr[0],arr[1]);});
 
 
+
 	var charsInjected = Promise.all([baseFontPersisted,bundleReady,fileSystemReady]).then(
 		function(results){
 			return getFileAsArrayBuffer(results[2],FILENAME).then(
