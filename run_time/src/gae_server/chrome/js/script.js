@@ -113,7 +113,7 @@ function requestPersistentFileSystem(grantedSize){
 }
 
 function requestBaseFont(name){
-	return requestURL('/incremental_fonts/base?font='+name,'GET',null,{},'arraybuffer');
+	return requestURL('/fonts/'+name+'/base','GET',null,{},'arraybuffer');
 }
 
 function sanitizeBaseFont(baseFont){

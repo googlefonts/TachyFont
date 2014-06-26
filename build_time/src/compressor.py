@@ -22,6 +22,7 @@ class Compressor(object):
   """
 
   LZMA_CMD = 'lzma -e -c %s > %s'
+  GZIP_CMD = 'gzip -9 - <%s  >%s'
 
   def __init__(self, cmd):
     self.cmd = cmd
