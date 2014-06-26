@@ -48,10 +48,28 @@ function requestURL(url,method,data,headerParams,responseType){
 var CHAR_ARRAY = [ 97,98,231];
 var FILENAME = 'my.ttf';
 
+function strToCodeArray(str){
+	console.log(str);
+	var len = str.length;
+	var arr = [];
+	var dummy = {};
+	var code;
+	for(var i=0;i<len;i++)
+	{
+		code = str.charCodeAt(i);
+		if(!dummy.hasOwnProperty(code)){
+			arr.push(code);
+			dummy[code]=0;
+		}
+	}
+	return arr;
+}
 
 function determineCharacters(){
 	return new Promise(function(resolve,reject){
-		resolve(CHAR_ARRAY);
+		var arr = strToCodeArray(document.body.innerText+document.head.innerText);
+		console.log(arr);
+		resolve(arr);
 	});
 }
 
