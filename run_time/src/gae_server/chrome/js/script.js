@@ -73,7 +73,7 @@ function determineCharacters(font_name){
 	});
 }
 
-function requestCharacters(chars,font_name){
+function requestCharacters(chars, font_name){
 	return requestURL('/incremental_fonts/request','POST',JSON.stringify({'font':font_name,'arr':chars}),{'Content-Type':'application/json'},'arraybuffer');
 }
 
