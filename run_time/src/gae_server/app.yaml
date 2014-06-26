@@ -34,8 +34,14 @@ handlers:
 - url: /chrome/
   static_dir: chrome/
   
+- url: /fonts
+  static_dir: fonts/
+  
 - url: /opentype_js/
   static_dir: third_party/opentype_js/
+  
+- url: /zlib_js/
+  static_dir: third_party/zlib_js/
 
 - url: /incremental_fonts/.*
   script: incremental_fonts.app
