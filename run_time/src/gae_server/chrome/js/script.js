@@ -69,12 +69,12 @@ function determineCharacters(){
 	return new Promise(function(resolve,reject){
 		var arr = strToCodeArray(document.body.innerText);
 		console.log(arr);
-		resolve(arr);
+		resolve([arr,'noto-sans']);
 	});
 }
 
-function requestCharacters(chars){
-	return requestURL('/incremental_fonts/request','POST',JSON.stringify({'font':'noto','arr':chars}),{'Content-Type':'application/json'},'arraybuffer');
+function requestCharacters(chars,font_name){
+	return requestURL('/incremental_fonts/request','POST',JSON.stringify({'font':font_name,'arr':chars}),{'Content-Type':'application/json'},'arraybuffer');
 }
 
 function requestQuota(size){
@@ -244,10 +244,15 @@ function persistToTheFilesystem(fs,filename,content,type){
 
 function updateFont()
 {
+	var START;
 	
 	//var baseSanitized = requestBaseFont('noto')
 
-	var baseSanitized = requestBaseGZFont('noto').then(gunzipBaseFont).then(sanitizeBaseFont);
+	var baseSanitized = requestBaseGZFont('noto-sans').then(
+		function(base_gz){ 
+			START = (new Date()); 
+			return gunzipBaseFont(base_gz);
+		}).then(sanitizeBaseFont);
 
 	var fileSystemReady = requestTemporaryFileSystem(32 * 1024);//requestQuota( 32 * 1024).then(requestPersistentFileSystem);
 
@@ -257,7 +262,7 @@ function updateFont()
 		}
 	);
 
-	var bundleReady = determineCharacters().then(requestCharacters);
+	var bundleReady = determineCharacters().then(function(arr){ return requestCharacters(arr[0],arr[1]);});
 
 	var charsInjected = Promise.all([baseFontPersisted,bundleReady,fileSystemReady]).then(
 		function(results){
@@ -285,7 +290,9 @@ function updateFont()
 
 	Promise.all([fileUpdated,fileURLReady]).then(
 		function(results){
-
+			var END = (new Date());
+			console.log('Took '+(END-START)+' ms to load');
+			window.performance.myProcessTime = (END-START);
 			setTheFont(results[1]);
 		}
 	);
