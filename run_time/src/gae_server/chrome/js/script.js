@@ -45,13 +45,31 @@ function requestURL(url,method,data,headerParams,responseType){
 	});
 }
 
-var CHAR_ARRAY = [ 97,98,99];
+var CHAR_ARRAY = [ 97,98,231];
 var FILENAME = 'my.ttf';
 
+function strToCodeArray(str){
+	console.log(str);
+	var len = str.length;
+	var arr = [];
+	var dummy = {};
+	var code;
+	for(var i=0;i<len;i++)
+	{
+		code = str.charCodeAt(i);
+		if(!dummy.hasOwnProperty(code)){
+			arr.push(code);
+			dummy[code]=0;
+		}
+	}
+	return arr;
+}
 
 function determineCharacters(){
 	return new Promise(function(resolve,reject){
-		resolve(CHAR_ARRAY);
+		var arr = strToCodeArray(document.body.innerText);
+		console.log(arr);
+		resolve(arr);
 	});
 }
 
@@ -71,8 +89,11 @@ function requestQuota(size){
 }
 
 function setTheFont(font_src){
-	var f = new FontFace("myfont", "url('"+font_src+"'')", {});
-	document.fonts.add(f);
+	console.log(font_src)
+	var font = new FontFace("myfont", "url("+font_src+")", {});
+	document.fonts.add(font);
+	font.load(); 
+
 }
 
 function requestTemporaryFileSystem(grantedSize){
@@ -92,7 +113,16 @@ function requestPersistentFileSystem(grantedSize){
 }
 
 function requestBaseFont(name){
-	return requestURL('/incremental_fonts/base?font='+name,'GET',null,{},'arraybuffer');
+	return requestURL('/fonts/'+name+'/base','GET',null,{},'arraybuffer');
+}
+
+function requestBaseGZFont(name){
+	return requestURL('/fonts/'+name+'/base.gz','GET',null,{},'arraybuffer');
+}
+
+function gunzipBaseFont(array_buffer){
+	var gunzip = new Zlib.Gunzip(new Uint8Array(array_buffer));
+	return gunzip.decompress().buffer;
 }
 
 function sanitizeBaseFont(baseFont){
@@ -215,7 +245,9 @@ function persistToTheFilesystem(fs,filename,content,type){
 function updateFont()
 {
 	
-	var baseSanitized = requestBaseFont('noto').then(sanitizeBaseFont);
+	//var baseSanitized = requestBaseFont('noto')
+
+	var baseSanitized = requestBaseGZFont('noto').then(gunzipBaseFont).then(sanitizeBaseFont);
 
 	var fileSystemReady = requestTemporaryFileSystem(32 * 1024);//requestQuota( 32 * 1024).then(requestPersistentFileSystem);
 
@@ -253,6 +285,7 @@ function updateFont()
 
 	Promise.all([fileUpdated,fileURLReady]).then(
 		function(results){
+
 			setTheFont(results[1]);
 		}
 	);
