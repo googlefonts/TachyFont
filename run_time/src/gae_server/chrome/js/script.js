@@ -46,7 +46,7 @@ function requestURL(url,method,data,headerParams,responseType){
 }
 
 var CHAR_ARRAY = [ 97,98,231];
-var FILENAME = 'my.ttf';
+var FILENAME ;
 
 function strToCodeArray(str){
 	console.log(str);
@@ -65,11 +65,11 @@ function strToCodeArray(str){
 	return arr;
 }
 
-function determineCharacters(){
+function determineCharacters(font_name){
 	return new Promise(function(resolve,reject){
 		var arr = strToCodeArray(document.body.innerText);
 		console.log(arr);
-		resolve([arr,'noto-sans']);
+		resolve([arr,font_name]);
 	});
 }
 
@@ -242,13 +242,16 @@ function persistToTheFilesystem(fs,filename,content,type){
 	});	
 }
 
-function updateFont()
+function updateFont(font_name)
 {
+	if(!window.performance.perf)
+		window.performance.perf = {};
 	var START;
+	FILENAME = font_name + '.ttf'
 	
 	//var baseSanitized = requestBaseFont('noto')
 
-	var baseSanitized = requestBaseGZFont('noto-sans').then(
+	var baseSanitized = requestBaseGZFont(font_name).then(
 		function(base_gz){ 
 			START = (new Date()); 
 			return gunzipBaseFont(base_gz);
@@ -262,7 +265,7 @@ function updateFont()
 		}
 	);
 
-	var bundleReady = determineCharacters().then(function(arr){ return requestCharacters(arr[0],arr[1]);});
+	var bundleReady = determineCharacters(font_name).then(function(arr){ return requestCharacters(arr[0],arr[1]);});
 
 	var charsInjected = Promise.all([baseFontPersisted,bundleReady,fileSystemReady]).then(
 		function(results){
@@ -292,7 +295,8 @@ function updateFont()
 		function(results){
 			var END = (new Date());
 			console.log('Took '+(END-START)+' ms to load');
-			window.performance.myProcessTime = (END-START);
+
+			window.performance.perf[font_name] = (END-START);
 			setTheFont(results[1]);
 		}
 	);
