@@ -28,5 +28,6 @@ def clean_invalid_glyphs_and_remove_hinting(fontfile, hinting, output):
 
 def cleanup(fontfile, hinting, output):
   """Calls cleanup pipeline Each routine must have three arguments fontfile,hinting and output
+
   """
   clean_invalid_glyphs_and_remove_hinting(fontfile, hinting, output)
