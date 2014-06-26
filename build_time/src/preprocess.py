@@ -50,6 +50,8 @@ class Preprocess(object):
     baseFonter.base(output)
     compressor = Compressor(Compressor.LZMA_CMD)
     compressor.compress(output, output + '.xz')
+    compressor = Compressor(Compressor.GZIP_CMD)
+    compressor.compress(output, output + '.gz')
 
   def cmap_dump(self):
     font = TTFont(self.fontfile)

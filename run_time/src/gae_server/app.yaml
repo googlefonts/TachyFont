@@ -34,6 +34,9 @@ handlers:
 - url: /chrome/
   static_dir: chrome/
   
+- url: /fonts
+  static_dir: fonts/
+  
 - url: /opentype_js/
   static_dir: third_party/opentype_js/
 
