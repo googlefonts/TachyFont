@@ -4,11 +4,12 @@ var fontInfo = [
   { familyName: 'Roboto', fileName: 'MMDEOSa6i6T9gBocjYCJkQ.woff', size: '72.4' },
   { familyName: 'Kranky', fileName: 'xoWb9ls7gtfC6bcwSS2agA.woff', size: '101.1' },
   { familyName: 'NotoSansUI', fileName: 'dOQO_yw3RAZ8Oi34Tamht_nZvTSLrt0ODqUY3DjsCVw.woff', size: '171.2' },
-  { familyName: 'NotoSans', fileName: 'base.gz', size: '15' },
   { familyName: 'Arimo', fileName: '__nOLWqmeXdhfr0g7GaFePesZW2xOQ-xsNqO47m55DA.ttf', size: '435.7' },
   { familyName: 'Andika', fileName: 'U3ktHGd7aNMDoALZkNNnKfesZW2xOQ-xsNqO47m55DA.ttf', size: '1,086.0' },
   { familyName: 'NanumGothic', fileName: 'NanumGothic-Bold.ttf', size: '2,369.6' },
   { familyName: 'NanumBrushScript', fileName: 'NanumBrushScript-Regular.ttf', size: '3,745.3' },
+  { familyName: 'NotoSans', fileName: 'noto-sans/base.gz', size: '15' },
+  { familyName: 'NanumBrush', fileName: 'nanum-brush/base.gz', size: '15' }
 ];
 
 function displayTimings() {
@@ -24,6 +25,11 @@ function displayTimings() {
     entry.resource = resources[i];
     var fontNameStart = entry.resource.name.lastIndexOf('/') + 1;
     var fileName = entry.resource.name.substr(fontNameStart);
+    if(fileName == 'base.gz'){
+      var fontFolderStart = entry.resource.name.substr(0,fontNameStart-1).lastIndexOf('/');
+      fileName = entry.resource.name.substr( fontFolderStart+1 );
+      console.log(fileName);
+    }  
     resourcesMap[fileName] = entry;
   }
   for (var i = 0; i < fontInfo.length; i++) {
@@ -35,19 +41,20 @@ function displayTimings() {
     appendFontTimingRow(table, fontInfo[i]);
   }
   
-   appendFontProcessingTimingRow(table,window.performance.myProcessTime);
+   //appendFontProcessingTimingRow(table,'noto-sans');
+   appendFontProcessingTimingRow(table,'nanum-brush' );
 }
 
-function appendFontProcessingTimingRow(table,processTime) {
+function appendFontProcessingTimingRow(table,name) {
   //alert('navTiming = ' + navTiming);
   var row = table.insertRow(table.rows.length);
   var cell = 0;
-  appendTimingCell(row, cell++, '(font loading time)', 'left');
+  appendTimingCell(row, cell++, name+' processing time', 'left');
   appendTimingCell(row, cell++, '--');
   appendTimingCell(row, cell++, '--');
   appendTimingCell(row, cell++, '--');
   appendTimingCell(row, cell++, '--');
-  appendTimingCell(row, cell++, processTime);
+  appendTimingCell(row, cell++,window.performance.perf[name]);
 }
 
 function appendNavigationTimingRow(table, navTiming) {
