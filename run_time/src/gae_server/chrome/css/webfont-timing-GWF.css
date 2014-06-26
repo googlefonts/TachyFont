@@ -30,16 +30,7 @@ table, td, th {
   font-style: normal;
   src: url(https://themes.googleusercontent.com/static/fonts/notosansui/v1/dOQO_yw3RAZ8Oi34Tamht_nZvTSLrt0ODqUY3DjsCVw.woff) format('woff');
 }
-@font-face {
-  font-family: mynotosans;
-  font-style: normal;
-  src: url(filesystem:http:/localhost:9999/temporary/noto-sans.ttf) format('truetype');
-}
-@font-face {
-  font-family: mynanum;
-  font-style: normal;
-  src: url(filesystem:http:/localhost:9999/temporary/nanum-brush.ttf) format('truetype');
-}
+
 @font-face {
   font-family: Arimo;
   font-style: normal;
