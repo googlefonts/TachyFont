@@ -20,23 +20,14 @@ import os, sys
 
 class BrowserRedirector(webapp2.RequestHandler):
 
-<<<<<<< HEAD
-    def get(self):
-      ua = self.request.headers.get('User-Agent')
-      if not 'Chrome/' in ua:
-        self.response.headers['Content-Type'] = 'text/plain'
-        self.response.out.write('browser redirector under development, try back later')
-        return
-
-      self.redirect('/chrome/sample_timing.html')
-
-=======
   def get(self):
     ua = self.request.headers.get('User-Agent')
-    self.response.headers['Content-Type'] = 'text/plain'
-    self.response.out.write(
-        'browser redirector under development, try back later')
->>>>>>> ahmet-celik-master
+    if not 'Chrome/' in ua:
+      self.response.headers['Content-Type'] = 'text/plain'
+      self.response.out.write('browser redirector under development, try back later')
+      return
+
+    self.redirect('/chrome/sample_timing.html')
 
 
 app = webapp2.WSGIApplication([
