@@ -201,7 +201,7 @@ function injectCharacters(baseFont,glyphData){
        }      
        var offset = glyphParser.parseULong();
        var length = glyphParser.parseUShort();
-       console.log('id:'+id+' off:'+offset+' len:'+length);
+       //console.log('id:'+id+' off:'+offset+' len:'+length);
        var bytes = glyphParser.parseBytes(length);
        fontParser.setBytes(glyphOffset+offset,bytes);
     }
@@ -253,7 +253,7 @@ function updateFont(font_name)
 
 	var baseSanitized = requestBaseGZFont(font_name).then(
 		function(base_gz){ 
-			START = (new Date()); 
+			START = Date.now(); 
 			return gunzipBaseFont(base_gz);
 		}).then(sanitizeBaseFont);
 
@@ -293,7 +293,7 @@ function updateFont(font_name)
 
 	Promise.all([fileUpdated,fileURLReady]).then(
 		function(results){
-			var END = (new Date());
+			var END = Date.now();
 			console.log('Took '+(END-START)+' ms to load');
 
 			window.performance.perf[font_name] = (END-START);
