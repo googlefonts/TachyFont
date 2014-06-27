@@ -297,6 +297,7 @@ function updateFont(font_name)
 			console.log('Took '+(END-START)+' ms to load');
 
 			window.performance.perf[font_name] = (END-START);
+
 			setTheFont(font_name, results[1]);
 		}
 	);
