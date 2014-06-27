@@ -68,7 +68,6 @@ function strToCodeArray(str){
 function determineCharacters(font_name){
 	return new Promise(function(resolve,reject){
 		var arr = strToCodeArray(document.body.innerText);
-		console.log(arr);
 		resolve([arr,font_name]);
 	});
 }
@@ -93,7 +92,6 @@ function setTheFont(font_name,font_src){
 	var font = new FontFace(font_name, "url("+font_src+")", {});
 	document.fonts.add(font);
 	font.load(); 
-
 }
 
 function requestTemporaryFileSystem(grantedSize){
