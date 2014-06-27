@@ -73,7 +73,7 @@ function determineCharacters(font_name){
 	});
 }
 
-function requestCharacters(chars,font_name){
+function requestCharacters(chars, font_name){
 	return requestURL('/incremental_fonts/request','POST',JSON.stringify({'font':font_name,'arr':chars}),{'Content-Type':'application/json'},'arraybuffer');
 }
 
@@ -88,9 +88,9 @@ function requestQuota(size){
 	});
 }
 
-function setTheFont(font_src){
+function setTheFont(font_name,font_src){
 	console.log(font_src)
-	var font = new FontFace("myfont", "url("+font_src+")", {});
+	var font = new FontFace(font_name, "url("+font_src+")", {});
 	document.fonts.add(font);
 	font.load(); 
 
@@ -297,7 +297,8 @@ function updateFont(font_name)
 			console.log('Took '+(END-START)+' ms to load');
 
 			window.performance.perf[font_name] = (END-START);
-			setTheFont(results[1]);
+
+			setTheFont(font_name, results[1]);
 		}
 	);
 

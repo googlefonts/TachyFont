@@ -20,31 +20,29 @@ from dumper import Dumper
 
 
 class GlyfSerializer(object):
-  """
-  Serializes 'glyf' table for given font file
+  """Serializes 'glyf' table for given font file
   """
   # formats
-  fmt_TOC        = '>4sHH'
-  fmt_TOCEntry   = '>4sLL'
+  fmt_TOC = '>4sHH'
+  fmt_TOCEntry = '>4sLL'
   fmt_GlyphTable = '>HH'
 
   # flags
-  NONE       = 0
-  HAS_HMTX   = 1 << 0
-  HAS_VMTX   = 1 << 1
-  CMP_NONE   = NONE 
-  CMP_GZIP   = (1 << 2) + NONE
+  NONE = 0
+  HAS_HMTX = 1 << 0
+  HAS_VMTX = 1 << 1
+  CMP_NONE = NONE
+  CMP_GZIP = (1 << 2) + NONE
   CMP_BROTLI = (1 << 2) + (1 << 2)
-  CMP_LZMA   = (1 << 2) + (1 << 3)
-  CLEAN      = NONE
-  DIRTY      = (1 << 6)
+  CMP_LZMA = (1 << 2) + (1 << 3)
+  CLEAN = NONE
+  DIRTY = (1 << 6)
 
   def __init__(self, fontfile):
     self.font = TTFont(fontfile)
 
   def prepare_TOC(self):
-    """
-    Prepare TOC header and entries as data
+    """Prepare TOC header and entries as data
     """
     self.TOC = pack(GlyfSerializer.fmt_TOC, self.font.reader.sfntVersion, 0,
                     self.font.reader.numTables)
@@ -75,8 +73,7 @@ class GlyfSerializer(object):
       self.VMTX = self.font['vmtx']
 
   def prepare_glyf(self):
-    """
-    Prepare Glyf table and table entries along with Glyf data
+    """Prepare Glyf table and table entries along with Glyf data
     """
     self.__determine_mtx_fmt()
     self.fmt_GlyphEntry = '>H' + self.fmt_mtx + 'LH'
@@ -110,8 +107,7 @@ class GlyfSerializer(object):
     self.glyfReady = True
 
   def serialize_TOC(self, output_idx, output_data):
-    """
-    Dump the TOC data to the file
+    """Dump the TOC data to the file
     """
     if self.tocReady:
       dumper = Dumper(output_idx)
@@ -122,8 +118,7 @@ class GlyfSerializer(object):
       dumper.close()
 
   def serialize_glyf(self, output_idx, output_data):
-    """
-    Dump the Glyf data to the file
+    """Dump the Glyf data to the file
     """
     if self.glyfReady:
       dumper = Dumper(output_idx)
