@@ -22,7 +22,10 @@ from fontTools.ttLib import TTFont
 
 
 def dump_closure_map(fontfile, outputfolder):
-  """Takes closure of each glyph in the font and dump them into the two seperate files Index file used to locate a glyph in data file Data file contains closure lists
+  """Takes closure of each glyph in the font and dump them into the two seperate files.
+
+  Index file used to locate a glyph in data file.
+  Data file contains closure lists
   """
 
   font = TTFont(fontfile)
