@@ -9,7 +9,7 @@ var fontInfo = [
   { familyName: 'NanumGothic', fileName: 'NanumGothic-Bold.ttf', size: '2,369.6' },
   { familyName: 'NanumBrushScript', fileName: 'NanumBrushScript-Regular.ttf', size: '3,745.3' },
   { familyName: 'NotoSans', fileName: 'noto-sans/base.gz', size: '15' },
-  { familyName: 'NanumBrush', fileName: 'nanum-brush/base.gz', size: '15' }
+  { familyName: 'NanumBrush', fileName: 'nanum-brush/base.gz', size: '62.6' }
 ];
 
 function displayTimings() {
