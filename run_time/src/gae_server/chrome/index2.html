@@ -18,14 +18,17 @@
   <head>
   <meta charset="UTF-8">
   <title>Font Loading Test(js loader)</title>
+  <style>
+    @font-face {
+      font-family: nanum-brush;
+      font-style: normal;
+      src: url(https://themes.googleusercontent.com/static/fonts/earlyaccess/nanumbrushscript/v2/NanumBrushScript-Regular.ttf) format('truetype');
+    }
+  </style>
   </head>
   <body>
  
   <div id='alphabet'  style="font-family: nanum-brush;" >ABCDEFGHIJKLMNOPQRSTUVWXYZ</div>
   
-  <script src="/opentype_js/parse.js"></script>
-  <script src="js/script.js"></script> 
-  <script src="/zlib_js/gunzip.min.js"></script>
-  <script >updateFont('nanum-brush');</script>
   </body>
   </html>

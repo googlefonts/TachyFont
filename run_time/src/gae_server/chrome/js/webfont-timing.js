@@ -45,6 +45,8 @@ function displayTimings() {
    appendFontProcessingTimingRow(table,'nanum-brush' );
 }
 
+
+
 function appendFontProcessingTimingRow(table,name) {
   //alert('navTiming = ' + navTiming);
   var row = table.insertRow(table.rows.length);
