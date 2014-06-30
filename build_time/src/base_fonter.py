@@ -45,6 +45,7 @@ class BaseFonter(object):
 
   def base(self, output):
     """Call this function get base font Call only once, since given font will be closed
+
     """
     self.__zero_mtx('hmtx')
     self.__zero_mtx('vmtx')

@@ -1,4 +1,5 @@
-"""
+  <!DOCTYPE html>
+<!--
   Copyright 2014 Google Inc. All rights reserved.
 
   Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,22 +13,22 @@
   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
   See the License for the specific language governing permissions and
   limitations under the License.
-"""
-
-from cleaner import Cleaner
-from glyph_sets import get_whitespace_list
-
-
-def clean_invalid_glyphs_and_remove_hinting(fontfile, hinting, output):
-  whitespace_list = get_whitespace_list()
-  cleaner = Cleaner(fontfile, hinting, whitespace_list)
-  cleaner.clean()
-  cleaner.save(output)
-  cleaner.close()
-
-
-def cleanup(fontfile, hinting, output):
-  """Calls cleanup pipeline Each routine must have three arguments fontfile,hinting and output
-
-  """
-  clean_invalid_glyphs_and_remove_hinting(fontfile, hinting, output)
+-->
+  <html>
+  <head>
+  <meta charset="UTF-8">
+  <title>Font Loading Test(js loader)</title>
+  <style>
+    @font-face {
+      font-family: nanum-brush;
+      font-style: normal;
+      src: url(https://themes.googleusercontent.com/static/fonts/earlyaccess/nanumbrushscript/v2/NanumBrushScript-Regular.ttf) format('truetype');
+    }
+  </style>
+  </head>
+  <body>
+ 
+  <div id='alphabet'  style="font-family: nanum-brush;" >ABCDEFGHIJKLMNOPQRSTUVWXYZ</div>
+  
+  </body>
+  </html>

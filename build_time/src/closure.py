@@ -20,12 +20,11 @@ from closure_taker import ClosureTaker
 from dumper import Dumper
 from fontTools.ttLib import TTFont
 
- 
+
 def dump_closure_map(fontfile, outputfolder):
-  """
-  Takes closure of each glyph in the font and dump them into the two
-  seperate files
-  Index file used to locate a glyph in data file
+  """Takes closure of each glyph in the font and dump them into the two seperate files.
+
+  Index file used to locate a glyph in data file.
   Data file contains closure lists
   """
 
@@ -46,17 +45,16 @@ def dump_closure_map(fontfile, outputfolder):
     glyphsClosure = closurer.closure()
     id = closurer.glyph_name_to_id[g]
     if len(glyphsClosure) == 1 and id in glyphsClosure:
-      #recording not needed 
-      glyph_metadata.dump_fmt(-1,fmt_offset)
-      glyph_metadata.dump_fmt(0,fmt_size)
+      # recording not needed
+      glyph_metadata.dump_fmt(-1, fmt_offset)
+      glyph_metadata.dump_fmt(0, fmt_size)
     else:
       size = elem_size * len(glyphsClosure)
       glyph_data.dump_array(glyphsClosure, fmt_elem, bigEndian)
-      glyph_metadata.dump_fmt(offset,fmt_offset )
-      glyph_metadata.dump_fmt(size,fmt_size )
-      #print id,g,glyphsClosure
+      glyph_metadata.dump_fmt(offset, fmt_offset)
+      glyph_metadata.dump_fmt(size, fmt_size)
+      # print id,g,glyphsClosure
       offset += size
-
 
   font.close()
   glyph_data.close()

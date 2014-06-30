@@ -46,7 +46,7 @@ function requestURL(url,method,data,headerParams,responseType){
 }
 
 var CHAR_ARRAY = [ 97,98,231];
-var FILENAME = 'my.ttf';
+var FILENAME ;
 
 function strToCodeArray(str){
 	console.log(str);
@@ -65,16 +65,15 @@ function strToCodeArray(str){
 	return arr;
 }
 
-function determineCharacters(){
+function determineCharacters(font_name){
 	return new Promise(function(resolve,reject){
 		var arr = strToCodeArray(document.body.innerText);
-		console.log(arr);
-		resolve(arr);
+		resolve([arr,font_name]);
 	});
 }
 
-function requestCharacters(chars){
-	return requestURL('/incremental_fonts/request','POST',JSON.stringify({'font':'noto','arr':chars}),{'Content-Type':'application/json'},'arraybuffer');
+function requestCharacters(chars, font_name){
+	return requestURL('/incremental_fonts/request','POST',JSON.stringify({'font':font_name,'arr':chars}),{'Content-Type':'application/json'},'arraybuffer');
 }
 
 function requestQuota(size){
@@ -88,12 +87,11 @@ function requestQuota(size){
 	});
 }
 
-function setTheFont(font_src){
+function setTheFont(font_name,font_src){
 	console.log(font_src)
-	var font = new FontFace("myfont", "url("+font_src+")", {});
+	var font = new FontFace(font_name, "url("+font_src+")", {});
 	document.fonts.add(font);
 	font.load(); 
-
 }
 
 function requestTemporaryFileSystem(grantedSize){
@@ -201,7 +199,7 @@ function injectCharacters(baseFont,glyphData){
        }      
        var offset = glyphParser.parseULong();
        var length = glyphParser.parseUShort();
-       console.log('id:'+id+' off:'+offset+' len:'+length);
+       //console.log('id:'+id+' off:'+offset+' len:'+length);
        var bytes = glyphParser.parseBytes(length);
        fontParser.setBytes(glyphOffset+offset,bytes);
     }
@@ -242,12 +240,20 @@ function persistToTheFilesystem(fs,filename,content,type){
 	});	
 }
 
-function updateFont()
+function updateFont(font_name)
 {
+	if(!window.performance.perf)
+		window.performance.perf = {};
+	var START;
+	FILENAME = font_name + '.ttf'
 	
 	//var baseSanitized = requestBaseFont('noto')
 
-	var baseSanitized = requestBaseGZFont('noto').then(gunzipBaseFont).then(sanitizeBaseFont);
+	var baseSanitized = requestBaseGZFont(font_name).then(
+		function(base_gz){ 
+			START = Date.now(); 
+			return gunzipBaseFont(base_gz);
+		}).then(sanitizeBaseFont);
 
 	var fileSystemReady = requestTemporaryFileSystem(32 * 1024);//requestQuota( 32 * 1024).then(requestPersistentFileSystem);
 
@@ -257,7 +263,7 @@ function updateFont()
 		}
 	);
 
-	var bundleReady = determineCharacters().then(requestCharacters);
+	var bundleReady = determineCharacters(font_name).then(function(arr){ return requestCharacters(arr[0],arr[1]);});
 
 	var charsInjected = Promise.all([baseFontPersisted,bundleReady,fileSystemReady]).then(
 		function(results){
@@ -285,8 +291,12 @@ function updateFont()
 
 	Promise.all([fileUpdated,fileURLReady]).then(
 		function(results){
+			var END = Date.now();
+			console.log('Took '+(END-START)+' ms to load');
 
-			setTheFont(results[1]);
+			window.performance.perf[font_name] = (END-START);
+
+			setTheFont(font_name, results[1]);
 		}
 	);
 

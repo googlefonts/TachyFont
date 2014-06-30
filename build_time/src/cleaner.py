@@ -14,8 +14,9 @@
   limitations under the License.
 """
 
-from fontTools.subset import Options, load_font, Subsetter, save_font
+
 from common import reverse_cmap
+from fontTools.subset import Options, load_font, Subsetter, save_font
 
 
 class Cleaner(object):
@@ -33,10 +34,10 @@ class Cleaner(object):
     (eg, not CFF) at this time'
     self.whitespace_list = whitespace_list
 
-  def _invalid_glyphs(self, names):
+  def _invalid_glyphs(self, names,rcmap):
     invalid_glyphs = set()
     glyf_table = self.font['glyf']
-    rcmap = reverse_cmap(self.font)
+    
     for name in names:
       if name != '.notdef' and glyf_table[name] and \
           glyf_table[name].numberOfContours == 0 and \
@@ -47,8 +48,9 @@ class Cleaner(object):
   def clean(self):
     """Remove glyphs that should have outlines but do not.
     """
-    names = set(self.font.getGlyphOrder())
-    names.difference_update(self._invalid_glyphs(names))
+    rcmap = reverse_cmap(self.font)
+    names = set(rcmap.keys())
+    names.difference_update(self._invalid_glyphs(names,rcmap))
     subsetter = Subsetter(options=self.options)
     subsetter.populate(glyphs=names)
     subsetter.subset(self.font)
