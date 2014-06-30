@@ -45,29 +45,37 @@ function requestURL(url,method,data,headerParams,responseType){
 	});
 }
 
-var CHAR_ARRAY = [ 97,98,231];
 var FILENAME ;
+var INDEXFILENAME 
 
-function strToCodeArray(str){
-	console.log(str);
+function strToCodeArrayExceptCodes(str,codes){
 	var len = str.length;
 	var arr = [];
-	var dummy = {};
 	var code;
 	for(var i=0;i<len;i++)
 	{
 		code = str.charCodeAt(i);
-		if(!dummy.hasOwnProperty(code)){
+		if(!codes.hasOwnProperty(code)){
 			arr.push(code);
-			dummy[code]=0;
+			codes[code]=0;
 		}
 	}
 	return arr;
 }
 
-function determineCharacters(font_name){
+function readPersistedCharacters(idx_file,fs){
+	return getFileAsText(fs,idx_file).then(function(idx_text){
+		if(idx_text){
+			return JSON.parse(idx_text);
+		}else{
+			return {};
+		}
+	});
+}
+
+function determineCharacters(font_name,codes){
 	return new Promise(function(resolve,reject){
-		var arr = strToCodeArray(document.body.innerText);
+		var arr = strToCodeArrayExceptCodes(document.body.innerText,codes);
 		resolve([arr,font_name]);
 	});
 }
@@ -118,6 +126,18 @@ function requestBaseGZFont(name){
 	return requestURL('/fonts/'+name+'/base.gz','GET',null,{},'arraybuffer');
 }
 
+function getBaseFont(inFS,fs,fontname,filename){
+	if(inFS){
+			return Promise.resolve();
+	}else{
+			return requestBaseGZFont(fontname).then(gunzipBaseFont).then(sanitizeBaseFont).then(
+					function(sanitized_base){ 
+						return persistToTheFilesystem(fs,filename,sanitized_base,'application/octet-binary');
+				});
+	}
+
+}
+
 function gunzipBaseFont(array_buffer){
 	var gunzip = new Zlib.Gunzip(new Uint8Array(array_buffer));
 	return gunzip.decompress().buffer;
@@ -147,9 +167,9 @@ function createFileWriter(fileEntry){
 	});
 }
 
-function getFileEntry(fs,filename){
+function getFileEntry(fs,filename,toCreate){
 	return new Promise(function(resolve,reject){
-		fs.root.getFile(filename,{create:true},
+		fs.root.getFile(filename,{create:toCreate},
 			function(fileEntry){resolve(fileEntry)},
 			reject);
 	});
@@ -170,8 +190,17 @@ function readFileAsArrayBuffer(file){
 	});
 }
 
+function readFileAsText(file){	
+	return new Promise(function(resolve,reject){
+		var reader = new FileReader();	
+		reader.onloadend = function(e){resolve(e.target.result)};
+		reader.onerror = reject;
+		reader.readAsText(file);
+	});
+}
+
 function getFileWriter(fs,filename){
-	return getFileEntry(fs,filename).then(createFileWriter);
+	return getFileEntry(fs,filename,true).then(createFileWriter);
 }
 
 
@@ -209,7 +238,16 @@ function injectCharacters(baseFont,glyphData){
     return baseFont;
 }
 
-
+function checkIfFileExists(fs,filename){
+	return new Promise(function(resolve,reject){
+		var dirReader = fs.root.createReader();
+		dirReader.readEntries(function(entries){
+			resolve(entries.some(function(elem,idx,arr){
+				return elem.name == filename;
+			}));
+		});
+	});
+}
 
 var formatFontFace = "\
      @font-face {\
@@ -223,14 +261,18 @@ function createCSSText(fileURL){
 }
 
 function getFileAsArrayBuffer(fs,filename){
-	return getFileEntry(fs,filename).then(getFileObj).then(readFileAsArrayBuffer);
+	return getFileEntry(fs,filename,true).then(getFileObj).then(readFileAsArrayBuffer);
 }
 
-function writeToTheFile(baseFont,contentType,fileWriter){
+function getFileAsText(fs,filename){
+	return getFileEntry(fs,filename,true).then(getFileObj).then(readFileAsText);
+}
+
+function writeToTheFile(content,contentType,fileWriter){
 	return new Promise(function(resolve,reject){
 		fileWriter.onwriteend = function(e) { resolve(e); };
 		fileWriter.onerror = function(e) {  reject(e)};                
-        fileWriter.write(new Blob([baseFont],{type:contentType}));
+        fileWriter.write(new Blob([content],{type:contentType}));
     });
 }
 
@@ -240,30 +282,44 @@ function persistToTheFilesystem(fs,filename,content,type){
 	});	
 }
 
+
+
 function updateFont(font_name)
 {
 	if(!window.performance.perf)
 		window.performance.perf = {};
 	var START;
 	FILENAME = font_name + '.ttf'
+	INDEXFILENAME = font_name + '.idx'
 	
 	//var baseSanitized = requestBaseFont('noto')
 
-	var baseSanitized = requestBaseGZFont(font_name).then(
-		function(base_gz){ 
-			START = Date.now(); 
-			return gunzipBaseFont(base_gz);
-		}).then(sanitizeBaseFont);
+	
 
-	var fileSystemReady = requestTemporaryFileSystem(32 * 1024);//requestQuota( 32 * 1024).then(requestPersistentFileSystem);
 
-	var baseFontPersisted = Promise.all([baseSanitized , fileSystemReady]).then(
-		function(results){
-			return persistToTheFilesystem(results[1],FILENAME,results[0],'application/octet-binary');
-		}
-	);
+	var fileSystemReady = requestTemporaryFileSystem(8 * 1024 * 1024);//requestQuota( 32 * 1024).then(requestPersistentFileSystem);
 
-	var bundleReady = determineCharacters(font_name).then(function(arr){ return requestCharacters(arr[0],arr[1]);});
+	var isBaseExist = fileSystemReady.then(function(fs){
+		START = Date.now();
+		return checkIfFileExists(fs,FILENAME)});
+
+	var baseFontPersisted  = Promise.all([isBaseExist, fileSystemReady]).then(function(results){
+		return getBaseFont(results[0],results[1],font_name,FILENAME);
+	});
+
+	var injectedChars = fileSystemReady.then(function(fs){
+		return readPersistedCharacters(INDEXFILENAME,fs);
+	});
+			
+	var bundleReady = injectedChars.then(function(chars){
+		return determineCharacters(font_name,chars);
+	}).then(function(arr){ 
+		return requestCharacters(arr[0],arr[1]);
+	});
+
+	var indexUpdated = Promise.all([bundleReady,fileSystemReady,injectedChars]).then(function(results){
+		return persistToTheFilesystem(results[1],INDEXFILENAME,JSON.stringify(results[2]),'text/plain');
+	});
 
 	var charsInjected = Promise.all([baseFontPersisted,bundleReady,fileSystemReady]).then(
 		function(results){
@@ -275,8 +331,11 @@ function updateFont(font_name)
 		}
 	);
 
-	var fileURLReady = fileSystemReady.then(function(fs){ return getFileEntry(fs,FILENAME)})
-									  .then(function(fe){ return fe.toURL() });
+	var fileURLReady = fileSystemReady.then(function(fs){ 
+		return getFileEntry(fs,FILENAME,true)
+	}).then(function(fe){ 
+		return fe.toURL() 
+	});
 
 	var fileUpdated = Promise.all([charsInjected,fileSystemReady]).then(
 		function(results){
@@ -289,7 +348,7 @@ function updateFont(font_name)
 	});*/
 
 
-	Promise.all([fileUpdated,fileURLReady]).then(
+	Promise.all([fileUpdated,fileURLReady,indexUpdated]).then(
 		function(results){
 			var END = Date.now();
 			console.log('Took '+(END-START)+' ms to load');

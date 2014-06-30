@@ -11,7 +11,7 @@ cd into the directory above this one and test_all in this directory; eg,
 
 Running shaped 3G/4G Network tests
 
--Install trickle using
+-Install trickle, 'sudo apt-get install trickle'
 -Run trickle to see all commandline options
 -Before issuing command make sure google-chrome is closed
 -Use 'trickle -u <upload_rate_in_KBps> -d <download_rate_in_KBps> -L <latency_in_ms> google-chrome'
