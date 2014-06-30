@@ -45,28 +45,37 @@ function requestURL(url,method,data,headerParams,responseType){
 	});
 }
 
-var CHAR_ARRAY = [ 97,98,231];
 var FILENAME ;
+var INDEXFILENAME 
 
-function strToCodeArray(str){
+function strToCodeArrayExceptCodes(str,codes){
 	var len = str.length;
 	var arr = [];
-	var dummy = {};
 	var code;
 	for(var i=0;i<len;i++)
 	{
 		code = str.charCodeAt(i);
-		if(!dummy.hasOwnProperty(code)){
+		if(!codes.hasOwnProperty(code)){
 			arr.push(code);
-			dummy[code]=0;
+			codes[code]=0;
 		}
 	}
 	return arr;
 }
 
-function determineCharacters(font_name){
+function readPersistedCharacters(idx_file,fs){
+	return getFileAsText(fs,idx_file).then(function(idx_text){
+		if(idx_text){
+			return JSON.parse(idx_text);
+		}else{
+			return {};
+		}
+	});
+}
+
+function determineCharacters(font_name,codes){
 	return new Promise(function(resolve,reject){
-		var arr = strToCodeArray(document.body.innerText);
+		var arr = strToCodeArrayExceptCodes(document.body.innerText,codes);
 		resolve([arr,font_name]);
 	});
 }
@@ -181,6 +190,15 @@ function readFileAsArrayBuffer(file){
 	});
 }
 
+function readFileAsText(file){	
+	return new Promise(function(resolve,reject){
+		var reader = new FileReader();	
+		reader.onloadend = function(e){resolve(e.target.result)};
+		reader.onerror = reject;
+		reader.readAsText(file);
+	});
+}
+
 function getFileWriter(fs,filename){
 	return getFileEntry(fs,filename,true).then(createFileWriter);
 }
@@ -246,11 +264,15 @@ function getFileAsArrayBuffer(fs,filename){
 	return getFileEntry(fs,filename,true).then(getFileObj).then(readFileAsArrayBuffer);
 }
 
-function writeToTheFile(baseFont,contentType,fileWriter){
+function getFileAsText(fs,filename){
+	return getFileEntry(fs,filename,true).then(getFileObj).then(readFileAsText);
+}
+
+function writeToTheFile(content,contentType,fileWriter){
 	return new Promise(function(resolve,reject){
 		fileWriter.onwriteend = function(e) { resolve(e); };
 		fileWriter.onerror = function(e) {  reject(e)};                
-        fileWriter.write(new Blob([baseFont],{type:contentType}));
+        fileWriter.write(new Blob([content],{type:contentType}));
     });
 }
 
@@ -268,6 +290,7 @@ function updateFont(font_name)
 		window.performance.perf = {};
 	var START;
 	FILENAME = font_name + '.ttf'
+	INDEXFILENAME = font_name + '.idx'
 	
 	//var baseSanitized = requestBaseFont('noto')
 
@@ -283,8 +306,20 @@ function updateFont(font_name)
 	var baseFontPersisted  = Promise.all([isBaseExist, fileSystemReady]).then(function(results){
 		return getBaseFont(results[0],results[1],font_name,FILENAME);
 	});
+
+	var injectedChars = fileSystemReady.then(function(fs){
+		return readPersistedCharacters(INDEXFILENAME,fs);
+	});
 			
-	var bundleReady = determineCharacters(font_name).then(function(arr){ return requestCharacters(arr[0],arr[1]);});
+	var bundleReady = injectedChars.then(function(chars){
+		return determineCharacters(font_name,chars);
+	}).then(function(arr){ 
+		return requestCharacters(arr[0],arr[1]);
+	});
+
+	var indexUpdated = Promise.all([bundleReady,fileSystemReady,injectedChars]).then(function(results){
+		return persistToTheFilesystem(results[1],INDEXFILENAME,JSON.stringify(results[2]),'text/plain');
+	});
 
 	var charsInjected = Promise.all([baseFontPersisted,bundleReady,fileSystemReady]).then(
 		function(results){
@@ -296,8 +331,11 @@ function updateFont(font_name)
 		}
 	);
 
-	var fileURLReady = fileSystemReady.then(function(fs){ return getFileEntry(fs,FILENAME,true)})
-									  .then(function(fe){ return fe.toURL() });
+	var fileURLReady = fileSystemReady.then(function(fs){ 
+		return getFileEntry(fs,FILENAME,true)
+	}).then(function(fe){ 
+		return fe.toURL() 
+	});
 
 	var fileUpdated = Promise.all([charsInjected,fileSystemReady]).then(
 		function(results){
@@ -310,7 +348,7 @@ function updateFont(font_name)
 	});*/
 
 
-	Promise.all([fileUpdated,fileURLReady]).then(
+	Promise.all([fileUpdated,fileURLReady,indexUpdated]).then(
 		function(results){
 			var END = Date.now();
 			console.log('Took '+(END-START)+' ms to load');
