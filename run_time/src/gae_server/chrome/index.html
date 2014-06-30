@@ -85,8 +85,10 @@
   <script src="js/script.js"></script>
   <script src="/zlib_js/gunzip.min.js"></script>
   <script>updateFont('nanum-brush');</script>
-  <!-- This delay is used to make WebPageTest.org record for a fixed / longer
-       time. For development you may want to set the delay shorter -->
+  <!-- Use slow_server to cause WebPageTest.org to run longer and have a
+       constant runtime to make visual comparison between web fonts and
+       incremental fonts more obvious. For development you may want to set the
+       delay shorter. -->
   <img src="/slow_server?delay=30" height="1" width="1">
 </body>
 </html>
