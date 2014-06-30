@@ -30,7 +30,6 @@ class AppTest(unittest.TestCase):
   def testIncrementalFonts(self):
     response = self.testapp.get('/')
     self.assertEqual(response.status_int, 200)
-    self.assertEqual(
-        response.normal_body,
-        'incremental fonts server under development, try back later')
+    self.assertEqual(response.normal_body, 'Under construction')
     self.assertEqual(response.content_type, 'text/plain')
+

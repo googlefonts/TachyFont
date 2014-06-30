@@ -34,14 +34,27 @@ class BaseFonter(object):
         new[i] = [metric[0], 0]
       self.font[mtx].metrics.clear()
       self.font[mtx].metrics = new
+      
 
   def __zero_glyf(self, output):
+    self.font = TTFont(output)
     glyf_off = self.font.reader.tables['glyf'].offset
     glyf_len = self.font.reader.tables['glyf'].length
     self.font.close()
     filler = Filler(output)
     filler.fill(glyf_off, glyf_len, '\0')
     filler.close()
+    
+  def __zero_loca(self, output):#more advanced filling needed
+    self.font = TTFont(output)
+    loca_off = self.font.reader.tables['loca'].offset
+    loca_len = self.font.reader.tables['loca'].length
+    self.font.close()
+    filler = Filler(output)
+    filler.fill(loca_off, loca_len, '\0')
+    filler.close()
+    
+    
 
   def base(self, output):
     """Call this function get base font Call only once, since given font will be closed
@@ -51,5 +64,5 @@ class BaseFonter(object):
     self.__zero_mtx('vmtx')
     self.font.save(output, reorderTables=False)
     self.font.close()
-    self.font = TTFont(output)
     self.__zero_glyf(output)
+   # self.__zero_loca(output)
