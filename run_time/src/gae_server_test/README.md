@@ -11,7 +11,6 @@ cd into the directory above this one and test_all in this directory; eg,
 
 Running shaped 3G/4G Network tests
 
-
 -Install trickle, 'sudo apt-get install trickle'
 -Run trickle to see all commandline options
 -Before issuing command make sure google-chrome is closed

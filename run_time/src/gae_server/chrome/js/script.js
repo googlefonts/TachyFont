@@ -140,7 +140,8 @@ function getBaseFont(inFS,fs,fontname,filename){
 
 }
 
-function gunzipBuffer(array_buffer){
+
+function gunzipBaseFont(array_buffer){
 	var gunzip = new Zlib.Gunzip(new Uint8Array(array_buffer));
 	return gunzip.decompress().buffer;
 }
@@ -297,8 +298,8 @@ function updateFont(font_name)
 	//var baseSanitized = requestBaseFont('noto')
 
 
-
 	var fileSystemReady = requestTemporaryFileSystem(8 * 1024 * 1024);//requestQuota( 32 * 1024).then(requestPersistentFileSystem);
+
 
 
 	var isBaseExist = fileSystemReady.then(function(fs){
@@ -317,7 +318,8 @@ function updateFont(font_name)
 	var bundleReady = injectedChars.then(function(chars){
 		return determineCharacters(font_name,chars);
 	}).then(function(arr){ 
-		return requestCharacters(arr[0],arr[1]).then(gunzipBuffer);
+		return requestCharacters(arr[0],arr[1]).then(gunzipBaseFont);
+
 	});
 
 	var indexUpdated = Promise.all([bundleReady,fileSystemReady,injectedChars]).then(function(results){
@@ -357,6 +359,7 @@ function updateFont(font_name)
 			console.log('Took '+(END-START)+' ms to load');
 
 			window.performance.perf[font_name] = (END-START);
+
 			setTheFont(font_name, results[1]);
 
 		}
