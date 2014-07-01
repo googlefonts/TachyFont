@@ -318,6 +318,7 @@ function updateFont(font_name)
 	var bundleReady = injectedChars.then(function(chars){
 		return determineCharacters(font_name,chars);
 	}).then(function(arr){ 
+
 		return requestCharacters(arr[0],arr[1]).then(gunzipBaseFont);
 
 	});

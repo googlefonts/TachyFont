@@ -19,10 +19,9 @@ import sys
 import struct
 import json as JSON
 from os import path
-import StringIO
 import cStringIO
-import gzip
-
+from gzip import GzipFile
+from binascii import b2a_hex
 
 def _parse_json(data):
   return JSON.loads(data)
@@ -96,10 +95,10 @@ def _read_region(file, offset, size):
   file.seek(prev)
   return data
 
-def _gzip(binary_string):
+def _gzip(input):
   buffer = cStringIO.StringIO();
-  f = gzip.open(fileobj=buffer,mode='wb');
-  f.write(binary_string);
+  f = GzipFile(fileobj=buffer,mode='wb');
+  f.write(input);
   f.close()
   compressed = buffer.getvalue();
   buffer.close();
@@ -137,7 +136,7 @@ def prepare_bundle(request):
     bundle.extend(_read_region(data, data_offset, data_size))
   table.close()
   data.close()
-  return _gzip(bundle.decode('latin-1'))
+  return _gzip(str(bundle))
 
 
 class ClosureReader(object):
