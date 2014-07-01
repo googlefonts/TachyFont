@@ -14,21 +14,21 @@
   limitations under the License.
 """
 
-import webapp2
-from time import sleep
+import unittest
+from gae_server.help import _gzip
+from gae_server_test.static_constants import NOTO_FONT_GZ_PATH, NOTO_FONT_PATH
 
 
-class SlowServer(webapp2.RequestHandler):
+class AppTest(unittest.TestCase):
 
-  def get(self):
-    delay = self.request.get('delay') or ''
-    if delay:
-      sleep(int(delay))
-    self.response.headers['Content-Type'] = 'text/plain'
-    self.response.out.write('')
-    
+  def setUp(self):
+    file = open(NOTO_FONT_PATH, 'rb')
+    self.content = file.read()
+    file.close()
+    file = open(NOTO_FONT_GZ_PATH, 'rb')
+    self.target = file.read()
+    file.close()
 
-
-app = webapp2.WSGIApplication([
-    ('/slow_server', SlowServer)
-], debug=True)
+  def test_GZip(self):
+    self.assertEqual(
+        self.target[10:], _gzip(self.content)[10:], 'Compressed contents dont match')

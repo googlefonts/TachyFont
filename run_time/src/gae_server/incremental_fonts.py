@@ -34,7 +34,7 @@ class GlyphRequest(webapp2.RequestHandler):
   """
 
   def post(self):
-    self.response.headers['Content-Type'] = 'application/octet-stream;charset=latin1'
+    self.response.headers['Content-Type'] = 'application/octet-stream'
     self.response.write(prepare_bundle(self.request))
 
 
