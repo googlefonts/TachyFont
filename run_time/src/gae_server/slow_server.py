@@ -15,21 +15,20 @@
 """
 
 import webapp2
-import unittest
-import webtest
-from gae_server.incremental_fonts import IncrementalFonts
+from time import sleep
 
 
-class AppTest(unittest.TestCase):
+class SlowServer(webapp2.RequestHandler):
 
-  def setUp(self):
-    app = webapp2.WSGIApplication([('/', IncrementalFonts)])
-    self.testapp = webtest.TestApp(app)
+  def get(self):
+    delay = self.request.get('delay') or ''
+    if delay:
+      sleep(int(delay))
+    self.response.headers['Content-Type'] = 'text/plain'
+    self.response.out.write('')
+    
 
-  # Test the handler.
-  def testIncrementalFonts(self):
-    response = self.testapp.get('/')
-    self.assertEqual(response.status_int, 200)
-    self.assertEqual(response.normal_body, 'Under construction')
-    self.assertEqual(response.content_type, 'text/plain')
 
+app = webapp2.WSGIApplication([
+    ('/slow_server', SlowServer)
+], debug=True)

@@ -18,8 +18,9 @@ import unittest
 import webtest
 import webapp2
 from binascii import a2b_hex
-from static_constants import GLYPH_REQUEST_RESPONSE_FOR_NOTO_ABC, NOTO_FONT, ARRAY_ABC
 from gae_server.incremental_fonts import GlyphRequest
+from gae_server_test.static_constants import NOTO_FONT, ARRAY_ABC,\
+  GLYPH_REQUEST_RESPONSE_FOR_NOTO_ABC
 
 
 class AppTest(unittest.TestCase):

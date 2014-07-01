@@ -21,7 +21,6 @@ import json as JSON
 from os import path
 import cStringIO
 from gzip import GzipFile
-from binascii import b2a_hex
 
 def _parse_json(data):
   return JSON.loads(data)
