@@ -52,11 +52,13 @@ function appendFontProcessingTimingRow(table,name) {
   var row = table.insertRow(table.rows.length);
   var cell = 0;
   appendTimingCell(row, cell++, name+' processing time', 'left');
+
   appendTimingCell(row, cell++, '--');
   appendTimingCell(row, cell++, '--');
   appendTimingCell(row, cell++, '--');
   appendTimingCell(row, cell++, '--');
   appendTimingCell(row, cell++,window.performance.perf[name]);
+
 }
 
 function appendNavigationTimingRow(table, navTiming) {
