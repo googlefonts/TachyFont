@@ -45,8 +45,6 @@ function requestURL(url,method,data,headerParams,responseType){
 	});
 }
 
-var FILENAME ;
-var INDEXFILENAME 
 
 function strToCodeArrayExceptCodes(str,codes){
 	var len = str.length;
@@ -73,10 +71,10 @@ function readPersistedCharacters(idx_file,fs){
 	});
 }
 
-function determineCharacters(font_name,codes){
+function determineCharacters(font_name,codes,text){
 	return new Promise(function(resolve,reject){
-		var arr = strToCodeArrayExceptCodes(document.body.innerText,codes);
-		resolve([arr,font_name]);
+		var arr = strToCodeArrayExceptCodes(text,codes);
+		resolve(arr);
 	});
 }
 
@@ -97,7 +95,8 @@ function requestQuota(size){
 }
 
 function setTheFont(font_name,font_src){
-	console.log(font_src)
+	font_src += ('?t='+Date.now());
+	console.log(font_src);
 	var font = new FontFace(font_name, "url("+font_src+")", {});
 	document.fonts.add(font);
 	font.load(); 
@@ -287,6 +286,128 @@ function persistToTheFilesystem(fs,filename,content,type){
 
 
 
+
+var fileSystemReady = requestTemporaryFileSystem(8 * 1024 * 1024);
+
+function getBaseToFileSystem(font_name)
+{
+
+	var FILENAME = font_name + '.ttf'
+
+	var doesBaseExist = fileSystemReady.then(
+		function(fs){
+			return checkIfFileExists(fs,FILENAME)
+		}
+	);
+
+	var baseFontPersisted = Promise.all([doesBaseExist, fileSystemReady]).then(
+		function(results){
+			return getBaseFont(results[0],results[1],font_name,FILENAME);
+		}
+	);
+
+	var fileURLReady = Promise.all([baseFontPersisted,fileSystemReady])
+	.then(
+		function(results){ 
+			return getFileEntry(results[1],FILENAME,false);
+		})
+	.then(
+		function(fe){ 
+			return fe.toURL(); 
+		}
+	);
+
+	return fileURLReady.then(
+		function(fileURL){
+			setTheFont(font_name, fileURL);
+		}
+	);
+
+}
+
+function requestGlyphs(font_name,text)
+{
+
+	var INDEXFILENAME = font_name + '.idx'
+
+	var injectedChars = fileSystemReady.then(
+		function(fs){
+			return readPersistedCharacters(INDEXFILENAME,fs);
+		}
+	);
+
+	var charsDetermined = injectedChars.then(
+		function(chars){
+			return determineCharacters(font_name,chars,text);
+		}
+	);
+
+	var indexUpdated = Promise.all([charsDetermined,fileSystemReady,injectedChars]).then(function(results){
+		return persistToTheFilesystem(results[1],INDEXFILENAME,JSON.stringify(results[2]),'text/plain');
+	});
+	
+
+	var bundleReady = Promise.all([charsDetermined,indexUpdated]).then(
+		function(arr){ 
+			return requestCharacters(arr[0],font_name).then(gunzipBaseFont);
+		}
+	);
+
+
+	return bundleReady;
+}
+
+function injectBundle(font_name,bundle){
+	var filename = font_name + '.ttf';
+
+	var charsInjected =fileSystemReady.then(
+		function(fs){
+			return getFileAsArrayBuffer(fs,filename)
+		}
+	).then(
+			function(baseFont){
+				return injectCharacters(baseFont,bundle);
+			}
+	);
+
+	var fileUpdated = Promise.all([charsInjected,fileSystemReady]).then(
+		function(results){
+			return persistToTheFilesystem(results[1],filename,results[0],'application/octet-binary');
+		}
+	);
+
+	var fileURLReady = Promise.all([fileUpdated,fileSystemReady])
+	.then(
+		function(results){ 
+			return getFileEntry(results[1],filename,false);
+		})
+	.then(
+		function(fe){ 
+			return fe.toURL(); 
+		}
+	);
+
+	return fileURLReady.then(
+		function(fileURL){
+			setTheFont(font_name, fileURL);
+		}
+	);
+
+}
+
+function incrUpdate(font_name,text){
+
+	var FILENAME = font_name + '.ttf'
+
+	var bundleReady = requestGlyphs(font_name,text);
+
+	return bundleReady.then(
+		function(bundle){
+				injectBundle(font_name,bundle);
+		}
+	);
+}
+
 function updateFont(font_name)
 {
 	if(!window.performance.perf)
@@ -298,7 +419,7 @@ function updateFont(font_name)
 	//var baseSanitized = requestBaseFont('noto')
 
 
-	var fileSystemReady = requestTemporaryFileSystem(8 * 1024 * 1024);//requestQuota( 32 * 1024).then(requestPersistentFileSystem);
+	var fileSystemReady = requestTemporaryFileSystem(8 * 1024 * 1024);
 
 
 
@@ -316,7 +437,7 @@ function updateFont(font_name)
 			
 
 	var bundleReady = injectedChars.then(function(chars){
-		return determineCharacters(font_name,chars);
+		return determineCharacters(font_name,chars,document.body.innerText);
 	}).then(function(arr){ 
 
 		return requestCharacters(arr[0],arr[1]).then(gunzipBaseFont);
