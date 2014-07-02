@@ -240,15 +240,20 @@ function injectCharacters(baseFont,glyphData){
     console.log('injection is done!');
     return baseFont;
 }
+var EMPTY_FS = false;
 
 function checkIfFileExists(fs,filename){
 	return new Promise(function(resolve,reject){
-		var dirReader = fs.root.createReader();
-		dirReader.readEntries(function(entries){
-			resolve(entries.some(function(elem,idx,arr){
-				return elem.name == filename;
-			}));
-		});
+		
+			var dirReader = fs.root.createReader();
+			dirReader.readEntries(function(entries){
+				var exists = entries.some(function(elem,idx,arr){
+					return elem.name == filename;
+				});
+
+				resolve(exists && !EMPTY_FS);
+			});
+
 	});
 }
 
@@ -343,9 +348,18 @@ function requestGlyphs(font_name,text)
 
 	var INDEXFILENAME = font_name + '.idx'
 
-	var injectedChars = fileSystemReady.then(
+	var doesIdxExist = fileSystemReady.then(
 		function(fs){
-			return readPersistedCharacters(INDEXFILENAME,fs);
+			return checkIfFileExists(fs,INDEXFILENAME)
+		}
+	);
+
+	var injectedChars = Promise.all([fileSystemReady,doesIdxExist]).then(
+		function(results){
+			if(results[1])
+				return readPersistedCharacters(INDEXFILENAME,results[0]);
+			else
+				return {};
 		}
 	);
 
