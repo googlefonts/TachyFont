@@ -356,13 +356,19 @@ function requestGlyphs(font_name,text)
 	);
 
 	var indexUpdated = Promise.all([charsDetermined,fileSystemReady,injectedChars]).then(function(results){
-		return persistToTheFilesystem(results[1],INDEXFILENAME,JSON.stringify(results[2]),'text/plain');
+		if (results[0].length) {
+	    return persistToTheFilesystem(results[1],INDEXFILENAME,JSON.stringify(results[2]),'text/plain');
+		}
 	});
 	
 
 	var bundleReady = Promise.all([charsDetermined,indexUpdated]).then(
 		function(arr){ 
-			return requestCharacters(arr[0],font_name).then(gunzipBaseFont);
+		  if (arr[0].length) {
+		    return requestCharacters(arr[0],font_name).then(gunzipBaseFont);
+		  } else {
+		    return null;
+		  }
 		}
 	);
 
@@ -373,21 +379,26 @@ function requestGlyphs(font_name,text)
 function injectBundle(font_name,bundle){
 	var filename = font_name + '.ttf';
 
-	var charsInjected =fileSystemReady.then(
-		function(fs){
-			return getFileAsArrayBuffer(fs,filename)
-		}
-	).then(
-			function(baseFont){
-				return injectCharacters(baseFont,bundle);
-			}
-	);
-
-	var fileUpdated = Promise.all([charsInjected,fileSystemReady]).then(
-		function(results){
-			return persistToTheFilesystem(results[1],filename,results[0],'application/octet-binary');
-		}
-	);
+	var charsInjected, fileUpdated;
+	if (bundle != null) {
+  	charsInjected =fileSystemReady.then(
+  		function(fs){
+  			return getFileAsArrayBuffer(fs,filename)
+  		}
+  	).then(
+  			function(baseFont){
+  				return injectCharacters(baseFont,bundle);
+  			}
+  	);
+  
+  	fileUpdated = Promise.all([charsInjected,fileSystemReady]).then(
+  		function(results){
+  			return persistToTheFilesystem(results[1],filename,results[0],'application/octet-binary');
+  		}
+  	);
+	} else {
+	  charsInjected = fileUpdated = Promise.resolve();
+	}
 
 	var fileURLReady = Promise.all([fileUpdated,fileSystemReady])
 	.then(
