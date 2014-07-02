@@ -24,6 +24,7 @@ String.prototype.format = function() {
 };
 
 
+var fileSystemReady = requestTemporaryFileSystem(8 * 1024 * 1024);
 
 function requestURL(url,method,data,headerParams,responseType){
 	return new Promise( function(resolve,reject){
@@ -284,10 +285,22 @@ function persistToTheFilesystem(fs,filename,content,type){
 	});	
 }
 
+function clearFileSystem(){
+	return fileSystemReady.then(function(fs){	
 
+		var dirReader = fs.root.createReader();
+		dirReader.readEntries(function(entries){
+			entries.forEach(function(elem){
+				 if(elem.isDirectory){
+				 	elem.removeRecursively();
+				 }else{
+				 	elem.remove();	
+				 }
+			});
+		});
+	});
+}
 
-
-var fileSystemReady = requestTemporaryFileSystem(8 * 1024 * 1024);
 
 function getBaseToFileSystem(font_name)
 {
@@ -413,8 +426,8 @@ function updateFont(font_name)
 	if(!window.performance.perf)
 		window.performance.perf = {};
 	var START;
-	FILENAME = font_name + '.ttf'
-	INDEXFILENAME = font_name + '.idx'
+	var FILENAME = font_name + '.ttf'
+	var INDEXFILENAME = font_name + '.idx'
 	
 	//var baseSanitized = requestBaseFont('noto')
 
@@ -440,7 +453,7 @@ function updateFont(font_name)
 		return determineCharacters(font_name,chars,document.body.innerText);
 	}).then(function(arr){ 
 
-		return requestCharacters(arr[0],arr[1]).then(gunzipBaseFont);
+		return requestCharacters(arr,font_name).then(gunzipBaseFont);
 
 	});
 

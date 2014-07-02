@@ -26,14 +26,18 @@
     src: url('../fonts/nanum-brush/NanumBrushScript-Regular.woff') format('woff');
   }
 </style>
-<script type="text/javascript" src="/opentype_js/parse.js"></script>
-<script type="text/javascript" src="/zlib_js/gunzip.min.js"></script>
-<script type="text/javascript" src="js/script.js"></script>
-<script type="text/javascript" src="js/webfont-timing.js"></script>
+  <script src="/opentype_js/parse.js"></script>
+  <script src="js/script.js"></script>
+  <script src="/zlib_js/gunzip.min.js"></script>
+<script>
+  var FONTNAME = 'nanum-brush';
+  var TEXTS=[];
+  var baseReady = getBaseToFileSystem(FONTNAME);
+</script>
 <img src="/slow_server?delay=15" height="1" width="1">
 </head>
 
-<body onload="displayTimings()">
+<body >
   Webfonts from
   <b>Google Webfont servers</b>.
   <br>
@@ -60,6 +64,8 @@
       도시에중국인사람들의합의로거슬러올라갈수인천19세기후반합니다.서울과인천에서두미만600킬로미터-<br>
       한국어중국어음식은매우베이징과산동성을포함한동북중국어요리전통에의해영향을받는다.한국어중국어음식북<br>
       동부중국요리에서많은요소를유지하는동안,그것은여전히인해국내및해외한국어지역사회에서의현지화된맛과레<br>
+       <script>TEXTS[TEXTS.length]=document.body.innerText;
+       </script>
       스토랑의농도에기본적으로한국어입니다.따라서,요리정확하게한국식중국음식과같이설명하고결코완전히확실<br>
       한것으로위장할수있습니다.한반도이외한국어중국어레스토랑같은도시의주요한인사회에서팝업이뉴욕,로스앤<br>
       젤레스,베이징과상하이에서도부품.그냥미국처럼중국음식은한국전역,저렴한신속하고편리한식사옵션으로잘<br>
@@ -80,6 +86,8 @@
       기가대체이다.탕수육의바삭외부층과달콤한젤리소스코팅접시에두가지고유한특징입니다.Kkanpungg<br>
       i(깐풍기/宫爆鸡)매운마늘요리를사랑하는사람들은kkanpunggi을시도해야합니다.완두콩,고추<br>
       ,양파,말린고추등모듬야채는,이아름다운접시에색상의배열을추가합니다.튀김돼지고기닭고기,쇠고기,또<br>
+       <script>TEXTS[TEXTS.length]=document.body.innerText;
+       </script>
       는두부로대체할수있습니다.이풍미요리는일반TSO의치킨에가깝다하지만,킥과개성을추가로.MAPA두부<br>
       (마파두부/麻婆豆腐)MAPA두부는마파두부,불가항력매운Sichuanese두부진미에서파생됩니다<br>
       .이요리의재료는다음과같습니다:단단한두부,다진쇠고기,고추,녹색양파.MAPA두부는일본어,중국어<br>
@@ -104,10 +112,19 @@
       하드링크tistory티스토리가입하기!rssTOTAL:13,765TODAY:15YESTERD<br>
       AY:80지역로그:태그:미디어로그:방명록:관리자:글쓰기우낀세상's<br>
       BlogispoweredbyDaum/DesignedbyTistory<br>
-
+   <script>TEXTS[TEXTS.length]=document.body.innerText;</script>
   </span><br>
 
   </span>
-  <script type="text/javascript">updateFont('nanum-brush');</script>
+    <script>
+                var BUNDLE =  requestGlyphs(FONTNAME,TEXTS[0]);
+                var sequence = Promise.all([BUNDLE,baseReady]).then(function(results){
+                  return injectBundle(FONTNAME,results[0]);
+                });
+                TEXTS.splice(0,1);
+               TEXTS.forEach(function(text){
+                    sequence = sequence.then(function(){return incrUpdate(FONTNAME,text);});
+               });
+  </script>
 </body>
 </html>

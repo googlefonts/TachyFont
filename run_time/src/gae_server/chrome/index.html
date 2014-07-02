@@ -20,10 +20,13 @@
 <head>
 <meta charset="UTF-8">
 <title>Font Loading Test(js loader)</title>
-
+  <script src="/opentype_js/parse.js"></script>
+  <script src="js/script.js"></script>
+  <script src="/zlib_js/gunzip.min.js"></script>
 <script>
 var FONTNAME = 'nanum-brush';
 var TEXTS=[];
+var baseReady = getBaseToFileSystem(FONTNAME);
 </script>
 </head>
 <body>
@@ -31,9 +34,6 @@ var TEXTS=[];
  <div  style="font-family: nanum-brush;">
     XZABCDEFGHIJKLMNOPQRSTUVWXYZ__
  </div>
- <script>
- TEXTS[TEXTS.length]=document.body.innerText;
- </script>
   <div  style="font-family: nanum-brush;">
     DaumTistory로그인대항해시대공략bset블로그홈|지역로그|태그|미디어로그|방명록|관리<br>
     자|글쓰기한국어중국어음식:머스트-시도-들어본적이없는퓨전요리분류없음2013/10/1123:3<br>
@@ -43,6 +43,7 @@ var TEXTS=[];
     ,당신은놓치고큰그림을.한국과중국은다시몇세기를간다풍부한역사를공유하고,그래서그기간동안전통요리의<br>
     교환이될것이라고매우생각할수있습니다.역사계정에따르면,한국현대중국요리의탄생은대부분의서쪽해안항구<br>
     도시에중국인사람들의합의로거슬러올라갈수인천19세기후반합니다.서울과인천에서두미만600킬로미터-<br>
+    <script>TEXTS[TEXTS.length]=document.body.innerText;</script>
     한국어중국어음식은매우베이징과산동성을포함한동북중국어요리전통에의해영향을받는다.한국어중국어음식북<br>
     동부중국요리에서많은요소를유지하는동안,그것은여전히인해국내및해외한국어지역사회에서의현지화된맛과레<br>
     스토랑의농도에기본적으로한국어입니다.따라서,요리정확하게한국식중국음식과같이설명하고결코완전히확실<br>
@@ -52,8 +53,6 @@ var TEXTS=[];
     서아닙니다.아래한국어중국어음식을구성하는가장잘알려진메인반찬의일부입니다.한국카톨릭교하는매우까다<br>
     로운언어이기때문에romanizations아래에나타납니다당신이레스토랑메뉴에서볼동일하지않을수있<br>
     습니다.당신은또한한국어(왼쪽)와중국어번체(오른쪽)스크립트를참조할수있습니다.Jjajangmy<br>
-    <script>TEXTS[TEXTS.length]=document.body.innerText;
-    </script>
     eon(짜장면/酢酱面)그것은유비쿼터스검은콩소스국수접시의당신의지역한국어중국어레스토랑에서은혜는<br>
     모든테이블.Jjajangmyeon의소스는일반적으로해산물,절단돼지고기조각,그리고호박이나오이슬<br>
     라이스야채를포함한다.Jjajangmyeon의서명두꺼운면은하얀밀가루로만들어집니다.사실상의미J<br>
@@ -70,8 +69,7 @@ var TEXTS=[];
     는두부로대체할수있습니다.이풍미요리는일반TSO의치킨에가깝다하지만,킥과개성을추가로.MAPA두부<br>
     (마파두부/麻婆豆腐)MAPA두부는마파두부,불가항력매운Sichuanese두부진미에서파생됩니다<br>
     .이요리의재료는다음과같습니다:단단한두부,다진쇠고기,고추,녹색양파.MAPA두부는일본어,중국어<br>
-    <script>TEXTS[TEXTS.length]=document.body.innerText;
-    </script>
+    <script>TEXTS[TEXTS.length]=document.body.innerText;</script>
     요리mabodofu로알려져있습니다.MAPA두부는일반적으로매운맛의균형을측면에쌀제공됩니다.만두<br>
     (만두/馒头)만두는각각중국과일본에서JIAOZI와만두와비슷한한국식만두입니다.만두는중국문화에만<br>
     두를말합니다mantou의동족이다.만두는튀김찜또는삶은될수있으며일반적으로간장소스와함께제공됩니다<br>
@@ -80,8 +78,6 @@ var TEXTS=[];
     작은접시에반찬을유지:danmuji,김치,생양파,그리고검은콩소스를찍기.김치(김치/泡菜)한국의<br>
     중국음식은한국의식사김치없이완료없다고단언.뭔가있다면,한국어중국어레스토랑에서반찬으로김치의표준화<br>
     요리를주로한국어고객에게충족시켜보여줍니다.시계:한국미식가인천에서"한국에서최고의중국음식점"에방<br>
-    <script>TEXTS[TEXTS.length]=document.body.innerText;
-    </script>
     문을지불합니다.Postedby우낀세상Trackback0,Comment0:이름:비밀번호:홈페<br>
     이지비밀글1...118119120121122123124125126...129우낀세상카테고리<br>
     분류전체보기(129)대항해시대공략!(17)워밸리온라인(13)드래곤기사단(20)템페스트사가(<br>
@@ -95,15 +91,10 @@ var TEXTS=[];
     하드링크tistory티스토리가입하기!rssTOTAL:13,765TODAY:15YESTERD<br>
     AY:80지역로그:태그:미디어로그:방명록:관리자:글쓰기우낀세상's<br>
     BlogispoweredbyDaum/DesignedbyTistory<br>
-  <script>TEXTS[TEXTS.length]=document.body.innerText;
-  </script>
+  <script>TEXTS[TEXTS.length]=document.body.innerText;</script>
   </div>
-  <script src="/opentype_js/parse.js"></script>
-  <script src="js/script.js"></script>
-  <script src="/zlib_js/gunzip.min.js"></script>
+
   <script>
-  
-   var baseReady = getBaseToFileSystem(FONTNAME);
    TEXTS.forEach(function(text){
         baseReady = baseReady.then(function(){return incrUpdate(FONTNAME,text);});
    });
@@ -116,6 +107,6 @@ var TEXTS=[];
        constant runtime to make visual comparison between web fonts and
        incremental fonts more obvious. For development you may want to set the
        delay shorter. -->
-  <img src="/slow_server?delay=30" height="1" width="1">
+  <img src="/slow_server" height="1" width="1">
 </body>
 </html>
