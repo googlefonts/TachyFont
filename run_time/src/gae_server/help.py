@@ -15,12 +15,32 @@
 """
 
 import array
+from datetime import datetime
+import logging
 import sys
 import struct
 import json as JSON
 from os import path
 import cStringIO
 from gzip import GzipFile
+
+last_time = None
+
+
+def elapsed_time(msg, new_start=False):
+  global last_time
+  this_time = datetime.now()
+  if last_time == None:
+    logging.getLogger().setLevel(logging.INFO)
+    last_time = this_time
+  if new_start:
+    last_time = this_time
+  if this_time > last_time:
+    logging.info('{0} took {1} seconds'.format(msg, this_time - last_time))
+  else:
+    logging.info(msg)
+  last_time = this_time
+
 
 def _parse_json(data):
   return JSON.loads(data)
@@ -94,14 +114,15 @@ def _read_region(file, offset, size):
   file.seek(prev)
   return data
 
+
 def _gzip(input):
-  buffer = cStringIO.StringIO();
-  f = GzipFile(fileobj=buffer,mode='wb');
-  f.write(input);
+  buffer = cStringIO.StringIO()
+  f = GzipFile(fileobj=buffer, mode='wb')
+  f.write(input)
   f.close()
-  compressed = buffer.getvalue();
-  buffer.close();
-  return compressed;
+  compressed = buffer.getvalue()
+  buffer.close()
+  return compressed
 
 
 def prepare_bundle(request):
@@ -110,6 +131,7 @@ def prepare_bundle(request):
   glyph_request = _parse_json(request.body)
   font = glyph_request['font']
   codepoints = glyph_request['arr']
+  elapsed_time('prepare_bundle for {0} characters'.format(len(codepoints)), True)
   base = path.dirname(path.abspath(__file__)) + '/data/' + font + '/'
   cmap = _build_cmap(base + 'codepoints', base + '/gids')
   closure_reader = ClosureReader(base + '/closure_idx', base + '/closure_data')
@@ -118,6 +140,7 @@ def prepare_bundle(request):
     if code in cmap:
       gids.update(closure_reader.read(cmap[code]))
   closure_reader.close()
+  elapsed_time('gather glyph info')
 
   table = open(base + '/glyph_table', 'rb')
   (glyf_table, has_hmtx, has_vmtx, header_size, entry_size ) = \
@@ -135,7 +158,10 @@ def prepare_bundle(request):
     bundle.extend(_read_region(data, data_offset, data_size))
   table.close()
   data.close()
-  return _gzip(str(bundle))
+  elapsed_time('build request')
+  result = _gzip(str(bundle))
+  elapsed_time('compress request')
+  return result
 
 
 class ClosureReader(object):
