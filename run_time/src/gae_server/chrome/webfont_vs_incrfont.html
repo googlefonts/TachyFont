@@ -116,9 +116,13 @@
 
   </span>
   <script>
+    //time_start('initial bundle')
     var BUNDLE =  requestGlyphs(FONTNAME,TEXTS[0]);
     var sequence = Promise.all([BUNDLE,baseReady]).then(function(results) {
-      return injectBundle(FONTNAME,results[0]);
+      return injectBundle(FONTNAME,results[0])
+      .then(function() {
+        //time_end('initial bundle')
+      });
     });
     TEXTS.splice(0,1);
     TEXTS.forEach(function(text) {
