@@ -89,21 +89,25 @@ def _build_cmap(cp_file, gid_file):
   return cmap
 
 
-def _parse_glyf_table(file):
+def _parse_glyf_table(file_bytes):
   """Parses given file as glyf table, where each entry is such tuples (glyph id , [hmtx lsb] ,[vmtx tsb] , offset , size )
   """
   fmt_GlyphTable = '>HH'
   HAS_HMTX = (1 << 0)
   HAS_VMTX = (1 << 1)
   header_size = struct.calcsize(fmt_GlyphTable)
-  file.seek(0)
-  (flags, numGlyphs) = struct.unpack(fmt_GlyphTable, file.read(header_size))
+  #file.seek(0)
+  #header = file.read(header_size)
+  header = buffer(file_bytes[0:header_size])
+  (flags, numGlyphs) = struct.unpack(fmt_GlyphTable, header)
   fmt_mtx = ''
   if flags & HAS_HMTX: fmt_mtx+='h'
   if flags & HAS_VMTX: fmt_mtx+='h'
   fmt_entry = '>H' + fmt_mtx + 'LH'
+  #file_data = file.read()
+  file_data = buffer(file_bytes[header_size:])
   return \
-    _parse_array_fmt(fmt_entry, numGlyphs, file.read()), flags & HAS_HMTX, \
+    _parse_array_fmt(fmt_entry, numGlyphs, file_data), flags & HAS_HMTX, \
     flags & HAS_VMTX, header_size, struct.calcsize(fmt_entry)
 
 
@@ -152,7 +156,7 @@ def prepare_bundle(request):
 
   table = open(base + '/glyph_table', 'rb')
   (glyf_table, has_hmtx, has_vmtx, header_size, entry_size ) = \
-  _parse_glyf_table(table)
+  _parse_glyf_table(table_bytes)
   mtx_count = has_hmtx + has_vmtx
   flag_mtx = has_hmtx | has_vmtx << 1
   elapsed_time('open & parse glyph table')
@@ -183,33 +187,34 @@ def prepare_bundle(request):
     bundle_pos += data_size
   elapsed_time('build mem bundle')
 
-  bundle = bytearray()
-  data = open(base + '/glyph_data', 'rb')
-  bundle.extend(bundle_header)
-  for id in gids:
-    # the following is slow
-    entry_offset = header_size + id * entry_size
-    bundle.extend(_read_region(table, entry_offset, entry_size))
-    data_offset = glyf_table[id][mtx_count + 1]
-    data_size = glyf_table[id][mtx_count + 2]
-    bundle.extend(_read_region(data, data_offset, data_size))
-  elapsed_time('build bundle')
-  if len(bundle) != len(bundle_bytes):
-    elapsed_time('len(bundle) = {0}, len(bundle_bytes) = {1}'
-                 .format(len(bundle), len(bundle_bytes)))
-  for i in range(len(bundle_bytes)):
-    if bundle[i] != bundle_bytes[i]:
-      elapsed_time('mismatch')
-      break
+#  bundle = bytearray()
+#  data = open(base + '/glyph_data', 'rb')
+#  bundle.extend(bundle_header)
+#  for id in gids:
+#    # the following is slow
+#    entry_offset = header_size + id * entry_size
+#    bundle.extend(_read_region(table, entry_offset, entry_size))
+#    data_offset = glyf_table[id][mtx_count + 1]
+#    data_size = glyf_table[id][mtx_count + 2]
+#    bundle.extend(_read_region(data, data_offset, data_size))
+#  elapsed_time('build bundle')
+
+#  if len(bundle) != len(bundle_bytes):
+#    elapsed_time('len(bundle) = {0}, len(bundle_bytes) = {1}'
+#                 .format(len(bundle), len(bundle_bytes)))
+#  for i in range(len(bundle_bytes)):
+#    if bundle[i] != bundle_bytes[i]:
+#      elapsed_time('mismatch')
+#      break
 
 
   elapsed_time('compare bundles')
   table.close()
-  data.close()
+#  data.close()
   table_fh.close()
   data_fh.close()
   elapsed_time('close files')
-  result = _gzip(str(bundle))
+  result = _gzip(str(bundle_bytes))
   elapsed_time('compress request')
   return result
 
