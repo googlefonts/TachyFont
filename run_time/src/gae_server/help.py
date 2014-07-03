@@ -89,21 +89,23 @@ def _build_cmap(cp_file, gid_file):
   return cmap
 
 
-def _parse_glyf_table(file):
-  """Parses given file as glyf table, where each entry is such tuples (glyph id , [hmtx lsb] ,[vmtx tsb] , offset , size )
+def _parse_glyf_table(file_bytes):
+  """Parses given file as glyf table, where each entry is such tuples 
+  (glyph id, [hmtx lsb], [vmtx tsb], offset, size)
   """
   fmt_GlyphTable = '>HH'
   HAS_HMTX = (1 << 0)
   HAS_VMTX = (1 << 1)
   header_size = struct.calcsize(fmt_GlyphTable)
-  file.seek(0)
-  (flags, numGlyphs) = struct.unpack(fmt_GlyphTable, file.read(header_size))
+  header = buffer(file_bytes[0:header_size])
+  (flags, numGlyphs) = struct.unpack(fmt_GlyphTable, header)
   fmt_mtx = ''
   if flags & HAS_HMTX: fmt_mtx+='h'
   if flags & HAS_VMTX: fmt_mtx+='h'
   fmt_entry = '>H' + fmt_mtx + 'LH'
+  file_data = buffer(file_bytes[header_size:])
   return \
-    _parse_array_fmt(fmt_entry, numGlyphs, file.read()), flags & HAS_HMTX, \
+    _parse_array_fmt(fmt_entry, numGlyphs, file_data), flags & HAS_HMTX, \
     flags & HAS_VMTX, header_size, struct.calcsize(fmt_entry)
 
 
@@ -143,23 +145,49 @@ def prepare_bundle(request):
   elapsed_time('gather glyph info')
 
   table = open(base + '/glyph_table', 'rb')
+  table_bytes = bytearray(table.read())
+  elapsed_time('read glyph table ({0} bytes)'.format(len(table_bytes)))
+  
+  data = open(base + '/glyph_data', 'rb')
+  data_bytes = bytearray(data.read())
+  elapsed_time('read glyph data ({0} bytes)'.format(len(data_bytes)))
+
   (glyf_table, has_hmtx, has_vmtx, header_size, entry_size ) = \
-  _parse_glyf_table(table)
+  _parse_glyf_table(table_bytes)
   mtx_count = has_hmtx + has_vmtx
   flag_mtx = has_hmtx | has_vmtx << 1
-  bundle = bytearray()
-  data = open(base + '/glyph_data', 'rb')
-  bundle.extend(struct.pack('>HB', len(gids), flag_mtx))
+  elapsed_time('open & parse glyph table')
+
+  bundle_header = struct.pack('>HB', len(gids), flag_mtx)
+  bundle_length = len(bundle_header)
+  bundle_length += len(gids) * entry_size
+  for id in gids:
+    bundle_length += glyf_table[id][mtx_count + 2]
+  bundle_bytes = bytearray(bundle_length)
+  bundle_pos = 0
+  length = len(bundle_header)
+  bundle_bytes[bundle_pos:bundle_pos+length] = bundle_header
+  bundle_pos += length
+  elapsed_time('calc bundle length')
+
+  # Copy in the data from table_bytes and data_bytes
   for id in gids:
     entry_offset = header_size + id * entry_size
-    bundle.extend(_read_region(table, entry_offset, entry_size))
+    bundle_bytes[bundle_pos:bundle_pos + entry_size] = \
+        table_bytes[entry_offset:entry_offset + entry_size]
+    bundle_pos += entry_size
+
     data_offset = glyf_table[id][mtx_count + 1]
     data_size = glyf_table[id][mtx_count + 2]
-    bundle.extend(_read_region(data, data_offset, data_size))
+    bundle_bytes[bundle_pos:bundle_pos + data_size] = \
+        data_bytes[data_offset:data_offset + data_size]
+    bundle_pos += data_size
+  elapsed_time('build bundle')
+
   table.close()
   data.close()
-  elapsed_time('build request')
-  result = _gzip(str(bundle))
+  elapsed_time('close files')
+  result = _gzip(str(bundle_bytes))
   elapsed_time('compress request')
   return result
 
