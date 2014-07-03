@@ -142,23 +142,73 @@ def prepare_bundle(request):
   closure_reader.close()
   elapsed_time('gather glyph info')
 
+  table_fh = open(base + '/glyph_table', 'rb')
+  table_bytes = bytearray(table_fh.read())
+  elapsed_time('read glyph table ({0} bytes)'.format(len(table_bytes)))
+  
+  data_fh = open(base + '/glyph_data', 'rb')
+  data_bytes = bytearray(data_fh.read())
+  elapsed_time('read glyph data ({0} bytes)'.format(len(data_bytes)))
+
   table = open(base + '/glyph_table', 'rb')
   (glyf_table, has_hmtx, has_vmtx, header_size, entry_size ) = \
   _parse_glyf_table(table)
   mtx_count = has_hmtx + has_vmtx
   flag_mtx = has_hmtx | has_vmtx << 1
+  elapsed_time('open & parse glyph table')
+
+  bundle_header = struct.pack('>HB', len(gids), flag_mtx)
+  bundle_length = len(bundle_header)
+  bundle_length += len(gids) * entry_size
+  for id in gids:
+    bundle_length += glyf_table[id][mtx_count + 2]
+  bundle_bytes = bytearray(bundle_length)
+  bundle_pos = 0
+  length = len(bundle_header)
+  bundle_bytes[bundle_pos:bundle_pos+length] = bundle_header
+  bundle_pos += length
+  elapsed_time('calc bundle length')
+
+  # Copy in the data from table_bytes and data_bytes
+  for id in gids:
+    entry_offset = header_size + id * entry_size
+    bundle_bytes[bundle_pos:bundle_pos + entry_size] = \
+        table_bytes[entry_offset:entry_offset + entry_size]
+    bundle_pos += entry_size
+
+    data_offset = glyf_table[id][mtx_count + 1]
+    data_size = glyf_table[id][mtx_count + 2]
+    bundle_bytes[bundle_pos:bundle_pos + data_size] = \
+        data_bytes[data_offset:data_offset + data_size]
+    bundle_pos += data_size
+  elapsed_time('build mem bundle')
+
   bundle = bytearray()
   data = open(base + '/glyph_data', 'rb')
-  bundle.extend(struct.pack('>HB', len(gids), flag_mtx))
+  bundle.extend(bundle_header)
   for id in gids:
+    # the following is slow
     entry_offset = header_size + id * entry_size
     bundle.extend(_read_region(table, entry_offset, entry_size))
     data_offset = glyf_table[id][mtx_count + 1]
     data_size = glyf_table[id][mtx_count + 2]
     bundle.extend(_read_region(data, data_offset, data_size))
+  elapsed_time('build bundle')
+  if len(bundle) != len(bundle_bytes):
+    elapsed_time('len(bundle) = {0}, len(bundle_bytes) = {1}'
+                 .format(len(bundle), len(bundle_bytes)))
+  for i in range(len(bundle_bytes)):
+    if bundle[i] != bundle_bytes[i]:
+      elapsed_time('mismatch')
+      break
+
+
+  elapsed_time('compare bundles')
   table.close()
   data.close()
-  elapsed_time('build request')
+  table_fh.close()
+  data_fh.close()
+  elapsed_time('close files')
   result = _gzip(str(bundle))
   elapsed_time('compress request')
   return result
