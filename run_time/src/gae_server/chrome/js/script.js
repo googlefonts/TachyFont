@@ -24,6 +24,8 @@ String.prototype.format = function() {
 };
 
 
+var CFF=false;
+
 var fileSystemReady = requestTemporaryFileSystem(8 * 1024 * 1024);
 
 function requestURL(url,method,data,headerParams,responseType){
@@ -147,13 +149,15 @@ function gunzipBaseFont(array_buffer){
 }
 
 function sanitizeBaseFont(baseFont){
-    var fontObj = parseFont(baseFont);
-    var fontParser = new Parser(new DataView(baseFont),0);
-    var glyphOffset =  fontObj.glyfOffset;
-    for(var i=1;i<fontObj.numGlyphs;i+=1)
-    {
-      fontParser.writeShortByOffset(glyphOffset+fontObj.loca[i],-1);  
-    }
+	if(!CFF){
+	    var fontObj = parseFont(baseFont);
+	    var fontParser = new Parser(new DataView(baseFont),0);
+	    var glyphOffset =  fontObj.glyfOffset;
+	    for(var i=1;i<fontObj.numGlyphs;i+=1)
+	    {
+	      fontParser.writeShortByOffset(glyphOffset+fontObj.loca[i],-1);  
+	    }
+	}
     return baseFont;
 }
 
@@ -215,7 +219,12 @@ function injectCharacters(baseFont,glyphData){
     var fontObj = parseFont(baseFont);
     var count = glyphParser.parseUShort();
     var flag_mtx = glyphParser.parseByte();
-    var glyphOffset=  fontObj.glyfOffset;
+
+    var glyphOffset;  
+    if(flag_mtx & 4)
+    	glyphOffset = fontObj.cffOffset;
+    else
+    	glyphOffset =fontObj.glyfOffset;
     console.log('glyfOff2: '+glyphOffset);
     console.log('count'+count);
     for(var i=0;i<count;i+=1)
