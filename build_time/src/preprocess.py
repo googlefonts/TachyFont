@@ -25,7 +25,8 @@ from cff_serializer import CffSerializer
 class Preprocess(object):
   """Generates base font and serialized glyf data, dumps cmap table"""
 
-  def __init__(self, fontfile, folder):
+  def __init__(self, fontfile, folder,debug=False):
+    self.debug = debug
     self.fontfile = fontfile
     self.folder = folder
     font = TTFont(self.fontfile,lazy=True)
@@ -68,7 +69,8 @@ class Preprocess(object):
       id = font.getGlyphID(name)
       glyphs.append(id)
       codepoints.append(code)
-      print id,name,code
+      if self.debug:
+        print id,name,code
     font.close()
 
     cp_dumper = Dumper(self.folder + '/codepoints')
