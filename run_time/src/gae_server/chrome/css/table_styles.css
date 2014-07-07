@@ -1,0 +1,15 @@
+table {
+  border-collapse:collapse;
+}
+table, th, td {
+  border: 1px solid #CCC;
+  padding: 5px;
+  padding-left: 10px;
+  padding-right: 10px;
+}
+.td_right {
+    text-align: left;
+}
+.td_wrap {
+  word-wrap: break-word;
+}

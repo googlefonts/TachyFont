@@ -22,13 +22,28 @@ String.prototype.format = function() {
         str = str.replace(new RegExp('_|-'+i+'-|_', 'gi'), arguments[i]);
     return str;
 };
+/*
+var global_start_time = Date.now();
 
+function time_start(msg) {
+  console.time('@@@ ' + msg);
+  console.timeStamp('@@@ begin ' + msg);
+  var cur_time = Date.now() - global_start_time;
+  console.log('@@@ begin ' + msg + ' at ' + cur_time);
+}
 
+function time_end(msg) {
+  console.timeEnd('@@@ ' + msg);
+  console.timeStamp('@@@ end ' + msg);
+  var cur_time = Date.now() - global_start_time;
+  console.log('@@@ end ' + msg + ' at ' + cur_time);
+}
+*/
 var CFF=false;
-
 var fileSystemReady = requestTemporaryFileSystem(8 * 1024 * 1024);
 
 function requestURL(url,method,data,headerParams,responseType){
+  //time_start('fetch ' + url)
 	return new Promise( function(resolve,reject){
 		var oReq = new XMLHttpRequest();
 		oReq.open(method, url, true);
@@ -36,9 +51,10 @@ function requestURL(url,method,data,headerParams,responseType){
 			oReq.setRequestHeader(param, headerParams[param]);
 		oReq.responseType = responseType;
 		oReq.onload = function (oEvent) {
-			if(oReq.status == 200)
+			if(oReq.status == 200) {
+			  //time_end('fetch ' + url)
 				resolve(oReq.response);
-			else
+			} else
 				reject(oReq.status+' '+oReq.statusText);
 		};
 		oReq.onerror = function() {
@@ -144,12 +160,16 @@ function getBaseFont(inFS,fs,fontname,filename){
 
 
 function gunzipBaseFont(array_buffer){
+  //time_start('gzip')
 	var gunzip = new Zlib.Gunzip(new Uint8Array(array_buffer));
-	return gunzip.decompress().buffer;
+	var decompressed = gunzip.decompress().buffer;
+  //time_end('gzip')
+	return decompressed;
 }
 
 function sanitizeBaseFont(baseFont){
 	if(!CFF){
+	    //time_start('sanitize')
 	    var fontObj = parseFont(baseFont);
 	    var fontParser = new Parser(new DataView(baseFont),0);
 	    var glyphOffset =  fontObj.glyfOffset;
@@ -157,6 +177,7 @@ function sanitizeBaseFont(baseFont){
 	    {
 	      fontParser.writeShortByOffset(glyphOffset+fontObj.loca[i],-1);  
 	    }
+	    //time_end('sanitize')
 	}
     return baseFont;
 }
@@ -212,6 +233,7 @@ function getFileWriter(fs,filename){
 
 
 function injectCharacters(baseFont,glyphData){
+    //time_start('inject')
     var glyphParser = new Parser(new DataView(glyphData),0);
     console.log('bundle size:'+glyphData.byteLength);
     console.log('baseFont size:'+baseFont.byteLength);
@@ -247,6 +269,7 @@ function injectCharacters(baseFont,glyphData){
     if(flag_mtx & 1)
         fontParser.writeHmtx(fontObj);
     console.log('injection is done!');
+    //time_end('inject')
     return baseFont;
 }
 var EMPTY_FS = false;
@@ -318,7 +341,7 @@ function clearFileSystem(){
 
 function getBaseToFileSystem(font_name)
 {
-
+  //time_start('getBaseToFileSystem');
 	var FILENAME = font_name + '.ttf'
 
 	var doesBaseExist = fileSystemReady.then(
@@ -347,6 +370,7 @@ function getBaseToFileSystem(font_name)
 	return fileURLReady.then(
 		function(fileURL){
 			setTheFont(font_name, fileURL);
+		  //time_end('getBaseToFileSystem');
 		}
 	);
 
@@ -354,6 +378,7 @@ function getBaseToFileSystem(font_name)
 
 function requestGlyphs(font_name,text)
 {
+  //time_start('request glyphs')
 
 	var INDEXFILENAME = font_name + '.idx'
 
@@ -379,13 +404,24 @@ function requestGlyphs(font_name,text)
 	);
 
 	var indexUpdated = Promise.all([charsDetermined,fileSystemReady,injectedChars]).then(function(results){
-		return persistToTheFilesystem(results[1],INDEXFILENAME,JSON.stringify(results[2]),'text/plain');
+		if (results[0].length) {
+	    return persistToTheFilesystem(results[1],INDEXFILENAME,JSON.stringify(results[2]),'text/plain');
+		}
 	});
 	
 
 	var bundleReady = Promise.all([charsDetermined,indexUpdated]).then(
 		function(arr){ 
-			return requestCharacters(arr[0],font_name).then(gunzipBaseFont);
+		  if (arr[0].length) {
+		    return requestCharacters(arr[0],font_name)
+		    .then(function(arr) {
+		      var uncompressed = gunzipBaseFont(arr);
+		      //time_end('request glyphs')
+		      return uncompressed;
+		    });
+		  } else {
+		    return null;
+		  }
 		}
 	);
 
@@ -394,23 +430,29 @@ function requestGlyphs(font_name,text)
 }
 
 function injectBundle(font_name,bundle){
+  //time_start('inject bundle')
 	var filename = font_name + '.ttf';
 
-	var charsInjected =fileSystemReady.then(
-		function(fs){
-			return getFileAsArrayBuffer(fs,filename)
-		}
-	).then(
-			function(baseFont){
-				return injectCharacters(baseFont,bundle);
-			}
-	);
-
-	var fileUpdated = Promise.all([charsInjected,fileSystemReady]).then(
-		function(results){
-			return persistToTheFilesystem(results[1],filename,results[0],'application/octet-binary');
-		}
-	);
+	var charsInjected, fileUpdated;
+	if (bundle != null) {
+  	charsInjected =fileSystemReady.then(
+  		function(fs){
+  			return getFileAsArrayBuffer(fs,filename)
+  		}
+  	).then(
+  			function(baseFont){
+  				return injectCharacters(baseFont,bundle);
+  			}
+  	);
+  
+  	fileUpdated = Promise.all([charsInjected,fileSystemReady]).then(
+  		function(results){
+  			return persistToTheFilesystem(results[1],filename,results[0],'application/octet-binary');
+  		}
+  	);
+	} else {
+	  charsInjected = fileUpdated = Promise.resolve();
+	}
 
 	var fileURLReady = Promise.all([fileUpdated,fileSystemReady])
 	.then(
@@ -425,6 +467,7 @@ function injectBundle(font_name,bundle){
 
 	return fileURLReady.then(
 		function(fileURL){
+		  //time_end('inject bundle')
 			setTheFont(font_name, fileURL);
 		}
 	);
@@ -433,6 +476,7 @@ function injectBundle(font_name,bundle){
 
 function incrUpdate(font_name,text){
 
+  //time_start('incrUpdate')
 	var FILENAME = font_name + '.ttf'
 
 	var bundleReady = requestGlyphs(font_name,text);
@@ -440,12 +484,15 @@ function incrUpdate(font_name,text){
 	return bundleReady.then(
 		function(bundle){
 				injectBundle(font_name,bundle);
+			  //time_end('incrUpdate')
 		}
 	);
 }
 
+/* TODO(ahmet) if this function is no longer use then please remove it. */
 function updateFont(font_name)
 {
+  //time_start('updateFont')
 	if(!window.performance.perf)
 		window.performance.perf = {};
 	var START;
@@ -454,7 +501,7 @@ function updateFont(font_name)
 	
 	//var baseSanitized = requestBaseFont('noto')
 
-
+  //time_start('get char list')
 	var fileSystemReady = requestTemporaryFileSystem(8 * 1024 * 1024);
 
 
@@ -468,7 +515,10 @@ function updateFont(font_name)
 	});
 
 	var injectedChars = fileSystemReady.then(function(fs){
-		return readPersistedCharacters(INDEXFILENAME,fs);
+		return readPersistedCharacters(INDEXFILENAME,fs)
+		.then(function() {
+		  //time_end('get char list')
+		});
 	});
 			
 
@@ -519,6 +569,7 @@ function updateFont(font_name)
 			window.performance.perf[font_name] = (END-START);
 
 			setTheFont(font_name, results[1]);
+		  //time_end('updateFont')
 
 		}
 	);
