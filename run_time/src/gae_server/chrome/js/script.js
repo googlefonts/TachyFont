@@ -176,9 +176,12 @@ function sanitizeBaseFont(baseFont){
 	    var fontObj = parseFont(baseFont);
 	    var fontParser = new Parser(new DataView(baseFont),0);
 	    var glyphOffset =  fontObj.glyfOffset;
+	    var glyphSize;
 	    for(var i=1;i<fontObj.numGlyphs;i+=1)
 	    {
-	      fontParser.writeShortByOffset(glyphOffset+fontObj.loca[i],-1);  
+	      glyphSize = fontObj.loca[i+1]-fontObj.loca[i];
+	      if(glyphSize)
+	        fontParser.writeShortByOffset(glyphOffset+fontObj.loca[i],-1);  
 	    }
 	    //time_end('sanitize')
 	}
@@ -245,11 +248,14 @@ function injectCharacters(baseFont,glyphData){
     var count = glyphParser.parseUShort();
     var flag_mtx = glyphParser.parseByte();
 
-    var glyphOffset;  
+    var glyphOffset,locaOffset;  
     if(flag_mtx & 4)
     	glyphOffset = fontObj.cffOffset;
-    else
+    else{
     	glyphOffset =fontObj.glyfOffset;
+    	locaOffset = fontObj.locaOffset;
+    	console.log('loca: '+locaOffset);
+    }
     console.log('glyfOff2: '+glyphOffset);
     console.log('count'+count);
     for(var i=0;i<count;i+=1)
@@ -265,10 +271,21 @@ function injectCharacters(baseFont,glyphData){
        }      
        var offset = glyphParser.parseULong();
        var length = glyphParser.parseUShort();
+       if(!(flag_mtx & 4)){
+       		fontObj.loca[id] = offset;
+       		fontObj.loca[id+1] = offset+length;
+       		var prev_id = id -1;
+       		while(prev_id>=0 && fontObj.loca[prev_id]>offset){
+       			fontObj.loca[prev_id] = offset;
+       			prev_id--;
+       		}
+       }
        //console.log('id:'+id+' off:'+offset+' len:'+length);
        var bytes = glyphParser.parseBytes(length);
        fontParser.setBytes(glyphOffset+offset,bytes);
     }
+    if(!(flag_mtx & 4))
+    	fontParser.writeLoca(fontObj);
     if(flag_mtx & 1)
         fontParser.writeHmtx(fontObj);
     console.log('injection is done!');

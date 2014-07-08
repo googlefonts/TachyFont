@@ -17,10 +17,13 @@
 from fontTools.ttLib import TTFont
 from filler import Filler
 from fontTools.cffLib import Index
+import array
 
 
 class BaseFonter(object):
   """Create base font for the given font file"""
+  
+  LOCA_BLOCK_SIZE = 64
 
   def __init__(self, fontfile):
     self.fontfile = fontfile
@@ -43,7 +46,7 @@ class BaseFonter(object):
     glyf_len = self.font.reader.tables['glyf'].length
     self.font.close()
     filler = Filler(output)
-    filler.fill(glyf_off, glyf_len, '\0')
+    filler.fill(glyf_off, glyf_len, '\xff')
     filler.close()
 
   def __end_char_strings(self, output):
@@ -68,14 +71,40 @@ class BaseFonter(object):
     filler.fill(offset, size, '\x0e')
     filler.close()
 
-  def __zero_loca(self, output):  # more advanced filling needed
+
+
+  def __fill_loca(self, output):  # more advanced filling needed
     self.font = TTFont(output)
     loca_off = self.font.reader.tables['loca'].offset
     loca_len = self.font.reader.tables['loca'].length
+    long_format = self.font['head'].indexToLocFormat
     self.font.close()
-    filler = Filler(output)
-    filler.fill(loca_off, loca_len, '\0')
-    filler.close()
+    font_file = open(output,'r+b')
+    if long_format:
+      format = "I"
+    else:
+      format = "H"
+    locations = array.array(format)
+    font_file.seek(loca_off);
+    locations.fromstring(font_file.read(loca_len))
+    n = len(locations)
+    block_count = (n-1) / BaseFonter.LOCA_BLOCK_SIZE
+    for block_no in xrange(block_count):
+      lower =  block_no * BaseFonter.LOCA_BLOCK_SIZE
+      upper = (block_no+1) * BaseFonter.LOCA_BLOCK_SIZE
+      locations[lower:upper] = array.array(format,[locations[upper-1]] * BaseFonter.LOCA_BLOCK_SIZE)
+    else:
+      lower =  block_count * BaseFonter.LOCA_BLOCK_SIZE
+      upper = n
+      assert upper-lower <= BaseFonter.LOCA_BLOCK_SIZE
+      locations[lower:upper] =  array.array(format,[locations[-1]]*(upper-lower))
+    font_file.seek(loca_off);
+    loca_data = locations.tostring()
+    assert len(loca_data)==loca_len
+    font_file.write(loca_data)
+    font_file.close()
+    
+    
 
   def base(self, output):
     """Call this function get base font Call only once, since given font will be closed
@@ -89,4 +118,4 @@ class BaseFonter(object):
       self.__end_char_strings(output)
     else:
       self.__zero_glyf(output)
-   # self.__zero_loca(output)
+      self.__fill_loca(output)
