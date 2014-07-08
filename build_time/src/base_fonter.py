@@ -16,7 +16,7 @@
 
 from fontTools.ttLib import TTFont
 from filler import Filler
-
+from rle_font import RleFont
 
 class BaseFonter(object):
   """Create base font for the given font file"""
@@ -54,6 +54,10 @@ class BaseFonter(object):
     filler.fill(loca_off, loca_len, '\0')
     filler.close()
     
+  def __rle(self, output):
+    rle_font = RleFont(output)
+    rle_font.rle()
+    rle_font.close()
     
 
   def base(self, output):
@@ -66,3 +70,4 @@ class BaseFonter(object):
     self.font.close()
     self.__zero_glyf(output)
    # self.__zero_loca(output)
+    self.__rle(output)
