@@ -17,6 +17,7 @@
 from fontTools.ttLib import TTFont
 from filler import Filler
 from fontTools.cffLib import Index
+from rle_font import RleFont
 
 
 class BaseFonter(object):
@@ -76,6 +77,12 @@ class BaseFonter(object):
     filler = Filler(output)
     filler.fill(loca_off, loca_len, '\0')
     filler.close()
+    
+  def __rle(self, output):
+    rle_font = RleFont(output)
+    rle_font.rle()
+    rle_font.close()
+    
 
   def base(self, output):
     """Call this function get base font Call only once, since given font will be closed
@@ -90,3 +97,4 @@ class BaseFonter(object):
     else:
       self.__zero_glyf(output)
    # self.__zero_loca(output)
+    self.__rle(output)
