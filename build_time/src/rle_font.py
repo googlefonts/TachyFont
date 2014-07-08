@@ -15,6 +15,10 @@
 """
 
 """
+RLE
+The absolute worst case should be the original length plus a copy_op
+and 8 byte length.
+
 RLE operands
 00nn-nnnn compact copy, nn-nnnn is the copy length
 01nn-nnnn compact zero fill, nn-nnnn is the repeat count
@@ -24,6 +28,12 @@ RLE operands
 1100-10nn byte fill, nn is the # of bytes in repeat count, 1 byte fill value
 1100-11nn short fill, nn is the # of bytes in repeat count, 2 byte fill value
 1101-00nn long fill, nn is the # of bytes in repeat count, 4 byte fill value
+
+Where nn is:
+  00 1 byte length
+  01 2 byte length
+  10 4 byte length
+  11 8 byte length
 """
 
 from __builtin__ import bytearray
@@ -35,7 +45,7 @@ class RleFont(object):
   def __init__(self, filename):
     self.file = open(filename, 'r+b')
 
-  def rle(self):
+  def encode(self):
     encoded_bytes = bytearray()
     file_bytes = bytearray(self.file.read())
     repeats = self.find_repeats(file_bytes)

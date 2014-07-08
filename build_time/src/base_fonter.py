@@ -80,7 +80,7 @@ class BaseFonter(object):
     
   def __rle(self, output):
     rle_font = RleFont(output)
-    rle_font.rle()
+    rle_font.encode()
     rle_font.close()
     
 
