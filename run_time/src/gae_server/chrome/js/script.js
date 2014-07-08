@@ -39,6 +39,7 @@ function time_end(msg) {
   console.log('@@@ end ' + msg + ' at ' + cur_time);
 }
 */
+
 var TTF=true;
 var fileSystemReady = requestTemporaryFileSystem(8 * 1024 * 1024);
 
@@ -168,7 +169,9 @@ function gunzipBaseFont(array_buffer){
 }
 
 function sanitizeBaseFont(baseFont){
+
 	if(TTF){
+
 	    //time_start('sanitize')
 	    var fontObj = parseFont(baseFont);
 	    var fontParser = new Parser(new DataView(baseFont),0);
