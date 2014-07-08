@@ -205,7 +205,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
         return v;
     };
 
-    Parser.prototype.writeULong = function (offset,item) {
+    Parser.prototype.writeULong = function (item) {
         var v = this.data.setUint32(this.offset + this.relativeOffset,item);
         this.relativeOffset += 4;
         return v;

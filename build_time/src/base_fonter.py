@@ -29,8 +29,6 @@ class BaseFonter(object):
     self.fontfile = fontfile
     self.font = TTFont(fontfile)
     self.isCff = 'CFF ' in self.font
-    # assert 'glyf' in self.font, 'only support TrueType (quadratic) fonts \
-    #(eg, not CFF) at this time'
 
   def __zero_mtx(self, mtx):
     if mtx in self.font:
@@ -53,20 +51,16 @@ class BaseFonter(object):
     self.font = TTFont(output)
     assert 'CFF ' in self.font
     cffTableOffset = self.font.reader.tables['CFF '].offset
-    #print 'CFF starts', cffTableOffset
     cffTable = self.font['CFF '].cff
     assert len(cffTable.fontNames) == 1
     charStringOffset = cffTable[cffTable.fontNames[0]].rawDict['CharStrings']
-    #print 'CS', charStringOffset
     inner_file = self.font.reader.file
     inner_file.seek(cffTableOffset + charStringOffset)
     rawIndexFile = Index(inner_file)
     baseOffset = rawIndexFile.offsetBase
-   # print 'Base', baseOffset
     size = rawIndexFile.offsets[-1] - 1
     offset = baseOffset + rawIndexFile.offsets[0]
     self.font.close()
-    #print 'Filled', offset, size
     filler = Filler(output)
     filler.fill(offset, size, '\x0e')
     filler.close()
