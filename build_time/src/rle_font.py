@@ -20,14 +20,8 @@ The absolute worst case should be the original length plus a copy_op
 and 8 byte length.
 
 RLE operands
-00nn-nnnn compact copy, nn-nnnn is the copy length
-01nn-nnnn compact zero fill, nn-nnnn is the repeat count
-10nn-nnnn compact byte fill, nn-nnnn is the repeat count, 1 byte value
 1100-00nn copy, nn is the # of bytes in length
-1100-01nn zero byte fill, nn is the # of bytes in length
 1100-10nn byte fill, nn is the # of bytes in repeat count, 1 byte fill value
-1100-11nn short fill, nn is the # of bytes in repeat count, 2 byte fill value
-1101-00nn long fill, nn is the # of bytes in repeat count, 4 byte fill value
 
 Where nn is:
   00 1 byte length
