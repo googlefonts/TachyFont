@@ -18,6 +18,8 @@ from fontTools.ttLib import TTFont
 from filler import Filler
 from fontTools.cffLib import Index
 import array
+from rle_font import RleFont
+
 
 
 class BaseFonter(object):
@@ -97,7 +99,12 @@ class BaseFonter(object):
     assert len(loca_data)==loca_len
     font_file.write(loca_data)
     font_file.close()
+
     
+  def __rle(self, output):
+    rle_font = RleFont(output)
+    rle_font.encode()
+    rle_font.close()
     
 
   def base(self, output):
@@ -113,3 +120,4 @@ class BaseFonter(object):
     else:
       self.__zero_glyf(output)
       self.__fill_loca(output)
+    self.__rle(output)
