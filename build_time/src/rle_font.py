@@ -13,6 +13,9 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 """
+from _struct import pack
+from __builtin__ import bytearray
+import sys
 
 """
 RLE
@@ -30,27 +33,85 @@ Where nn is:
   11 8 byte length
 """
 
-from __builtin__ import bytearray
+OPERATORS = { 'copy' : 0b11000000, #copy operation
+              'fill' : 0b11001000 #value fill
+             }
+LOG = {1:0, 2:1 , 4:2 , 8:3 }
+
+def how_many_bytes(size):
+  if size < 0x100:
+    count = 1
+  elif size < 0x10000:
+    count = 2
+  elif size < 0x100000000L:
+    count = 4
+  else:
+    count = 8
+  assert count <= 4 , 'too big size'
+  return count
+
+def compact_size(size):
+  count = how_many_bytes(size)
+  bin_size = pack(">L", size)[-count:]
+  assert len(bin_size) == count
+  return (count , bin_size)
+
+def  byte_operator(operation,count):
+  assert count in [1,2,4] , 'invalid count'
+  #instead of using costly log operation
+  return chr(OPERATORS[operation] | LOG[count] )
 
 
-class RleFont(object):
-  """Fills the file with given byte"""
+class Rle(object):
+  """Running Length Encoding of the given file"""
 
   def __init__(self, filename):
-    self.file = open(filename, 'r+b')
+    file_p = open(filename, 'rb')
+    self.file_bytes = bytearray(file_p.read())
+    file_p.close()
+    self.encoded_bytes = bytearray()
+    self.position = 0
+  
+  def _copy(self,end_pos):
+    copy_size = end_pos - self.position
+    count , bin_size = compact_size(copy_size)
+    byte_op = byte_operator('copy', count)
+    self.encoded_bytes.extend(byte_op)
+    self.encoded_bytes.extend(bin_size)
+    self.encoded_bytes.extend(self.file_bytes[self.position:end_pos])
+    self.position = end_pos
+    
+  def _fill(self,repeat_len,fill_byte):
+    count , bin_size = compact_size(repeat_len)
+    byte_op = byte_operator('fill', count)
+    self.encoded_bytes.extend(byte_op)
+    self.encoded_bytes.extend(bin_size)
+    self.encoded_bytes.extend(chr(fill_byte))
+    self.position += repeat_len
 
   def encode(self):
-    encoded_bytes = bytearray()
-    file_bytes = bytearray(self.file.read())
-    repeats = self.find_repeats(file_bytes)
-    print "need to build the RLE'd data"
-
-  def find_repeats(self, arr):
+    assert  self.position == 0 , 'Do not call encode twice'
+    repeats = self.find_repeats()
+    total_size = len(self.file_bytes)
+    self.encoded_bytes.extend(pack(">L",total_size))
+    for repeat in repeats:
+      repeat_start ,repeat_len , fill_byte = repeat
+      #check if copy is needed
+      if repeat_start > self.position:
+        self._copy(  repeat_start)
+      self._fill( repeat_len, fill_byte)
+      
+    if total_size > self.position:
+      self._copy( total_size)
+    assert self.position == total_size , 'file could not parsed completely'
+      
+  def find_repeats(self):
     repeats = []
     repeat_start = 0
     prev_byte = None
-    for i in range(len(arr)):
-      cur_byte = arr[i]
+    len_bytes = len(self.file_bytes)
+    for i in range(len_bytes):
+      cur_byte = self.file_bytes[i]
       # In a repeat.
       if cur_byte == prev_byte:
         continue
@@ -70,17 +131,28 @@ class RleFont(object):
       repeat_start = i
       
     # Close any last repeat
-    repeat_len = i - repeat_start
+    repeat_len = len_bytes - repeat_start
     if repeat_len > 3:
       repeat_tuple = (repeat_start, repeat_len, prev_byte)
       repeats.append(repeat_tuple)
     
     return repeats
+  
+  def write(self,output):
+    file_p = open(output, 'wb')
+    file_p.write(self.encoded_bytes)
+    file_p.close()
 
 
-  def close(self):
-    self.file.close()
-
+if __name__ == '__main__':
+  print 'args', sys.argv[1]
+  filename = sys.argv[1]
+  rle = Rle(filename)
+  repeats = rle.find_repeats()
+  rle.encode()
+  rle.write(filename+'.rle')
+  
+  
 
 
 

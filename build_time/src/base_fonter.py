@@ -18,7 +18,7 @@ from fontTools.ttLib import TTFont
 from filler import Filler
 from fontTools.cffLib import Index
 import array
-from rle_font import RleFont
+from rle_font import Rle
 
 
 
@@ -77,10 +77,10 @@ class BaseFonter(object):
     self.font.close()
     font_file = open(output,'r+b')
     if long_format:
-      format = "I"
+      off_format = "I"
     else:
-      format = "H"
-    locations = array.array(format)
+      off_format = "H"
+    locations = array.array(off_format)
     font_file.seek(loca_off);
     locations.fromstring(font_file.read(loca_len))
     n = len(locations)
@@ -88,12 +88,12 @@ class BaseFonter(object):
     for block_no in xrange(block_count):
       lower =  block_no * BaseFonter.LOCA_BLOCK_SIZE
       upper = (block_no+1) * BaseFonter.LOCA_BLOCK_SIZE
-      locations[lower:upper] = array.array(format,[locations[upper-1]] * BaseFonter.LOCA_BLOCK_SIZE)
+      locations[lower:upper] = array.array(off_format,[locations[upper-1]] * BaseFonter.LOCA_BLOCK_SIZE)
     else:
       lower =  block_count * BaseFonter.LOCA_BLOCK_SIZE
       upper = n
       assert upper-lower <= BaseFonter.LOCA_BLOCK_SIZE
-      locations[lower:upper] =  array.array(format,[locations[-1]]*(upper-lower))
+      locations[lower:upper] =  array.array(off_format,[locations[-1]]*(upper-lower))
     font_file.seek(loca_off);
     loca_data = locations.tostring()
     assert len(loca_data)==loca_len
@@ -102,9 +102,9 @@ class BaseFonter(object):
 
     
   def __rle(self, output):
-    rle_font = RleFont(output)
+    rle_font = Rle(output)
     rle_font.encode()
-    rle_font.close()
+    rle_font.write(output)
     
 
   def base(self, output):

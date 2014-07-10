@@ -151,12 +151,61 @@ function getBaseFont(inFS,fs,fontname,filename){
 	if(inFS){
 			return Promise.resolve();
 	}else{
-			return requestBaseGZFont(fontname).then(gunzipBaseFont).then(sanitizeBaseFont).then(
+			return requestBaseGZFont(fontname).then(gunzipBaseFont).then(rleDecode)./*then(sanitizeBaseFont).*/then(
 					function(sanitized_base){ 
 						return persistToTheFilesystem(fs,filename,sanitized_base,'application/octet-binary');
 				});
 	}
 
+}
+
+var RLE_OPS = {  0xC0 : 'copy', 0xC8 : 'fill'};
+
+function  byteOp(op){
+	var byteCount = op & 0x03;
+	var byteOperation = RLE_OPS[op & 0xFC];
+	return [byteCount , byteOperation];
+}
+
+function rleDecode(array_buffer){
+	var readOffset = 0;
+	var writeOffset = 0;
+	var data = new DataView(array_buffer);
+	var totalSize = data.getUint32(readOffset); 
+	readOffset+=4;
+	var decodedData = new DataView(new ArrayBuffer(totalSize));
+	while(writeOffset<totalSize){
+		var byteOperation = data.getUint8(readOffset); 
+		readOffset++;
+		var operationInfo = byteOp(byteOperation);
+		var operationSize;
+		if(operationInfo[0]==0){
+			operationSize = data.getUint8(readOffset); 
+			readOffset+=1;
+		}else if(operationInfo[0]==1){
+			operationSize = data.getUint16(readOffset); 
+			readOffset+=2;
+		}else if(operationInfo[0]==2){
+			operationSize = data.getUint32(readOffset); 
+			readOffset+=4;
+		}
+		if(operationInfo[1]=='copy'){
+			for(var i=0;i<operationSize;i++){
+				decodedData.setUint8(writeOffset,data.getUint8(readOffset));
+				readOffset++;
+				writeOffset++;	
+			}
+		}else if(operationInfo[1]=='fill'){
+			var fill_byte = data.getUint8(readOffset);
+			readOffset++;
+			for(var i=0;i<operationSize;i++){
+				decodedData.setUint8(writeOffset,fill_byte);
+				writeOffset++;	
+			}			
+		}
+
+	}
+	return decodedData.buffer;
 }
 
 
