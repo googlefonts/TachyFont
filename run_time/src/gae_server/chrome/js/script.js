@@ -115,11 +115,15 @@ function requestQuota(size){
 }
 
 function setTheFont(font_name,font_src){
-	font_src += ('?t='+Date.now());
+	//font_src += ('?t='+Date.now());
 	console.log(font_src);
 	var font = new FontFace(font_name, "url("+font_src+")", {});
 	document.fonts.add(font);
-	font.load(); 
+	font.load().then(function(){
+		var elem= document.getElementById('abcd');
+		elem.style.visibility = '';
+
+	});
 }
 
 function requestTemporaryFileSystem(grantedSize){
