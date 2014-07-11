@@ -284,9 +284,10 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 	writeHmtxTable(this.data, font.hmtxOffset, font.numberOfHMetrics, font.numGlyphs, font.metrics) 
    };
 
-Parser.prototype.writeLoca = function(font){
-    writeLocaTable(this.data, font.locaOffset, font.numGlyphs, font.indexToLocFormat === 0,font.loca);
-};
+    Parser.prototype.writeLoca = function(font){
+        writeLocaTable(this.data, font.locaOffset, font.numGlyphs, font.indexToLocFormat === 0, font.loca);
+    };
+
     // Precondition function that checks if the given predicate is true.
     // If not, it will log an error message to the console.
     function checkArgument(predicate, message) {

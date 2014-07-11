@@ -17,7 +17,7 @@
 import unittest
 from fontTools.ttLib import TTFont
 from closure_taker import ClosureTaker
-from rle_font import Rle
+from rle_font import RleFont
 
 
 class TestRle(unittest.TestCase):
@@ -30,7 +30,7 @@ class TestRle(unittest.TestCase):
     """Test RLE encoding for each test file
     """
     for test_file in self.TEST_FILES:
-      rle = Rle(test_file)
+      rle = RleFont(test_file)
       result_file = open(test_file+'.rle')
       rle.encode()
       self.assertEqual(

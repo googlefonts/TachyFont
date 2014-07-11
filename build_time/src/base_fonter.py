@@ -18,7 +18,7 @@ from fontTools.ttLib import TTFont
 from filler import Filler
 from fontTools.cffLib import Index
 import array
-from rle_font import Rle
+from rle_font import RleFont
 
 
 
@@ -102,7 +102,7 @@ class BaseFonter(object):
 
     
   def __rle(self, output):
-    rle_font = Rle(output)
+    rle_font = RleFont(output)
     rle_font.encode()
     rle_font.write(output)
     
