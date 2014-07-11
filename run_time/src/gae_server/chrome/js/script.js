@@ -120,9 +120,9 @@ function setTheFont(font_name,font_src){
 	var font = new FontFace(font_name, "url("+font_src+")", {});
 	document.fonts.add(font);
 	font.load().then(function(){
-		var elem= document.getElementById('abcd');
-		elem.style.visibility = '';
-
+		var elem= document.getElementById('incrfont');
+		if(elem)
+			elem.style.visibility = '';
 	});
 }
 
