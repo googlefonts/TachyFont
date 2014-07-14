@@ -17,13 +17,24 @@
 */
 
 
-/*
+
+var TTF=true;
+var fileSystemReady = requestTemporaryFileSystem(8 * 1024 * 1024);
+
 var global_start_time = Date.now();
+var RLE_OPS = {  0xC0 : 'copy', 0xC8 : 'fill'};
+
+var EMPTY_FS = false;
+
+var CHARS_INJECTED={};
+var RESULTS=[];
+
 
 function time_start(msg) {
   console.time('@@@ ' + msg);
   console.timeStamp('@@@ begin ' + msg);
   var cur_time = Date.now() - global_start_time;
+  RESULTS.push('begin ' + msg + ' at ' + cur_time+'\n');
   console.log('@@@ begin ' + msg + ' at ' + cur_time);
 }
 
@@ -31,15 +42,22 @@ function time_end(msg) {
   console.timeEnd('@@@ ' + msg);
   console.timeStamp('@@@ end ' + msg);
   var cur_time = Date.now() - global_start_time;
+  RESULTS.push('end ' + msg + ' at ' + cur_time+'\n');
   console.log('@@@ end ' + msg + ' at ' + cur_time);
 }
-*/
 
-var TTF=true;
-var fileSystemReady = requestTemporaryFileSystem(8 * 1024 * 1024);
+function updateResults(){
+    var resultsElem = document.getElementById('results');
+     var aResult;
+     while( resultsElem && (aResult = RESULTS.shift())){
+      resultsElem.appendChild(document.createTextNode(aResult));
+      resultsElem.appendChild(document.createElement('br'));
+     }
+}
+
 
 function requestURL(url,method,data,headerParams,responseType){
-  //time_start('fetch ' + url)
+   time_start('fetch ' + url)
 	return new Promise( function(resolve,reject){
 		var oReq = new XMLHttpRequest();
 		oReq.open(method, url, true);
@@ -48,7 +66,7 @@ function requestURL(url,method,data,headerParams,responseType){
 		oReq.responseType = responseType;
 		oReq.onload = function (oEvent) {
 			if(oReq.status == 200) {
-			  //time_end('fetch ' + url)
+			    time_end('fetch ' + url)
 				resolve(oReq.response);
 			} else
 				reject(oReq.status+' '+oReq.statusText);
@@ -81,7 +99,7 @@ function readPersistedCharacters(idx_file,fs){
 		if(idx_text){
 			return JSON.parse(idx_text);
 		}else{
-			return {};
+			return {0:0};//always request .notdef
 		}
 	});
 }
@@ -100,7 +118,7 @@ function requestCharacters(chars, font_name){
 
 
 function setTheFont(font_name,font_src){
-	//font_src += ('?t='+Date.now());
+	font_src += ('?t='+Date.now());
 	console.log(font_src);
 	var font = new FontFace(font_name, "url("+font_src+")", {});
 	document.fonts.add(font);
@@ -132,9 +150,8 @@ function getBaseFont(inFS,fs,fontname,filename){
 	if(inFS){
 			return Promise.resolve();
 	}else{
-			return requestBaseGZFont(fontname).then(gunzipBaseFont).then(rleDecode).
-			/*Sanitize not needed when glyf filled with 0xff 
-			then(sanitizeBaseFont).*/then(
+
+			return requestBaseGZFont(fontname).then(gunzipBaseFont).then(rleDecode).then(sanitizeBaseFont).then(
 					function(sanitized_base){ 
 						return persistToTheFilesystem(fs,filename,sanitized_base,'application/octet-binary');
 				});
@@ -142,7 +159,6 @@ function getBaseFont(inFS,fs,fontname,filename){
 
 }
 
-var RLE_OPS = {  0xC0 : 'copy', 0xC8 : 'fill'};
 
 function  byteOp(op){
 	var byteCount = op & 0x03;
@@ -151,17 +167,25 @@ function  byteOp(op){
 }
 
 function rleDecode(array_buffer){
+	time_start('rle');
 	var readOffset = 0;
-	var writeOffset = 0;
+	var writeOffset = 0,dummy=0;
 	var data = new DataView(array_buffer);
 	var totalSize = data.getUint32(readOffset); 
+	var fill_byte;
+	var byteOperation;
+	var operationSize;
+	var operationInfo;
+	var i;
 	readOffset+=4;
+	time_start('rle_alloc');
 	var decodedData = new DataView(new ArrayBuffer(totalSize));
+	time_end('rle_alloc');
 	while(writeOffset<totalSize){
-		var byteOperation = data.getUint8(readOffset); 
+		byteOperation = data.getUint8(readOffset); 
 		readOffset++;
-		var operationInfo = byteOp(byteOperation);
-		var operationSize;
+		operationInfo= byteOp(byteOperation);
+
 		if(operationInfo[0]==0){
 			operationSize = data.getUint8(readOffset); 
 			readOffset+=1;
@@ -173,30 +197,35 @@ function rleDecode(array_buffer){
 			readOffset+=4;
 		}
 		if(operationInfo[1]=='copy'){
-			for(var i=0;i<operationSize;i++){
+			for(i=0;i<operationSize;i++){
 				decodedData.setUint8(writeOffset,data.getUint8(readOffset));
 				readOffset++;
 				writeOffset++;	
 			}
 		}else if(operationInfo[1]=='fill'){
-			var fill_byte = data.getUint8(readOffset);
+			fill_byte = data.getUint8(readOffset);
 			readOffset++;
-			for(var i=0;i<operationSize;i++){
-				decodedData.setUint8(writeOffset,fill_byte);
-				writeOffset++;	
-			}			
+			if(fill_byte != 0){
+				for(i=0;i<operationSize;i++){
+					decodedData.setUint8(writeOffset,fill_byte);
+					writeOffset++;	
+				}	
+			}else{
+				writeOffset+=operationSize;
+			}		
 		}
 
 	}
+	 time_end('rle');
 	return decodedData.buffer;
 }
 
 
 function gunzipBaseFont(array_buffer){
-  //time_start('gzip')
+  time_start('gzip');
 	var gunzip = new Zlib.Gunzip(new Uint8Array(array_buffer));
 	var decompressed = gunzip.decompress().buffer;
-  //time_end('gzip')
+  time_end('gzip');
 	return decompressed;
 }
 
@@ -204,18 +233,19 @@ function sanitizeBaseFont(baseFont){
 
 	if(TTF){
 
-	    //time_start('sanitize')
+	    time_start('sanitize');
 	    var fontObj = parseFont(baseFont);
 	    var fontParser = new Parser(new DataView(baseFont),0);
 	    var glyphOffset =  fontObj.glyfOffset;
+	    var glyphCount = fontObj.numGlyphs;
 	    var glyphSize;
-	    for(var i=1;i<fontObj.numGlyphs;i+=1)
+	    for(var i=63;i<glyphCount;i+=64)
 	    {
 	      glyphSize = fontObj.loca[i+1]-fontObj.loca[i];
 	      if(glyphSize)
 	        fontParser.writeShortByOffset(glyphOffset+fontObj.loca[i],-1);  
 	    }
-	    //time_end('sanitize')
+	    time_end('sanitize');
 	}
     return baseFont;
 }
@@ -274,7 +304,7 @@ var HAS_HMTX = 1;
 var HAS_VMTX = 2;
 
 function injectCharacters(baseFont,glyphData){
-    //time_start('inject')
+    time_start('inject')
     var glyphParser = new Parser(new DataView(glyphData),0);
     console.log('bundle size:'+glyphData.byteLength);
     var fontParser = new Parser(new DataView(baseFont),0);
@@ -303,16 +333,22 @@ function injectCharacters(baseFont,glyphData){
        }      
        var offset = glyphParser.parseULong();
        var length = glyphParser.parseUShort();
-       if(!(flags & 4)){
+
+       if(!(flags & HAS_CFF)){
        		fontObj.loca[id] = offset;
+       		var isChanged = (fontObj.loca[id+1] != offset+length);
        		fontObj.loca[id+1] = offset+length;
        		var prev_id = id -1;
        		while(prev_id>=0 && fontObj.loca[prev_id]>offset){
        			fontObj.loca[prev_id] = offset;
        			prev_id--;
        		}
+       		/*if value is changed and length is nonzero
+       		we should write -1*/
+       		if(length>0 && isChanged)
+       			fontParser.writeShortByOffset(glyphOffset+fontObj.loca[id+1],-1);
        }
-       //console.log('id:'+id+' off:'+offset+' len:'+length);
+       //CHARS_INJECTED[id]=0;
        var bytes = glyphParser.parseBytes(length);
        fontParser.setBytes(glyphOffset+offset,bytes);
     }
@@ -321,10 +357,10 @@ function injectCharacters(baseFont,glyphData){
     if(flags & HAS_HMTX)
         fontParser.writeHmtx(fontObj);
     console.log('injection is done!');
-    //time_end('inject')
+    time_end('inject')
+
     return baseFont;
 }
-var EMPTY_FS = false;
 
 function checkIfFileExists(fs,filename){
 	return new Promise(function(resolve,reject){
@@ -340,6 +376,7 @@ function checkIfFileExists(fs,filename){
 
 	});
 }
+
 
 
 function getFileAsArrayBuffer(fs,filename){
@@ -383,7 +420,7 @@ function clearFileSystem(){
 
 function getBaseToFileSystem(font_name)
 {
-  //time_start('getBaseToFileSystem');
+  time_start('getBaseToFileSystem');
 	var FILENAME = font_name + '.ttf'
 
 	var doesBaseExist = fileSystemReady.then(
@@ -412,7 +449,7 @@ function getBaseToFileSystem(font_name)
 	return fileURLReady.then(
 		function(fileURL){
 			setTheFont(font_name, fileURL);
-		  //time_end('getBaseToFileSystem');
+		  time_end('getBaseToFileSystem');
 		}
 	);
 
@@ -420,7 +457,7 @@ function getBaseToFileSystem(font_name)
 
 function requestGlyphs(font_name,text)
 {
-  //time_start('request glyphs')
+  time_start('request glyphs')
 
 	var INDEXFILENAME = font_name + '.idx'
 
@@ -458,7 +495,7 @@ function requestGlyphs(font_name,text)
 		    return requestCharacters(arr[0],font_name)
 		    .then(function(arr) {
 		      var uncompressed = gunzipBaseFont(arr);
-		      //time_end('request glyphs')
+		      time_end('request glyphs')
 		      return uncompressed;
 		    });
 		  } else {
@@ -472,7 +509,7 @@ function requestGlyphs(font_name,text)
 }
 
 function injectBundle(font_name,bundle){
-  //time_start('inject bundle')
+  time_start('inject bundle')
 	var filename = font_name + '.ttf';
 
 	var charsInjected, fileUpdated;
@@ -509,7 +546,7 @@ function injectBundle(font_name,bundle){
 
 	return fileURLReady.then(
 		function(fileURL){
-		  //time_end('inject bundle')
+		  time_end('inject bundle')
 			setTheFont(font_name, fileURL);
 		}
 	);
@@ -518,7 +555,7 @@ function injectBundle(font_name,bundle){
 
 function incrUpdate(font_name,text){
 
-  //time_start('incrUpdate')
+  time_start('incrUpdate')
 	var FILENAME = font_name + '.ttf'
 
 	var bundleReady = requestGlyphs(font_name,text);
@@ -526,8 +563,10 @@ function incrUpdate(font_name,text){
 	return bundleReady.then(
 		function(bundle){
 				injectBundle(font_name,bundle);
-			  //time_end('incrUpdate')
+
+			  time_end('incrUpdate')
 		}
 	);
 }
+
 

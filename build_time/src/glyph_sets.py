@@ -51,7 +51,7 @@ def _expand_ranges(bound_list):
   return expanded_list
 
 
-def get_whitespace_list():
+def get_exceptional_list():
   exception_set = set()
   for l in _exceptional_glyph_lists:
     exception_set.update(set(_expand_ranges(l)))

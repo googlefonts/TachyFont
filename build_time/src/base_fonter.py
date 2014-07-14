@@ -46,7 +46,7 @@ class BaseFonter(object):
     glyf_len = self.font.reader.tables['glyf'].length
     self.font.close()
     filler = Filler(output)
-    filler.fill(glyf_off, glyf_len, '\xff')
+    filler.fill(glyf_off, glyf_len, '\x00')
     filler.close()
 
   def __end_char_strings(self, output):

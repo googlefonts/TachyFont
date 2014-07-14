@@ -25,21 +25,19 @@ class Cleaner(object):
      hinting : True if you want to keep hinting
      whitespace_list : These code points are expected to hve 0 contours."""
 
-  def __init__(self, fontfile, hinting, whitespace_list):
+  def __init__(self, fontfile, hinting, exceptional_list):
     self.fontfile = fontfile
     self.options = Options()
     self.options.hinting = hinting
     self.font = load_font(fontfile, self.options, lazy=False)
-    # assert 'glyf' in self.font, 'only support TrueType (quadratic) fonts \
-    #(eg, not CFF) at this time'
-    self.whitespace_list = whitespace_list
+    self.exceptional_list = exceptional_list
 
   def _invalid_glyphs(self, names, rcmap):
     invalid_glyphs = set()
     if 'glyf' in self.font:
       glyf_table = self.font['glyf']
       for name in names:
-        if name != '.notdef' and glyf_table[name] and glyf_table[name].numberOfContours == 0 and rcmap[name] not in self.whitespace_list:
+        if name != '.notdef' and glyf_table[name] and glyf_table[name].numberOfContours == 0 and rcmap[name] not in self.exceptional_list:
           invalid_glyphs.add(name)
     else:
       pass
