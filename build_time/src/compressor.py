@@ -21,7 +21,7 @@ class Compressor(object):
   """Runs external executable with given input file and produce output file
   """
 
-  LZMA_CMD = 'lzma -e -c "%s" > "%s"'
+  LZMA_CMD = 'lzma -9 -c "%s" > "%s"'
   GZIP_CMD = 'gzip -9 - <"%s"  >"%s"'
 
   def __init__(self, cmd):
