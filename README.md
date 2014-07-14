@@ -20,7 +20,9 @@ Build and Deployment
 Incremental Fonts is, unfortunately, pre-alpha and notes for building / deploying 
 have not yet been finalized or written.
 
-In order to preprocess fonts use `pyprepfnt`
+# Generating font data
+
+- Run `pyprepfnt` with the font file
 
 ```
 usage: pyprepfnt [-h] [--hinting [HINTING]] [--output [OUTPUT]] fontfile
@@ -33,8 +35,12 @@ optional arguments:
   --hinting [HINTING]  Enable hinting if True, default is False
   --output [OUTPUT]    Output folder, default is current folder
 ```
+- Copy `base` and `base.gz` files into the `fonts/<font-name>/` folder
+- Copy `closure_data`, `closure_idx`, `codepoints`, `gids`, `glyph_data` and `glyph_table` files
+into the `data/<font-name>/` folder
+- Use this `<font-name>` as `family-name` in styles, and pass this name to the javascript functions
 
-To run unit tests:
+# To run unit tests:
 - build_time/test/
   - run: py.test
 
