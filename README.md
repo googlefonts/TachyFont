@@ -20,6 +20,20 @@ Build and Deployment
 Incremental Fonts is, unfortunately, pre-alpha and notes for building / deploying 
 have not yet been finalized or written.
 
+In order to preprocess fonts use `pyprepfnt`
+
+```
+usage: pyprepfnt [-h] [--hinting [HINTING]] [--output [OUTPUT]] fontfile
+
+positional arguments:
+  fontfile             Input font file
+
+optional arguments:
+  -h, --help           show this help message and exit
+  --hinting [HINTING]  Enable hinting if True, default is False
+  --output [OUTPUT]    Output folder, default is current folder
+```
+
 To run unit tests:
 - build_time/test/
   - run: py.test
