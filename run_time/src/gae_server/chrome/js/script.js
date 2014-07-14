@@ -57,7 +57,7 @@ function updateResults(){
 
 
 function requestURL(url,method,data,headerParams,responseType){
-   time_start('fetch ' + url)
+   //time_start('fetch ' + url)
 	return new Promise( function(resolve,reject){
 		var oReq = new XMLHttpRequest();
 		oReq.open(method, url, true);
@@ -66,7 +66,7 @@ function requestURL(url,method,data,headerParams,responseType){
 		oReq.responseType = responseType;
 		oReq.onload = function (oEvent) {
 			if(oReq.status == 200) {
-			    time_end('fetch ' + url)
+			    //time_end('fetch ' + url)
 				resolve(oReq.response);
 			} else
 				reject(oReq.status+' '+oReq.statusText);
@@ -167,9 +167,9 @@ function  byteOp(op){
 }
 
 function rleDecode(array_buffer){
-	time_start('rle');
+	//time_start('rle');
 	var readOffset = 0;
-	var writeOffset = 0,dummy=0;
+	var writeOffset = 0;
 	var data = new DataView(array_buffer);
 	var totalSize = data.getUint32(readOffset); 
 	var fill_byte;
@@ -178,9 +178,9 @@ function rleDecode(array_buffer){
 	var operationInfo;
 	var i;
 	readOffset+=4;
-	time_start('rle_alloc');
+	//time_start('rle_alloc');
 	var decodedData = new DataView(new ArrayBuffer(totalSize));
-	time_end('rle_alloc');
+	//time_end('rle_alloc');
 	while(writeOffset<totalSize){
 		byteOperation = data.getUint8(readOffset); 
 		readOffset++;
@@ -216,16 +216,16 @@ function rleDecode(array_buffer){
 		}
 
 	}
-	 time_end('rle');
+	 //time_end('rle');
 	return decodedData.buffer;
 }
 
 
 function gunzipBaseFont(array_buffer){
-  time_start('gzip');
+  //time_start('gzip');
 	var gunzip = new Zlib.Gunzip(new Uint8Array(array_buffer));
 	var decompressed = gunzip.decompress().buffer;
-  time_end('gzip');
+  //time_end('gzip');
 	return decompressed;
 }
 
@@ -233,7 +233,7 @@ function sanitizeBaseFont(baseFont){
 
 	if(TTF){
 
-	    time_start('sanitize');
+	    //time_start('sanitize');
 	    var fontObj = parseFont(baseFont);
 	    var fontParser = new Parser(new DataView(baseFont),0);
 	    var glyphOffset =  fontObj.glyfOffset;
@@ -245,7 +245,7 @@ function sanitizeBaseFont(baseFont){
 	      if(glyphSize)
 	        fontParser.writeShortByOffset(glyphOffset+fontObj.loca[i],-1);  
 	    }
-	    time_end('sanitize');
+	    //time_end('sanitize');
 	}
     return baseFont;
 }
@@ -304,7 +304,7 @@ var HAS_HMTX = 1;
 var HAS_VMTX = 2;
 
 function injectCharacters(baseFont,glyphData){
-    time_start('inject')
+    //time_start('inject')
     var glyphParser = new Parser(new DataView(glyphData),0);
     console.log('bundle size:'+glyphData.byteLength);
     var fontParser = new Parser(new DataView(baseFont),0);
@@ -357,7 +357,7 @@ function injectCharacters(baseFont,glyphData){
     if(flags & HAS_HMTX)
         fontParser.writeHmtx(fontObj);
     console.log('injection is done!');
-    time_end('inject')
+    //time_end('inject')
 
     return baseFont;
 }
@@ -420,7 +420,7 @@ function clearFileSystem(){
 
 function getBaseToFileSystem(font_name)
 {
-  time_start('getBaseToFileSystem');
+  //time_start('getBaseToFileSystem');
 	var FILENAME = font_name + '.ttf'
 
 	var doesBaseExist = fileSystemReady.then(
@@ -449,7 +449,7 @@ function getBaseToFileSystem(font_name)
 	return fileURLReady.then(
 		function(fileURL){
 			setTheFont(font_name, fileURL);
-		  time_end('getBaseToFileSystem');
+		  //time_end('getBaseToFileSystem');
 		}
 	);
 
@@ -457,7 +457,7 @@ function getBaseToFileSystem(font_name)
 
 function requestGlyphs(font_name,text)
 {
-  time_start('request glyphs')
+  //time_start('request glyphs')
 
 	var INDEXFILENAME = font_name + '.idx'
 
@@ -495,7 +495,7 @@ function requestGlyphs(font_name,text)
 		    return requestCharacters(arr[0],font_name)
 		    .then(function(arr) {
 		      var uncompressed = gunzipBaseFont(arr);
-		      time_end('request glyphs')
+		      //time_end('request glyphs')
 		      return uncompressed;
 		    });
 		  } else {
@@ -509,7 +509,7 @@ function requestGlyphs(font_name,text)
 }
 
 function injectBundle(font_name,bundle){
-  time_start('inject bundle')
+  //time_start('inject bundle')
 	var filename = font_name + '.ttf';
 
 	var charsInjected, fileUpdated;
@@ -546,7 +546,7 @@ function injectBundle(font_name,bundle){
 
 	return fileURLReady.then(
 		function(fileURL){
-		  time_end('inject bundle')
+		  //time_end('inject bundle')
 			setTheFont(font_name, fileURL);
 		}
 	);
@@ -555,7 +555,7 @@ function injectBundle(font_name,bundle){
 
 function incrUpdate(font_name,text){
 
-  time_start('incrUpdate')
+  //time_start('incrUpdate')
 	var FILENAME = font_name + '.ttf'
 
 	var bundleReady = requestGlyphs(font_name,text);
@@ -564,7 +564,7 @@ function incrUpdate(font_name,text){
 		function(bundle){
 				injectBundle(font_name,bundle);
 
-			  time_end('incrUpdate')
+			  //time_end('incrUpdate')
 		}
 	);
 }
