@@ -24,6 +24,7 @@ var fileSystemReady = requestTemporaryFileSystem(8 * 1024 * 1024);
 var global_start_time = Date.now();
 var RLE_OPS = {  0xC0 : 'copy', 0xC8 : 'fill'};
 
+var LOCA_BLOCK_SIZE = 64;
 var EMPTY_FS = false;
 
 var CHARS_INJECTED={};
@@ -239,7 +240,7 @@ function sanitizeBaseFont(baseFont){
 	    var glyphOffset =  fontObj.glyfOffset;
 	    var glyphCount = fontObj.numGlyphs;
 	    var glyphSize;
-	    for(var i=63;i<glyphCount;i+=64)
+	    for(var i=(LOCA_BLOCK_SIZE-1);i<glyphCount;i+=LOCA_BLOCK_SIZE)
 	    {
 	      glyphSize = fontObj.loca[i+1]-fontObj.loca[i];
 	      if(glyphSize)
