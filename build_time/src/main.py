@@ -17,35 +17,43 @@
 from __future__ import print_function
 import sys
 import os
+import errno
 from fontTools.subset import Options
 import cleanup
 import closure
 from preprocess import Preprocess
+import argparse
 
 
 def main(args):
   """Main program to run preprocessing of the font Arguments:
 
     font-file
+    --output= Output folder of the files, default is current folder
     --hinting=(False|True)  ,default is false
   """
-  options = Options()
-  args = options.parse_opts(args, ignore_unknown=True)
-  if len(args) < 1:
-    print('usage: ./pyprepfnt font-file [--option=value]...', file=sys.stderr)
-    sys.exit(1)
+  parser = argparse.ArgumentParser(prog='pyprepfnt')
+  parser.add_argument('fontfile',help='Input font file')
+  parser.add_argument('--hinting', nargs='?', default=False ,type=bool, help='Enable hinting if True, default is False')
+  parser.add_argument('--output', nargs='?', default='.' , help='Output folder, default is current folder')
+  cmd_args = parser.parse_args(args)
 
-  fontfile = args[0]
-  args = args[1:]
+  fontfile = cmd_args.fontfile
+  basename = os.path.basename(fontfile)
+  filename, extension = os.path.splitext(basename)
+  output_folder = cmd_args.output+'/'+filename
+  try:
+      os.makedirs(output_folder)
+  except OSError as exception:
+      if exception.errno != errno.EEXIST:
+          raise
 
-  filename, extension = os.path.splitext(fontfile)
+  cleanfile = output_folder+'/'+filename + '_clean' + extension
+  cleanup.cleanup(fontfile, cmd_args.hinting, cleanfile)
 
-  cleanfile = filename + '_clean' + extension
-  cleanup.cleanup(fontfile, False, cleanfile)
+  closure.dump_closure_map(cleanfile, output_folder)
 
-  closure.dump_closure_map(cleanfile, '.')
-
-  preprocess = Preprocess(cleanfile, '.')
+  preprocess = Preprocess(cleanfile, output_folder)
   preprocess.base_font()
   preprocess.cmap_dump()
   preprocess.serial_glyphs()
