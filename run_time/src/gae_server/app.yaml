@@ -38,6 +38,7 @@ handlers:
   
 - url: /fonts
   static_dir: fonts/
+  mime_type: text/richtext #HACK forcing GAE to use gzip
   
 - url: /opentype_js/
   static_dir: third_party/opentype_js/
