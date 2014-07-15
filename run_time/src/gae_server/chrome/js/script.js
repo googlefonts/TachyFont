@@ -151,7 +151,7 @@ function getBaseFont(inFS,fs,fontname,filename){
 			return Promise.resolve();
 	}else{
 
-			return requestBaseGZFont(fontname).then(gunzipBaseFont).then(rleDecode).then(sanitizeBaseFont).then(
+			return requestBaseFont(fontname)/*.then(gunzipBaseFont)*/.then(rleDecode).then(sanitizeBaseFont).then(
 					function(sanitized_base){ 
 						return persistToTheFilesystem(fs,filename,sanitized_base,'application/octet-binary');
 				});
@@ -493,11 +493,11 @@ function requestGlyphs(font_name,text)
 		function(arr){ 
 		  if (arr[0].length) {
 		    return requestCharacters(arr[0],font_name)
-		    .then(function(arr) {
+		   /* .then(function(arr) {
 		      var uncompressed = gunzipBaseFont(arr);
 		      //time_end('request glyphs')
 		      return uncompressed;
-		    });
+		    })*/;
 		  } else {
 		    return null;
 		  }

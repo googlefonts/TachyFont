@@ -201,9 +201,9 @@ def prepare_bundle(request):
   table.close()
   data.close()
   elapsed_time('close files')
-  result = _gzip(str(bundle_bytes))
+  #result = _gzip(str(bundle_bytes))
   elapsed_time('compress request')
-  return result
+  return str(bundle_bytes)
 
 
 class ClosureReader(object):

@@ -34,7 +34,8 @@ class GlyphRequest(webapp2.RequestHandler):
   """
 
   def post(self):
-    self.response.headers['Content-Type'] = 'application/octet-stream'
+    #HACK forcing GAE to use gzip
+    self.response.headers['Content-Type'] = 'text/richtext'
     self.response.write(prepare_bundle(self.request))
 
 
