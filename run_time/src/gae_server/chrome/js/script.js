@@ -142,17 +142,13 @@ function requestBaseFont(name){
 	return requestURL('/fonts/'+name+'/base','GET',null,{},'arraybuffer');
 }
 
-function requestBaseGZFont(name){
-	return requestURL('/fonts/'+name+'/base.gz','GET',null,{},'arraybuffer');
-}
-
 
 function getBaseFont(inFS,fs,fontname,filename){
 	if(inFS){
 			return Promise.resolve();
 	}else{
 
-			return requestBaseFont(fontname)/*.then(gunzipBaseFont)*/.then(rleDecode).then(sanitizeBaseFont).then(
+			return requestBaseFont(fontname).then(rleDecode).then(sanitizeBaseFont).then(
 					function(sanitized_base){ 
 						return persistToTheFilesystem(fs,filename,sanitized_base,'application/octet-binary');
 				});
@@ -221,14 +217,6 @@ function rleDecode(array_buffer){
 	return decodedData.buffer;
 }
 
-
-function gunzipBaseFont(array_buffer){
-  //time_start('gzip');
-	var gunzip = new Zlib.Gunzip(new Uint8Array(array_buffer));
-	var decompressed = gunzip.decompress().buffer;
-  //time_end('gzip');
-	return decompressed;
-}
 
 function sanitizeBaseFont(baseFont){
 
@@ -493,12 +481,7 @@ function requestGlyphs(font_name,text)
 	var bundleReady = Promise.all([charsDetermined,indexUpdated]).then(
 		function(arr){ 
 		  if (arr[0].length) {
-		    return requestCharacters(arr[0],font_name)
-		   /* .then(function(arr) {
-		      var uncompressed = gunzipBaseFont(arr);
-		      //time_end('request glyphs')
-		      return uncompressed;
-		    })*/;
+		    return requestCharacters(arr[0],font_name);
 		  } else {
 		    return null;
 		  }

@@ -12,9 +12,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-application: sample-app
+#application: sample-app
 #application: green-pear
-#application: ilffwc
+application: ilffwc
 version: 1
 runtime: python27
 api_version: 1
@@ -38,13 +38,14 @@ handlers:
   
 - url: /fonts
   static_dir: fonts/
-  mime_type: text/richtext #HACK forcing GAE to use gzip
+  mime_type: text/richtext 
+  #HACK 
+  #Since GAE is brain dead, it decides using gzip compression only for text 
+  #resources and does not allow the application to decide. 
+  #Therefore, we set mime_type for binary data as text.
   
 - url: /opentype_js/
   static_dir: third_party/opentype_js/
-  
-- url: /zlib_js/
-  static_dir: third_party/zlib_js/
 
 - url: /incremental_fonts/.*
   script: incremental_fonts.app

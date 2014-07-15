@@ -34,7 +34,10 @@ class GlyphRequest(webapp2.RequestHandler):
   """
 
   def post(self):
-    #HACK forcing GAE to use gzip
+    #HACK 
+    #Since GAE is brain dead, it decides using gzip compression only for text 
+    #resources and does not allow the application to decide. 
+    #Therefore, we set mime_type for binary data as text.
     self.response.headers['Content-Type'] = 'text/richtext'
     self.response.write(prepare_bundle(self.request))
 
