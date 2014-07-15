@@ -58,7 +58,7 @@ function updateResults(){
 
 
 function requestURL(url,method,data,headerParams,responseType){
-   //time_start('fetch ' + url)
+  //time_start('fetch ' + url)
 	return new Promise( function(resolve,reject){
 		var oReq = new XMLHttpRequest();
 		oReq.open(method, url, true);
@@ -194,13 +194,25 @@ function rleDecode(array_buffer){
 			readOffset+=4;
 		}
 		if(operationInfo[1]=='copy'){
-			for(i=0;i<operationSize;i++){
+		  //time_start('rle copy ' + operationSize);
+		  // Each DataView operation is slow so minimize the number of operations.
+		  // https://code.google.com/p/chromium/issues/detail?id=225811
+		  var long_len = operationSize & ~3;
+		  i = 0;
+      for (; i < long_len; i += 4){
+        decodedData.setUint32(writeOffset,data.getUint32(readOffset));
+        readOffset += 4;
+        writeOffset += 4;  
+      }
+			for (; i < operationSize; i++){
 				decodedData.setUint8(writeOffset,data.getUint8(readOffset));
 				readOffset++;
 				writeOffset++;	
 			}
+      //time_end('rle copy ' + operationSize);
 		}else if(operationInfo[1]=='fill'){
 			fill_byte = data.getUint8(readOffset);
+      //time_start('rle fill ' + fill_byte + ' ' + operationSize);
 			readOffset++;
 			if(fill_byte != 0){
 				for(i=0;i<operationSize;i++){
@@ -210,10 +222,11 @@ function rleDecode(array_buffer){
 			}else{
 				writeOffset+=operationSize;
 			}		
+      //time_end('rle fill ' + fill_byte + ' ' + operationSize);
 		}
 
 	}
-	 //time_end('rle');
+	//time_end('rle');
 	return decodedData.buffer;
 }
 
@@ -479,7 +492,8 @@ function requestGlyphs(font_name,text)
 	
 
 	var bundleReady = Promise.all([charsDetermined,indexUpdated]).then(
-		function(arr){ 
+		function(arr){
+		  //time_end('request glyphs')
 		  if (arr[0].length) {
 		    return requestCharacters(arr[0],font_name);
 		  } else {
