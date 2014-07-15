@@ -34,7 +34,7 @@ _default_ignorable_glyphs = [
     (0x2060, 0x206F), (0xFE00, 0xFE0F), (0x1D173, 0x1D17A)]
 
 
-_exceptional_glyph_lists = [_white_space_glyphs, _default_ignorable_glyphs]
+_whitespace_and_ignorable_list = [_white_space_glyphs, _default_ignorable_glyphs]
 
 
 def _expand_range_into_list(bounds, list):
@@ -51,8 +51,8 @@ def _expand_ranges(bound_list):
   return expanded_list
 
 
-def get_whitespace_list():
+def get_whitespace_and_ignorable_list():
   exception_set = set()
-  for l in _exceptional_glyph_lists:
+  for l in _whitespace_and_ignorable_list:
     exception_set.update(set(_expand_ranges(l)))
   return exception_set
