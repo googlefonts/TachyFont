@@ -174,7 +174,7 @@ function updateResults(){
 
 
 function requestURL(url,method,data,headerParams,responseType){
-   //time_start('fetch ' + url)
+  //time_start('fetch ' + url)
 	return new Promise( function(resolve,reject){
 		var oReq = new XMLHttpRequest();
 		oReq.open(method, url, true);
@@ -280,58 +280,71 @@ function  byteOp(op){
 	return [byteCount , byteOperation];
 }
 
-function rleDecode(array_buffer){
-	//time_start('rle');
-	var readOffset = 0;
-	var writeOffset = 0;
-	var data = new DataView(array_buffer);
-	var totalSize = data.getUint32(readOffset); 
-	var fill_byte;
-	var byteOperation;
-	var operationSize;
-	var operationInfo;
-	var i;
-	readOffset+=4;
-	//time_start('rle_alloc');
-	var decodedData = new DataView(new ArrayBuffer(totalSize));
-	//time_end('rle_alloc');
-	while(writeOffset<totalSize){
-		byteOperation = data.getUint8(readOffset); 
-		readOffset++;
-		operationInfo= byteOp(byteOperation);
+function rleDecode(array_buffer) {
+    //time_start('rle');
+    var readOffset = 0;
+    var writeOffset = 0;
+    var data = new DataView(array_buffer);
+    var totalSize = data.getUint32(readOffset);
+    var fill_byte;
+    var byteOperation;
+    var operationSize;
+    var operationInfo;
+    var i;
+    readOffset += 4;
+    //time_start('rle_alloc');
+    var decodedData = new DataView(new ArrayBuffer(totalSize));
+    //time_end('rle_alloc');
+    while (writeOffset < totalSize) {
+        byteOperation = data.getUint8(readOffset);
+        readOffset++;
+        operationInfo = byteOp(byteOperation);
 
-		if(operationInfo[0]==0){
-			operationSize = data.getUint8(readOffset); 
-			readOffset+=1;
-		}else if(operationInfo[0]==1){
-			operationSize = data.getUint16(readOffset); 
-			readOffset+=2;
-		}else if(operationInfo[0]==2){
-			operationSize = data.getUint32(readOffset); 
-			readOffset+=4;
-		}
-		if(operationInfo[1]=='copy'){
-			for(i=0;i<operationSize;i++){
-				decodedData.setUint8(writeOffset,data.getUint8(readOffset));
-				readOffset++;
-				writeOffset++;	
-			}
-		}else if(operationInfo[1]=='fill'){
-			fill_byte = data.getUint8(readOffset);
-			readOffset++;
-			if(fill_byte != 0){
-				for(i=0;i<operationSize;i++){
-					decodedData.setUint8(writeOffset,fill_byte);
-					writeOffset++;	
-				}	
-			}else{
-				writeOffset+=operationSize;
-			}		
-		}
+        if (operationInfo[0] == 0) {
+            operationSize = data.getUint8(readOffset);
+            readOffset += 1;
+        } else if (operationInfo[0] == 1) {
+            operationSize = data.getUint16(readOffset);
+            readOffset += 2;
+        } else if (operationInfo[0] == 2) {
+            operationSize = data.getUint32(readOffset);
+            readOffset += 4;
+        }
+        if (operationInfo[1] == 'copy') {
+            //time_start('rle copy ' + operationSize);
+            // Each DataView operation is slow so minimize the number of operations.
+            // https://code.google.com/p/chromium/issues/detail?id=225811
+            var long_len = operationSize & ~3;
+            i = 0;
+            for (; i < long_len; i += 4) {
+                decodedData.setUint32(writeOffset, data.getUint32(readOffset));
+                readOffset += 4;
+                writeOffset += 4;
+            }
+            for (; i < operationSize; i++) {
+                decodedData.setUint8(writeOffset, data.getUint8(readOffset));
+                readOffset++;
+                writeOffset++;
+            }
+            //time_end('rle copy ' + operationSize);
+        } else if (operationInfo[1] == 'fill') {
+            fill_byte = data.getUint8(readOffset);
+            //time_start('rle fill ' + fill_byte + ' ' + operationSize);
+            readOffset++;
+            if (fill_byte != 0) {
+                for (i = 0; i < operationSize; i++) {
+                    decodedData.setUint8(writeOffset, fill_byte);
+                    writeOffset++;
+                }
+            } else {
+                writeOffset += operationSize;
+            }
+            //time_end('rle fill ' + fill_byte + ' ' + operationSize);
+        }
 
-	}
-	 //time_end('rle');
-	return decodedData.buffer;
+    }
+    //time_end('rle');
+    return decodedData.buffer;
 }
 
 
@@ -445,8 +458,8 @@ function getBaseToFileSystem(font_name)
                 //time_end('getBaseToFileSystem');
             }
     );
-
 }
+
 
 function requestGlyphs(font_name, text)
 {
