@@ -38,12 +38,14 @@ handlers:
   
 - url: /fonts
   static_dir: fonts/
+  mime_type: text/richtext 
+  #HACK 
+  #Since GAE is brain dead, it decides using gzip compression only for text 
+  #resources and does not allow the application to decide. 
+  #Therefore, we set mime_type for binary data as text.
   
 - url: /opentype_js/
   static_dir: third_party/opentype_js/
-  
-- url: /zlib_js/
-  static_dir: third_party/zlib_js/
 
 - url: /incremental_fonts/.*
   script: incremental_fonts.app

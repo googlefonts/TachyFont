@@ -19,8 +19,8 @@ from glyph_sets import get_whitespace_and_ignorable_list
 
 
 def clean_invalid_glyphs_and_remove_hinting(fontfile, hinting, output):
-  exceptional_list = get_whitespace_and_ignorable_list()
-  cleaner = Cleaner(fontfile, hinting, exceptional_list)
+  whitespace_and_ignorable_list = get_whitespace_and_ignorable_list()
+  cleaner = Cleaner(fontfile, hinting, whitespace_and_ignorable_list)
   cleaner.clean()
   cleaner.save(output)
   cleaner.close()
