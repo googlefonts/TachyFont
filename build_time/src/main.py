@@ -39,9 +39,12 @@ def main(args):
   cmd_args = parser.parse_args(args)
 
   fontfile = cmd_args.fontfile
+  # TODO(bstell) use Logger
+  print('preprocess {0}'.format(cmd_args.fontfile))
   basename = os.path.basename(fontfile)
   filename, extension = os.path.splitext(basename)
   output_folder = cmd_args.output+'/'+filename
+  print('put results in {0}'.format(output_folder))
   try:
       os.makedirs(output_folder)
   except OSError as exception:
@@ -49,15 +52,23 @@ def main(args):
           raise
 
   cleanfile = output_folder+'/'+filename + '_clean' + extension
+  print('make cleaned up version: {0}'.format(cleanfile))
   cleanup.cleanup(fontfile, cmd_args.hinting, cleanfile)
 
+  print('build closure')
   closure.dump_closure_map(cleanfile, output_folder)
 
   preprocess = Preprocess(cleanfile, output_folder)
+  print('build base')
   preprocess.base_font()
+  print('dump cmap')
   preprocess.cmap_dump()
+  print('build glyph data')
   preprocess.serial_glyphs()
+  print('done')
 
+def console_msg(msg):
+  pass
 
 if __name__ == '__main__':
   main(sys.argv[1:])

@@ -124,7 +124,7 @@ class RleFont(object):
       # Note: shorter versions are possible.
       # It might be worthwhile to handle the shorter versions but it seems
       # unlikely there will be much actual gain.
-      if repeat_len > 3:
+      if repeat_len > 63:
         repeat_tuple = (repeat_start, repeat_len, prev_byte)
         repeats.append(repeat_tuple)
       prev_byte = cur_byte
@@ -132,7 +132,7 @@ class RleFont(object):
 
     # Close any last repeat
     repeat_len = len_bytes - repeat_start
-    if repeat_len > 3:
+    if repeat_len > 0:
       repeat_tuple = (repeat_start, repeat_len, prev_byte)
       repeats.append(repeat_tuple)
 
