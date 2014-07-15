@@ -133,8 +133,7 @@ function getBaseFont(inFS,fs,fontname,filename){
 			return Promise.resolve();
 	}else{
 			return requestBaseGZFont(fontname).then(gunzipBaseFont).then(rleDecode).
-			/*Sanitize not needed when glyf filled with 0xff 
-			then(sanitizeBaseFont).*/then(
+			then(sanitizeBaseFont).then(
 					function(sanitized_base){ 
 						return persistToTheFilesystem(fs,filename,sanitized_base,'application/octet-binary');
 				});
@@ -151,6 +150,7 @@ function  byteOp(op){
 }
 
 function rleDecode(array_buffer){
+  //time_start('rleDecode')
 	var readOffset = 0;
 	var writeOffset = 0;
 	var data = new DataView(array_buffer);
@@ -181,13 +181,18 @@ function rleDecode(array_buffer){
 		}else if(operationInfo[1]=='fill'){
 			var fill_byte = data.getUint8(readOffset);
 			readOffset++;
-			for(var i=0;i<operationSize;i++){
-				decodedData.setUint8(writeOffset,fill_byte);
-				writeOffset++;	
-			}			
+			if (fill_byte == 0) {
+			  writeOffset += operationSize
+			} else {
+	      for(var i=0;i<operationSize;i++){
+	        decodedData.setUint8(writeOffset,fill_byte);
+	        writeOffset++;  
+	      }     
+			}
 		}
 
 	}
+  //time_end('rleDecode')
 	return decodedData.buffer;
 }
 
@@ -303,7 +308,7 @@ function injectCharacters(baseFont,glyphData){
        }      
        var offset = glyphParser.parseULong();
        var length = glyphParser.parseUShort();
-       if(!(flags & 4)){
+       if(!(flags & HAS_CFF)){
        		fontObj.loca[id] = offset;
        		fontObj.loca[id+1] = offset+length;
        		var prev_id = id -1;
