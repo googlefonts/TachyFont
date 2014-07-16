@@ -15,8 +15,8 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 /**
- *
  * @param {type} filesystemReady
  * @param {type} assumeEmpty
  * @constructor
@@ -25,8 +25,8 @@ function FilesystemHelper(filesystemReady, assumeEmpty) {
   this.filesystemReady = filesystemReady;
   this.assumeEmpty = assumeEmpty;
 }
+
 /**
- *
  * @type type
  */
 FilesystemHelper.TYPES = {
@@ -35,8 +35,8 @@ FilesystemHelper.TYPES = {
     BINARYSTRING: 2,
     DATAURL: 3
 };
+
 /**
- *
  * @param {type} fileEntry
  * @return {Promise}
  */
@@ -47,8 +47,8 @@ FilesystemHelper.prototype.createFileWriter = function(fileEntry) {
     }, reject);
   });
 };
+
 /**
- *
  * @param {type} filename
  * @param {type} toCreate
  * @return {FilesystemHelper.prototype@pro;filesystemReady@call;then}
@@ -64,8 +64,8 @@ FilesystemHelper.prototype.getFileEntry = function(filename, toCreate) {
     });
   });
 };
+
 /**
- *
  * @param {type} fileEntry
  * @return {Promise}
  */
@@ -76,8 +76,8 @@ FilesystemHelper.prototype.getFileObject = function(fileEntry) {
     }, reject);
   });
 };
+
 /**
- *
  * @param {type} filename
  * @return {FilesystemHelper.prototype@call;getFileEntry@call;then}
  */
@@ -86,7 +86,6 @@ FilesystemHelper.prototype.getFileWriter = function(filename) {
 };
 
 /**
- *
  * @param {type} filename
  * @return {FilesystemHelper.prototype@pro;filesystemReady@call;then}
  */
@@ -104,8 +103,8 @@ FilesystemHelper.prototype.checkIfFileExists = function(filename) {
     });
   });
 };
+
 /**
- *
  * @param {type} filename
  * @param {type} content
  * @param {type} contentType
@@ -129,8 +128,8 @@ FilesystemHelper.prototype.writeToTheFile = function(filename, content,
     });
   });
 };
+
 /**
- *
  * @param {type} filename
  * @param {type} type
  * @return {FilesystemHelper.prototype@call;getFileEntry@call;then@call;then}
@@ -164,8 +163,8 @@ FilesystemHelper.prototype.getFileAs = function(filename, type) {
     });
   });
 };
+
 /**
- *
  * @param {type} filename
  * @return {FilesystemHelper.prototype@call;getFileEntry@call;then}
  */
