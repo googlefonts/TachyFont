@@ -17,8 +17,9 @@
  */
 
 /**
- * @param {type} filesystemReady
- * @param {type} assumeEmpty
+ * FilesystemHelper class to call filesystem API in much more convenient way
+ * @param {Promise} filesystemReady Promise to get filesystem from system
+ * @param {boolean} assumeEmpty Flag to ignore contents of the filesystem
  * @constructor
  */
 function FilesystemHelper(filesystemReady, assumeEmpty) {
@@ -27,7 +28,8 @@ function FilesystemHelper(filesystemReady, assumeEmpty) {
 }
 
 /**
- * @type type
+ * Enum for types used in file reader
+ * @enum {number}
  */
 FilesystemHelper.TYPES = {
     ARRAYBUFFER: 0,
@@ -37,10 +39,12 @@ FilesystemHelper.TYPES = {
 };
 
 /**
- * @param {type} fileEntry
- * @return {Promise}
+ * Creates file writer for this file entry
+ * @param {FileEntry} fileEntry
+ * @return {Promise} Promise to return file writer
+ * @private
  */
-FilesystemHelper.prototype.createFileWriter = function(fileEntry) {
+FilesystemHelper.prototype.createFileWriter_ = function(fileEntry) {
   return new Promise(function(resolve, reject) {
     fileEntry.createWriter(function(fw) {
       resolve(fw);
@@ -49,11 +53,14 @@ FilesystemHelper.prototype.createFileWriter = function(fileEntry) {
 };
 
 /**
- * @param {type} filename
- * @param {type} toCreate
- * @return {FilesystemHelper.prototype@pro;filesystemReady@call;then}
+ * Gets file entry for the given filename
+ * @param {string} filename
+ * @param {boolean} toCreate If false, gives error if file does not exits, else
+ * creates the file
+ * @return {Promise} Promise to return file entry
+ * @private
  */
-FilesystemHelper.prototype.getFileEntry = function(filename, toCreate) {
+FilesystemHelper.prototype.getFileEntry_ = function(filename, toCreate) {
   return this.filesystemReady.then(function(fs) {
     return new Promise(function(resolve, reject) {
       fs.root.getFile(filename, {
@@ -66,10 +73,12 @@ FilesystemHelper.prototype.getFileEntry = function(filename, toCreate) {
 };
 
 /**
- * @param {type} fileEntry
- * @return {Promise}
+ * Get file object from file entry
+ * @param {FileEntry} fileEntry
+ * @return {Promise} Promise to return file object
+ * @private
  */
-FilesystemHelper.prototype.getFileObject = function(fileEntry) {
+FilesystemHelper.prototype.getFileObject_ = function(fileEntry) {
   return new Promise(function(resolve, reject) {
     fileEntry.file(function(file) {
       resolve(file);
@@ -78,16 +87,19 @@ FilesystemHelper.prototype.getFileObject = function(fileEntry) {
 };
 
 /**
- * @param {type} filename
- * @return {FilesystemHelper.prototype@call;getFileEntry@call;then}
+ * Get file writer for given filename, if not exist create the file
+ * @param {string} filename
+ * @return {Promise} Promise to return file writer
+ * @private
  */
-FilesystemHelper.prototype.getFileWriter = function(filename) {
-  return this.getFileEntry(filename, true).then(this.createFileWriter);
+FilesystemHelper.prototype.getFileWriter_ = function(filename) {
+  return this.getFileEntry_(filename, true).then(this.createFileWriter_);
 };
 
 /**
- * @param {type} filename
- * @return {FilesystemHelper.prototype@pro;filesystemReady@call;then}
+ * Checks if file exists in the filesystem
+ * @param {string} filename
+ * @return {Promise} Promise to return existence of the file
  */
 FilesystemHelper.prototype.checkIfFileExists = function(filename) {
   return this.filesystemReady.then(function(fs) {
@@ -105,14 +117,15 @@ FilesystemHelper.prototype.checkIfFileExists = function(filename) {
 };
 
 /**
- * @param {type} filename
+ * Write given content to file which is found by filename
+ * @param {string} filename
  * @param {type} content
- * @param {type} contentType
- * @return {FilesystemHelper.prototype@call;getFileWriter@call;then}
+ * @param {string} contentType
+ * @return {Promise} Promise to write content to the file
  */
 FilesystemHelper.prototype.writeToTheFile = function(filename, content, 
   contentType) {
-  return this.getFileWriter(filename).then(function(fileWriter) {
+  return this.getFileWriter_(filename).then(function(fileWriter) {
     return new Promise(function(resolve, reject) {
       fileWriter.onwriteend = function(e) {
         resolve(e);
@@ -130,12 +143,13 @@ FilesystemHelper.prototype.writeToTheFile = function(filename, content,
 };
 
 /**
- * @param {type} filename
- * @param {type} type
- * @return {FilesystemHelper.prototype@call;getFileEntry@call;then@call;then}
+ * Read content of the file as specified
+ * @param {string} filename
+ * @param {FilesystemHelper.TYPES} type Reader type
+ * @return {Promise} Promise to return content
  */
 FilesystemHelper.prototype.getFileAs = function(filename, type) {
-  return this.getFileEntry(filename, true).then(this.getFileObject).then(
+  return this.getFileEntry_(filename, true).then(this.getFileObject_).then(
     function(file) {
     return new Promise(function(resolve, reject) {
       var reader = new FileReader();
@@ -165,11 +179,12 @@ FilesystemHelper.prototype.getFileAs = function(filename, type) {
 };
 
 /**
- * @param {type} filename
- * @return {FilesystemHelper.prototype@call;getFileEntry@call;then}
+ * Return file url for the given filename
+ * @param {string} filename
+ * @return {Promise} Promise to return file url
  */
 FilesystemHelper.prototype.getFileURL = function(filename) {
-  return this.getFileEntry(filename, false).then(function(fe) {
+  return this.getFileEntry_(filename, false).then(function(fe) {
     return fe.toURL();
   });
 };
