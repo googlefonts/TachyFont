@@ -22,12 +22,27 @@
 <title>Font Loading Test(js loader)</title>
   <script src="/opentype_js/parse.js"></script>
   <script src="js/filesystem-helper.js"></script>
+  <script src="js/incr-font-loader.js"></script>
   <script src="js/script.js"></script>
 <script>
+
 EMPTY_FS = true;
 var FONTNAME = 'nanum-brush';
 var TEXTS=[];
-var baseReady = getBaseToFileSystem(FONTNAME);
+
+var fontLoader = new IncrementalFontLoader(FONTNAME,true);
+
+var filesystem = new FilesystemHelper(
+  requestTemporaryFileSystem(TEMPORARY_FS_REQUEST_SIZE), EMPTY_FS);
+  
+var makeVisible = function(){
+    var elem = document.getElementById('incrfont');
+    if(elem)
+      elem.style.visibility = '';
+};
+
+
+var baseReady = fontLoader.getBaseToFileSystem(filesystem,makeVisible);
 
 
 </script>
@@ -98,7 +113,7 @@ var baseReady = getBaseToFileSystem(FONTNAME);
   <script>
   document.getElementById('incrfont').style.visibility = 'hidden';
    TEXTS.forEach(function(text){
-        baseReady = baseReady.then(function(){return incrUpdate(FONTNAME,text);});
+        baseReady = baseReady.then(function(){return fontLoader.incrUpdate(filesystem,text,makeVisible);});
    });
   </script>
   
