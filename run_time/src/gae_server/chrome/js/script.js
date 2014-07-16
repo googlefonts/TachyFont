@@ -19,7 +19,8 @@
 
 
 var TTF=true;
-var fileSystemReady = requestTemporaryFileSystem(8 * 1024 * 1024);
+
+var TEMPORARY_FS_REQUEST_SIZE = 8 * 1024 * 1024;
 
 var global_start_time = Date.now();
 var RLE_OPS = {  0xC0 : 'copy', 0xC8 : 'fill'};
@@ -27,7 +28,8 @@ var RLE_OPS = {  0xC0 : 'copy', 0xC8 : 'fill'};
 var LOCA_BLOCK_SIZE = 64;
 var EMPTY_FS = false;
 
-var CHARS_INJECTED={};
+var filesytem = new FilesystemHelper(requestTemporaryFileSystem(TEMPORARY_FS_REQUEST_SIZE), EMPTY_FS);
+
 var RESULTS=[];
 
 
@@ -96,7 +98,7 @@ function strToCodeArrayExceptCodes(str,codes){
 }
 
 function readPersistedCharacters(idx_file,fs){
-	return getFileAsText(fs,idx_file).then(function(idx_text){
+	return fs.getFileAs(idx_file, FilesystemHelper.TYPES.TEXT).then(function(idx_text){
 		if(idx_text){
 			return JSON.parse(idx_text);
 		}else{
@@ -148,10 +150,9 @@ function getBaseFont(inFS,fs,fontname,filename){
 			return Promise.resolve();
 	}else{
 
-			return requestBaseFont(fontname).then(rleDecode).then(sanitizeBaseFont).then(
-					function(sanitized_base){ 
-						return persistToTheFilesystem(fs,filename,sanitized_base,'application/octet-binary');
-				});
+    return requestBaseFont(fontname).then(rleDecode).then(sanitizeBaseFont).then(function(sanitized_base) {
+      return fs.writeToTheFile(filename, sanitized_base, 'application/octet-stream');
+    });
 	}
 
 }
@@ -252,55 +253,6 @@ function sanitizeBaseFont(baseFont){
     return baseFont;
 }
 
-function createTheFile(filename){
-	return new Promise(function(resolve,reject){
-		fs.root.getFile(filename,{create:true},function(fe){ resolve(fe)},reject);
-	});
-}
-
-function createFileWriter(fileEntry){
-	return new Promise(function(resolve,reject){
-		fileEntry.createWriter(function(fw){ resolve(fw);}
-			,reject)
-	});
-}
-
-function getFileEntry(fs,filename,toCreate){
-	return new Promise(function(resolve,reject){
-		fs.root.getFile(filename,{create:toCreate},
-			function(fileEntry){resolve(fileEntry)},
-			reject);
-	});
-}
-
-function getFileObj(fileEntry){
-	return new Promise(function(resolve,reject){
-		fileEntry.file(function(file){ resolve(file) },reject);
-	});
-}
-
-function readFileAsArrayBuffer(file){	
-	return new Promise(function(resolve,reject){
-		var reader = new FileReader();	
-		reader.onloadend = function(e){resolve(e.target.result)};
-		reader.onerror = reject;
-		reader.readAsArrayBuffer(file);
-	});
-}
-
-function readFileAsText(file){	
-	return new Promise(function(resolve,reject){
-		var reader = new FileReader();	
-		reader.onloadend = function(e){resolve(e.target.result)};
-		reader.onerror = reject;
-		reader.readAsText(file);
-	});
-}
-
-function getFileWriter(fs,filename){
-	return getFileEntry(fs,filename,true).then(createFileWriter);
-}
-
 var HAS_CFF = 4;
 var HAS_HMTX = 1;
 var HAS_VMTX = 2;
@@ -364,60 +316,6 @@ function injectCharacters(baseFont,glyphData){
     return baseFont;
 }
 
-function checkIfFileExists(fs,filename){
-	return new Promise(function(resolve,reject){
-		
-			var dirReader = fs.root.createReader();
-			dirReader.readEntries(function(entries){
-				var exists = entries.some(function(elem,idx,arr){
-					return elem.name == filename;
-				});
-
-				resolve(exists && !EMPTY_FS);
-			});
-
-	});
-}
-
-
-
-function getFileAsArrayBuffer(fs,filename){
-	return getFileEntry(fs,filename,true).then(getFileObj).then(readFileAsArrayBuffer);
-}
-
-function getFileAsText(fs,filename){
-	return getFileEntry(fs,filename,true).then(getFileObj).then(readFileAsText);
-}
-
-function writeToTheFile(content,contentType,fileWriter){
-	return new Promise(function(resolve,reject){
-		fileWriter.onwriteend = function(e) { resolve(e); };
-		fileWriter.onerror = function(e) {  reject(e)};                
-        fileWriter.write(new Blob([content],{type:contentType}));
-    });
-}
-
-function persistToTheFilesystem(fs,filename,content,type){
-	return getFileWriter(fs,filename).then(function(fw){ 
-		return writeToTheFile(content,type,fw);
-	});	
-}
-
-function clearFileSystem(){
-	return fileSystemReady.then(function(fs){	
-
-		var dirReader = fs.root.createReader();
-		dirReader.readEntries(function(entries){
-			entries.forEach(function(elem){
-				 if(elem.isDirectory){
-				 	elem.removeRecursively();
-				 }else{
-				 	elem.remove();	
-				 }
-			});
-		});
-	});
-}
 
 
 function getBaseToFileSystem(font_name)
@@ -425,28 +323,16 @@ function getBaseToFileSystem(font_name)
   //time_start('getBaseToFileSystem');
 	var FILENAME = font_name + '.ttf'
 
-	var doesBaseExist = fileSystemReady.then(
-		function(fs){
-			return checkIfFileExists(fs,FILENAME)
-		}
-	);
+  var doesBaseExist = filesytem.checkIfFileExists(FILENAME);
 
-	var baseFontPersisted = Promise.all([doesBaseExist, fileSystemReady]).then(
-		function(results){
-			return getBaseFont(results[0],results[1],font_name,FILENAME);
-		}
-	);
+  var baseFontPersisted = doesBaseExist.then(function(doesExist) {
+    return getBaseFont(doesExist, filesytem, font_name, FILENAME);
+  });
 
-	var fileURLReady = Promise.all([baseFontPersisted,fileSystemReady])
-	.then(
-		function(results){ 
-			return getFileEntry(results[1],FILENAME,false);
-		})
-	.then(
-		function(fe){ 
-			return fe.toURL(); 
-		}
-	);
+  var fileURLReady = baseFontPersisted.then(function() {
+    return filesytem.getFileURL(FILENAME);
+  });
+
 
 	return fileURLReady.then(
 		function(fileURL){
@@ -463,20 +349,14 @@ function requestGlyphs(font_name,text)
 
 	var INDEXFILENAME = font_name + '.idx'
 
-	var doesIdxExist = fileSystemReady.then(
-		function(fs){
-			return checkIfFileExists(fs,INDEXFILENAME)
-		}
-	);
+  var doesIdxExist = filesytem.checkIfFileExists(INDEXFILENAME);
 
-	var injectedChars = Promise.all([fileSystemReady,doesIdxExist]).then(
-		function(results){
-			if(results[1])
-				return readPersistedCharacters(INDEXFILENAME,results[0]);
-			else
-				return {};
-		}
-	);
+  var injectedChars = doesIdxExist.then(function(doesExist) {
+    if (doesExist)
+      return readPersistedCharacters(filesytem, INDEXFILENAME);
+    else
+      return {};
+  });
 
 	var charsDetermined = injectedChars.then(
 		function(chars){
@@ -484,16 +364,18 @@ function requestGlyphs(font_name,text)
 		}
 	);
 
-	var indexUpdated = Promise.all([charsDetermined,fileSystemReady,injectedChars]).then(function(results){
-		if (results[0].length) {
-	    return persistToTheFilesystem(results[1],INDEXFILENAME,JSON.stringify(results[2]),'text/plain');
-		}
-	});
+  var indexUpdated = Promise.all([
+      charsDetermined, injectedChars
+  ]).then(function(results) {
+    if (results[0].length) {
+      return filesytem.writeToTheFile(INDEXFILENAME, JSON.stringify(results[1]), 'text/plain');
+    }
+  });
 	
 
 	var bundleReady = Promise.all([charsDetermined,indexUpdated]).then(
 		function(arr){
-		  //time_end('request glyphs')
+		  // time_end('request glyphs')
 		  if (arr[0].length) {
 		    return requestCharacters(arr[0],font_name);
 		  } else {
@@ -512,35 +394,20 @@ function injectBundle(font_name,bundle){
 
 	var charsInjected, fileUpdated;
 	if (bundle != null) {
-  	charsInjected =fileSystemReady.then(
-  		function(fs){
-  			return getFileAsArrayBuffer(fs,filename)
-  		}
-  	).then(
-  			function(baseFont){
-  				return injectCharacters(baseFont,bundle);
-  			}
-  	);
+    charsInjected = filesytem.getFileAs(filename, FilesystemHelper.TYPES.ARRAYBUFFER).then(function(baseFont) {
+      return injectCharacters(baseFont, bundle);
+    });
   
-  	fileUpdated = Promise.all([charsInjected,fileSystemReady]).then(
-  		function(results){
-  			return persistToTheFilesystem(results[1],filename,results[0],'application/octet-binary');
-  		}
-  	);
+    fileUpdated = charsInjected.then(function(newBase) {
+      return filesytem.writeToTheFile(filename, newBase, 'application/octet-stream');
+    });
 	} else {
 	  charsInjected = fileUpdated = Promise.resolve();
 	}
 
-	var fileURLReady = Promise.all([fileUpdated,fileSystemReady])
-	.then(
-		function(results){ 
-			return getFileEntry(results[1],filename,false);
-		})
-	.then(
-		function(fe){ 
-			return fe.toURL(); 
-		}
-	);
+  var fileURLReady = fileUpdated.then(function() {
+    return filesytem.getFileURL(filename);
+  });
 
 	return fileURLReady.then(
 		function(fileURL){
