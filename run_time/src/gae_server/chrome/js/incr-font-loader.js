@@ -153,7 +153,7 @@ IncrementalFontLoader.prototype.getBaseFont_ = function(inFS, fs, filename) {
   } else {
     var that = this;
     return this.requestBaseFont_().
-            then(rleDecode).
+            then(RLEDecoder.rleDecode).
             then(that.sanitizeBaseFont_.bind(that)).
             then(function(sanitized_base) {
               return fs.writeToTheFile(filename, sanitized_base,
