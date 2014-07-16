@@ -100,6 +100,38 @@ IncrementalFontLoader.prototype.determineCharacters_ = function(codes, text) {
 };
 
 /**
+ * Async XMLHttpRequest to given url using given method, data and header
+ * @param {string} url Destination url
+ * @param {string} method Request method
+ * @param {type} data Request data
+ * @param {Object} headerParams Request headers
+ * @param {string} responseType Response type
+ * @return {Promise} Promise to return response
+ */
+IncrementalFontLoader.requestURL = function(url, method, data, headerParams, 
+responseType) {
+  // time_start('fetch ' + url)
+  return new Promise(function(resolve, reject) {
+    var oReq = new XMLHttpRequest();
+    oReq.open(method, url, true);
+    for (var param in headerParams)
+      oReq.setRequestHeader(param, headerParams[param]);
+    oReq.responseType = responseType;
+    oReq.onload = function(oEvent) {
+      if (oReq.status == 200) {
+        // time_end('fetch ' + url)
+        resolve(oReq.response);
+      } else
+        reject(oReq.status + ' ' + oReq.statusText);
+    };
+    oReq.onerror = function() {
+      reject(Error('Network Error'));
+    };
+    oReq.send(data);
+  });
+};
+
+/**
  * Request codepoints from server
  * @param {Array.<number>} chars Codepoints to be requested
  * @return {Promise} Promise to return ArrayBuffer for the response bundle
@@ -107,7 +139,8 @@ IncrementalFontLoader.prototype.determineCharacters_ = function(codes, text) {
  */
 IncrementalFontLoader.prototype.requestCharacters_ = function(chars) {
 
-  return requestURL('/incremental_fonts/request', 'POST', JSON.stringify({
+  return IncrementalFontLoader.requestURL('/incremental_fonts/request', 'POST',
+  JSON.stringify({
       'font': this.fontname,
       'arr': chars
   }), {
@@ -135,7 +168,8 @@ IncrementalFontLoader.prototype.setTheFont_ = function(font_src, callback) {
  * @private
  */
 IncrementalFontLoader.prototype.requestBaseFont_ = function() {
-  return requestURL('/fonts/' + this.fontname + '/base', 'GET', null, {},
+  return IncrementalFontLoader.requestURL('/fonts/' + this.fontname + '/base',
+  'GET', null, {},
     'arraybuffer');
 };
 

@@ -24,14 +24,15 @@
   <script src="js/filesystem-helper.js"></script>
   <script src="js/rle-decoder.js"></script>
   <script src="js/incr-font-loader.js"></script>
-  <script src="js/script.js"></script>
   <script>
-    EMPTY_FS = true;
+    var TEMPORARY_FS_REQUEST_SIZE = 8 * 1024 * 1024;
+    var EMPTY_FS = true;
     var FONTNAME = 'nanum-brush';
     var TEXTS = [];
     var fontLoader = new IncrementalFontLoader(FONTNAME, true);
     var filesystem = new FilesystemHelper(
-            requestTemporaryFileSystem(TEMPORARY_FS_REQUEST_SIZE), EMPTY_FS);
+            FilesystemHelper.requestTemporaryFileSystem(
+            TEMPORARY_FS_REQUEST_SIZE), EMPTY_FS);
 
     var makeVisible = function() {
         var elem = document.getElementById('incrfont');
