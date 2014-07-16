@@ -18,8 +18,8 @@
 
 /**
  * Incremental font loader object
- * @param {type} fontname Name of the font which will be used as id for the font
- * @param {type} isTTF True if it is TrueType font, else should be False
+ * @param {string} fontname Name of the font which will be used as id for font
+ * @param {boolean} isTTF True if it is TrueType font, else should be False
  * @constructor
  */
 function IncrementalFontLoader(fontname, isTTF) {
@@ -126,8 +126,7 @@ IncrementalFontLoader.prototype.setTheFont_ = function(font_src, callback) {
   console.log(font_src);
   var font = new FontFace(this.fontname, 'url(' + font_src + ')', {});
   document.fonts.add(font);
-  font.load().
-        then(callback);
+  font.load().then(callback);
 };
 
 /**
@@ -345,30 +344,26 @@ IncrementalFontLoader.prototype.injectBundle = function(fs, bundle, callback) {
   var that = this;
   var charsInjected, fileUpdated;
   if (bundle != null) {
-    charsInjected = fs.getFileAs(filename, FilesystemHelper.TYPES.ARRAYBUFFER).
-                      then(function(baseFont) {
+    charsInjected = fs.getFileAs(filename,
+    FilesystemHelper.TYPES.ARRAYBUFFER).then(function(baseFont) {
                         return that.injectCharacters_(baseFont, bundle);
                       });
 
-    fileUpdated = charsInjected.
-                    then(function(newBase) {
-                      return fs.writeToTheFile(filename, newBase,
-                        'application/octet-stream');
-                      });
+    fileUpdated = charsInjected.then(function(newBase) {
+        return fs.writeToTheFile(filename, newBase, 'application/octet-stream');
+    });
   } else {
     charsInjected = fileUpdated = Promise.resolve();
   }
 
-  var fileURLReady = fileUpdated.
-                      then(function() {
-                        return fs.getFileURL(filename);
-                      });
+  var fileURLReady = fileUpdated.then(function() {
+      return fs.getFileURL(filename);
+  });
 
-  return fileURLReady.
-          then(function(fileURL) {
-            // time_end('inject bundle')
-            that.setTheFont_(fileURL, callback);
-          });
+  return fileURLReady.then(function(fileURL) {
+      // time_end('inject bundle')
+      that.setTheFont_(fileURL, callback);
+  });
 
 };
 
