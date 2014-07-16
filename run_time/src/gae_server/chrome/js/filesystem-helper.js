@@ -39,6 +39,19 @@ FilesystemHelper.TYPES = {
 };
 
 /**
+ * Request temporary filesystem
+ * @param {number} requestedSize Size requested in bytes
+ * @returns {Promise} Promise to return filesystem
+ */
+FilesystemHelper.requestTemporaryFileSystem = function(requestedSize) {
+  window.requestFileSystem = window.requestFileSystem || 
+          window.webkitRequestFileSystem;
+  return new Promise(function(resolve, reject) {
+    window.requestFileSystem(window.TEMPORARY, requestedSize, resolve, reject);
+  });
+};
+
+/**
  * Creates file writer for this file entry
  * @param {FileEntry} fileEntry
  * @return {Promise} Promise to return file writer
