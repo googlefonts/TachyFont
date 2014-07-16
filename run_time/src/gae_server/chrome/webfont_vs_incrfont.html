@@ -31,26 +31,22 @@
   <script src="js/filesystem-helper.js"></script>
   <script src="js/incr-font-loader.js"></script>
   <script src="js/script.js"></script>
-<script>
-    
+  <script>
     EMPTY_FS = true;
     var FONTNAME = 'nanum-brush';
-    var TEXTS=[];
-    var fontLoader = new IncrementalFontLoader(FONTNAME,true);
-
+    var TEXTS = [];
+    var fontLoader = new IncrementalFontLoader(FONTNAME, true);
     var filesystem = new FilesystemHelper(
-      requestTemporaryFileSystem(TEMPORARY_FS_REQUEST_SIZE), EMPTY_FS);
+            requestTemporaryFileSystem(TEMPORARY_FS_REQUEST_SIZE), EMPTY_FS);
 
-    var makeVisible = function(){
+    var makeVisible = function() {
         var elem = document.getElementById('incrfont');
-        if(elem)
-          elem.style.visibility = '';
+        if (elem)
+          elem.style.visibility = 'visible';
     };
 
-
-    var baseReady = fontLoader.getBaseToFileSystem(filesystem,makeVisible);
-  
-</script>
+    var baseReady = fontLoader.getBaseToFileSystem(filesystem, makeVisible);
+  </script>
 
 </head>
 
@@ -185,22 +181,21 @@ http://qwed01...우낀세상02/18http://qwed01...우낀세상02/18최근에받�
   </table>
 
   <script>
-  
     document.getElementById('incrfont').style.visibility = 'hidden';
     //time_start('initial bundle')
-    var BUNDLE =  fontLoader.requestGlyphs(filesystem,TEXTS[0]);
-    var sequence = Promise.all([BUNDLE,baseReady]).
-                    then(function(results) {
-                        return fontLoader.injectBundle(filesystem,results[0],
-                        makeVisible).
-                                then(function() {
-                                    //time_end('initial bundle')
-                                });
-                    });
-    TEXTS.splice(0,1);
+    var BUNDLE = fontLoader.requestGlyphs(filesystem, TEXTS[0]);
+    var sequence = Promise.all([BUNDLE, baseReady]).
+                  then(function(results) {
+                      return fontLoader.injectBundle(filesystem, results[0],
+                      makeVisible).
+                              then(function() {
+                                  //time_end('initial bundle')
+                              });
+                  });
+    TEXTS.splice(0, 1);
     TEXTS.forEach(function(text) {
-        sequence = sequence.then(function(){return fontLoader.incrUpdate(
-                    filesystem,text,makeVisible);});
+      sequence = sequence.then(function() {return fontLoader.incrUpdate(
+                  filesystem, text, makeVisible);});
     });
   </script>
   
