@@ -99,6 +99,15 @@ IncrementalFontLoader.prototype.determineCharacters_ = function(codes, text) {
   });
 };
 
+/**
+ * Async XMLHttpRequest to given url using given method, data and header
+ * @param {string} url Destination url
+ * @param {string} method Request method
+ * @param {type} data Request data
+ * @param {Object} headerParams Request headers
+ * @param {string} responseType Response type
+ * @return {Promise} Promise to return response
+ */
 IncrementalFontLoader.requestURL = function(url, method, data, headerParams, 
 responseType) {
   // time_start('fetch ' + url)

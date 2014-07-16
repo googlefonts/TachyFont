@@ -21,7 +21,7 @@
  * @constructor
  */
 function Timer() {
-    this.start_time = Date.now();  
+    this.start_time = Date.now();
     this.results = [];
 }
 
@@ -32,7 +32,7 @@ function Timer() {
 Timer.prototype.time_start = function(msg) {
   console.time('@@@ ' + msg);
   console.timeStamp('@@@ begin ' + msg);
-  var cur_time = Date.now() -this.start_time;
+  var cur_time = Date.now() - this.start_time;
   this.results.push('begin ' + msg + ' at ' + cur_time + '\n');
   console.log('@@@ begin ' + msg + ' at ' + cur_time);
 };

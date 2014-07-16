@@ -41,10 +41,10 @@ FilesystemHelper.TYPES = {
 /**
  * Request temporary filesystem
  * @param {number} requestedSize Size requested in bytes
- * @returns {Promise} Promise to return filesystem
+ * @return {Promise} Promise to return filesystem
  */
 FilesystemHelper.requestTemporaryFileSystem = function(requestedSize) {
-  window.requestFileSystem = window.requestFileSystem || 
+  window.requestFileSystem = window.requestFileSystem ||
           window.webkitRequestFileSystem;
   return new Promise(function(resolve, reject) {
     window.requestFileSystem(window.TEMPORARY, requestedSize, resolve, reject);
