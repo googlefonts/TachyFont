@@ -40,7 +40,7 @@ FilesystemHelper.TYPES = {
  * @param {type} fileEntry
  * @return {Promise}
  */
-FilesystemHelper.prototype.createFileWriter = function(fileEntry) {
+FilesystemHelper.prototype._createFileWriter = function(fileEntry) {
   return new Promise(function(resolve, reject) {
     fileEntry.createWriter(function(fw) {
       resolve(fw);
@@ -53,7 +53,7 @@ FilesystemHelper.prototype.createFileWriter = function(fileEntry) {
  * @param {type} toCreate
  * @return {FilesystemHelper.prototype@pro;filesystemReady@call;then}
  */
-FilesystemHelper.prototype.getFileEntry = function(filename, toCreate) {
+FilesystemHelper.prototype._getFileEntry = function(filename, toCreate) {
   return this.filesystemReady.then(function(fs) {
     return new Promise(function(resolve, reject) {
       fs.root.getFile(filename, {
@@ -69,7 +69,7 @@ FilesystemHelper.prototype.getFileEntry = function(filename, toCreate) {
  * @param {type} fileEntry
  * @return {Promise}
  */
-FilesystemHelper.prototype.getFileObject = function(fileEntry) {
+FilesystemHelper.prototype._getFileObject = function(fileEntry) {
   return new Promise(function(resolve, reject) {
     fileEntry.file(function(file) {
       resolve(file);
@@ -81,8 +81,8 @@ FilesystemHelper.prototype.getFileObject = function(fileEntry) {
  * @param {type} filename
  * @return {FilesystemHelper.prototype@call;getFileEntry@call;then}
  */
-FilesystemHelper.prototype.getFileWriter = function(filename) {
-  return this.getFileEntry(filename, true).then(this.createFileWriter);
+FilesystemHelper.prototype._getFileWriter = function(filename) {
+  return this._getFileEntry(filename, true).then(this._createFileWriter);
 };
 
 /**
@@ -112,7 +112,7 @@ FilesystemHelper.prototype.checkIfFileExists = function(filename) {
  */
 FilesystemHelper.prototype.writeToTheFile = function(filename, content, 
   contentType) {
-  return this.getFileWriter(filename).then(function(fileWriter) {
+  return this._getFileWriter(filename).then(function(fileWriter) {
     return new Promise(function(resolve, reject) {
       fileWriter.onwriteend = function(e) {
         resolve(e);
@@ -135,7 +135,7 @@ FilesystemHelper.prototype.writeToTheFile = function(filename, content,
  * @return {FilesystemHelper.prototype@call;getFileEntry@call;then@call;then}
  */
 FilesystemHelper.prototype.getFileAs = function(filename, type) {
-  return this.getFileEntry(filename, true).then(this.getFileObject).then(
+  return this._getFileEntry(filename, true).then(this._getFileObject).then(
     function(file) {
     return new Promise(function(resolve, reject) {
       var reader = new FileReader();
@@ -169,7 +169,7 @@ FilesystemHelper.prototype.getFileAs = function(filename, type) {
  * @return {FilesystemHelper.prototype@call;getFileEntry@call;then}
  */
 FilesystemHelper.prototype.getFileURL = function(filename) {
-  return this.getFileEntry(filename, false).then(function(fe) {
+  return this._getFileEntry(filename, false).then(function(fe) {
     return fe.toURL();
   });
 };
