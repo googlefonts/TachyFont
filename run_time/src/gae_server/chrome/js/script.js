@@ -16,8 +16,6 @@
  * the License.
  */
 
-
-
 var global_start_time = Date.now();
 
 var RLE_OPS = {
@@ -157,5 +155,3 @@ function rleDecode(array_buffer) {
   // time_end('rle');
   return decodedData.buffer;
 }
-
-
