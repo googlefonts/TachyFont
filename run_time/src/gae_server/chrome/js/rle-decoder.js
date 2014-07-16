@@ -20,11 +20,11 @@
  * RLEDecoder class to decode RLE'd data
  * @constructor
  */
-function RLEDecoder(){}
+function RLEDecoder() {}
 
 /**
  * Defined RLE operations
- * @type {Object}  
+ * @type {Object}
  */
 RLEDecoder.RLE_OPS = {
     0xC0: 'copy',
@@ -43,7 +43,7 @@ RLEDecoder.MASKS = {
 /**
  * Interpret the byte code
  * @param {byte} op Byte code
- * @returns {Array} Array of byte cound and operation
+ * @return {Array} Array of byte cound and operation
  */
 RLEDecoder.byteOp = function(op) {
   var byteCount = op & RLEDecoder.MASKS.SIZE;
@@ -54,7 +54,7 @@ RLEDecoder.byteOp = function(op) {
 /**
  * Decode given array_buffer and return decoded data
  * @param {ArrayBuffer} array_buffer Encoded data
- * @returns {ArrayBuffer} Decoded data
+ * @return {ArrayBuffer} Decoded data
  */
 RLEDecoder.rleDecode = function(array_buffer) {
   // time_start('rle');
