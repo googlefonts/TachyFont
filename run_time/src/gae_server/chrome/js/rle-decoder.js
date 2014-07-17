@@ -92,6 +92,8 @@ RLEDecoder.rleDecode = function(array_buffer) {
       // https://code.google.com/p/chromium/issues/detail?id=225811
       var long_len = operationSize & ~3;
       i = 0;
+      // This loop tests for "less than" but increments by 4. We know this works
+      // because the long_len was forced down to a multiple of 4.
       for (; i < long_len; i += 4) {
         decodedData.setUint32(writeOffset, data.getUint32(readOffset));
         readOffset += 4;

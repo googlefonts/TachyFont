@@ -99,6 +99,7 @@ IncrementalFontLoader.prototype.determineCharacters_ = function(codes, text) {
   });
 };
 
+//var fetchCnt = 0;
 /**
  * Async XMLHttpRequest to given url using given method, data and header
  * @param {string} url Destination url
@@ -110,7 +111,8 @@ IncrementalFontLoader.prototype.determineCharacters_ = function(codes, text) {
  */
 IncrementalFontLoader.requestURL = function(url, method, data, headerParams, 
 responseType) {
-  // time_start('fetch ' + url)
+  //var cnt = fetchCnt++;
+  //timer.start('fetch ' + cnt + ' ' + url);
   return new Promise(function(resolve, reject) {
     var oReq = new XMLHttpRequest();
     oReq.open(method, url, true);
@@ -119,7 +121,7 @@ responseType) {
     oReq.responseType = responseType;
     oReq.onload = function(oEvent) {
       if (oReq.status == 200) {
-        // time_end('fetch ' + url)
+        //timer.end('fetch ' + cnt + ' ' + url);
         resolve(oReq.response);
       } else
         reject(oReq.status + ' ' + oReq.statusText);
@@ -155,7 +157,7 @@ IncrementalFontLoader.prototype.requestCharacters_ = function(chars) {
  * @private
  */
 IncrementalFontLoader.prototype.setTheFont_ = function(font_src, callback) {
-  font_src += ('?t=' + Date.now());
+  font_src += ('?t=' + Date.now()); // REMOVE THE TIMESTAMP FOR OBJECT/BLOB URLS
   console.log(font_src);
   var font = new FontFace(this.fontname, 'url(' + font_src + ')', {});
   document.fonts.add(font);
@@ -187,12 +189,21 @@ IncrementalFontLoader.prototype.getBaseFont_ = function(inFS, fs, filename) {
   } else {
     var that = this;
     return this.requestBaseFont_().
-            then(RLEDecoder.rleDecode).
-            then(that.sanitizeBaseFont_.bind(that)).
-            then(function(sanitized_base) {
-              return fs.writeToTheFile(filename, sanitized_base,
-                'application/octet-stream');
-            });
+    //then(function(data) {
+    //  timer.start('rleDecode');
+    //  return data;
+    //}).
+    then(RLEDecoder.rleDecode).
+    //then(function(data) {
+    //  timer.end('rleDecode');
+    //  timer.start('sanitizeBase');
+    //  return data;
+    //}).
+    then(that.sanitizeBaseFont_.bind(that)).
+    then(function(sanitized_base) {
+      //timer.end('sanitizeBase');
+      return sanitized_base;
+    });
   }
 
 };
@@ -296,15 +307,27 @@ IncrementalFontLoader.prototype.injectCharacters_ = function(baseFont,
  * @return {Promise} Promise to load base font
  */
 IncrementalFontLoader.prototype.getBaseToFileSystem = function(fs, callback) {
-  // time_start('getBaseToFileSystem');
   var filename = this.fontname + '.ttf';
   var that = this;
   var doesBaseExist = fs.checkIfFileExists(filename);
-  var baseFontPersisted = doesBaseExist.then(function(doesExist) {
-                                                return that.getBaseFont_(
-                                                        doesExist, fs,
-                                                filename);
-                                            });
+  var baseFontPersisted = doesBaseExist.then(
+    function(doesExist) {
+      return that.getBaseFont_(doesExist, fs, filename).
+      //then(function(sanitized_base) {
+      //  // Create a blob and blob URL and set the font.
+      //  return sanitized_base;
+      //}).
+      then(function(sanitized_base) {
+        //timer.start('write base to filesystem');
+        return fs.writeToTheFile(filename, sanitized_base,
+          'application/octet-stream');
+      }).
+      then(function(data) {
+        //timer.end('write base to filesystem');
+        return data;
+      });
+    });
+
 
   var fileURLReady = baseFontPersisted.
                        then(function() {
@@ -314,7 +337,6 @@ IncrementalFontLoader.prototype.getBaseToFileSystem = function(fs, callback) {
   return fileURLReady.
           then(function(fileURL) {
             that.setTheFont_(fileURL, callback);
-            // time_end('getBaseToFileSystem');
           });
 
 };

@@ -56,7 +56,10 @@ Timer.prototype.end = function(msg) {
   this.results.push('end ' + msg + ' at ' + cur_time + '\n');
   console.log('@@@ end ' + msg + ' at ' + cur_time);
   var info = this.timing_info[msg];
-  info['end'] = cur_time;
+  if (info)
+    info['end'] = cur_time;
+  else
+    console.log('**** missing start for "' + msg + '"');
 };
 
 /**
