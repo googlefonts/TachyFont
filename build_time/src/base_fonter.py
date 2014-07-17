@@ -66,7 +66,31 @@ class BaseFonter(object):
     filler = Filler(output)
     filler.fill(offset, size, '\x0e')
     filler.close()
-
+    
+  def __fill_char_strings(self,output):
+    self.font = TTFont(output)
+    assert 'CFF ' in self.font
+    cffTableOffset = self.font.reader.tables['CFF '].offset
+    cffTable = self.font['CFF '].cff
+    assert len(cffTable.fontNames) == 1
+    charStringOffset = cffTable[cffTable.fontNames[0]].rawDict['CharStrings']
+    inner_file = self.font.reader.file
+    inner_file.seek(cffTableOffset + charStringOffset)
+    rawIndexFile = Index(inner_file)
+    locations = rawIndexFile.offsets
+    off_format = '>L'
+    n = len(locations)
+    block_count = (n-1) / BaseFonter.LOCA_BLOCK_SIZE
+    for block_no in xrange(block_count):
+      lower =  block_no * BaseFonter.LOCA_BLOCK_SIZE
+      upper = (block_no+1) * BaseFonter.LOCA_BLOCK_SIZE
+      locations[lower:upper] = array.array(off_format,[locations[upper-1]] * BaseFonter.LOCA_BLOCK_SIZE)
+    else:
+      lower =  block_count * BaseFonter.LOCA_BLOCK_SIZE
+      upper = n
+      assert upper-lower <= BaseFonter.LOCA_BLOCK_SIZE
+      locations[lower:upper] =  array.array(off_format,[locations[-1]]*(upper-lower))
+    
 
 
   def __fill_loca(self, output):  # more advanced filling needed
@@ -117,6 +141,7 @@ class BaseFonter(object):
     self.font.close()
     if self.isCff:
       self.__end_char_strings(output)
+      self.__fill_char_strings(output)
     else:
       self.__zero_glyf(output)
       self.__fill_loca(output)
