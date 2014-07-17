@@ -31,11 +31,13 @@
   <script src="js/filesystem-helper.js"></script>
   <script src="js/rle-decoder.js"></script>
   <script src="js/incr-font-loader.js"></script>
+  <script src="js/time-utils.js"></script>
   <script>
     var TEMPORARY_FS_REQUEST_SIZE = 8 * 1024 * 1024;      
     var EMPTY_FS = true;
     var FONTNAME = 'nanum-brush';
     var TEXTS = [];
+    var timer = new Timer();
     var fontLoader = new IncrementalFontLoader(FONTNAME, true);
     var filesystem = new FilesystemHelper(
             FilesystemHelper.requestTemporaryFileSystem(
@@ -47,7 +49,9 @@
           elem.style.visibility = 'visible';
     };
 
+    //timer.start('get base to file system');
     var baseReady = fontLoader.getBaseToFileSystem(filesystem, makeVisible);
+    //timer.end('get base to file system');
   </script>
 
 </head>
@@ -196,7 +200,7 @@ http://qwed01...우낀세상02/18http://qwed01...우낀세상02/18최근에받�
                   filesystem, text, makeVisible);});
     });
     sequence.then(function() {
-      //display_timing(document.getElementById('timingTable'));
+      timer.display_timing(document.getElementById('timingTable'));
     });
   </script>
   
