@@ -52,18 +52,14 @@
 
 </head>
 
-<body  >
-  Webfonts from
-  <b>Google Webfont servers</b>.
+<body>
   <br>
-  <table id="timingTable" style="text-align: right;">
+  <table id="timingTable" style="text-align: right; font-size: 125%; font-family: sans-serif;">
     <tr>
       <th style="text-align: center;">Item</th>
-      <th style="text-align: center;">KBytes</th>
-      <th style="text-align: center;">Domain</th>
-      <th style="text-align: center;">Connect</th>
-      <th style="text-align: center;">ReqStart</th>
-      <th style="text-align: center;">Duration</th>
+      <th style="text-align: center;">Start</th>
+      <th style="text-align: center;">End</th>
+      <th style="text-align: center;">Length</th>
     </tr>
   </table>
 
@@ -198,6 +194,9 @@ http://qwed01...우낀세상02/18http://qwed01...우낀세상02/18최근에받�
     TEXTS.forEach(function(text) {
       sequence = sequence.then(function() {return fontLoader.incrUpdate(
                   filesystem, text, makeVisible);});
+    });
+    sequence.then(function() {
+      //display_timing(document.getElementById('timingTable'));
     });
   </script>
   
