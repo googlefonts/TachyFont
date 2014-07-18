@@ -20,6 +20,8 @@ from base_fonter import BaseFonter
 from compressor import Compressor
 from glyf_serializer import GlyfSerializer
 from cff_serializer import CffSerializer
+from font_info import FontInfo
+from base_header import BaseHeaderPrepare
 
 
 class Preprocess(object):
@@ -51,7 +53,9 @@ class Preprocess(object):
   def base_font(self):
     output = self.folder + '/base'
     baseFonter = BaseFonter(self.fontfile)
-    baseFonter.base(output)
+    header_dict = FontInfo.getInformation(self.fontfile, FontInfo.TAGS.keys())
+    bin_header = BaseHeaderPrepare.prepare(0, header_dict)
+    baseFonter.base(output,bin_header)
     compressor = Compressor(Compressor.LZMA_CMD)
     compressor.compress(output, output + '.xz')
     compressor = Compressor(Compressor.GZIP_CMD)
