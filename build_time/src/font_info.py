@@ -25,7 +25,7 @@ class FontInfo(object):
              },
           'VMOF': 
             {'desc':'Start of the VMTX table relative to font file start', 
-             'fn': InfoOps._not_implemented
+             'fn': InfoOps._getVMOF
              },
           'HMMC': 
             {'desc': 'Number of hmetrics in hmtx table', 

@@ -2,7 +2,7 @@ import struct
 
 class BaseHeaderPrepare(object):
   
-  MAGIC = b'\x0B\x50\x0A\xC0'
+  MAGIC = b'BSAC'
   
   @staticmethod
   def prepare(version,dict_of_objects):
@@ -18,6 +18,7 @@ class BaseHeaderPrepare(object):
       bin_head.extend(struct.pack('>H',running_offset))
       running_offset += len(data)
       bin_head_data.extend(data)
+    bin_head.extend(struct.pack('>L',len(bin_head)+len(bin_head_data)+4))
     bin_head.extend(bin_head_data)
     return bin_head
       
