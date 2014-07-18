@@ -280,30 +280,31 @@ IncrementalFontLoader.prototype.injectCharacters_ = function(baseFont,
     if (flags & IncrementalFontLoader.FLAGS.HAS_HMTX) {
         hmtx = bundleBinEd.getUint16_();
         baseBinEd.setMtxSideBearing(this.hmtxOffset, this.hmetricCount,
-        id, hmtx);
+            id, hmtx);
     }
     if (flags & IncrementalFontLoader.FLAGS.HAS_VMTX) {
         vmtx = bundleBinEd.getUint16_();
         baseBinEd.setMtxSideBearing(this.vmtxOffset, this.vmetricCount,
-        id, vmtx);
+            id, vmtx);
     }
     var offset = bundleBinEd.getUint32_();
     var length = bundleBinEd.getUint16_();
 
     if (!isCFF) {
       baseBinEd.setGlyphDataOffset(this.glyphDataOffset, this.offsetSize,
-      id, offset);
+        id, offset);
       var oldNextOne = baseBinEd.getGlyphDataOffset(this.glyphDataOffset,
       this.offsetSize, id + 1);
       var newNextOne = offset + length;
       var isChanged = oldNextOne != newNextOne;
       baseBinEd.setGlyphDataOffset(this.glyphDataOffset, this.offsetSize,
-      id + 1, newNextOne);
+        id + 1, newNextOne);
       var prev_id = id - 1;
       while (prev_id >= 0 && baseBinEd.getGlyphDataOffset(this.glyphDataOffset,
-      this.offsetSize, prev_id) > offset) {
+        this.offsetSize, prev_id) > offset) {
+
         baseBinEd.setGlyphDataOffset(this.glyphDataOffset, this.offsetSize,
-        prev_id, offset);
+            prev_id, offset);
         prev_id--;
       }
       /*

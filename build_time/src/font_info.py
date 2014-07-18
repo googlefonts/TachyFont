@@ -1,5 +1,6 @@
 from fontTools.ttLib import TTFont
 from info_ops import InfoOps
+import sys
 
 class FontInfo(object):
   
@@ -51,6 +52,6 @@ class FontInfo(object):
 
 
 if __name__ == '__main__':
-  fi = FontInfo('/usr/local/google/home/ahmetcelik/SourceSansPro-Regular.otf')
+  fi = FontInfo(sys.argv[1])
   bin_head = fi.getInformation(FontInfo.TAGS.keys())
   pass

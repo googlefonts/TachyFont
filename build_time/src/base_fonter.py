@@ -148,7 +148,7 @@ class BaseFonter(object):
     rle_font.encode()
     rle_font.write(output)
     
-  def __add_header(self,output,header_data):
+  def __add_header(self, output, header_data):
     base_file = open(output,'rb')
     all_base = base_file.read()
     base_file.close()
@@ -159,7 +159,7 @@ class BaseFonter(object):
     
     
 
-  def base(self, output ,header_data):
+  def base(self, output, header_data):
     """Call this function get base font Call only once, since given font will be closed
 
     """
