@@ -376,7 +376,7 @@ BinaryFontEditor.prototype.parseBaseHeader = function(font) {
         for (var i = 0; i < count; i++) {
             tag = this.readString_(4);
             tagOffset = this.getUint16_();
-            if (!BinaryFontEditor.TAG.hasOwnProperty(tag)) {//unknown tag
+            if (!BinaryFontEditor.TAGS.hasOwnProperty(tag)) {//unknown tag
                 throw 'Unknown Base Font Header TAG';
             }
             saveOffset = this.tell();
