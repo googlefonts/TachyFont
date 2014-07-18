@@ -13,3 +13,7 @@ is set. The first one (without a number) is the base/empty font at 1.4
 sec. The second one is the first block of glyphs at 1.6 sec (and so forth).
 The data in this experiment is only held in memory.
 
+Also added is the results for DroidSansFallback.ttf. The base load is 752
+ms and the initial glyphs load is 835 ms. It looks like sub 1 second view
+of the initial data.
+
