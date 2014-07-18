@@ -44,9 +44,6 @@ handlers:
   #resources and does not allow the application to decide. 
   #Therefore, we set mime_type for binary data as text.
   
-- url: /opentype_js/
-  static_dir: third_party/opentype_js/
-
 - url: /incremental_fonts/.*
   script: incremental_fonts.app
 
