@@ -58,6 +58,7 @@ def main(args):
   print('build closure')
   closure.dump_closure_map(cleanfile, output_folder)
 
+  print('start proprocess')
   preprocess = Preprocess(cleanfile, output_folder)
   print('build base')
   preprocess.base_font()
