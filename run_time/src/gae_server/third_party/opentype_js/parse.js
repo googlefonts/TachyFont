@@ -297,6 +297,52 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     }
 
 
+    // Parse a `CFF` INDEX array.
+    // An index array consists of a list of offsets, then a list of objects at those offsets.
+    function parseCFFIndex(data, start, skip) {
+        var offsets, objects, count, endOffset, offsetSize, objectOffset, pos, i;
+        offsets = [];
+        count = getCard16(data, start);
+        if (count !== 0) {
+            offsetSize = getByte(data, start + 2);
+            objectOffset = start + ((count + 1) * offsetSize) + 2;
+            pos = start + 3;
+            if(!skip){
+                for (i = 0; i < count + 1; i += 1) {
+                    offsets.push(getOffset(data, pos, offsetSize));
+                    pos += offsetSize;
+                }
+                // The total size of the index array is 4 header bytes + the value of the last offset.
+                endOffset = objectOffset + offsets[count];
+            }else{
+                endOffset = objectOffset + getOffset(data, pos+count*offsetSize, offsetSize);
+            }
+        } else {
+            endOffset = start + 2;
+        }
+        return { endOffset: endOffset , offs: offsets };
+    }
+
+    // Parse the CFF header.
+    function parseCFFHeader(data, start) {
+        var header = {};
+        header.formatMajor = getCard8(data, start);
+        header.formatMinor = getCard8(data, start + 1);
+        header.size = getCard8(data, start + 2);
+        header.offsetSize = getCard8(data, start + 3);
+        header.startOffset = start;
+        header.endOffset = start + 4;
+        return header;
+    }
+    // Parse the `CFF` table, which contains the glyph outlines in PostScript format.
+    function parseCFFTable(data, start, font) {
+        var header, nameIndex, topDictIndex;
+        header = parseCFFHeader(data, start );
+        nameIndex = parseCFFIndex(data, header.endOffset,true);
+        topDictIndex = parseCFFIndex(data, nameIndex.endOffset,false);    
+    }
+
+
     function Font() {
         this.supported = true;
         this.glyphs = [];
@@ -576,9 +622,10 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
         if (font.glyfOffset && font.locaOffset && font.hmtxOffset) {
 	       font.loca = parseLocaTable(data, font.locaOffset, font.numGlyphs, font.indexToLocFormat === 0);
             font.metrics = parseHmtxTable(data, font.hmtxOffset, font.numberOfHMetrics, font.numGlyphs);
-        } else if (font.cffOffset && font.hmtxOffset) {
-            font.metrics = parseHmtxTable(data, font.hmtxOffset, font.numberOfHMetrics, font.numGlyphs);
-           // parseCFFTable(data, cffOffset, font);
+        } else if (font.cffOffset ) {
+            if(font.hmtxOffset)
+                font.metrics = parseHmtxTable(data, font.hmtxOffset, font.numberOfHMetrics, font.numGlyphs);
+            parseCFFTable(data, cffOffset, font);
         } else {
             font.supported = false;
         }
