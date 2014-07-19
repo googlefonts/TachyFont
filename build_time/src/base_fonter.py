@@ -21,6 +21,8 @@ import array
 from rle_font import RleFont
 import os
 from compressor import Compressor
+import sys
+import struct
 
 
 
@@ -68,8 +70,58 @@ class BaseFonter(object):
     filler = Filler(output)
     filler.fill(offset, size, '\x0e')
     filler.close()
+    
 
+  def __segment_table(self, locations, off_format):
+    n = len(locations)
+    block_count = (n - 1) / BaseFonter.LOCA_BLOCK_SIZE
+    for block_no in xrange(block_count):
+      lower = block_no * BaseFonter.LOCA_BLOCK_SIZE
+      upper = (block_no + 1) * BaseFonter.LOCA_BLOCK_SIZE
+      locations[lower:upper] = array.array(off_format, [locations[upper - 1]] * BaseFonter.LOCA_BLOCK_SIZE)
+    else:
+      lower = block_count * BaseFonter.LOCA_BLOCK_SIZE
+      upper = n
+      assert upper - lower <= BaseFonter.LOCA_BLOCK_SIZE
+      locations[lower:upper] = array.array(off_format, [locations[-1]] * (upper - lower))
 
+  def __fill_char_strings(self,output):
+    self.font = TTFont(output)
+    assert 'CFF ' in self.font
+    cffTableOffset = self.font.reader.tables['CFF '].offset
+    cffTable = self.font['CFF '].cff
+    assert len(cffTable.fontNames) == 1
+    
+    charStringOffset = cffTable[cffTable.fontNames[0]].rawDict['CharStrings']
+    
+    inner_file = self.font.reader.file
+    
+    inner_file.seek(cffTableOffset + charStringOffset)
+    count = struct.unpack('>H',inner_file.read(2))[0]
+    offSize = struct.unpack('B',inner_file.read(1))[0]
+    
+    inner_file.seek(cffTableOffset + charStringOffset )
+    raw_index_file = Index(inner_file)
+    
+    locations = raw_index_file.offsets
+    assert (count+1) == len(locations)
+    
+    self.font.close()
+    
+    off_format = 'L'
+    self.__segment_table(locations, off_format)
+    
+    new_offsets = bytearray()
+    offSize = -offSize
+    for offset in locations:
+      bin_offset = struct.pack(">l", offset)[offSize:]
+      new_offsets.extend(bin_offset)
+    assert len(new_offsets) == (count+1) * -offSize
+    
+    font_file = open(output,'r+b')
+    font_file.seek(cffTableOffset + charStringOffset + 3)
+    font_file.write(new_offsets)
+    font_file.close()
 
   def __fill_loca(self, output):  # more advanced filling needed
     self.font = TTFont(output)
@@ -85,17 +137,7 @@ class BaseFonter(object):
     locations = array.array(off_format)
     font_file.seek(loca_off);
     locations.fromstring(font_file.read(loca_len))
-    n = len(locations)
-    block_count = (n-1) / BaseFonter.LOCA_BLOCK_SIZE
-    for block_no in xrange(block_count):
-      lower =  block_no * BaseFonter.LOCA_BLOCK_SIZE
-      upper = (block_no+1) * BaseFonter.LOCA_BLOCK_SIZE
-      locations[lower:upper] = array.array(off_format,[locations[upper-1]] * BaseFonter.LOCA_BLOCK_SIZE)
-    else:
-      lower =  block_count * BaseFonter.LOCA_BLOCK_SIZE
-      upper = n
-      assert upper-lower <= BaseFonter.LOCA_BLOCK_SIZE
-      locations[lower:upper] =  array.array(off_format,[locations[-1]]*(upper-lower))
+    self.__segment_table(locations, off_format)
     font_file.seek(loca_off);
     loca_data = locations.tostring()
     assert len(loca_data)==loca_len
@@ -136,8 +178,18 @@ class BaseFonter(object):
     rle_font.encode()
     rle_font.write(output)
     
+  def __add_header(self, output, header_data):
+    base_file = open(output,'rb')
+    all_base = base_file.read()
+    base_file.close()
+    base_with_head_file = open(output,'wb')
+    base_with_head_file.write(header_data)
+    base_with_head_file.write(all_base)
+    base_with_head_file.close()
+    
+    
 
-  def base(self, output, dump_tables):
+  def base(self, output, header_data, dump_tables):
     """Call this function get base font Call only once, since given font will be closed
     """
     self.__zero_mtx('hmtx')
@@ -146,9 +198,12 @@ class BaseFonter(object):
     self.font.close()
     if self.isCff:
       self.__end_char_strings(output)
+      self.__fill_char_strings(output)
     else:
       self.__zero_glyf(output)
       self.__fill_loca(output)
     if dump_tables:
       self.__dump_tables(output)
     self.__rle(output)
+    if header_data:
+      self.__add_header(output, header_data)
