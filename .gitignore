@@ -14,7 +14,6 @@ tmp/
 local.properties
 .settings/
 .loadpath
-build_time/src/*
 
 # External tool builders
 .externalToolBuilders/
