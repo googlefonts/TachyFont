@@ -83,7 +83,7 @@ class CffSerializer(object):
     cff_data_table_start = self.rawIndexFile.offsetBase
     offset_table = self.rawIndexFile.offsets
     for i in xrange(numGlyphs):
-      offset = offset_table[i] + cff_data_table_start - self.cffTableOffset
+      offset = offset_table[i]
       length = offset_table[i + 1] - offset_table[i]
       self.glyphs_data.append(self.rawIndexFile[i])
       args = [i]
