@@ -19,6 +19,8 @@ from filler import Filler
 from fontTools.cffLib import Index
 import array
 from rle_font import RleFont
+import os
+from compressor import Compressor
 
 
 
@@ -101,15 +103,42 @@ class BaseFonter(object):
     font_file.close()
 
     
+  def __dump_tables(self, output):
+    dump_folder = output + '_tables'
+    print('dump results in {0}'.format(dump_folder))
+    try:
+      os.makedirs(dump_folder)
+    except OSError as exception:
+      if exception.errno != errno.EEXIST:
+        raise
+
+    self.font = TTFont(output)
+    font_file = open(output,'r+b')
+    tables = self.font.reader.tables
+    for name in self.font.reader.tables:
+      table = tables[name]
+      offset = table.offset
+      length = table.length
+      print('{0}: offset={1}, len={2}'.format(name, offset, length))
+      table_file_name = dump_folder + '/' + name.replace('/', '_')
+      table_file = open(table_file_name,'w+b')
+      font_file.seek(offset);
+      table_file.write(font_file.read(length))
+      table_file.close()
+      compressor = Compressor(Compressor.GZIP_CMD)
+      compressor.compress(table_file_name, table_file_name + '.gz')
+
+    self.font.close()
+    
+
   def __rle(self, output):
     rle_font = RleFont(output)
     rle_font.encode()
     rle_font.write(output)
     
 
-  def base(self, output):
+  def base(self, output, dump_tables):
     """Call this function get base font Call only once, since given font will be closed
-
     """
     self.__zero_mtx('hmtx')
     self.__zero_mtx('vmtx')
@@ -120,4 +149,6 @@ class BaseFonter(object):
     else:
       self.__zero_glyf(output)
       self.__fill_loca(output)
+    if dump_tables:
+      self.__dump_tables(output)
     self.__rle(output)

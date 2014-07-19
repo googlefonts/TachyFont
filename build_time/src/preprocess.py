@@ -48,10 +48,10 @@ class Preprocess(object):
     dumper.dumpObject(metadata)
     dumper.close()
 
-  def base_font(self):
+  def base_font(self, dump_tables=False):
     output = self.folder + '/base'
     baseFonter = BaseFonter(self.fontfile)
-    baseFonter.base(output)
+    baseFonter.base(output, dump_tables)
     compressor = Compressor(Compressor.LZMA_CMD)
     compressor.compress(output, output + '.xz')
     compressor = Compressor(Compressor.GZIP_CMD)
