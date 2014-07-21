@@ -37,13 +37,28 @@ class BaseFonter(object):
     self.font = TTFont(fontfile)
     self.isCff = 'CFF ' in self.font
 
-  def __zero_mtx(self, mtx):
+  def __zero_mtx(self, mtx, output):
+    """Zero side bearings in mtx tables
+    Changed code, to not use the fontTools save function
+    """
     if mtx in self.font:
-      new = dict.fromkeys(self.font[mtx].metrics.keys())
-      for i, metric in self.font[mtx].metrics.iteritems():
-        new[i] = [metric[0], 0]
-      self.font[mtx].metrics.clear()
-      self.font[mtx].metrics = new
+      double_zero = '\0\0'
+      offset = self.font.reader.tables[mtx].offset
+      numGlyphs = self.font['maxp'].numGlyphs
+      if mtx == 'hmtx':
+        metricCount = self.font['hhea'].numberOfHMetrics
+      else:
+        metricCount = self.font['vhea'].numberOfVMetrics
+      fontfile_handler = open(output,'r+b')
+      fontfile_handler.seek(offset)
+      for i in xrange(numGlyphs):
+        if i < metricCount:
+          fontfile_handler.seek(2,1)
+          fontfile_handler.write(double_zero)
+        else:
+          fontfile_handler.write(double_zero)
+      fontfile_handler.close()
+          
 
   def __zero_glyf(self, output):
     self.font = TTFont(output)
@@ -193,10 +208,14 @@ class BaseFonter(object):
   def base(self, output, header_data, dump_tables):
     """Call this function get base font Call only once, since given font will be closed
     """
-    self.__zero_mtx('hmtx')
-    self.__zero_mtx('vmtx')
-    self.font.save(output, reorderTables=False)
+    of = open(output,'wb')
+    self.font.reader.file.seek(0)
+    of.write(self.font.reader.file.read())
+    of.close()
+    self.__zero_mtx('hmtx', output)
+    self.__zero_mtx('vmtx', output)
     self.font.close()
+    #self.font.save(output, reorderTables=False)
     if self.isCff:
       self.__end_char_strings(output)
       #self.__fill_char_strings(output)
