@@ -151,14 +151,16 @@ def prepare_bundle(request):
 
   (glyf_table, has_hmtx, has_vmtx, has_cff, header_size, entry_size ) = \
   _parse_glyf_table(table_bytes)
-  mtx_count = has_hmtx + has_vmtx
-  flag_mtx = has_hmtx | has_vmtx << 1  | has_cff
+  mtx_count = has_hmtx + (has_vmtx >> 1)
+  flag_mtx = has_hmtx | has_vmtx  | has_cff
   elapsed_time('open & parse glyph table')
 
   bundle_header = struct.pack('>HB', len(gids), flag_mtx)
   bundle_length = len(bundle_header)
   bundle_length += len(gids) * entry_size
+  
   for id in gids:
+    assert id < len(glyf_table)
     bundle_length += glyf_table[id][mtx_count + 2]
   bundle_bytes = bytearray(bundle_length)
   bundle_pos = 0
