@@ -111,7 +111,7 @@ def _parse_glyf_table(file_bytes):
   file_data = buffer(file_bytes[header_size:])
   return \
     _parse_array_fmt(fmt_entry, numGlyphs, file_data), flags & HAS_HMTX, \
-    flags & HAS_VMTX, flags & HAS_CFF,header_size, struct.calcsize(fmt_entry)
+    flags & HAS_VMTX, flags & HAS_CFF, header_size, struct.calcsize(fmt_entry)
 
 
 
