@@ -53,6 +53,7 @@ This file is used as to test cff font file loading
  </div>
   
   <script>
+  TEXTS[TEXTS.length]=document.body.innerText;
     TEXTS.forEach(function(text) {
         baseReady = baseReady.then(function() {
             return fontLoader.incrUpdate(filesystem, text, makeVisible);
