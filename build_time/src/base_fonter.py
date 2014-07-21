@@ -32,9 +32,9 @@ class BaseFonter(object):
   
   LOCA_BLOCK_SIZE = 64
   
-  RELATIVE_BEGIN_POS = 0
-  RELATIVE_CURRENT_POS = 1
-  RELATIVE_END_POS = 2
+  SEEK_BEGIN_POS = 0
+  SEEK_CURRENT_POS = 1
+  SEEK_END_POS = 2
 
   def __init__(self, fontfile):
     self.fontfile = fontfile
