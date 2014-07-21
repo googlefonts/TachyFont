@@ -23,11 +23,15 @@ class Compressor(object):
 
   LZMA_CMD = 'lzma -7 -c "%s" > "%s"'
   GZIP_CMD = 'gzip -9 - <"%s"  >"%s"'
+  GZIP_INPLACE_CMD = 'gzip -9 "%s"'
 
   def __init__(self, cmd):
     self.cmd = cmd
 
-  def compress(self, input, output):
-    status = system(self.cmd % (input, output))
+  def compress(self, input, output=None):
+    if (output):
+      status = system(self.cmd % (input, output))
+    else:
+      status = system(self.cmd % (input))
     if status != 0:
-      raise Exception('creating xz')
+      raise Exception('creating {0}/{1}'.format(input, output))
