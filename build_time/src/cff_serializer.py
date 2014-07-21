@@ -26,7 +26,7 @@ class CffSerializer(object):
   """Serializes 'cff' table for given font file
   """
   # formats
-  fmt_CffTable = '>HHL'
+  fmt_CffTable = '>HH'
   # flags
   NONE = 0
   HAS_HMTX = 1 << 0
@@ -75,15 +75,14 @@ class CffSerializer(object):
             CffSerializer.fmt_CffTable,
             (
                 self.has_hmtx_ | self.has_vmtx_ | CffSerializer.CLEAN | CffSerializer.CFF_FONT),
-            numGlyphs,
-            self.rawIndexFile.offsetBase - self.cffTableOffset))
+            numGlyphs))
     self.glyphs_info = []
     self.glyphs_data = []
     glyphOrder = self.font.getGlyphOrder()
     cff_data_table_start = self.rawIndexFile.offsetBase
     offset_table = self.rawIndexFile.offsets
     for i in xrange(numGlyphs):
-      offset = offset_table[i] + cff_data_table_start - self.cffTableOffset
+      offset = offset_table[i]
       length = offset_table[i + 1] - offset_table[i]
       self.glyphs_data.append(self.rawIndexFile[i])
       args = [i]

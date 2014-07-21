@@ -104,11 +104,6 @@ def _parse_glyf_table(file_bytes):
 
   header = buffer(file_bytes[0:header_size])
   (flags, numGlyphs) = struct.unpack(fmt_GlyphTable, header)
-  deltaOffset = -1
-  if flags & HAS_CFF:
-    fmt_delta_size = struct.calcsize('>L')
-    deltaOffset = struct.unpack('>L', file_bytes[header_size:header_size+fmt_delta_size])[0]
-    header_size += fmt_delta_size
   fmt_mtx = ''
   if flags & HAS_HMTX: fmt_mtx+='h'
   if flags & HAS_VMTX: fmt_mtx+='h'
@@ -116,7 +111,7 @@ def _parse_glyf_table(file_bytes):
   file_data = buffer(file_bytes[header_size:])
   return \
     _parse_array_fmt(fmt_entry, numGlyphs, file_data), flags & HAS_HMTX, \
-    flags & HAS_VMTX, flags & HAS_CFF, deltaOffset,header_size, struct.calcsize(fmt_entry)
+    flags & HAS_VMTX, flags & HAS_CFF, header_size, struct.calcsize(fmt_entry)
 
 
 
@@ -154,16 +149,18 @@ def prepare_bundle(request):
   data_bytes = bytearray(data.read())
   elapsed_time('read glyph data ({0} bytes)'.format(len(data_bytes)))
 
-  (glyf_table, has_hmtx, has_vmtx, has_cff, delta_offset,header_size, entry_size ) = \
+  (glyf_table, has_hmtx, has_vmtx, has_cff, header_size, entry_size ) = \
   _parse_glyf_table(table_bytes)
-  mtx_count = has_hmtx + has_vmtx
-  flag_mtx = has_hmtx | has_vmtx << 1  | has_cff
+  mtx_count = has_hmtx + (has_vmtx >> 1)
+  flag_mtx = has_hmtx | has_vmtx  | has_cff
   elapsed_time('open & parse glyph table')
 
   bundle_header = struct.pack('>HB', len(gids), flag_mtx)
   bundle_length = len(bundle_header)
   bundle_length += len(gids) * entry_size
+  
   for id in gids:
+    assert id < len(glyf_table)
     bundle_length += glyf_table[id][mtx_count + 2]
   bundle_bytes = bytearray(bundle_length)
   bundle_pos = 0
@@ -171,7 +168,10 @@ def prepare_bundle(request):
   bundle_bytes[bundle_pos:bundle_pos+length] = bundle_header
   bundle_pos += length
   elapsed_time('calc bundle length')
-
+  if has_cff:
+    delta = -1
+  else:
+    delta = 0
   # Copy in the data from table_bytes and data_bytes
   for id in gids:
     entry_offset = header_size + id * entry_size
@@ -179,7 +179,7 @@ def prepare_bundle(request):
         table_bytes[entry_offset:entry_offset + entry_size]
     bundle_pos += entry_size
 
-    data_offset = glyf_table[id][mtx_count + 1] - delta_offset - 1
+    data_offset = glyf_table[id][mtx_count + 1] + delta
     data_size = glyf_table[id][mtx_count + 2]
     bundle_bytes[bundle_pos:bundle_pos + data_size] = \
         data_bytes[data_offset:data_offset + data_size]

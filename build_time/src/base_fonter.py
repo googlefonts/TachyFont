@@ -121,7 +121,7 @@ class BaseFonter(object):
     
     font_file = open(output,'r+b')
     font_file.seek(cffTableOffset + charStringOffset + 3)
-    font_file.write(new_offsets)
+    font_file.write('\1' * ((count+1) * -offSize))
     font_file.close()
 
   def __fill_loca(self, output):  # more advanced filling needed
@@ -199,7 +199,7 @@ class BaseFonter(object):
     self.font.close()
     if self.isCff:
       self.__end_char_strings(output)
-      self.__fill_char_strings(output)
+      #self.__fill_char_strings(output)
     else:
       self.__zero_glyf(output)
       self.__fill_loca(output)

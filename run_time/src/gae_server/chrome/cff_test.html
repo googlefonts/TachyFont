@@ -31,25 +31,34 @@ This file is used as to test cff font file loading
   <script src="js/incr-font-loader.js"></script>
   <script src="js/time-utils.js"></script>
 <script>
+    var TEMPORARY_FS_REQUEST_SIZE = 8 * 1024 * 1024;
+    var EMPTY_FS = true;
+    var FONTNAME = 'cff';
+    var TEXTS = [];
+    var fontLoader = new IncrementalFontLoader(FONTNAME, false);
+    var filesystem = new FilesystemHelper(
+            FilesystemHelper.requestTemporaryFileSystem(
+            TEMPORARY_FS_REQUEST_SIZE), EMPTY_FS);
 
-//CFF = false;
-var FONTNAME = 'cff';
-EMPTY_FS = true;
-var TEXTS=[];
-var baseReady = getBaseToFileSystem(FONTNAME);
+    var makeVisible = function() {
+    };
+
+    var baseReady = fontLoader.getBaseToFileSystem(filesystem, makeVisible);
 </script>
 </head>
 <body>
 
- <div  style="font-family: cff;">
+ <div id="abc" style="font-family: cff;">
     ABCDEFGHIJKLMNOPQRSTUVWXYZ
  </div>
   
   <script>
-   TEXTS[TEXTS.length]=document.body.innerText;
-   TEXTS.forEach(function(text){
-        baseReady = baseReady.then(function(){return incrUpdate(FONTNAME,text);});
-   });
+    TEXTS[TEXTS.length] = document.body.innerText;
+    TEXTS.forEach(function(text) {
+        baseReady = baseReady.then(function() {
+            return fontLoader.incrUpdate(filesystem, text, makeVisible);
+        });
+    });
   </script>
   
 
