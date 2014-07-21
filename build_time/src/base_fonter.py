@@ -18,6 +18,7 @@ from fontTools.ttLib import TTFont
 from filler import Filler
 from fontTools.cffLib import Index
 import array
+import errno
 from rle_font import RleFont
 import os
 from compressor import Compressor
@@ -167,8 +168,8 @@ class BaseFonter(object):
       font_file.seek(offset);
       table_file.write(font_file.read(length))
       table_file.close()
-      compressor = Compressor(Compressor.GZIP_CMD)
-      compressor.compress(table_file_name, table_file_name + '.gz')
+      compressor = Compressor(Compressor.GZIP_INPLACE_CMD)
+      compressor.compress(table_file_name)
 
     self.font.close()
     
