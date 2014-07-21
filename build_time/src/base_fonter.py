@@ -53,11 +53,11 @@ class BaseFonter(object):
         metricCount = self.font['hhea'].numberOfHMetrics
       else:
         metricCount = self.font['vhea'].numberOfVMetrics
-      fontfile_handler = open(output,'r+b')
+      fontfile_handler = open(output, 'r+b')
       fontfile_handler.seek(offset)
       for i in xrange(numGlyphs):
         if i < metricCount:
-          fontfile_handler.seek(2,BaseFonter.RELATIVE_CURRENT_POS)
+          fontfile_handler.seek(2, BaseFonter.RELATIVE_CURRENT_POS)
           fontfile_handler.write(double_zero)
         else:
           fontfile_handler.write(double_zero)
@@ -212,7 +212,7 @@ class BaseFonter(object):
   def base(self, output, header_data, dump_tables):
     """Call this function get base font Call only once, since given font will be closed
     """
-    of = open(output,'wb')
+    of = open(output, 'wb')
     self.font.reader.file.seek(0)
     of.write(self.font.reader.file.read())
     of.close()
