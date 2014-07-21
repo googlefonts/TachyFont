@@ -31,6 +31,10 @@ class BaseFonter(object):
   """Create base font for the given font file"""
   
   LOCA_BLOCK_SIZE = 64
+  
+  RELATIVE_BEGIN_POS = 0
+  RELATIVE_CURRENT_POS = 1
+  RELATIVE_END_POS = 2
 
   def __init__(self, fontfile):
     self.fontfile = fontfile
@@ -53,7 +57,7 @@ class BaseFonter(object):
       fontfile_handler.seek(offset)
       for i in xrange(numGlyphs):
         if i < metricCount:
-          fontfile_handler.seek(2,1)
+          fontfile_handler.seek(2,BaseFonter.RELATIVE_CURRENT_POS)
           fontfile_handler.write(double_zero)
         else:
           fontfile_handler.write(double_zero)
