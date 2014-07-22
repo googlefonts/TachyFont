@@ -65,23 +65,17 @@ IncrementalFont.createManager = function(fontname) {
       var base_font = base_font_pre_sanitize;
       return base_font;
     }).
+    then(function(base_font_pre_sanitize) {
+      console.log('for debug: get some ttf font data so we can test the blob url');
+      return IncrementalFontLoader.requestURL(
+        '../fonts/nanum-brush/NanumBrushScript-Regular.ttf',
+        'GET', null, {}, 'arraybuffer')
+    }).
     then(function(base_font) {
-      console.log('need to set the @font-face');
-//      /**
-//       * Add and load the font
-//       * @param {string} font_src Data url of the font
-//       * @param {function()} callback Action to take when font is loaded
-//       * @private
-//       */
-//      IncrementalFontLoader.prototype.setTheFont_ = function(font_src, callback) {
-//        font_src += ('?t=' + Date.now()); // REMOVE THE TIMESTAMP FOR OBJECT/BLOB URLS
-//        console.log(font_src);
-//        var font = new FontFace(this.fontname, 'url(' + font_src + ')', {});
-//        document.fonts.add(font);
-//        font.load().then(callback);
-//      };
-
-      return data;
+      console.log('Set the @font-face');
+      IncrementalFont.obj_.setFont_(fontname, base_font,
+        'application/x-font-ttf');
+      return base_font;
     });
   });
   // Start the operation to get the list of already fetched chars.
@@ -121,6 +115,23 @@ IncrementalFont.obj_ = function(fontname) {
   this.getCharList = null;
 };
 
+
+/**
+ * Add the @font-face rule
+ * @param {string} fontname The CSS fontname
+ * @param {Array} data The font data.
+ * @param {string} mime_type The mime type of the font.
+ * @private
+ */
+IncrementalFont.obj_.setFont_ = function(fontname, data, mime_type) {
+  console.log(data);
+  var blob = new Blob([data], { type: mime_type });
+  var blobUrl = window.URL.createObjectURL(blob);
+  console.log('fontname = ' + fontname);
+  var font = new FontFace(fontname, 'url(' + blobUrl + ')', {});
+  document.fonts.add(font);
+  font.load();
+};
 
 
 /**
