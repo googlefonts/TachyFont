@@ -43,36 +43,33 @@ IncrementalFont.createManager = function(fontname) {
   incrFontMgr.getIDB_ = incrFontMgr.openIndexedDB(fontname);
   // Do the next two operations in parallel.
   // Start the operation to get the base.
-  incrFontMgr.getBase = incrFontMgr.getIDB_.then(function(idb) {
-    console.log('Need to get base.');
-//    debugger; // for development only.
-    return incrFontMgr.getData_('base').
-    catch(function(e) {
-      console.log('need to fetch the data');
-      debugger;
-      return IncrementalFontLoader.requestURL('/fonts/' + incrFontMgr.fontname + 
-        '/base', 'GET', null, {}, 'arraybuffer').
-      then(function(data) {
-        console.log('fetched the data');
-        incrFontMgr.base_dirty = true;
-        return data;
-      });
-    }).
+  console.log('Get the base.');
+  incrFontMgr.getBase = incrFontMgr.getData_('base').
+  catch(function(e) {
+    console.log('Need to fetch the data');
+    return IncrementalFontLoader.requestURL('/fonts/' + incrFontMgr.fontname + 
+      '/base', 'GET', null, {}, 'arraybuffer').
     then(function(data) {
-      debugger;
+      console.log('fetched the data');
+      incrFontMgr.base_dirty = true;
       return data;
     });
   });
-  // ONLY COMMENTED OUT WHILE DEBUGGING getData_
-//  // Start the operation to get the list of already fetched chars.
-//  incrFontMgr.getCharList = incrFontMgr.getIDB_.then(function(idb) {
-//    console.log('Need to get the list of already fetched chars.');
-//    debugger; // for development only.
-//    return incrFontMgr.getData_('base').
-//    then(function(data) {
-//      return data;
-//    });
-//  });
+  // Start the operation to get the list of already fetched chars.
+  console.log('Need to get the list of already fetched chars.');
+  incrFontMgr.getCharList = incrFontMgr.getData_('charList').
+  then(function(data) {
+    debugger;
+    return data;
+  }).
+  catch(function(e) {
+    console.log('no charList');
+    incrFontMgr.charList_dirty = true;
+    return {};
+  }).
+  then(function(data) {
+    return data;
+  });
   return incrFontMgr;
 };
 
@@ -199,29 +196,9 @@ IncrementalFont.obj_.prototype.getData_ = function(dataname) {
       };
       console.log('after define cursor onerror');
     });
-
-  }).
-//  catch(function(e) {
-//    console.log('need to fetch the data');
-//    debugger;
-//    console.log('REQUEST URL NEEDS TO MOVE OUT OF THIS GENERIC FUNCTION!!!');
-//    return IncrementalFontLoader.requestURL('/fonts/' + that.fontname + 
-//      '/base', 'GET', null, {}, 'arraybuffer').
-//    then(function(data) {
-//      console.log('fetched the data');
-//      that.data = data;
-//      that.base_dirty = true;
-//      return data;
-//    });
-//  }).
-  then(function(data) {
-    console.log('cursor onsuccess: got data = ' + data);
-    return data;
   });
   return getData;
-
 };
-
 
 
 /**
@@ -237,78 +214,3 @@ IncrementalFont.obj_.prototype.updateData = function(dataname) {
     console.log('no need to updateData');
   }
 };
-
-
-/**
- * Update the font.
- * @param {string} fontname The name of the font.
- * @param {string} data The font data (binary).
- * @return {Promise} Promise to return filesystem
- */
-
-//**
-//* IncrFontIDB - A namespace.
-//*/
-//function IncrFontIDB() {
-//}
-//
-//
-///**
-//* Get the fontDB.
-//* @param {string} fontname The name of the font.
-//* @return {Promise} The font DB.
-//*/
-//IncrFontIDB.getFontDB = function(fontname) {
-//var fdb = new IncrFontIDB.obj_(fontname);
-//
-//var getFdb = new Promise(function(resolve, reject) {
-//  var dbOpen = indexedDB.open(fdb.storeName + fontname, fdb.version);
-//
-//  dbOpen.onsuccess = function(e) {
-//    fdb.db = e.target.result;
-//    console.log('open storeName "' + fdb.storeName + '"');
-//    resolve(fdb);
-//  };
-//  dbOpen.onerror = function(e) {
-//    console.log('!!! IncrFontIDB.obj_ "' + fdb.fontname + '": ' + e.value);
-//    debugger;
-//    reject(e);
-//  };
-//
-//  // Will get called when the version changes.
-//  dbOpen.onupgradeneeded = function(e) {
-//    var db = e.target.result;
-//    console.log('onupgradeneeded');
-//    e.target.transaction.onerror = function(e) {
-//      console.log('!!! onupgradeneeded: ' + e.value);
-//      debugger;
-//      reject(e);
-//    }
-//    console.log('before delete');
-//    if (db.objectStoreNames.contains(fdb.storeName)) {
-//      console.log('onupgradeneeded');
-//      db.deleteObjectStore(fdb.storeName);
-//    }
-//    console.log('before create');
-//    var store = db.createObjectStore(fdb.storeName,
-//      { keypath: 'fontname' });
-//    console.log('after create');
-//  };
-//}).then(function(fdb) {
-//  // TODO(bstell) timing call
-//  return fdb;
-//});
-//return getFdb;
-//};
-
-///**
-//* Get a part of the font.
-//* @param {string} dataname The name of the font data to get.
-//* @return {Promise} Promise to return the data.
-//*/
-//IncrFontIDB.obj_.prototype.getBase = function(dataname) {
-//var that = this;
-//console.log('getData');
-//};
-
-
