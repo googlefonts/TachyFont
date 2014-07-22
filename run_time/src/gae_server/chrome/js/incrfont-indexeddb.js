@@ -30,14 +30,13 @@ function IncrementalFont() {
  * @return {Object} The incremental font object.
  */
 // 1. Create an incremental font manager object.
-// 2. Open the IndexedDB.
-// 3. Start the operation to get the base.
-// 4. Start the operation to get the list of fetched/not-fetched chars.
-// TODO(bstell) need to code the following.
+// 2. Create a class using the @font-face rule and with visibility=hidden
+// 3. Open the IndexedDB.
+// 4. Start the operation to get the base.
+// 5. Start the operation to get the list of fetched/not-fetched chars.
+// 6ODO(bstell) need to code the following.
 // 5. Create a @font-face rule.
-// 6. Create a class using the @font-face rule and with visibility=hidden
-// 7. When the base is available:
-//    7.1. Set the class visibility=visible 
+// 7. When the base is available set the class visibility=visible 
 IncrementalFont.createManager = function(fontname) {
   var incrFontMgr = new IncrementalFont.obj_(fontname);
   incrFontMgr.getIDB_ = incrFontMgr.openIndexedDB(fontname);
@@ -49,9 +48,39 @@ IncrementalFont.createManager = function(fontname) {
     console.log('Need to fetch the data');
     return IncrementalFontLoader.requestURL('/fonts/' + incrFontMgr.fontname + 
       '/base', 'GET', null, {}, 'arraybuffer').
-    then(function(data) {
-      console.log('fetched the data');
+    then(function(xfer_bytes) {
+      console.log('fetched the raw base');
       incrFontMgr.base_dirty = true;
+      console.log('need to parseBaseHeader_');
+      var base_font_rle = xfer_bytes;
+      return base_font_rle;
+    }).
+    then(function(base_font_rle) {
+      console.log('need to RLEDecoder.rleDecode');
+      var base_font_pre_sanitize = base_font_rle;
+      return base_font_pre_sanitize;
+    }).
+    then(function(base_font_pre_sanitize) {
+      console.log('need to sanitize');
+      var base_font = base_font_pre_sanitize;
+      return base_font;
+    }).
+    then(function(base_font) {
+      console.log('need to set the @font-face');
+//      /**
+//       * Add and load the font
+//       * @param {string} font_src Data url of the font
+//       * @param {function()} callback Action to take when font is loaded
+//       * @private
+//       */
+//      IncrementalFontLoader.prototype.setTheFont_ = function(font_src, callback) {
+//        font_src += ('?t=' + Date.now()); // REMOVE THE TIMESTAMP FOR OBJECT/BLOB URLS
+//        console.log(font_src);
+//        var font = new FontFace(this.fontname, 'url(' + font_src + ')', {});
+//        document.fonts.add(font);
+//        font.load().then(callback);
+//      };
+
       return data;
     });
   });
