@@ -25,7 +25,6 @@
 function IncrementalFontLoader(fontname, isTTF) {
   this.fontname = fontname;
   this.isTTF = isTTF;
-
 }
 
 /**
