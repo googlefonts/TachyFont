@@ -38,7 +38,7 @@
     var FONTNAME = 'noto-sans-cjk-thin';
     var TEXTS = [];
     var timer = new Timer();
-    var fontLoader = new IncrementalFontLoader(FONTNAME, true);
+    var fontLoader = new IncrementalFontLoader(FONTNAME, false);
     var filesystem = new FilesystemHelper(
             FilesystemHelper.requestTemporaryFileSystem(
             TEMPORARY_FS_REQUEST_SIZE), EMPTY_FS);
