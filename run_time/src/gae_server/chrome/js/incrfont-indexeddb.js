@@ -43,12 +43,22 @@ IncrementalFont.createManager = function(fontname) {
   // Do the next two operations in parallel.
   // Start the operation to get the base.
   console.log('Get the base.');
+  var style;
   incrFontMgr.getBase = incrFontMgr.getData_('base').
   catch(function(e) {
     console.log('Need to fetch the data');
     return IncrementalFontLoader.requestURL('/fonts/' + incrFontMgr.fontname + 
       '/base', 'GET', null, {}, 'arraybuffer').
-    then(function(xfer_bytes) {
+      then(function(xfer_bytes) {
+        style = document.createElement('style');
+        // WebKit hack
+        style.appendChild(document.createTextNode(''));
+        document.head.appendChild(style);
+        style.sheet.insertRule('.' + fontname + 
+          ' { font-family: nanum-brush; visibility: hidden; }', 0);
+        return xfer_bytes;
+      }).
+      then(function(xfer_bytes) {
       console.log('fetched the raw base');
       incrFontMgr.base_dirty = true;
       console.log('need to parseBaseHeader_');
@@ -75,6 +85,19 @@ IncrementalFont.createManager = function(fontname) {
       console.log('Set the @font-face');
       IncrementalFont.obj_.setFont_(fontname, base_font,
         'application/x-font-ttf');
+      console.log('make the class visible');
+      // style.sheet.rules.length
+      style.sheet.deleteRule(0);
+      style.sheet.insertRule('.' + fontname + 
+        ' { font-family: nanum-brush; visibility: visible; }', 0);
+
+//      console.log('make the elements with this class visible');
+//      var elements = document.getElementsByClassName(fontname);
+//      for (var i in elements) {
+//        if (elements.hasOwnProperty(i)) {
+//          elements[i].style.visibility = 'visible';
+//        }
+//      }
       return base_font;
     });
   });
