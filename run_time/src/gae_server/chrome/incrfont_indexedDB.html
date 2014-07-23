@@ -1,0 +1,61 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<!--
+  Copyright 2014 Google Inc. All rights reserved.
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>Incremental Fonts: Droid Sans Fallback</title>
+
+  <script src="js/time-utils.js"></script>
+  <script src="js/incr-font-loader.js"></script>
+  <script src="js/incrfont-indexeddb.js"></script>
+  <script>
+    /* This single line of code does the following:
+     * 1. Create a class using the @font-face rule and with visibility=hidden
+     * 2. Create an incremental font manager object.
+     * 3. Open the IndexedDB.
+     * 4. Start the operation to get the base.
+     * 5. Start the operation to get the list of fetched/not-fetched chars.
+     * 6. Create a @font-face rule (need the data to make the blob URL).
+     * 7. When the base is available set the class visibility=visible
+     */
+    var nanumBrushIFM = IncrementalFont.createManager('nanum-brush');
+  </script>
+  <link rel="stylesheet" type="text/css" href="css/table_styles.css">
+
+</head>
+
+<body>
+  <br>
+  <table id="timingTable" style="text-align: right; font-size: 125%; 
+    font-family: sans-serif;">
+    <tr>
+      <th style="text-align: center;">Item</th>
+      <th style="text-align: center;">Start</th>
+      <th style="text-align: center;">End</th>
+      <th style="text-align: center;">Length</th>
+    </tr>
+  </table>
+  By font-family: <span style='font-family: "nanum-brush";'>
+    abcdefghijklmnop
+  </span><br>
+  By class: <span class='nanum-brush'>
+    abcdefghijklmnop
+  </span><br>
+</body>
+</html>
+  
