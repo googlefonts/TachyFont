@@ -25,14 +25,16 @@
 function IncrementalFontLoader(fontname, isTTF) {
   this.fontname = fontname;
   this.isTTF = isTTF;
-  this.metaname = fontname.replace('-','_') + '_metadata';
+  this.metaname = fontname.replace(/-/g, '_') + '_metadata';
+  this.dirty = false;
+  this.newChars = false;
   window.IncrementalFonts = window.IncrementalFonts || {};
   var fontmetaobj;
-  try{
+  try {
     fontmetaobj = eval(this.metaname);
-  }catch(e){
-    if(e instanceof ReferenceError)
-      fontmetaobj = {idxExist:false};
+  }catch (e) {
+    if (e instanceof ReferenceError)
+      fontmetaobj = {idxExist: false};
     else
       throw e;
   }
@@ -94,7 +96,8 @@ IncrementalFontLoader.prototype.readPersistedCharacters_ = function(idx_file,
               return {0: 0};// always request .notdef
             }
           });
-    */console.log('len '+window.IncrementalFonts[this.fontname].chars.length);
+
+    */
     return window.IncrementalFonts[this.fontname].chars;
 };
 
@@ -170,7 +173,6 @@ IncrementalFontLoader.prototype.requestCharacters_ = function(chars) {
  * @private
  */
 IncrementalFontLoader.prototype.setTheFont_ = function(font_src, callback) {
-  //font_src += ('?t=' + Date.now()); // REMOVE THE TIMESTAMP FOR OBJECT/BLOB URLS
   console.log(font_src);
   var font = new FontFace(this.fontname, 'url(' + font_src + ')', {});
   document.fonts.add(font);
@@ -198,6 +200,7 @@ IncrementalFontLoader.prototype.requestBaseFont_ = function() {
  */
 IncrementalFontLoader.prototype.getBaseFont_ = function(inFS, fs, filename) {
   if (inFS) {
+    //need to return array-buffer in case of insertion of new chars
     return Promise.resolve();
   } else {
     var that = this;
@@ -248,6 +251,7 @@ IncrementalFontLoader.prototype.parseBaseHeader_ = function(baseFont) {
 IncrementalFontLoader.prototype.sanitizeBaseFont_ = function(baseFont) {
 
   if (this.isTTF) {
+    this.dirty = true;
     var binEd = new BinaryFontEditor(new DataView(baseFont), 0);
     var glyphOffset = this.glyphOffset;
     var glyphCount = this.numGlyphs;
@@ -278,7 +282,7 @@ IncrementalFontLoader.prototype.sanitizeBaseFont_ = function(baseFont) {
 IncrementalFontLoader.prototype.injectCharacters_ = function(baseFont,
   glyphData) {
   // time_start('inject')
-
+  this.dirty = true;
   var bundleBinEd = new BinaryFontEditor(new DataView(glyphData), 0);
   var baseBinEd = new BinaryFontEditor(new DataView(baseFont), 0);
 
@@ -357,17 +361,26 @@ IncrementalFontLoader.prototype.getBaseToFileSystem = function(fs, callback) {
       //}).
       then(function(sanitized_base) {
         //timer.start('write base to filesystem');
-        that.baseFont = sanitized_base;
-        var fileURL = URL.createObjectURL(new Blob([sanitized_base], {type: 'application/font-sfnt'}));
-        that.setTheFont_(fileURL, callback);
+        if (!doesBaseExist) {
+          that.baseFont = sanitized_base;
+          var fileURL = URL.createObjectURL(new Blob([sanitized_base],
+            {type: 'application/font-sfnt'}));
+          that.setTheFont_(fileURL, callback);
+        }else {
+          var fileURL = 'filesystem:' + window.location.protocol + '//' +
+                  window.location.host + '/temporary/' + filename + '?t=' +
+                  Date.now();
+          that.setTheFont_(fileURL, callback);
+        }
+
         //return fs.writeToTheFile(filename, sanitized_base,
         //  'application/octet-stream');
-      })/*.
+      });/*.
       then(function(data) {
         //timer.end('write base to filesystem');
         return data;
-      })*/;
-    
+      })*/
+
 
 
   /*var fileURLReady = baseFontPersisted.
@@ -399,7 +412,7 @@ IncrementalFontLoader.prototype.requestGlyphs = function(fs, text) {
     injectedChars = that.readPersistedCharacters_(INDEXFILENAME, fs);
   else
     injectedChars = {};
-                                        
+
 
   var charsDetermined = that.determineCharacters_(injectedChars, text);
 
@@ -407,7 +420,13 @@ IncrementalFontLoader.prototype.requestGlyphs = function(fs, text) {
   var indexUpdated = charsDetermined.
                         then(function(results) {
                           if (results.length) {
-                            window.IncrementalFonts[that.fontname].chars = injectedChars;
+                            that.newChars = true;
+                            window.IncrementalFonts[that.fontname].chars =
+                                    injectedChars;
+                            window.IncrementalFonts[that.fontname].idxExist =
+                                    true;
+                          }else {
+                            that.newChars = false;
                           }
                         });
 
@@ -438,9 +457,10 @@ IncrementalFontLoader.prototype.injectBundle = function(fs, bundle, callback) {
   var charsInjected;
   if (bundle != null) {
     charsInjected = that.injectCharacters_(that.baseFont, bundle);
-    var fileURL = URL.createObjectURL(new Blob([charsInjected], {type: 'application/font-sfnt'}));
+    var fileURL = URL.createObjectURL(new Blob([charsInjected],
+        {type: 'application/font-sfnt'}));
     that.setTheFont_(fileURL, callback);
-  } 
+  }
 
   return Promise.resolve();
 };
@@ -464,4 +484,30 @@ IncrementalFontLoader.prototype.incrUpdate = function(fs, text, callback) {
             that.injectBundle(fs, bundle, callback);
             // time_end('incrUpdate')
           });
+};
+
+/**
+ * Persist the current base font and metadata about to filesystem
+ * @param {Promise} ready Promise to indicate it is ready to persist
+ * @param {FilesystemHelper} fs Filesystem to be written
+ * @return {Promise} Promise to persist state if changed
+ */
+IncrementalFontLoader.prototype.persistState = function(ready, fs) {
+
+   var that = this;
+
+    var metaUpdated = ready.then(function() {
+      if (that.newChars)
+        fs.writeToTheFile(that.metaname + '.js', 'var ' + that.metaname +
+            ' = ' + JSON.stringify(window.IncrementalFonts[that.fontname]) +
+            ';', 'text/plain');
+    });
+
+    var baseUpdated = ready.then(function() {
+      if (that.dirty)
+      fs.writeToTheFile(that.fontname + '.ttf', that.baseFont,
+        'application/font-sfnt');
+    });
+
+    return Promise.all([metaUpdated, baseUpdated]);
 };
