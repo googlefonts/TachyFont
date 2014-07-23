@@ -57,10 +57,7 @@ IncrementalFont.createManager = function(fontname) {
     console.log('Need to fetch the data');
     return IncrementalFontLoader.requestURL('/fonts/' + incrFontMgr.fontname + 
       '/base', 'GET', null, {}, 'arraybuffer').
-      then(function(xfer_bytes) {
-        return xfer_bytes;
-      }).
-      then(function(xfer_bytes) {
+    then(function(xfer_bytes) {
       console.log('fetched the raw base');
       incrFontMgr.base_dirty = true;
       console.log('need to parseBaseHeader_');
