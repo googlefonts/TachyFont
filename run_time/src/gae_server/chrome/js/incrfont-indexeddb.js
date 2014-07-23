@@ -26,36 +26,38 @@ function IncrementalFont() {
 
 /**
  * Get the incremental font object.
+ * This class does the following:
+ * 1. Create a class using the @font-face rule and with visibility=hidden
+ * 2. Create an incremental font manager object.
+ * 3. Open the IndexedDB.
+ * 4. Start the operation to get the base.
+ * 5. Start the operation to get the list of fetched/not-fetched chars.
+ * 6. Create a @font-face rule (need the data to make the blob URL).
+ * 7. When the base is available set the class visibility=visible
+ * 
  * @param {string} fontname The name of the font.
  * @return {Object} The incremental font object.
  */
-// 1. Create an incremental font manager object.
-// 2. Create a class using the @font-face rule and with visibility=hidden
-// 3. Open the IndexedDB.
-// 4. Start the operation to get the base.
-// 5. Start the operation to get the list of fetched/not-fetched chars.
-// 6ODO(bstell) need to code the following.
-// 5. Create a @font-face rule.
-// 7. When the base is available set the class visibility=visible 
 IncrementalFont.createManager = function(fontname) {
   var incrFontMgr = new IncrementalFont.obj_(fontname);
   incrFontMgr.getIDB_ = incrFontMgr.openIndexedDB(fontname);
   // Do the next two operations in parallel.
   // Start the operation to get the base.
+  console.log('Create a class with visibility: hidden.');
+  var style = document.createElement('style');
+  //// WebKit hack
+  //style.appendChild(document.createTextNode(''));
+  document.head.appendChild(style);
+  style.sheet.insertRule('.' + fontname + 
+    ' { font-family: nanum-brush; visibility: hidden; }', 0);
+
   console.log('Get the base.');
-  var style;
   incrFontMgr.getBase = incrFontMgr.getData_('base').
   catch(function(e) {
     console.log('Need to fetch the data');
     return IncrementalFontLoader.requestURL('/fonts/' + incrFontMgr.fontname + 
       '/base', 'GET', null, {}, 'arraybuffer').
       then(function(xfer_bytes) {
-        style = document.createElement('style');
-        // WebKit hack
-        style.appendChild(document.createTextNode(''));
-        document.head.appendChild(style);
-        style.sheet.insertRule('.' + fontname + 
-          ' { font-family: nanum-brush; visibility: hidden; }', 0);
         return xfer_bytes;
       }).
       then(function(xfer_bytes) {
@@ -90,14 +92,6 @@ IncrementalFont.createManager = function(fontname) {
       style.sheet.deleteRule(0);
       style.sheet.insertRule('.' + fontname + 
         ' { font-family: nanum-brush; visibility: visible; }', 0);
-
-//      console.log('make the elements with this class visible');
-//      var elements = document.getElementsByClassName(fontname);
-//      for (var i in elements) {
-//        if (elements.hasOwnProperty(i)) {
-//          elements[i].style.visibility = 'visible';
-//        }
-//      }
       return base_font;
     });
   });
