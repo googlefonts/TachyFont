@@ -21,6 +21,8 @@ api_version: 1
 
 threadsafe: true
 
+default_expiration: "10s"
+
 libraries:
 - name: webapp2
   version: latest
