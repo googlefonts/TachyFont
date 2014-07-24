@@ -27,6 +27,7 @@
   }
 </style>
   <link rel="stylesheet" type="text/css" href="css/table_styles.css">
+  <script src="filesystem:http:/ilffwc.appspot.com/temporary/noto_sans_cjk_thin_metadata.js"></script>
   <script src="js/binary-font-editor.js"></script>
   <script src="js/filesystem-helper.js"></script>
   <script src="js/rle-decoder.js"></script>
@@ -202,6 +203,7 @@ http://qwed01...우낀세상02/18http://qwed01...우낀세상02/18최근에받�
     sequence.then(function() {
       timer.display_timing(document.getElementById('timingTable'));
     });
+    fontLoader.persistState(sequence,filesystem);
   </script>
   
 </body>
