@@ -115,39 +115,6 @@ IncrementalFontLoader.prototype.determineCharacters_ = function(codes, text) {
   });
 };
 
-//var fetchCnt = 0;
-/**
- * Async XMLHttpRequest to given url using given method, data and header
- * @param {string} url Destination url
- * @param {string} method Request method
- * @param {type} data Request data
- * @param {Object} headerParams Request headers
- * @param {string} responseType Response type
- * @return {Promise} Promise to return response
- */
-IncrementalFontLoader.requestURL = function(url, method, data, headerParams, 
-responseType) {
-  //var cnt = fetchCnt++;
-  //timer.start('fetch ' + cnt + ' ' + url);
-  return new Promise(function(resolve, reject) {
-    var oReq = new XMLHttpRequest();
-    oReq.open(method, url, true);
-    for (var param in headerParams)
-      oReq.setRequestHeader(param, headerParams[param]);
-    oReq.responseType = responseType;
-    oReq.onload = function(oEvent) {
-      if (oReq.status == 200) {
-        //timer.end('fetch ' + cnt + ' ' + url);
-        resolve(oReq.response);
-      } else
-        reject(oReq.status + ' ' + oReq.statusText);
-    };
-    oReq.onerror = function() {
-      reject(Error('Network Error'));
-    };
-    oReq.send(data);
-  });
-};
 
 /**
  * Request codepoints from server
@@ -185,7 +152,7 @@ IncrementalFontLoader.prototype.setTheFont_ = function(font_src, callback) {
  * @private
  */
 IncrementalFontLoader.prototype.requestBaseFont_ = function() {
-  return IncrementalFontLoader.requestURL('/fonts/' + this.fontname + '/base',
+  return IncrementalFontUtils.requestURL('/fonts/' + this.fontname + '/base',
   'GET', null, {},
     'arraybuffer');
 };
