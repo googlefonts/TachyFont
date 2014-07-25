@@ -87,7 +87,9 @@ IncrementalFont.CHARLIST_DIRTY = 'charList_dirty';
  */
 IncrementalFont.createManager = function(fontname) {
   var incrFontMgr = new IncrementalFont.obj_(fontname);
+  timer.start('openIndexedDB.open ' + fontname);
   incrFontMgr.getIDB_ = incrFontMgr.openIndexedDB(fontname);
+  timer.end('openIndexedDB.open ' + fontname);
 
   //console.log('Create a class with visibility: hidden.');
   var style = document.createElement('style');
@@ -100,13 +102,16 @@ IncrementalFont.createManager = function(fontname) {
   console.log('Get the base.');
   // Get the base and charList in parallel.
   // Start the operation to get the base.
+  timer.start('get the base data ' + fontname);
+  timer.start('did not get the base data ' + fontname);
   incrFontMgr.getBase = incrFontMgr.getData_(IncrementalFont.BASE).
   then(function(data) {
-    debugger;
+    timer.end('get the base data ' + fontname);
     var base_font = data.base;
     return base_font;
   }).
   catch (function(e) {
+    timer.end('did not get the base data ' + fontname);
     //console.log('Need to fetch the data');
     return IncrementalFontLoader.requestURL('/fonts/' + incrFontMgr.fontname +
       '/base', 'GET', null, {}, 'arraybuffer').
@@ -183,6 +188,7 @@ IncrementalFont.createManager = function(fontname) {
  * @private
  */
 IncrementalFont.addDropDbButton_ = function(incrFontMgr, fontname) {
+  var old_onload = window.onload;
   window.onload = function() {
     var span = document.createElement('span');
     span.style.position = 'absolute';
@@ -199,6 +205,9 @@ IncrementalFont.addDropDbButton_ = function(incrFontMgr, fontname) {
     msg_span.id = 'dropDB_msg';
     span.appendChild(msg_span);
     document.body.appendChild(span);
+    if (old_onload) {
+      old_onload(window);
+    }
   };
   function dropDB() {
     var msg_span = document.getElementById('dropDB_msg');
@@ -352,15 +361,12 @@ IncrementalFont.obj_.prototype.saveData_ = function(name, data) {
     // string. If a variable varname is used for the key then the string varname
     // will be used ... NOT the value of the varname.
     return new Promise(function(resolve, reject) {
-      debugger;
       var value = {};
       value[name] = data;
-//      value['id'] = 0;
       var trans = db.transaction([name], 'readwrite');
       var store = trans.objectStore(name);
       var request = store.put(value, 0);
       request.onsuccess = function(e) {
-        debugger;
         resolve();
       };
       request.onerror = function(e) {
@@ -371,9 +377,6 @@ IncrementalFont.obj_.prototype.saveData_ = function(name, data) {
     catch (function(e) {
       console.log('saveData ' + name + ': ' + e.message);
       debugger;
-    }).
-    then(function() {
-//      debugger;
     });
   });
 };
@@ -405,7 +408,9 @@ IncrementalFont.obj_.prototype.openIndexedDB = function(fontname) {
 
   var openIDB = new Promise(function(resolve, reject) {
     var db_name = IncrementalFont.DB_NAME + '/' + fontname;
+    timer.start('indexedDB.open ' + db_name);
     var dbOpen = indexedDB.open(db_name, IncrementalFont.version);
+    timer.end('indexedDB.open ' + db_name);
 
     dbOpen.onsuccess = function(e) {
       var db = e.target.result;
