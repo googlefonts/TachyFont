@@ -87,9 +87,9 @@ IncrementalFont.CHARLIST_DIRTY = 'charList_dirty';
  */
 IncrementalFont.createManager = function(fontname) {
   var incrFontMgr = new IncrementalFont.obj_(fontname);
-  timer.start('openIndexedDB.open ' + fontname);
+  //timer.start('openIndexedDB.open ' + fontname);
   incrFontMgr.getIDB_ = incrFontMgr.openIndexedDB(fontname);
-  timer.end('openIndexedDB.open ' + fontname);
+  //timer.end('openIndexedDB.open ' + fontname);
 
   //console.log('Create a class with visibility: hidden.');
   var style = document.createElement('style');
@@ -99,20 +99,20 @@ IncrementalFont.createManager = function(fontname) {
   style.sheet.insertRule('.' + fontname +
     ' { font-family: nanum-brush; visibility: hidden; }', 0);
 
-  console.log('Get the base.');
+  //console.log('Get the base.');
   // Get the base and charList in parallel.
   // Start the operation to get the base.
-  timer.start('get the base data ' + fontname);
-  timer.start('did not get the base data ' + fontname);
+  //timer.start('get the base data ' + fontname);
+  //timer.start('did not get the base data ' + fontname);
   incrFontMgr.getBase = incrFontMgr.getData_(IncrementalFont.BASE).
   then(function(data) {
-    timer.end('get the base data ' + fontname);
+    //timer.end('got the base from IDB: ' + fontname);
     var base_font = data.base;
     return base_font;
   }).
   catch (function(e) {
-    timer.end('did not get the base data ' + fontname);
-    //console.log('Need to fetch the data');
+    //timer.end('did not get the base data ' + fontname);
+    console.log('Did not get base from IDB, need to fetch it: ' + fontname);
     return IncrementalFontLoader.requestURL('/fonts/' + incrFontMgr.fontname +
       '/base', 'GET', null, {}, 'arraybuffer').
     then(function(xfer_bytes) {
@@ -143,8 +143,7 @@ IncrementalFont.createManager = function(fontname) {
       })
     }).
     then(function(base_font) {
-//      debugger;
-      console.log('persist the base: ' + base_font.byteLength + ' bytes');
+      //console.log('persist the base: ' + base_font.byteLength + ' bytes');
       incrFontMgr.persistDelayed_(IncrementalFont.BASE);
       return base_font;
     }).
@@ -161,6 +160,7 @@ IncrementalFont.createManager = function(fontname) {
     });
   });
 // For debug just do one persist operation.
+  console.log('need to reenable the code to get the char list');
 //  // Start the operation to get the list of already fetched chars.
 //  //console.log('Get the list of already fetched chars.');
 //  incrFontMgr.getCharList = incrFontMgr.getData_(IncrementalFont.CHARLIST).
@@ -408,13 +408,13 @@ IncrementalFont.obj_.prototype.openIndexedDB = function(fontname) {
 
   var openIDB = new Promise(function(resolve, reject) {
     var db_name = IncrementalFont.DB_NAME + '/' + fontname;
-    timer.start('indexedDB.open ' + db_name);
+    //timer.start('indexedDB.open ' + db_name);
     var dbOpen = indexedDB.open(db_name, IncrementalFont.version);
-    timer.end('indexedDB.open ' + db_name);
+    //timer.end('indexedDB.open ' + db_name);
 
     dbOpen.onsuccess = function(e) {
       var db = e.target.result;
-      console.log('open db "' + db_name + '"');
+      //console.log('open db "' + db_name + '"');
       resolve(db);
     };
     dbOpen.onerror = function(e) {
@@ -468,19 +468,12 @@ IncrementalFont.obj_.prototype.getData_ = function(name) {
   var getData = new Promise(function(resolve, reject) {
     //console.log('create transaction');
     that.getIDB_.then(function(db) {
-//      try {
-        var trans = db.transaction([name], 'readwrite');
-        var store = trans.objectStore(name);
-        var request = store.get(0);
-//      } catch (e) {
-//        console.log('e = ' + e.message);
-//        debugger;
-//        throw e;
-//      }
-
+      var trans = db.transaction([name], 'readwrite');
+      var store = trans.objectStore(name);
+      var request = store.get(0);
       request.onsuccess = function(e) {
         var result = e.target.result;
-        console.log('cursor onsuccess: result = ' + result);
+        //console.log('cursor onsuccess: result = ' + result);
         if (result != undefined) {
           resolve(result);
         } else {
@@ -489,13 +482,11 @@ IncrementalFont.obj_.prototype.getData_ = function(name) {
         return; // I think this is unnecessary.
       };
 
-      console.log('define cursor onerror');
       request.onerror = function(e) {
         console.log('result = ' + result.value);
         debugger;
         reject(e);
       };
-      console.log('after define cursor onerror');
     });
   });
   return getData;
