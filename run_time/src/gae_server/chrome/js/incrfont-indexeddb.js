@@ -111,12 +111,13 @@ IncrementalFont.createManager = function(fontname) {
     return base_font;
   }).
   catch (function(e) {
+    //console.log('getData_ caught: ' + e + '/' + e.message);
     //timer.end('did not get the base data ' + fontname);
     console.log('Did not get base from IDB, need to fetch it: ' + fontname);
-    return IncrementalFontLoader.requestURL('/fonts/' + incrFontMgr.fontname +
+    return IncrementalFontUtils.requestURL('/fonts/' + incrFontMgr.fontname +
       '/base', 'GET', null, {}, 'arraybuffer').
     then(function(xfer_bytes) {
-      console.log('fetched the raw base: ' + xfer_bytes.byteLength + ' bytes');
+      //console.log('fetched the raw base: ' + xfer_bytes.byteLength + ' bytes');
       console.log('need to parseBaseHeader_');
       var base_font_rle = xfer_bytes;
       return base_font_rle;
@@ -134,7 +135,7 @@ IncrementalFont.createManager = function(fontname) {
     then(function(base_font) {
       console.log('for debug: get some ttf font data so we can test saving' +
         '  data');
-      return IncrementalFontLoader.requestURL(
+      return IncrementalFontUtils.requestURL(
         '../fonts/nanum-brush/NanumBrushScript-Regular.ttf',
         'GET', null, {}, 'arraybuffer').
       then(function(base_font) {
