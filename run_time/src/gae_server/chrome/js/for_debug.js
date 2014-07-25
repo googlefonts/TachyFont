@@ -24,21 +24,37 @@
 // This is here only for measuring the timings during development.
 // This is not needed for regular use.
 var timer = new Timer();
-//timer.start('first timer event');
-//timer.end('first timer event');
-function displayTimings() {
-  setTimeout(function() {
-//    timer.display_timing(document.getElementById('timingTable'));
-  }, 1000);
-}
+
+var columns = ['Item', 'Start', 'End', 'Length'];
 
 var old_onload = window.onload;
+/**
+ * Display the results on window.onload.
+ */
 window.onload = function() {
   setTimeout(function() {
-    timer.display_timing(document.getElementById('timingTable'));
+    var num_timings = timer.numberOfTimingRecords();
+    if (num_timings) {
+      var table = document.createElement('table');
+      table.id = 'timingTablex';
+      table.style.fontSize = '125%';
+      table.style.fontFamily = 'sans-serif';
+      var row = table.insertRow(0);
+      for (var i = 0; i < columns.length; i++) {
+        var cell = row.insertCell(i);
+        cell.style.fontWeight = '900';
+        cell.style.textAlign = 'center';
+        cell.innerHTML = columns[i];
+      }
+      // Use body.childNodes rather than body.children to get before any text.
+      var first_child = document.body.childNodes[0];
+      document.body.insertBefore(table, first_child);
+      var br = document.createElement('br');
+      document.body.insertBefore(br, first_child);
+      timer.display_timing(table);
+    }
     if (old_onload) {
       old_onload(window);
     }
-  }, 1000);
-  
+  }, 500);
 };
