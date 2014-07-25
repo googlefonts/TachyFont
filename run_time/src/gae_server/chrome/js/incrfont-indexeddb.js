@@ -118,14 +118,12 @@ IncrementalFont.createManager = function(fontname) {
       '/base', 'GET', null, {}, 'arraybuffer').
     then(function(xfer_bytes) {
       //console.log('fetched the raw base: ' + xfer_bytes.byteLength + ' bytes');
-      console.log('need to parseBaseHeader_');
-      var base_font_rle = xfer_bytes;
-      return base_font_rle;
+      console.log('parseBaseHeader_');
+      return IncrementalFontUtils.parseBaseHeader_(incrFontMgr, xfer_bytes);
     }).
     then(function(base_font_rle) {
-      console.log('need to RLEDecoder.rleDecode');
-      var base_font_pre_sanitize = base_font_rle;
-      return base_font_pre_sanitize;
+      console.log('RLEDecoder.rleDecode');
+      return RLEDecoder.rleDecode(base_font_rle);
     }).
     then(function(base_font_pre_sanitize) {
       console.log('need to sanitize');
