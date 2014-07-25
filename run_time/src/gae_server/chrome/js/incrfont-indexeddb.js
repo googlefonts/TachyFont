@@ -119,16 +119,17 @@ IncrementalFont.createManager = function(fontname) {
     then(function(xfer_bytes) {
       //console.log('fetched the raw base: ' + xfer_bytes.byteLength + ' bytes');
       console.log('parseBaseHeader');
+      console.log('need to get isTTF from base header');
+      incrFontMgr.isTTF = true;
       return IncrementalFontUtils.parseBaseHeader(incrFontMgr, xfer_bytes);
     }).
     then(function(base_font_rle) {
       console.log('RLEDecoder.rleDecode');
       return RLEDecoder.rleDecode(base_font_rle);
     }).
-    then(function(base_font_pre_sanitize) {
-      console.log('need to sanitize');
-      var base_font = base_font_pre_sanitize;
-      return base_font;
+    then(function(raw_base_font) {
+      console.log('sanitize');
+      return IncrementalFontUtils.sanitizeBaseFont(incrFontMgr, raw_base_font);
     }).
     then(function(base_font) {
       console.log('for debug: get some ttf font data so we can test saving' +
@@ -268,6 +269,7 @@ IncrementalFont.obj_ = function(fontname) {
   this.persistInfo = {};
   this.persistInfo[IncrementalFont.BASE_DIRTY] = false;
   this.persistInfo[IncrementalFont.CHARLIST_DIRTY] = false;
+  this.isTTF = false;
 
   // Promises
   this.getIDB_ = null;
