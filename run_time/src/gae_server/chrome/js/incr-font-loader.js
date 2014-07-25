@@ -172,7 +172,9 @@ IncrementalFontLoader.prototype.getBaseFont_ = function(inFS, fs, filename) {
   } else {
     var that = this;
     return this.requestBaseFont_().
-    then(that.parseBaseHeader_.bind(that)).
+    then(function(xfer_bytes) {
+      return IncrementalFontUtils.parseBaseHeader_(that, xfer_bytes);
+    }).
     //then(function(data) {
     //  timer.start('rleDecode');
     //  return data;
@@ -191,27 +193,6 @@ IncrementalFontLoader.prototype.getBaseFont_ = function(inFS, fs, filename) {
 
   }
 
-};
-
-/**
- * Parses base font header, set properties
- * @param {ArrayBuffer} baseFont Base font with header
- * @return {ArrayBuffer} Base font without header
- * @private
- */
-IncrementalFontLoader.prototype.parseBaseHeader_ = function(baseFont) {
-
-    var binEd = new BinaryFontEditor(new DataView(baseFont), 0);
-    var results = binEd.parseBaseHeader(this);
-    if (results.headerInfo) {
-      this.version = results.version;
-      this.headSize = results.headSize;
-      for (var key in results.headerInfo) {
-        this[key] = results.headerInfo[key];
-      }
-      baseFont = baseFont.slice(this.headSize);
-    }
-    return baseFont;
 };
 
 /**
