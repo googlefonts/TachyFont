@@ -101,19 +101,17 @@ IncrementalFont.createManager = function(fontname) {
   // Get the base and charList in parallel.
   // Start the operation to get the base.
   incrFontMgr.getBase = incrFontMgr.getData_(IncrementalFont.BASE).
-  then(function(base_font) {
+  then(function(data) {
     debugger;
+    var base_font = data.base;
     return base_font;
   }).
   catch (function(e) {
-    debugger;
     //console.log('Need to fetch the data');
     return IncrementalFontLoader.requestURL('/fonts/' + incrFontMgr.fontname +
       '/base', 'GET', null, {}, 'arraybuffer').
     then(function(xfer_bytes) {
-      //console.log('fetched the raw base');
-      debugger;
-      incrFontMgr.persistDelayed_(IncrementalFont.BASE);
+      console.log('fetched the raw base: ' + xfer_bytes.byteLength + ' bytes');
       console.log('need to parseBaseHeader_');
       var base_font_rle = xfer_bytes;
       return base_font_rle;
@@ -128,12 +126,22 @@ IncrementalFont.createManager = function(fontname) {
       var base_font = base_font_pre_sanitize;
       return base_font;
     }).
-    then(function(base_font_pre_sanitize) {
-      //console.log('for debug: get some ttf font data so we can test the blob' +
-      //  ' url');
+    then(function(base_font) {
+      console.log('for debug: get some ttf font data so we can test saving' +
+        '  data');
       return IncrementalFontLoader.requestURL(
         '../fonts/nanum-brush/NanumBrushScript-Regular.ttf',
-        'GET', null, {}, 'arraybuffer');
+        'GET', null, {}, 'arraybuffer').
+      then(function(base_font) {
+        console.log('fetched the ttf: ' + base_font.byteLength + ' bytes');
+        return base_font;
+      })
+    }).
+    then(function(base_font) {
+//      debugger;
+      console.log('persist the base: ' + base_font.byteLength + ' bytes');
+      incrFontMgr.persistDelayed_(IncrementalFont.BASE);
+      return base_font;
     }).
     then(function(base_font) {
       //console.log('Set the @font-face');
@@ -147,20 +155,21 @@ IncrementalFont.createManager = function(fontname) {
       return base_font;
     });
   });
-  // Start the operation to get the list of already fetched chars.
-  //console.log('Get the list of already fetched chars.');
-  incrFontMgr.getCharList = incrFontMgr.getData_(IncrementalFont.CHARLIST).
-  then(function(data) {
-    debugger;
-    return data;
-  }).
-  catch (function(e) {
-    console.log('no charList');
-    return {};
-  }).
-  then(function(data) {
-    return data;
-  });
+// For debug just do one persist operation.
+//  // Start the operation to get the list of already fetched chars.
+//  //console.log('Get the list of already fetched chars.');
+//  incrFontMgr.getCharList = incrFontMgr.getData_(IncrementalFont.CHARLIST).
+//  then(function(data) {
+//    debugger;
+//    return data;
+//  }).
+//  catch (function(e) {
+//    console.log('no charList');
+//    return {};
+//  }).
+//  then(function(data) {
+//    return data;
+//  });
 
   // For Debug: add a button to clear the IndexedDB.
   IncrementalFont.addDropDbButton_(incrFontMgr, fontname);
@@ -210,22 +219,19 @@ IncrementalFont.addDropDbButton_ = function(incrFontMgr, fontname) {
  * @return {Promise} The Promise for when the DB is dropped.
  */
 IncrementalFont.dropDB = function(incrFontMgr, fontname) {
-  debugger;
+  var db_name = IncrementalFont.DB_NAME + '/' + fontname;
   return incrFontMgr.getIDB_
   .then(function(db) {
     db.close();
     return new Promise(function(resolve, reject) {
-      var db_name = IncrementalFont.DB_NAME + '/' + fontname;
       console.log('drop ' + db_name);
       var request = indexedDB.deleteDatabase(db_name);
       request.onsuccess = function(e) {
-        debugger;
         resolve();
       };
       request.onblocked = function() {
         console.log("deleteDatbase got blocked event");
       };
-  
       request.onerror = function(e) {
         debugger;
         reject(e);
@@ -283,7 +289,7 @@ IncrementalFont.obj_.prototype.persistDelayed_ = function(name) {
   this.finishPersistingData.then(function() {
     // Previous persists may have already saved the data so see if there is
     // anything still to persist.
-    debugger;
+//    debugger;
     var base_dirty = that.persistInfo[IncrementalFont.BASE_DIRTY];
     var charList_dirty = that.persistInfo[IncrementalFont.CHARLIST_DIRTY];
     if (!base_dirty && !charList_dirty) {
@@ -302,11 +308,11 @@ IncrementalFont.obj_.prototype.persistDelayed_ = function(name) {
       }, IncrementalFont.timeoutTime);
     }).
     then(function() {
-      debugger;
+//      debugger;
       if (base_dirty) {
         return that.getBase.
         then(function(base) {
-          debugger;
+//          debugger;
           return that.saveData_(IncrementalFont.BASE, base);
         });
       }
@@ -346,9 +352,10 @@ IncrementalFont.obj_.prototype.saveData_ = function(name, data) {
     // string. If a variable varname is used for the key then the string varname
     // will be used ... NOT the value of the varname.
     return new Promise(function(resolve, reject) {
-      //
+      debugger;
       var value = {};
       value[name] = data;
+//      value['id'] = 0;
       var trans = db.transaction([name], 'readwrite');
       var store = trans.objectStore(name);
       var request = store.put(value, 0);
@@ -366,7 +373,7 @@ IncrementalFont.obj_.prototype.saveData_ = function(name, data) {
       debugger;
     }).
     then(function() {
-      debugger;
+//      debugger;
     });
   });
 };
@@ -452,45 +459,33 @@ IncrementalFont.obj_.prototype.openIndexedDB = function(fontname) {
  */
 IncrementalFont.obj_.prototype.getData_ = function(name) {
   var that = this;
-  var data = '';
   //console.log('getData_');
   var getData = new Promise(function(resolve, reject) {
     //console.log('create transaction');
-    console.log('change this to not use a cursor');
     that.getIDB_.then(function(db) {
-      try {
+//      try {
         var trans = db.transaction([name], 'readwrite');
         var store = trans.objectStore(name);
         var request = store.get(0);
-//        var keyRange = IDBKeyRange.lowerBound(0);
-//        var request = store.openCursor(keyRange);
-      } catch (e) {
-        console.log('e = ' + e.message);
-        debugger;
-        throw e;
-      }
+//      } catch (e) {
+//        console.log('e = ' + e.message);
+//        debugger;
+//        throw e;
+//      }
 
-      console.log('define cursor onsuccess');
       request.onsuccess = function(e) {
         var result = e.target.result;
         console.log('cursor onsuccess: result = ' + result);
-        if (!!result == false) {
-          if (data) {
-            debugger;
-            resolve(data);
-          } else {
-            reject(e);
-          }
-          return;
+        if (result != undefined) {
+          resolve(result);
+        } else {
+          reject(e);
         }
-        console.log('result = ' + result.value);
-        data += result.value;
-        result.continue();
+        return; // I think this is unnecessary.
       };
 
       console.log('define cursor onerror');
       request.onerror = function(e) {
-        debugger;
         console.log('result = ' + result.value);
         debugger;
         reject(e);
