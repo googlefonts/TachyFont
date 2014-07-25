@@ -115,39 +115,6 @@ IncrementalFontLoader.prototype.determineCharacters_ = function(codes, text) {
   });
 };
 
-//var fetchCnt = 0;
-/**
- * Async XMLHttpRequest to given url using given method, data and header
- * @param {string} url Destination url
- * @param {string} method Request method
- * @param {type} data Request data
- * @param {Object} headerParams Request headers
- * @param {string} responseType Response type
- * @return {Promise} Promise to return response
- */
-IncrementalFontLoader.requestURL = function(url, method, data, headerParams, 
-responseType) {
-  //var cnt = fetchCnt++;
-  //timer.start('fetch ' + cnt + ' ' + url);
-  return new Promise(function(resolve, reject) {
-    var oReq = new XMLHttpRequest();
-    oReq.open(method, url, true);
-    for (var param in headerParams)
-      oReq.setRequestHeader(param, headerParams[param]);
-    oReq.responseType = responseType;
-    oReq.onload = function(oEvent) {
-      if (oReq.status == 200) {
-        //timer.end('fetch ' + cnt + ' ' + url);
-        resolve(oReq.response);
-      } else
-        reject(oReq.status + ' ' + oReq.statusText);
-    };
-    oReq.onerror = function() {
-      reject(Error('Network Error'));
-    };
-    oReq.send(data);
-  });
-};
 
 /**
  * Request codepoints from server
@@ -157,7 +124,7 @@ responseType) {
  */
 IncrementalFontLoader.prototype.requestCharacters_ = function(chars) {
 
-  return IncrementalFontLoader.requestURL('/incremental_fonts/request', 'POST',
+  return IncrementalFontUtils.requestURL('/incremental_fonts/request', 'POST',
   JSON.stringify({
       'font': this.fontname,
       'arr': chars
@@ -185,7 +152,7 @@ IncrementalFontLoader.prototype.setTheFont_ = function(font_src, callback) {
  * @private
  */
 IncrementalFontLoader.prototype.requestBaseFont_ = function() {
-  return IncrementalFontLoader.requestURL('/fonts/' + this.fontname + '/base',
+  return IncrementalFontUtils.requestURL('/fonts/' + this.fontname + '/base',
   'GET', null, {},
     'arraybuffer');
 };
@@ -205,7 +172,9 @@ IncrementalFontLoader.prototype.getBaseFont_ = function(inFS, fs, filename) {
   } else {
     var that = this;
     return this.requestBaseFont_().
-    then(that.parseBaseHeader_.bind(that)).
+    then(function(xfer_bytes) {
+      return IncrementalFontUtils.parseBaseHeader(that, xfer_bytes);
+    }).
     //then(function(data) {
     //  timer.start('rleDecode');
     //  return data;
@@ -216,7 +185,9 @@ IncrementalFontLoader.prototype.getBaseFont_ = function(inFS, fs, filename) {
     //  timer.start('sanitizeBase');
     //  return data;
     //}).
-    then(that.sanitizeBaseFont_.bind(that)).
+    then(function(raw_base_font) {
+      return IncrementalFontUtils.sanitizeBaseFont(that, raw_base_font);
+    }).
     then(function(sanitized_base) {
       //timer.end('sanitizeBase');
       return sanitized_base;
@@ -224,52 +195,6 @@ IncrementalFontLoader.prototype.getBaseFont_ = function(inFS, fs, filename) {
 
   }
 
-};
-
-/**
- * Parses base font header, set properties
- * @param {ArrayBuffer} baseFont Base font with header
- * @return {ArrayBuffer} Base font without header
- * @private
- */
-IncrementalFontLoader.prototype.parseBaseHeader_ = function(baseFont) {
-
-    var binEd = new BinaryFontEditor(new DataView(baseFont), 0);
-    var hasHead = binEd.parseBaseHeader(this);
-    if (hasHead) {
-      baseFont = baseFont.slice(this.headSize);
-    }
-    return baseFont;
-};
-
-/**
- * Sanitize base font to pass OTS
- * @param {ArrayBuffer} baseFont Base font as ArrayBuffer
- * @return {ArrayBuffer} Sanitized base font
- * @private
- */
-IncrementalFontLoader.prototype.sanitizeBaseFont_ = function(baseFont) {
-
-  if (this.isTTF) {
-    this.dirty = true;
-    var binEd = new BinaryFontEditor(new DataView(baseFont), 0);
-    var glyphOffset = this.glyphOffset;
-    var glyphCount = this.numGlyphs;
-    var glyphSize, thisOne, nextOne;
-    for (var i = (IncrementalFontLoader.LOCA_BLOCK_SIZE - 1); i < glyphCount;
-    i += IncrementalFontLoader.LOCA_BLOCK_SIZE) {
-        thisOne = binEd.getGlyphDataOffset(this.glyphDataOffset,
-        this.offsetSize, i);
-        nextOne = binEd.getGlyphDataOffset(this.glyphDataOffset,
-        this.offsetSize, i + 1);
-      glyphSize = nextOne - thisOne;
-      if (glyphSize) {
-          binEd.seek(glyphOffset + thisOne);
-          binEd.setInt16_(-1);
-      }
-    }
-  }
-  return baseFont;
 };
 
 /**
