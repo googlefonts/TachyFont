@@ -62,6 +62,16 @@ Timer.prototype.end = function(msg) {
     console.log('**** missing start for "' + msg + '"');
 };
 
+
+/**
+ * Get the number of the timing records on the page.
+ * @returns {Number} The number of timing records.
+ */
+Timer.prototype.numberOfTimingRecords = function() {
+  return Object.keys(this.timing_info).length;
+};
+
+
 /**
  * Display the timing info on the page.
  * @param {Object} table DOM table element.
