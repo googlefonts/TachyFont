@@ -173,7 +173,7 @@ IncrementalFontLoader.prototype.getBaseFont_ = function(inFS, fs, filename) {
     var that = this;
     return this.requestBaseFont_().
     then(function(xfer_bytes) {
-      return IncrementalFontUtils.parseBaseHeader_(that, xfer_bytes);
+      return IncrementalFontUtils.parseBaseHeader(that, xfer_bytes);
     }).
     //then(function(data) {
     //  timer.start('rleDecode');
@@ -185,7 +185,9 @@ IncrementalFontLoader.prototype.getBaseFont_ = function(inFS, fs, filename) {
     //  timer.start('sanitizeBase');
     //  return data;
     //}).
-    then(that.sanitizeBaseFont_.bind(that)).
+    then(function(raw_base_font) {
+      return IncrementalFontUtils.sanitizeBaseFont(that, raw_base_font);
+    }).
     then(function(sanitized_base) {
       //timer.end('sanitizeBase');
       return sanitized_base;
@@ -193,36 +195,6 @@ IncrementalFontLoader.prototype.getBaseFont_ = function(inFS, fs, filename) {
 
   }
 
-};
-
-/**
- * Sanitize base font to pass OTS
- * @param {ArrayBuffer} baseFont Base font as ArrayBuffer
- * @return {ArrayBuffer} Sanitized base font
- * @private
- */
-IncrementalFontLoader.prototype.sanitizeBaseFont_ = function(baseFont) {
-
-  if (this.isTTF) {
-    this.dirty = true;
-    var binEd = new BinaryFontEditor(new DataView(baseFont), 0);
-    var glyphOffset = this.glyphOffset;
-    var glyphCount = this.numGlyphs;
-    var glyphSize, thisOne, nextOne;
-    for (var i = (IncrementalFontLoader.LOCA_BLOCK_SIZE - 1); i < glyphCount;
-    i += IncrementalFontLoader.LOCA_BLOCK_SIZE) {
-        thisOne = binEd.getGlyphDataOffset(this.glyphDataOffset,
-        this.offsetSize, i);
-        nextOne = binEd.getGlyphDataOffset(this.glyphDataOffset,
-        this.offsetSize, i + 1);
-      glyphSize = nextOne - thisOne;
-      if (glyphSize) {
-          binEd.seek(glyphOffset + thisOne);
-          binEd.setInt16_(-1);
-      }
-    }
-  }
-  return baseFont;
 };
 
 /**
