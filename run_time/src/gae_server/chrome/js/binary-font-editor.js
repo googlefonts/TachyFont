@@ -363,13 +363,14 @@ BinaryFontEditor.TAGS = {
 /**
  * Parse the header of the base font
  * Set information as attributes in given loader object
- * @param {IncrementalFontLoader} font
- * @return {boolean} If header is parsed
+ * @return {Object} Results of parsing the header.
  */
-BinaryFontEditor.prototype.parseBaseHeader = function(font) {
+BinaryFontEditor.prototype.parseBaseHeader = function() {
+    var results = {};
     var magic = this.readString_(4);
     if (magic == BinaryFontEditor.magicHead) {
-        font.version = this.getInt32_();
+        var headerInfo = {};
+        results.version = this.getInt32_();
         var count = this.getUint16_();
         var tags = [], tag, tagOffset, saveOffset,
                 dataStart = count * 6 + 4 + 4 + 2 + 4;//magic,ver,count,headSize
@@ -381,14 +382,13 @@ BinaryFontEditor.prototype.parseBaseHeader = function(font) {
             }
             saveOffset = this.tell();
             this.seek(dataStart + tagOffset);
-            BinaryFontEditor.TAGS[tag]['fn'](this, font);
+            BinaryFontEditor.TAGS[tag]['fn'](this, headerInfo);
             this.seek(saveOffset);
         }
-        font.headSize = this.getInt32_();
-        return true;
-    }else {
-        return false;
+        results.headerInfo = headerInfo;
+        results.headSize = this.getInt32_();
     }
+    return results;
 };
 
 /**

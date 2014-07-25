@@ -202,8 +202,13 @@ IncrementalFontLoader.prototype.getBaseFont_ = function(inFS, fs, filename) {
 IncrementalFontLoader.prototype.parseBaseHeader_ = function(baseFont) {
 
     var binEd = new BinaryFontEditor(new DataView(baseFont), 0);
-    var hasHead = binEd.parseBaseHeader(this);
-    if (hasHead) {
+    var results = binEd.parseBaseHeader(this);
+    if (results.headerInfo) {
+      this.version = results.version;
+      this.headSize = results.headSize;
+      for (var key in results.headerInfo) {
+        this[key] = results.headerInfo[key];
+      }
       baseFont = baseFont.slice(this.headSize);
     }
     return baseFont;
