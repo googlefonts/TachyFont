@@ -29,7 +29,7 @@ var IncrementalFontUtils = {};
  * @return {ArrayBuffer} Base font without header
  * @private
  */
-IncrementalFontUtils.parseBaseHeader_ = function(obj, baseFont) {
+IncrementalFontUtils.parseBaseHeader = function(obj, baseFont) {
 
     var binEd = new BinaryFontEditor(new DataView(baseFont), 0);
     var results = binEd.parseBaseHeader();
@@ -78,3 +78,34 @@ IncrementalFontUtils.requestURL = function(url, method, data, headerParams,
     oReq.send(data);
   });
 };
+
+
+/**
+ * Sanitize base font to pass OTS
+ * @param {ArrayBuffer} baseFont Base font as ArrayBuffer
+ * @return {ArrayBuffer} Sanitized base font
+ */
+IncrementalFontUtils.sanitizeBaseFont = function(obj, baseFont) {
+
+  if (obj.isTTF) {
+    obj.dirty = true;
+    var binEd = new BinaryFontEditor(new DataView(baseFont), 0);
+    var glyphOffset = obj.glyphOffset;
+    var glyphCount = obj.numGlyphs;
+    var glyphSize, thisOne, nextOne;
+    for (var i = (IncrementalFontLoader.LOCA_BLOCK_SIZE - 1); i < glyphCount;
+    i += IncrementalFontLoader.LOCA_BLOCK_SIZE) {
+        thisOne = binEd.getGlyphDataOffset(obj.glyphDataOffset,
+        obj.offsetSize, i);
+        nextOne = binEd.getGlyphDataOffset(obj.glyphDataOffset,
+        obj.offsetSize, i + 1);
+      glyphSize = nextOne - thisOne;
+      if (glyphSize) {
+          binEd.seek(glyphOffset + thisOne);
+          binEd.setInt16_(-1);
+      }
+    }
+  }
+  return baseFont;
+};
+
