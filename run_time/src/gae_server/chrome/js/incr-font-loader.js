@@ -23,6 +23,8 @@
  * @constructor
  */
 function IncrementalFontLoader(fontname, isTTF) {
+  console.log('isTTF should come out of the base header not be passed in ' +
+    'by the web page');
   this.fontname = fontname;
   this.isTTF = isTTF;
   this.metaname = fontname.replace(/-/g, '_') + '_metadata';
@@ -50,12 +52,6 @@ IncrementalFontLoader.FLAGS = {
     HAS_VMTX: 2,
     HAS_CFF: 4
 };
-
-/**
- * Segment size in the loca table
- * @const {number}
- */
-IncrementalFontLoader.LOCA_BLOCK_SIZE = 64;
 
 /**
  * Find new codepoints
