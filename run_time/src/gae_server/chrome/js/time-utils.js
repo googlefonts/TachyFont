@@ -65,7 +65,7 @@ Timer.prototype.end = function(msg) {
 
 /**
  * Get the number of the timing records on the page.
- * @returns {Number} The number of timing records.
+ * @return {Number} The number of timing records.
  */
 Timer.prototype.numberOfTimingRecords = function() {
   return Object.keys(this.timing_info).length;
