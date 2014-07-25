@@ -383,7 +383,6 @@ IncrementalFont.obj_.prototype.openIndexedDB = function(fontname) {
 
     dbOpen.onsuccess = function(e) {
       var db = e.target.result;
-      console.log('open db "' + db_name + '"');
       resolve(db);
     };
     dbOpen.onerror = function(e) {
