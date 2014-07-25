@@ -124,7 +124,7 @@ IncrementalFontLoader.prototype.determineCharacters_ = function(codes, text) {
  */
 IncrementalFontLoader.prototype.requestCharacters_ = function(chars) {
 
-  return IncrementalFontLoader.requestURL('/incremental_fonts/request', 'POST',
+  return IncrementalFontUtils.requestURL('/incremental_fonts/request', 'POST',
   JSON.stringify({
       'font': this.fontname,
       'arr': chars
