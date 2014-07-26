@@ -22,6 +22,12 @@
  */
 var IncrementalFontUtils = {};
 
+/**
+ * Segment size in the loca table
+ * @const {number}
+ */
+IncrementalFontUtils.LOCA_BLOCK_SIZE = 64;
+
 
 /**
  * Parses base font header, set properties
@@ -34,6 +40,8 @@ IncrementalFontUtils.parseBaseHeader = function(obj, baseFont) {
     var binEd = new BinaryFontEditor(new DataView(baseFont), 0);
     var results = binEd.parseBaseHeader();
     if (results.headerInfo) {
+      console.log('we should set a headerInfo member rather that randomly ' +
+        'setting values on the object like this');
       obj.version = results.version;
       obj.headSize = results.headSize;
       for (var key in results.headerInfo) {
@@ -93,8 +101,8 @@ IncrementalFontUtils.sanitizeBaseFont = function(obj, baseFont) {
     var glyphOffset = obj.glyphOffset;
     var glyphCount = obj.numGlyphs;
     var glyphSize, thisOne, nextOne;
-    for (var i = (IncrementalFontLoader.LOCA_BLOCK_SIZE - 1); i < glyphCount;
-    i += IncrementalFontLoader.LOCA_BLOCK_SIZE) {
+    for (var i = (IncrementalFontUtils.LOCA_BLOCK_SIZE - 1); i < glyphCount;
+    i += IncrementalFontUtils.LOCA_BLOCK_SIZE) {
         thisOne = binEd.getGlyphDataOffset(obj.glyphDataOffset,
         obj.offsetSize, i);
         nextOne = binEd.getGlyphDataOffset(obj.glyphDataOffset,

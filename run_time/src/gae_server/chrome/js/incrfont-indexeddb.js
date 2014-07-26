@@ -119,28 +119,29 @@ IncrementalFont.createManager = function(fontname) {
     then(function(xfer_bytes) {
       //console.log('fetched the raw base: ' + xfer_bytes.byteLength + ' bytes');
       console.log('parseBaseHeader');
+      console.log('need to get isTTF from base header');
+      incrFontMgr.isTTF = true;
       return IncrementalFontUtils.parseBaseHeader(incrFontMgr, xfer_bytes);
     }).
     then(function(base_font_rle) {
       console.log('RLEDecoder.rleDecode');
       return RLEDecoder.rleDecode(base_font_rle);
     }).
-    then(function(base_font_pre_sanitize) {
-      console.log('need to sanitize');
-      var base_font = base_font_pre_sanitize;
-      return base_font;
+    then(function(raw_base_font) {
+      console.log('sanitize');
+      return IncrementalFontUtils.sanitizeBaseFont(incrFontMgr, raw_base_font);
     }).
-    then(function(base_font) {
-      console.log('for debug: get some ttf font data so we can test saving' +
-        '  data');
-      return IncrementalFontUtils.requestURL(
-        '../fonts/nanum-brush/NanumBrushScript-Regular.ttf',
-        'GET', null, {}, 'arraybuffer').
-      then(function(base_font) {
-        console.log('fetched the ttf: ' + base_font.byteLength + ' bytes');
-        return base_font;
-      })
-    }).
+//    then(function(base_font) {
+//      console.log('for debug: get some ttf font data so we can test saving' +
+//        '  data');
+//      return IncrementalFontUtils.requestURL(
+//        '../fonts/nanum-brush/NanumBrushScript-Regular.ttf',
+//        'GET', null, {}, 'arraybuffer').
+//      then(function(base_font) {
+//        console.log('fetched the ttf: ' + base_font.byteLength + ' bytes');
+//        return base_font;
+//      })
+//    }).
     then(function(base_font) {
       //console.log('persist the base: ' + base_font.byteLength + ' bytes');
       incrFontMgr.persistDelayed_(IncrementalFont.BASE);
@@ -158,22 +159,21 @@ IncrementalFont.createManager = function(fontname) {
       return base_font;
     });
   });
-// For debug just do one persist operation.
-  console.log('need to reenable the code to get the char list');
-//  // Start the operation to get the list of already fetched chars.
-//  //console.log('Get the list of already fetched chars.');
-//  incrFontMgr.getCharList = incrFontMgr.getData_(IncrementalFont.CHARLIST).
-//  then(function(data) {
-//    debugger;
-//    return data;
-//  }).
-//  catch (function(e) {
-//    console.log('no charList');
-//    return {};
-//  }).
-//  then(function(data) {
-//    return data;
-//  });
+
+  // Start the operation to get the list of already fetched chars.
+  //console.log('Get the list of already fetched chars.');
+  incrFontMgr.getCharList = incrFontMgr.getData_(IncrementalFont.CHARLIST).
+  then(function(data) {
+    debugger;
+    return data;
+  }).
+  catch (function(e) {
+    console.log('no charList');
+    return {};
+  }).
+  then(function(data) {
+    return data;
+  });
 
   // For Debug: add a button to clear the IndexedDB.
   IncrementalFont.addDropDbButton_(incrFontMgr, fontname);
@@ -268,6 +268,7 @@ IncrementalFont.obj_ = function(fontname) {
   this.persistInfo = {};
   this.persistInfo[IncrementalFont.BASE_DIRTY] = false;
   this.persistInfo[IncrementalFont.CHARLIST_DIRTY] = false;
+  this.isTTF = false;
 
   // Promises
   this.getIDB_ = null;
@@ -413,7 +414,7 @@ IncrementalFont.obj_.prototype.openIndexedDB = function(fontname) {
 
     dbOpen.onsuccess = function(e) {
       var db = e.target.result;
-      //console.log('open db "' + db_name + '"');
+      console.log('open db "' + db_name + '"');
       resolve(db);
     };
     dbOpen.onerror = function(e) {
@@ -425,7 +426,7 @@ IncrementalFont.obj_.prototype.openIndexedDB = function(fontname) {
     // Will get called when the version changes.
     dbOpen.onupgradeneeded = function(e) {
       var db = e.target.result;
-      //console.log('onupgradeneeded');
+      console.log('onupgradeneeded');
       e.target.transaction.onerror = function(e) {
         console.log('!!! onupgradeneeded: ' + e.value);
         debugger;
@@ -472,7 +473,7 @@ IncrementalFont.obj_.prototype.getData_ = function(name) {
       var request = store.get(0);
       request.onsuccess = function(e) {
         var result = e.target.result;
-        //console.log('cursor onsuccess: result = ' + result);
+        console.log('request onsuccess: result = ' + result);
         if (result != undefined) {
           resolve(result);
         } else {
@@ -487,6 +488,10 @@ IncrementalFont.obj_.prototype.getData_ = function(name) {
         reject(e);
       };
     });
+//  }).
+//  catch (function(e) {
+//    console.log('getData_: ' + e.message);
+//    debugger;
   });
   return getData;
 };
