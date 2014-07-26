@@ -51,9 +51,9 @@ def main(args):
       if exception.errno != errno.EEXIST:
           raise
 
-  cleanfile = fontfile #output_folder+'/'+filename + '_clean' + extension
-  #print('make cleaned up version: {0}'.format(cleanfile))
-  #cleanup.cleanup(fontfile, cmd_args.hinting, cleanfile)
+  cleanfile = output_folder+'/'+filename + '_clean' + extension
+  print('make cleaned up version: {0}'.format(cleanfile))
+  cleanup.cleanup(fontfile, cmd_args.hinting, cleanfile)
 
   print('build closure')
   closure.dump_closure_map(cleanfile, output_folder)
