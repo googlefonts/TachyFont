@@ -44,16 +44,6 @@ function IncrementalFontLoader(fontname, isTTF) {
 }
 
 /**
- * Enum for flags in the coming glyph bundle
- * @enum {number}
- */
-IncrementalFontLoader.FLAGS = {
-    HAS_HMTX: 1,
-    HAS_VMTX: 2,
-    HAS_CFF: 4
-};
-
-/**
  * Find new codepoints
  * @param {string} str Input text
  * @param {Object.<number, number>} codes Codepoints to exclude from the result
@@ -255,7 +245,7 @@ IncrementalFontLoader.prototype.requestGlyphs = function(fs, text) {
                         then(function(arr) {
                           // time_end('request glyphs')
                           if (arr[0].length) {
-                            return IncrementalFontUtils.requestCharacters(that.fontname, arr[0]);
+                            return IncrementalFontUtils.requestCodepoints(that.fontname, arr[0]);
                           } else {
                             return null;
                           }
@@ -272,11 +262,9 @@ IncrementalFontLoader.prototype.requestGlyphs = function(fs, text) {
  */
 IncrementalFontLoader.prototype.injectBundle = function(bundle, callback) {
   // time_start('inject bundle')
-  var filename = this.fontname + '.ttf';
   var that = this;
-  var charsInjected;
   if (bundle != null) {
-    charsInjected = IncrementalFontUtils.injectCharacters(that, that.baseFont, bundle);
+    var charsInjected = IncrementalFontUtils.injectCharacters(that, that.baseFont, bundle);
     var fileURL = URL.createObjectURL(new Blob([charsInjected],
         {type: 'application/font-sfnt'}));
     IncrementalFontUtils.setTheFont(that.fontname, fileURL, callback);
