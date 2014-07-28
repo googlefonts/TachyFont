@@ -113,19 +113,6 @@ IncrementalFontLoader.prototype.determineCharacters_ = function(codes, text) {
 
 
 /**
- * Add and load the font
- * @param {string} font_src Data url of the font
- * @param {function()} callback Action to take when font is loaded
- * @private
- */
-IncrementalFontLoader.prototype.setTheFont_ = function(font_src, callback) {
-  console.log(font_src);
-  var font = new FontFace(this.fontname, 'url(' + font_src + ')', {});
-  document.fonts.add(font);
-  font.load().then(callback);
-};
-
-/**
  * Request base font from the server
  * @return {Promise} Promise to return ArrayBuffer for the base font
  * @private
@@ -269,12 +256,12 @@ IncrementalFontLoader.prototype.getBaseToFileSystem = function(fs, callback) {
           that.baseFont = sanitized_base;
           var fileURL = URL.createObjectURL(new Blob([sanitized_base],
             {type: 'application/font-sfnt'}));
-          that.setTheFont_(fileURL, callback);
+          IncrementalFontUtils.setTheFont(that.fontname, fileURL, callback);
         }else {
           var fileURL = 'filesystem:' + window.location.protocol + '//' +
                   window.location.host + '/temporary/' + filename + '?t=' +
                   Date.now();
-          that.setTheFont_(fileURL, callback);
+          IncrementalFontUtils.setTheFont(that.fontname, fileURL, callback);
         }
 
         //return fs.writeToTheFile(filename, sanitized_base,
@@ -294,7 +281,7 @@ IncrementalFontLoader.prototype.getBaseToFileSystem = function(fs, callback) {
 
   return fileURLReady.
           then(function(fileURL) {
-            that.setTheFont_(fileURL, callback);
+            IncrementalFontUtils.setTheFont(that.fontname, fileURL, callback);
           });*/
 };
 
@@ -363,7 +350,7 @@ IncrementalFontLoader.prototype.injectBundle = function(fs, bundle, callback) {
     charsInjected = that.injectCharacters_(that.baseFont, bundle);
     var fileURL = URL.createObjectURL(new Blob([charsInjected],
         {type: 'application/font-sfnt'}));
-    that.setTheFont_(fileURL, callback);
+    IncrementalFontUtils.setTheFont(that.fontname, fileURL, callback);
   }
 
   return Promise.resolve();

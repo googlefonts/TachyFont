@@ -138,3 +138,17 @@ IncrementalFontUtils.sanitizeBaseFont = function(obj, baseFont) {
   return baseFont;
 };
 
+/**
+ * Add and load the font
+ * @param {String} fontname The fontname
+ * @param {string} font_src Data url of the font
+ * @param {function()} callback Action to take when font is loaded
+ */
+IncrementalFontUtils.setTheFont = function(fontname, font_src, callback) {
+  console.log(font_src);
+  var font = new FontFace(fontname, 'url(' + font_src + ')', {});
+  document.fonts.add(font);
+  font.load().then(callback);
+};
+
+
