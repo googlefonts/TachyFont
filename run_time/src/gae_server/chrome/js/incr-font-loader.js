@@ -113,23 +113,6 @@ IncrementalFontLoader.prototype.determineCharacters_ = function(codes, text) {
 
 
 /**
- * Request codepoints from server
- * @param {Array.<number>} chars Codepoints to be requested
- * @return {Promise} Promise to return ArrayBuffer for the response bundle
- * @private
- */
-IncrementalFontLoader.prototype.requestCharacters_ = function(chars) {
-
-  return IncrementalFontUtils.requestURL('/incremental_fonts/request', 'POST',
-  JSON.stringify({
-      'font': this.fontname,
-      'arr': chars
-  }), {
-    'Content-Type': 'application/json'
-  }, 'arraybuffer');
-};
-
-/**
  * Add and load the font
  * @param {string} font_src Data url of the font
  * @param {function()} callback Action to take when font is loaded
@@ -355,7 +338,7 @@ IncrementalFontLoader.prototype.requestGlyphs = function(fs, text) {
                         then(function(arr) {
                           // time_end('request glyphs')
                           if (arr[0].length) {
-                            return that.requestCharacters_(arr[0]);
+                            return IncrementalFontUtils.requestCharacters(that.fontname, arr[0]);
                           } else {
                             return null;
                           }
