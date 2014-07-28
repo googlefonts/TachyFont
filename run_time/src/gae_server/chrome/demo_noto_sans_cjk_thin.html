@@ -190,8 +190,7 @@ http://qwed01...우낀세상02/18http://qwed01...우낀세상02/18최근에받�
     var BUNDLE = fontLoader.requestGlyphs(filesystem, TEXTS[0]);
     var sequence = Promise.all([BUNDLE, baseReady]).
                   then(function(results) {
-                      return fontLoader.injectBundle(filesystem, results[0],
-                      makeVisible).
+                      return fontLoader.injectBundle(results[0], makeVisible).
                               then(function() {
                                   //time_end('initial bundle')
                               });

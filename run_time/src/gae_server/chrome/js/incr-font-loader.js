@@ -266,12 +266,11 @@ IncrementalFontLoader.prototype.requestGlyphs = function(fs, text) {
 
 /**
  * Inject the bundle to the base font and load updated font
- * @param {FilesystemHelper} fs Filesystem to be written
  * @param {type} bundle New glyph data
  * @param {function()} callback Action to take after font load
  * @return {Promise} Promise to inject bundle and load the new font
  */
-IncrementalFontLoader.prototype.injectBundle = function(fs, bundle, callback) {
+IncrementalFontLoader.prototype.injectBundle = function(bundle, callback) {
   // time_start('inject bundle')
   var filename = this.fontname + '.ttf';
   var that = this;
@@ -302,7 +301,7 @@ IncrementalFontLoader.prototype.incrUpdate = function(fs, text, callback) {
 
   return bundleReady.
           then(function(bundle) {
-            that.injectBundle(fs, bundle, callback);
+            that.injectBundle(bundle, callback);
             // time_end('incrUpdate')
           });
 };
