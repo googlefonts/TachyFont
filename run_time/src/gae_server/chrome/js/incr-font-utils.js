@@ -22,11 +22,23 @@
  */
 var IncrementalFontUtils = {};
 
+
+/**
+ * Enum for flags in the coming glyph bundle
+ * @enum {number}
+ */
+IncrementalFontUtils.FLAGS = {
+    HAS_HMTX: 1,
+    HAS_VMTX: 2,
+    HAS_CFF: 4
+};
+
 /**
  * Segment size in the loca table
  * @const {number}
  */
 IncrementalFontUtils.LOCA_BLOCK_SIZE = 64;
+
 
 /**
  * Inject glyphs in the glyphData to the baseFont
@@ -45,17 +57,17 @@ IncrementalFontUtils.injectCharacters = function(obj, baseFont,
   var count = bundleBinEd.getUint16_();
   var flags = bundleBinEd.getUint8_();
 
-  var isCFF = flags & IncrementalFontLoader.FLAGS.HAS_CFF;
+  var isCFF = flags & IncrementalFontUtils.FLAGS.HAS_CFF;
   console.log('count ' + count);
   for (var i = 0; i < count; i += 1) {
     var id = bundleBinEd.getUint16_();
     var hmtx, vmtx;
-    if (flags & IncrementalFontLoader.FLAGS.HAS_HMTX) {
+    if (flags & IncrementalFontUtils.FLAGS.HAS_HMTX) {
         hmtx = bundleBinEd.getUint16_();
         baseBinEd.setMtxSideBearing(obj.hmtxOffset, obj.hmetricCount,
             id, hmtx);
     }
-    if (flags & IncrementalFontLoader.FLAGS.HAS_VMTX) {
+    if (flags & IncrementalFontUtils.FLAGS.HAS_VMTX) {
         vmtx = bundleBinEd.getUint16_();
         baseBinEd.setMtxSideBearing(obj.vmtxOffset, obj.vmetricCount,
             id, vmtx);
@@ -127,16 +139,16 @@ IncrementalFontUtils.parseBaseHeader = function(obj, baseFont) {
 /**
  * Request codepoints from server
  * @param {String} fontname The fontname.
- * @param {Array.<number>} chars Codepoints to be requested
+ * @param {Array.<number>} codes Codepoints to be requested
  * @return {Promise} Promise to return ArrayBuffer for the response bundle
  * @private
  */
-IncrementalFontUtils.requestCharacters = function(fontname, chars) {
+IncrementalFontUtils.requestCodepoints = function(fontname, codes) {
 
   return IncrementalFontUtils.requestURL('/incremental_fonts/request', 'POST',
   JSON.stringify({
       'font': fontname,
-      'arr': chars
+      'arr': codes
   }), {
     'Content-Type': 'application/json'
   }, 'arraybuffer');
