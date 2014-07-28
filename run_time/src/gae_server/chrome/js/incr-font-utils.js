@@ -53,6 +53,27 @@ IncrementalFontUtils.parseBaseHeader = function(obj, baseFont) {
 };
 
 
+/**
+ * Request codepoints from server
+ * @param {String} fontname The fontname.
+ * @param {Array.<number>} chars Codepoints to be requested
+ * @return {Promise} Promise to return ArrayBuffer for the response bundle
+ * @private
+ */
+IncrementalFontUtils.requestCharacters = function(fontname, chars) {
+
+  return IncrementalFontUtils.requestURL('/incremental_fonts/request', 'POST',
+  JSON.stringify({
+      'font': fontname,
+      'arr': chars
+  }), {
+    'Content-Type': 'application/json'
+  }, 'arraybuffer');
+};
+
+
+
+
 //var fetchCnt = 0;
 /**
  * Async XMLHttpRequest to given url using given method, data and header
