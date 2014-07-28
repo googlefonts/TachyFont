@@ -17,6 +17,7 @@ import sys
 import struct
 import time
 import array
+import functools
 
 
 def _add_method(*clazzes):
@@ -492,22 +493,22 @@ def __classify_context(self):
         Coverage = lambda r: r.Coverage
         ChainCoverage = lambda r: r.Coverage
         ContextData = lambda r:(r.ClassDef,)
-        ChainContextData = lambda r:(r.LookAheadClassDef,
-                                      r.InputClassDef,
-                                      r.BacktrackClassDef)
+        ChainContextData = lambda r:(r.BacktrackClassDef,
+                                     r.InputClassDef,
+                                     r.LookAheadClassDef)
         RuleData = lambda r:(r.Class,)
-        ChainRuleData = lambda r:(r.LookAhead, r.Input, r.Backtrack)
+        ChainRuleData = lambda r:(r.Backtrack, r.Input, r.LookAhead)
         def SetRuleData(r, d):(r.Class,) = d
-        def ChainSetRuleData(r, d):(r.LookAhead, r.Input, r.Backtrack) = d
+        def ChainSetRuleData(r, d):(r.Backtrack, r.Input, r.LookAhead) = d
       elif Format == 3:
         Coverage = lambda r: r.Coverage[0]
         ChainCoverage = lambda r: r.InputCoverage[0]
         ContextData = None
         ChainContextData = None
         RuleData = lambda r: r.Coverage
-        ChainRuleData = lambda r:(r.LookAheadCoverage +
-                                   r.InputCoverage +
-                                   r.BacktrackCoverage)
+        ChainRuleData = lambda r:(r.BacktrackCoverage +
+                                  r.InputCoverage +
+                                  r.LookAheadCoverage)
         SetRuleData = None
         ChainSetRuleData = None
       else:
@@ -535,7 +536,8 @@ def __classify_context(self):
         self.RuleCount = ChainTyp+'ClassRuleCount'
         self.RuleSet = ChainTyp+'ClassSet'
         self.RuleSetCount = ChainTyp+'ClassSetCount'
-        self.Intersect = lambda glyphs, c, r: c.intersect_class(glyphs, r)
+        self.Intersect = lambda glyphs, c, r: (c.intersect_class(glyphs, r) if c
+                                               else (set(glyphs) if r == 0 else set()))
 
         self.ClassDef = 'InputClassDef' if Chain else 'ClassDef'
         self.ClassDefIndex = 1 if Chain else 0
@@ -664,7 +666,7 @@ def subset_glyphs(self, s):
     if not self.Coverage.subset(s.glyphs):
       return False
     ContextData = c.ContextData(self)
-    klass_maps = [x.subset(s.glyphs, remap=True) for x in ContextData]
+    klass_maps = [x.subset(s.glyphs, remap=True) if x else None for x in ContextData]
 
     # Keep rulesets for class numbers that survived.
     indices = klass_maps[c.ClassDefIndex]
@@ -1371,7 +1373,14 @@ def subset_glyphs(self, s):
       del csi.file, csi.offsets
       if hasattr(font, "FDSelect"):
         sel = font.FDSelect
-        sel.format = None
+        # XXX We want to set sel.format to None, such that the most compact
+        # format is selected.  However, OTS was broken and couldn't parse
+        # a FDSelect format 0 that happened before CharStrings.  As such,
+        # always force format 3 until we fix cffLib to always generate
+        # FDSelect after CharStrings.
+        # https://github.com/khaledhosny/ots/pull/31
+        #sel.format = None
+        sel.format = 3
         sel.gidArray = [sel.gidArray[i] for i in indices]
       cs.charStrings = dict((g,indices.index(v))
                             for g,v in cs.charStrings.items()
@@ -1582,6 +1591,62 @@ class _DehintingT2Decompiler(psCharStrings.SimpleT2Decompiler):
         else:
           hints.last_hint = index - 2 # Leave the subr call in
 
+class _DecompressingT2Decompiler(psCharStrings.SimpleT2Decompiler):
+
+  def __init__(self, localSubrs, globalSubrs):
+    psCharStrings.SimpleT2Decompiler.__init__(self,
+                                              localSubrs,
+                                              globalSubrs)
+
+  def execute(self, charString):
+    # Note: Currently we recompute _decompressed each time.  This
+    # is more robust in some cases, but in other places we assume
+    # that each subroutine always expands to the same code, so
+    # maybe it doesn't matter.  To speed up we can just not
+    # recompute _decompressed if it's there.  For now I just
+    # double-check that it decompressed to the same thing.
+    old_decompressed = charString._decompressed if hasattr(charString, '_decompressed') else None
+
+    charString._patches = []
+    psCharStrings.SimpleT2Decompiler.execute(self, charString)
+    decompressed = charString.program[:]
+    for idx,expansion in reversed (charString._patches):
+      if decompressed[idx - 1] not in ['callsubr', 'callgsubr']:
+        import pdb; pdb.set_trace()
+      assert idx >= 2
+      assert decompressed[idx - 1] in ['callsubr', 'callgsubr'], decompressed[idx - 1]
+      assert type(decompressed[idx - 2]) == int
+      if expansion[-1] == 'return':
+        expansion = expansion[:-1]
+      decompressed[idx-2:idx] = expansion
+    if 'endchar' in decompressed:
+      # Cut off after first endchar
+      decompressed = decompressed[:decompressed.index('endchar') + 1]
+    else:
+      if not len(decompressed) or decompressed[-1] != 'return':
+        decompressed.append('return')
+
+    charString._decompressed = decompressed
+    del charString._patches
+
+    if old_decompressed:
+      assert decompressed == old_decompressed
+
+  def op_callsubr(self, index):
+    subr = self.localSubrs[self.operandStack[-1]+self.localBias]
+    psCharStrings.SimpleT2Decompiler.op_callsubr(self, index)
+    self.processSubr(index, subr)
+
+  def op_callgsubr(self, index):
+    subr = self.globalSubrs[self.operandStack[-1]+self.globalBias]
+    psCharStrings.SimpleT2Decompiler.op_callgsubr(self, index)
+    self.processSubr(index, subr)
+
+  def processSubr(self, index, subr):
+    cs = self.callingStack[-1]
+    cs._patches.append((index, subr._decompressed))
+
+
 @_add_method(ttLib.getTableClass('CFF '))
 def prune_post_subset(self, options):
   cff = self.cff
@@ -1635,6 +1700,7 @@ def prune_post_subset(self, options):
         decompiler.execute(c)
       for charstring in css:
         charstring.drop_hints()
+      del css
 
       # Drop font-wide hinting values
       all_privs = []
@@ -1648,6 +1714,17 @@ def prune_post_subset(self, options):
                   'StemSnapH', 'StemSnapV', 'StdHW', 'StdVW']:
           if hasattr(priv, k):
             setattr(priv, k, None)
+
+    if options.decompress:
+      for g in font.charset:
+        c,sel = cs.getItemAndSelector(g)
+        # Make sure it's decompiled.  We want our "decompiler" to walk
+        # the program, not the bytecode.
+        c.draw(basePen.NullPen())
+        subrs = getattr(c.private, "Subrs", [])
+        decompiler = _DecompressingT2Decompiler(subrs, c.globalSubrs)
+        decompiler.execute(c)
+        c.program = c._decompressed
 
 
     #
@@ -1849,6 +1926,7 @@ class Options(object):
   recalc_timestamp = False # Recalculate font modified timestamp
   canonical_order = False # Order tables as recommended
   flavor = None # May be 'woff'
+  decompress = False
 
   def __init__(self, **kwargs):
 
@@ -2165,6 +2243,26 @@ def save_font(font, outfile, options):
   font.flavor = options.flavor
   font.save(outfile, reorderTables=options.canonical_order)
 
+def get_unicode(g):
+  if g.startswith('uni') and len(g) > 3:
+    g = g[3:]
+  elif g.startswith('U+') and len(g) > 2:
+    g = g[2:]
+  return int(g, 16)
+
+def get_gid(g):
+  if g.startswith('gid') and len(g) > 3:
+    g = g[3:]
+  elif g.startswith('glyph') and len(g) > 5:
+    g = g[5:]
+  return int(g)
+
+def get_glyph_name(gid, font):
+  try:
+    return font.getGlyphName(gid, requireReal=True)
+  except ValueError:
+    raise Exception("Invalid glyph identifier: %d" % gid)
+
 def main(args):
 
   log = Logger()
@@ -2206,22 +2304,20 @@ def main(args):
       text += g[7:]
       continue
     if g.startswith('uni') or g.startswith('U+'):
-      if g.startswith('uni') and len(g) > 3:
-        g = g[3:]
-      elif g.startswith('U+') and len(g) > 2:
-        g = g[2:]
-      u = int(g, 16)
-      unicodes.append(u)
+      if '-' in g:
+        uni_range = map(get_unicode, g.split('-'))
+        uni_range = range(uni_range[0], uni_range[1] + 1)
+        unicodes.extend(uni_range)
+      else:
+        unicodes.append(get_unicode(g))
       continue
     if g.startswith('gid') or g.startswith('glyph'):
-      if g.startswith('gid') and len(g) > 3:
-        g = g[3:]
-      elif g.startswith('glyph') and len(g) > 5:
-        g = g[5:]
-      try:
-        glyphs.append(font.getGlyphName(int(g), requireReal=True))
-      except ValueError:
-        raise Exception("Invalid glyph identifier: %s" % g)
+      if '-' in g:
+        gid_range = map(get_gid, g.split('-'))
+        gid_range = range(gid_range[0], gid_range[1] + 1)
+        glyphs.extend(map(functools.partial(get_glyph_name, font=font), gid_range))
+      else:
+        glyphs.append(get_glyph_name(get_gid(g), font))
       continue
     raise Exception("Invalid glyph identifier: %s" % g)
   log.lapse("compile glyph list")
