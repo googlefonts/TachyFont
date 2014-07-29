@@ -95,9 +95,19 @@ IncrementalFontUtils.injectCharacters = function(obj, baseFont,
       /*
        * if value is changed and length is nonzero we should write -1
        */
-      if (length > 0 && isChanged) {
-         baseBinEd.seek(obj.glyphOffset + newNextOne);
-         baseBinEd.setInt16_(-1);
+      if (isChanged) {
+        baseBinEd.seek(obj.glyphOffset + newNextOne);
+        if (length > 0) {
+          baseBinEd.setInt16_(-1);
+        }else if (length == 0) {
+           /*if it is still zero,then could write -1*/
+          var currentUint1 = baseBinEd.getUint32_(),
+              currentUint2 = baseBinEd.getUint32_();
+          if (currentUint1 == 0 && currentUint2 == 0) {
+            baseBinEd.seek(obj.glyphOffset + newNextOne);
+            baseBinEd.setInt16_(-1);
+          }
+        }
       }
     }
 
@@ -114,9 +124,9 @@ IncrementalFontUtils.injectCharacters = function(obj, baseFont,
 
 /**
  * Parses base font header, set properties
+ * @param {Object} obj The object with the font header information.
  * @param {ArrayBuffer} baseFont Base font with header
  * @return {ArrayBuffer} Base font without header
- * @private
  */
 IncrementalFontUtils.parseBaseHeader = function(obj, baseFont) {
 
@@ -141,7 +151,6 @@ IncrementalFontUtils.parseBaseHeader = function(obj, baseFont) {
  * @param {String} fontname The fontname.
  * @param {Array.<number>} codes Codepoints to be requested
  * @return {Promise} Promise to return ArrayBuffer for the response bundle
- * @private
  */
 IncrementalFontUtils.requestCodepoints = function(fontname, codes) {
 
@@ -194,6 +203,7 @@ IncrementalFontUtils.requestURL = function(url, method, data, headerParams,
 
 /**
  * Sanitize base font to pass OTS
+ * @param {Object} obj The object with the font header information.
  * @param {ArrayBuffer} baseFont Base font as ArrayBuffer
  * @return {ArrayBuffer} Sanitized base font
  */

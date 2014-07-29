@@ -40,6 +40,17 @@ class Cleaner(object):
       for name in names:
         if name != '.notdef' and glyf_table[name] and glyf_table[name].numberOfContours == 0 and rcmap[name] not in self.whitespace_and_ignorable_list:
           invalid_glyphs.add(name)
+    elif 'CFF ' in self.font:
+      """TODO(ahmetcelik) Adding code to exclude valid 1 byte CharStrings
+      """
+      cffTable = self.font['CFF '].cff
+      assert len(cffTable.fontNames) == 1
+      charStrings = cffTable[cffTable.fontNames[0]].CharStrings
+      endchars = set()
+      for i in xrange(len(charStrings.charStringsIndex)):
+        assert charStrings.charStringsIndex[i].bytecode
+        if len(charStrings.charStringsIndex[i].bytecode) == 1:
+          endchars.add(i)
     else:
       pass
 
