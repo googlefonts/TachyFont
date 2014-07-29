@@ -21,13 +21,15 @@
  * This module has "for debug" code.
  */
 
+var ForDebug = {};
+
 // This is here only for measuring the timings during development.
 // This is not needed for regular use.
 var timer = new Timer();
 
 var columns = ['Item', 'Start', 'End', 'Length'];
 
-var old_onload = window.onload;
+ForDebug.old_onload = window.onload;
 /**
  * Display the results on window.onload.
  */
@@ -53,8 +55,83 @@ window.onload = function() {
       document.body.insertBefore(br, first_child);
       timer.display_timing(table);
     }
-    if (old_onload) {
-      old_onload(window);
+    if (ForDebug.old_onload) {
+      ForDebug.old_onload(window);
     }
   }, 500);
 };
+
+/**
+ * Add a "drop DB" button.
+ * @private
+ */
+ForDebug.addDropDbButton = function(incrFontMgr, fontname) {
+  var old_onload = window.onload;
+  window.onload = function() {
+    var span = document.createElement('span');
+    span.style.position = 'absolute';
+    span.style.top = '10px';
+    span.style.right = '10px';
+    var button = document.createElement('button');
+    button.onclick = dropDB;
+    var label = document.createTextNode('drop DB');
+    button.appendChild(label);
+    span.appendChild(button);
+    var br = document.createElement('br');
+    span.appendChild(br);
+    var msg_span = document.createElement('span');
+    msg_span.id = 'dropDB_msg';
+    span.appendChild(msg_span);
+    document.body.appendChild(span);
+    if (old_onload) {
+      old_onload(window);
+    }
+  };
+  function dropDB() {
+    var msg_span = document.getElementById('dropDB_msg');
+    ForDebug.dropDB(incrFontMgr, fontname).
+    then(function() {
+      msg_span.innerHTML = 'dropped DB';
+    }).
+    catch (function(msg) {
+      msg_span.innerHTML = msg;
+    });
+  }
+
+};
+
+
+/**
+ * Drop the IndexedDB database.
+ * @return {Promise} The Promise for when the DB is dropped.
+ */
+ForDebug.dropDB = function(incrFontMgr, fontname) {
+  var db_name = IncrementalFont.DB_NAME + '/' + fontname;
+  return incrFontMgr.getIDB_
+  .then(function(db) {
+    db.close();
+    return new Promise(function(resolve, reject) {
+      console.log('drop ' + db_name);
+      var request = indexedDB.deleteDatabase(db_name);
+      request.onsuccess = function(e) {
+        resolve();
+      };
+      request.onblocked = function() {
+        console.log("deleteDatbase got blocked event");
+      };
+      request.onerror = function(e) {
+        debugger;
+        reject(e);
+      };
+    })
+  }).
+  then(function() {
+    return 'dropped ' + db_name;
+  }).
+  catch (function(e) {
+    console.log('dropDB ' + db_name + ': ' + e.message);
+    debugger;
+    return 'dropDB ' + db_name + ': ' + e.message;
+  });
+};
+
