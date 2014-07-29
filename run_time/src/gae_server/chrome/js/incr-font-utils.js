@@ -22,11 +22,94 @@
  */
 var IncrementalFontUtils = {};
 
+
+/**
+ * Enum for flags in the coming glyph bundle
+ * @enum {number}
+ */
+IncrementalFontUtils.FLAGS = {
+    HAS_HMTX: 1,
+    HAS_VMTX: 2,
+    HAS_CFF: 4
+};
+
 /**
  * Segment size in the loca table
  * @const {number}
  */
 IncrementalFontUtils.LOCA_BLOCK_SIZE = 64;
+
+
+/**
+ * Inject glyphs in the glyphData to the baseFont
+ * @param {Object} obj The object with the font header information.
+ * @param {ArrayBuffer} baseFont Current base font
+ * @param {ArrayBuffer} glyphData New glyph data
+ * @return {ArrayBuffer} Updated base font
+ */
+IncrementalFontUtils.injectCharacters = function(obj, baseFont,
+  glyphData) {
+  // time_start('inject')
+  obj.dirty = true;
+  var bundleBinEd = new BinaryFontEditor(new DataView(glyphData), 0);
+  var baseBinEd = new BinaryFontEditor(new DataView(baseFont), 0);
+
+  var count = bundleBinEd.getUint16_();
+  var flags = bundleBinEd.getUint8_();
+
+  var isCFF = flags & IncrementalFontUtils.FLAGS.HAS_CFF;
+  console.log('count ' + count);
+  for (var i = 0; i < count; i += 1) {
+    var id = bundleBinEd.getUint16_();
+    var hmtx, vmtx;
+    if (flags & IncrementalFontUtils.FLAGS.HAS_HMTX) {
+        hmtx = bundleBinEd.getUint16_();
+        baseBinEd.setMtxSideBearing(obj.hmtxOffset, obj.hmetricCount,
+            id, hmtx);
+    }
+    if (flags & IncrementalFontUtils.FLAGS.HAS_VMTX) {
+        vmtx = bundleBinEd.getUint16_();
+        baseBinEd.setMtxSideBearing(obj.vmtxOffset, obj.vmetricCount,
+            id, vmtx);
+    }
+    var offset = bundleBinEd.getUint32_();
+    var length = bundleBinEd.getUint16_();
+
+    if (!isCFF) {
+      baseBinEd.setGlyphDataOffset(obj.glyphDataOffset, obj.offsetSize,
+        id, offset);
+      var oldNextOne = baseBinEd.getGlyphDataOffset(obj.glyphDataOffset,
+      obj.offsetSize, id + 1);
+      var newNextOne = offset + length;
+      var isChanged = oldNextOne != newNextOne;
+      baseBinEd.setGlyphDataOffset(obj.glyphDataOffset, obj.offsetSize,
+        id + 1, newNextOne);
+      var prev_id = id - 1;
+      while (prev_id >= 0 && baseBinEd.getGlyphDataOffset(obj.glyphDataOffset,
+        obj.offsetSize, prev_id) > offset) {
+
+        baseBinEd.setGlyphDataOffset(obj.glyphDataOffset, obj.offsetSize,
+            prev_id, offset);
+        prev_id--;
+      }
+      /*
+       * if value is changed and length is nonzero we should write -1
+       */
+      if (length > 0 && isChanged) {
+         baseBinEd.seek(obj.glyphOffset + newNextOne);
+         baseBinEd.setInt16_(-1);
+      }
+    }
+
+
+    var bytes = bundleBinEd.getArrayOf_(bundleBinEd.getUint8_, length);
+    baseBinEd.seek(obj.glyphOffset + offset);
+    baseBinEd.setArrayOf_(baseBinEd.setUint8_, bytes);
+  }
+  // time_end('inject')
+
+  return baseFont;
+};
 
 
 /**
@@ -51,6 +134,27 @@ IncrementalFontUtils.parseBaseHeader = function(obj, baseFont) {
     }
     return baseFont;
 };
+
+
+/**
+ * Request codepoints from server
+ * @param {String} fontname The fontname.
+ * @param {Array.<number>} codes Codepoints to be requested
+ * @return {Promise} Promise to return ArrayBuffer for the response bundle
+ * @private
+ */
+IncrementalFontUtils.requestCodepoints = function(fontname, codes) {
+
+  return IncrementalFontUtils.requestURL('/incremental_fonts/request', 'POST',
+  JSON.stringify({
+      'font': fontname,
+      'arr': codes
+  }), {
+    'Content-Type': 'application/json'
+  }, 'arraybuffer');
+};
+
+
 
 
 //var fetchCnt = 0;
@@ -116,4 +220,18 @@ IncrementalFontUtils.sanitizeBaseFont = function(obj, baseFont) {
   }
   return baseFont;
 };
+
+/**
+ * Add and load the font
+ * @param {String} fontname The fontname
+ * @param {string} font_src Data url of the font
+ * @param {function()} callback Action to take when font is loaded
+ */
+IncrementalFontUtils.setTheFont = function(fontname, font_src, callback) {
+  console.log(font_src);
+  var font = new FontFace(fontname, 'url(' + font_src + ')', {});
+  document.fonts.add(font);
+  font.load().then(callback);
+};
+
 

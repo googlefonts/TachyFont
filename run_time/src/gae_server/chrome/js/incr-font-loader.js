@@ -44,16 +44,6 @@ function IncrementalFontLoader(fontname, isTTF) {
 }
 
 /**
- * Enum for flags in the coming glyph bundle
- * @enum {number}
- */
-IncrementalFontLoader.FLAGS = {
-    HAS_HMTX: 1,
-    HAS_VMTX: 2,
-    HAS_CFF: 4
-};
-
-/**
  * Find new codepoints
  * @param {string} str Input text
  * @param {Object.<number, number>} codes Codepoints to exclude from the result
@@ -113,36 +103,6 @@ IncrementalFontLoader.prototype.determineCharacters_ = function(codes, text) {
 
 
 /**
- * Request codepoints from server
- * @param {Array.<number>} chars Codepoints to be requested
- * @return {Promise} Promise to return ArrayBuffer for the response bundle
- * @private
- */
-IncrementalFontLoader.prototype.requestCharacters_ = function(chars) {
-
-  return IncrementalFontUtils.requestURL('/incremental_fonts/request', 'POST',
-  JSON.stringify({
-      'font': this.fontname,
-      'arr': chars
-  }), {
-    'Content-Type': 'application/json'
-  }, 'arraybuffer');
-};
-
-/**
- * Add and load the font
- * @param {string} font_src Data url of the font
- * @param {function()} callback Action to take when font is loaded
- * @private
- */
-IncrementalFontLoader.prototype.setTheFont_ = function(font_src, callback) {
-  console.log(font_src);
-  var font = new FontFace(this.fontname, 'url(' + font_src + ')', {});
-  document.fonts.add(font);
-  font.load().then(callback);
-};
-
-/**
  * Request base font from the server
  * @return {Promise} Promise to return ArrayBuffer for the base font
  * @private
@@ -193,76 +153,6 @@ IncrementalFontLoader.prototype.getBaseFont_ = function(inFS, fs, filename) {
 
 };
 
-/**
- * Inject glyphs in the glyphData to the baseFont
- * @param {ArrayBuffer} baseFont Current base font
- * @param {ArrayBuffer} glyphData New glyph data
- * @return {ArrayBuffer} Updated base font
- * @private
- */
-IncrementalFontLoader.prototype.injectCharacters_ = function(baseFont,
-  glyphData) {
-  // time_start('inject')
-  this.dirty = true;
-  var bundleBinEd = new BinaryFontEditor(new DataView(glyphData), 0);
-  var baseBinEd = new BinaryFontEditor(new DataView(baseFont), 0);
-
-  var count = bundleBinEd.getUint16_();
-  var flags = bundleBinEd.getUint8_();
-
-  var isCFF = flags & IncrementalFontLoader.FLAGS.HAS_CFF;
-  console.log('count ' + count);
-  for (var i = 0; i < count; i += 1) {
-    var id = bundleBinEd.getUint16_();
-    var hmtx, vmtx;
-    if (flags & IncrementalFontLoader.FLAGS.HAS_HMTX) {
-        hmtx = bundleBinEd.getUint16_();
-        baseBinEd.setMtxSideBearing(this.hmtxOffset, this.hmetricCount,
-            id, hmtx);
-    }
-    if (flags & IncrementalFontLoader.FLAGS.HAS_VMTX) {
-        vmtx = bundleBinEd.getUint16_();
-        baseBinEd.setMtxSideBearing(this.vmtxOffset, this.vmetricCount,
-            id, vmtx);
-    }
-    var offset = bundleBinEd.getUint32_();
-    var length = bundleBinEd.getUint16_();
-
-    if (!isCFF) {
-      baseBinEd.setGlyphDataOffset(this.glyphDataOffset, this.offsetSize,
-        id, offset);
-      var oldNextOne = baseBinEd.getGlyphDataOffset(this.glyphDataOffset,
-      this.offsetSize, id + 1);
-      var newNextOne = offset + length;
-      var isChanged = oldNextOne != newNextOne;
-      baseBinEd.setGlyphDataOffset(this.glyphDataOffset, this.offsetSize,
-        id + 1, newNextOne);
-      var prev_id = id - 1;
-      while (prev_id >= 0 && baseBinEd.getGlyphDataOffset(this.glyphDataOffset,
-        this.offsetSize, prev_id) > offset) {
-
-        baseBinEd.setGlyphDataOffset(this.glyphDataOffset, this.offsetSize,
-            prev_id, offset);
-        prev_id--;
-      }
-      /*
-       * if value is changed and length is nonzero we should write -1
-       */
-      if (length > 0 && isChanged) {
-         baseBinEd.seek(this.glyphOffset + newNextOne);
-         baseBinEd.setInt16_(-1);
-      }
-    }
-
-
-    var bytes = bundleBinEd.getArrayOf_(bundleBinEd.getUint8_, length);
-    baseBinEd.seek(this.glyphOffset + offset);
-    baseBinEd.setArrayOf_(baseBinEd.setUint8_, bytes);
-  }
-  // time_end('inject')
-
-  return baseFont;
-};
 
 /**
  * Write the base font to the filesystem and load it
@@ -286,12 +176,12 @@ IncrementalFontLoader.prototype.getBaseToFileSystem = function(fs, callback) {
           that.baseFont = sanitized_base;
           var fileURL = URL.createObjectURL(new Blob([sanitized_base],
             {type: 'application/font-sfnt'}));
-          that.setTheFont_(fileURL, callback);
+          IncrementalFontUtils.setTheFont(that.fontname, fileURL, callback);
         }else {
           var fileURL = 'filesystem:' + window.location.protocol + '//' +
                   window.location.host + '/temporary/' + filename + '?t=' +
                   Date.now();
-          that.setTheFont_(fileURL, callback);
+          IncrementalFontUtils.setTheFont(that.fontname, fileURL, callback);
         }
 
         //return fs.writeToTheFile(filename, sanitized_base,
@@ -311,7 +201,7 @@ IncrementalFontLoader.prototype.getBaseToFileSystem = function(fs, callback) {
 
   return fileURLReady.
           then(function(fileURL) {
-            that.setTheFont_(fileURL, callback);
+            IncrementalFontUtils.setTheFont(that.fontname, fileURL, callback);
           });*/
 };
 
@@ -355,7 +245,7 @@ IncrementalFontLoader.prototype.requestGlyphs = function(fs, text) {
                         then(function(arr) {
                           // time_end('request glyphs')
                           if (arr[0].length) {
-                            return that.requestCharacters_(arr[0]);
+                            return IncrementalFontUtils.requestCodepoints(that.fontname, arr[0]);
                           } else {
                             return null;
                           }
@@ -366,21 +256,18 @@ IncrementalFontLoader.prototype.requestGlyphs = function(fs, text) {
 
 /**
  * Inject the bundle to the base font and load updated font
- * @param {FilesystemHelper} fs Filesystem to be written
  * @param {type} bundle New glyph data
  * @param {function()} callback Action to take after font load
  * @return {Promise} Promise to inject bundle and load the new font
  */
-IncrementalFontLoader.prototype.injectBundle = function(fs, bundle, callback) {
+IncrementalFontLoader.prototype.injectBundle = function(bundle, callback) {
   // time_start('inject bundle')
-  var filename = this.fontname + '.ttf';
   var that = this;
-  var charsInjected;
   if (bundle != null) {
-    charsInjected = that.injectCharacters_(that.baseFont, bundle);
+    var charsInjected = IncrementalFontUtils.injectCharacters(that, that.baseFont, bundle);
     var fileURL = URL.createObjectURL(new Blob([charsInjected],
         {type: 'application/font-sfnt'}));
-    that.setTheFont_(fileURL, callback);
+    IncrementalFontUtils.setTheFont(that.fontname, fileURL, callback);
   }
 
   return Promise.resolve();
@@ -402,7 +289,7 @@ IncrementalFontLoader.prototype.incrUpdate = function(fs, text, callback) {
 
   return bundleReady.
           then(function(bundle) {
-            that.injectBundle(fs, bundle, callback);
+            that.injectBundle(bundle, callback);
             // time_end('incrUpdate')
           });
 };
