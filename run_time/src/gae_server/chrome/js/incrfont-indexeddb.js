@@ -57,13 +57,13 @@ IncrementalFont.BASE_DIRTY = 'base_dirty';
 /**
  * The the char list name.
  */
-IncrementalFont.CHARLIST = 'charList';
+IncrementalFont.CHARLIST = 'charlist';
 
 
 /**
  * The the char list dirty (needs to be persisted) key.
  */
-IncrementalFont.CHARLIST_DIRTY = 'charList_dirty';
+IncrementalFont.CHARLIST_DIRTY = 'charlist_dirty';
 
 ///**
 // * The the persist timeout key.
@@ -100,7 +100,7 @@ IncrementalFont.createManager = function(fontname) {
     ' { font-family: nanum-brush; visibility: hidden; }', 0);
 
   //console.log('Get the base.');
-  // Get the base and charList in parallel.
+  // Get the base and charlist in parallel.
   // Start the operation to get the base.
   //timer.start('get the base data ' + fontname);
   //timer.start('did not get the base data ' + fontname);
@@ -168,7 +168,7 @@ IncrementalFont.createManager = function(fontname) {
     return data;
   }).
   catch (function(e) {
-    console.log('no charList');
+    console.log('no charlist');
     return {};
   }).
   then(function(data) {
@@ -176,85 +176,11 @@ IncrementalFont.createManager = function(fontname) {
   });
 
   // For Debug: add a button to clear the IndexedDB.
-  IncrementalFont.addDropDbButton_(incrFontMgr, fontname);
+  ForDebug.addDropDbButton(incrFontMgr, fontname);
 
   return incrFontMgr;
 };
 
-
-/**
- * Add a "drop DB" button.
- * @private
- */
-IncrementalFont.addDropDbButton_ = function(incrFontMgr, fontname) {
-  var old_onload = window.onload;
-  window.onload = function() {
-    var span = document.createElement('span');
-    span.style.position = 'absolute';
-    span.style.top = '10px';
-    span.style.right = '10px';
-    var button = document.createElement('button');
-    button.onclick = dropDB;
-    var label = document.createTextNode('drop DB');
-    button.appendChild(label);
-    span.appendChild(button);
-    var br = document.createElement('br');
-    span.appendChild(br);
-    var msg_span = document.createElement('span');
-    msg_span.id = 'dropDB_msg';
-    span.appendChild(msg_span);
-    document.body.appendChild(span);
-    if (old_onload) {
-      old_onload(window);
-    }
-  };
-  function dropDB() {
-    var msg_span = document.getElementById('dropDB_msg');
-    IncrementalFont.dropDB(incrFontMgr, fontname).
-    then(function() {
-      msg_span.innerHTML = 'dropped DB';
-    }).
-    catch (function(msg) {
-      msg_span.innerHTML = msg;
-    });
-  }
-
-};
-
-
-/**
- * Drop the IndexedDB database.
- * @return {Promise} The Promise for when the DB is dropped.
- */
-IncrementalFont.dropDB = function(incrFontMgr, fontname) {
-  var db_name = IncrementalFont.DB_NAME + '/' + fontname;
-  return incrFontMgr.getIDB_
-  .then(function(db) {
-    db.close();
-    return new Promise(function(resolve, reject) {
-      console.log('drop ' + db_name);
-      var request = indexedDB.deleteDatabase(db_name);
-      request.onsuccess = function(e) {
-        resolve();
-      };
-      request.onblocked = function() {
-        console.log("deleteDatbase got blocked event");
-      };
-      request.onerror = function(e) {
-        debugger;
-        reject(e);
-      };
-    })
-  }).
-  then(function() {
-    return 'dropped ' + db_name;
-  }).
-  catch (function(e) {
-    console.log('dropDB ' + db_name + ': ' + e.message);
-    debugger;
-    return 'dropDB ' + db_name + ': ' + e.message;
-  });
-};
 
 /**
  * IncrFontIDB.obj_ - A class to handle interacting the IndexedDB.
@@ -279,6 +205,57 @@ IncrementalFont.obj_ = function(fontname) {
 
 
 /**
+ * Lazily data for these chars.
+ * @param {string} element_name The name of the data item.
+ * @private
+ */
+IncrementalFont.obj_.prototype.loadNeededChars = function(element_name) {
+  var that = this;
+  //console.log('persist ' + name);
+  var chars = document.getElementById(element_name).innerText;
+  this.getCharList.
+  then(function(charlist) {
+    //console.log('charlist = ' + Object.keys(charlist));
+    var neededCodes = [];
+    for (var i = 0; i < chars.length; i++) {
+      var c = chars.charAt(i);
+      if (!charlist[c]) {
+        neededCodes.push(c.charCodeAt(0));
+        charlist[c] = 1;
+      }
+    }
+    //console.log(neededCodes);
+    if (neededCodes.length == 0) {
+      debugger;
+      return null;
+    }
+    neededCodes.sort(function(a, b){return a-b});
+    //console.log(neededCodes);
+    return IncrementalFontUtils.requestCodepoints(that.fontname, neededCodes).
+    then(function(chardata) {
+      //console.log('requested char data length = ' + chardata.byteLength);
+      return chardata;
+    });
+  }).
+  then(function(chardata) {
+    //console.log('need to decouple injectBundle from IncrementalFontLoader');
+    if (chardata != null) {
+      return that.getBase.
+      then(function(base) {
+        //console.log('that = ' + Object.keys(that));
+        //console.log('base.byteLength = ' + base.byteLength);
+        //console.log('chardata.byteLength = ' + chardata.byteLength);
+        var fontdata = IncrementalFontUtils.injectCharacters(that, base, chardata);
+        that.persistInfo[IncrementalFont.CHARLIST_DIRTY] = true;
+        var blobURL = URL.createObjectURL(new Blob([fontdata],
+            {type: 'application/font-sfnt'}));
+        IncrementalFontUtils.setTheFont(that.fontname, blobURL, function() {});
+      });
+    }
+  });
+};
+
+/**
  * Save data that needs to be persisted.
  * @param {string} name The name of the data item.
  * @private
@@ -300,8 +277,8 @@ IncrementalFont.obj_.prototype.persistDelayed_ = function(name) {
     // anything still to persist.
 //    debugger;
     var base_dirty = that.persistInfo[IncrementalFont.BASE_DIRTY];
-    var charList_dirty = that.persistInfo[IncrementalFont.CHARLIST_DIRTY];
-    if (!base_dirty && !charList_dirty) {
+    var charlist_dirty = that.persistInfo[IncrementalFont.CHARLIST_DIRTY];
+    if (!base_dirty && !charlist_dirty) {
       return;
     }
 
@@ -327,10 +304,10 @@ IncrementalFont.obj_.prototype.persistDelayed_ = function(name) {
       }
     }).
     then(function() {
-      if (charList_dirty) {
+      if (charlist_dirty) {
         return that.getCharList().
-        then(function(charList) {
-          return that.saveData_(IncrementalFont.CHARLIST, charList);
+        then(function(charlist) {
+          return that.saveData_(IncrementalFont.CHARLIST, charlist);
         });
       }
     }).
@@ -438,7 +415,7 @@ IncrementalFont.obj_.prototype.openIndexedDB = function(fontname) {
         db.deleteObjectStore(IncrementalFont.BASE);
       }
       if (db.objectStoreNames.contains(IncrementalFont.CHARLIST)) {
-        console.log('onupgradeneeded charList');
+        console.log('onupgradeneeded charlist');
         db.deleteObjectStore(IncrementalFont.CHARLIST);
       }
       //console.log('before creates');
