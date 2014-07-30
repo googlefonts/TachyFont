@@ -37,7 +37,7 @@ This file is used as to test cff font file loading
     var EMPTY_FS = true;
     var FONTNAME = 'cff';
     var TEXTS = [];
-    var fontLoader = new IncrementalFontLoader(FONTNAME, false);
+    var fontLoader = new IncrementalFontLoader(FONTNAME);
     var filesystem = new FilesystemHelper(
             FilesystemHelper.requestTemporaryFileSystem(
             TEMPORARY_FS_REQUEST_SIZE), EMPTY_FS);

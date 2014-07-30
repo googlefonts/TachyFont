@@ -322,6 +322,14 @@ BinaryFontEditor.readOps.VMMC = function(editor, font) {
 };
 
 /**
+ * @param {BinaryFontEditor} editor Editor used to parse header
+ * @param {IncrementalFontLoader} font Font loader object
+ */
+BinaryFontEditor.readOps.TYPE = function(editor, font) {
+    font.isTTF = editor.getUint8_();
+};
+
+/**
  * Tags defined in the header of the basefont
  * @enum {Object}
  */
@@ -357,6 +365,10 @@ BinaryFontEditor.TAGS = {
     'VMMC':
             {'desc': 'Number of vmetrics in vmtx table',
                 'fn': BinaryFontEditor.readOps.VMMC
+            },
+    'TYPE':
+            {'desc': 'Type of the font. 1 for TTF and 0 for CFF',
+                'fn': BinaryFontEditor.readOps.TYPE
             }
 };
 

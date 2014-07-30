@@ -30,7 +30,7 @@
     var EMPTY_FS = true;
     var FONTNAME = 'nanum-brush';
     var TEXTS = [];
-    var fontLoader = new IncrementalFontLoader(FONTNAME, true);
+    var fontLoader = new IncrementalFontLoader(FONTNAME);
     var filesystem = new FilesystemHelper(
             FilesystemHelper.requestTemporaryFileSystem(
             TEMPORARY_FS_REQUEST_SIZE), EMPTY_FS);
