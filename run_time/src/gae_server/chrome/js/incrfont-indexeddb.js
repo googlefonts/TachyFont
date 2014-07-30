@@ -137,9 +137,7 @@ IncrementalFont.createManager = function(fontname) {
     return IncrementalFontUtils.requestURL('/fonts/' + incrFontMgr.fontname +
       '/base', 'GET', null, {}, 'arraybuffer').
     then(function(xfer_bytes) {
-      console.log('need to get isTTF from base fileinfo');
       var fileinfo = {};
-      fileinfo.isTTF = true;
       var rle_basefont =
         IncrementalFontUtils.parseBaseHeader(fileinfo, xfer_bytes);
       return [fileinfo, rle_basefont];
@@ -199,8 +197,8 @@ IncrementalFont.obj_ = function(fontname) {
   this.charsURL = '/incremental_fonts/request';
   this.persistInfo = {};
   this.persistInfo[IncrementalFont.BASE_DIRTY] = false;
+  this.persistInfo[IncrementalFont.FILEINFO_DIRTY] = false;
   this.persistInfo[IncrementalFont.CHARLIST_DIRTY] = false;
-  this.isTTF = false;
 
   // Promises
   this.getIDB_ = null;
@@ -460,7 +458,6 @@ IncrementalFont.obj_.prototype.openIndexedDB = function(fontname) {
       if (db.objectStoreNames.contains(IncrementalFont.CHARLIST)) {
         db.deleteObjectStore(IncrementalFont.CHARLIST);
       }
-      console.log('probably can get rid of keypath');
       var store = db.createObjectStore(IncrementalFont.BASE);
       var store = db.createObjectStore(IncrementalFont.FILEINFO);
       var store = db.createObjectStore(IncrementalFont.CHARLIST);
