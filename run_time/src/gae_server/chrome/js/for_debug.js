@@ -29,6 +29,9 @@ var timer = new Timer();
 
 var columns = ['Item', 'Start', 'End', 'Length'];
 
+/**
+ * The existing onload function.
+ */
 ForDebug.old_onload = window.onload;
 /**
  * Display the results on window.onload.
@@ -63,9 +66,10 @@ window.onload = function() {
 
 /**
  * Add a "drop DB" button.
- * @private
+ * @param {Object} incrFontMgr The incremental font manager.
+ * @param {String} fontname The fontname.
  */
-ForDebug.addDropDbButton = function(incrFontMgr, fontname) {
+ForDebug.addDropIdbButton = function(incrFontMgr, fontname) {
   var old_onload = window.onload;
   window.onload = function() {
     var span = document.createElement('span');
@@ -73,23 +77,23 @@ ForDebug.addDropDbButton = function(incrFontMgr, fontname) {
     span.style.top = '10px';
     span.style.right = '10px';
     var button = document.createElement('button');
-    button.onclick = dropDB;
+    button.onclick = dropIdb;
     var label = document.createTextNode('drop DB');
     button.appendChild(label);
     span.appendChild(button);
     var br = document.createElement('br');
     span.appendChild(br);
     var msg_span = document.createElement('span');
-    msg_span.id = 'dropDB_msg';
+    msg_span.id = 'dropIdb_msg';
     span.appendChild(msg_span);
     document.body.appendChild(span);
     if (old_onload) {
       old_onload(window);
     }
   };
-  function dropDB() {
-    var msg_span = document.getElementById('dropDB_msg');
-    ForDebug.dropDB(incrFontMgr, fontname).
+  function dropIdb() {
+    var msg_span = document.getElementById('dropIdb_msg');
+    ForDebug.dropIdb(incrFontMgr, fontname).
     then(function() {
       msg_span.innerHTML = 'dropped DB';
     }).
@@ -103,9 +107,11 @@ ForDebug.addDropDbButton = function(incrFontMgr, fontname) {
 
 /**
  * Drop the IndexedDB database.
+ * @param {Object} incrFontMgr The incremental font manager.
+ * @param {String} fontname The fontname.
  * @return {Promise} The Promise for when the DB is dropped.
  */
-ForDebug.dropDB = function(incrFontMgr, fontname) {
+ForDebug.dropIdb = function(incrFontMgr, fontname) {
   var db_name = IncrementalFont.DB_NAME + '/' + fontname;
   return incrFontMgr.getIDB_
   .then(function(db) {
@@ -117,21 +123,21 @@ ForDebug.dropDB = function(incrFontMgr, fontname) {
         resolve();
       };
       request.onblocked = function() {
-        console.log("deleteDatbase got blocked event");
+        console.log('deleteDatbase got blocked event');
       };
       request.onerror = function(e) {
         debugger;
         reject(e);
       };
-    })
+    });
   }).
   then(function() {
     return 'dropped ' + db_name;
   }).
   catch (function(e) {
-    console.log('dropDB ' + db_name + ': ' + e.message);
+    console.log('dropIdb ' + db_name + ': ' + e.message);
     debugger;
-    return 'dropDB ' + db_name + ': ' + e.message;
+    return 'dropIdb ' + db_name + ': ' + e.message;
   });
 };
 
