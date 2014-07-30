@@ -241,7 +241,8 @@ IncrementalFontLoader.prototype.requestGlyphs = function(fs, text) {
                         then(function(arr) {
                           // time_end('request glyphs')
                           if (arr[0].length) {
-                            return IncrementalFontUtils.requestCodepoints(that.fontname, arr[0]);
+                            return IncrementalFontUtils.requestCodepoints(
+                                    that.fontname, arr[0]);
                           } else {
                             return null;
                           }
@@ -260,7 +261,8 @@ IncrementalFontLoader.prototype.injectBundle = function(bundle, callback) {
   // time_start('inject bundle')
   var that = this;
   if (bundle != null) {
-    var charsInjected = IncrementalFontUtils.injectCharacters(that, that.baseFont, bundle);
+    var charsInjected = IncrementalFontUtils.injectCharacters(that,
+        that.baseFont, bundle);
     var fileURL = URL.createObjectURL(new Blob([charsInjected],
         {type: 'application/font-sfnt'}));
     IncrementalFontUtils.setTheFont(that.fontname, fileURL, callback);
