@@ -114,6 +114,16 @@ IncrementalFont.createManager = function(fontname) {
 
   incrFontMgr.getBase = incrFontMgr.getIDB_.
   then(function(idb) {
+    // Consider storing the header with the font data. Then only one fetch
+    // would be needed. Use DataViews with offsets to access the header and
+    // font data in the ArrayBuffer.
+    //
+    // Notes:
+    // 1. Have the header started as:
+    //    * magic number
+    //    * version
+    //    * header length
+    console.log('consider reading fileinfo and base in the same operation.');
     var fileinfo = incrFontMgr.getData_(idb, IncrementalFont.FILEINFO);
     return Promise.all([idb, fileinfo]);
   }).
@@ -450,12 +460,9 @@ IncrementalFont.obj_.prototype.openIndexedDB = function(fontname) {
         db.deleteObjectStore(IncrementalFont.CHARLIST);
       }
       console.log('probably can get rid of keypath');
-      var store = db.createObjectStore(IncrementalFont.BASE,
-        { keypath: 'id' });
-      var store = db.createObjectStore(IncrementalFont.FILEINFO,
-        { keypath: 'id' });
-      var store = db.createObjectStore(IncrementalFont.CHARLIST,
-        { keypath: 'id' });
+      var store = db.createObjectStore(IncrementalFont.BASE);
+      var store = db.createObjectStore(IncrementalFont.FILEINFO);
+      var store = db.createObjectStore(IncrementalFont.CHARLIST);
     };
   }).then(function(db) {
     // TODO(bstell) timing call
