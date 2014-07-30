@@ -125,7 +125,8 @@ IncrementalFontLoader.prototype.getBaseFont_ = function(inFS, fs, filename) {
     var that = this;
     return this.requestBaseFont_().
     then(function(xfer_bytes) {
-      return IncrementalFontUtils.parseBaseHeader(that, xfer_bytes);
+      IncrementalFontUtils.parseBaseHeader(that, xfer_bytes);
+      return xfer_bytes.slice(that.headSize);
     }).
     //then(function(data) {
     //  timer.start('rleDecode');
