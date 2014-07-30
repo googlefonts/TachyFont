@@ -395,7 +395,7 @@ BinaryFontEditor.prototype.parseBaseHeader = function() {
             }
             saveOffset = this.tell();
             this.seek(dataStart + tagOffset);
-            BinaryFontEditor.TAGS[tag]['fn'](this, headerInfo);
+            BinaryFontEditor.TAGS[tag]['fn'](this, results);
             this.seek(saveOffset);
         }
         results.headerInfo = headerInfo;
