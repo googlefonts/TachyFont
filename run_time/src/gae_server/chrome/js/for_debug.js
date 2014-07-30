@@ -29,6 +29,9 @@ var timer = new Timer();
 
 var columns = ['Item', 'Start', 'End', 'Length'];
 
+/**
+ * The existing onload function.
+ */
 ForDebug.old_onload = window.onload;
 /**
  * Display the results on window.onload.
@@ -63,7 +66,8 @@ window.onload = function() {
 
 /**
  * Add a "drop DB" button.
- * @private
+ * @param {Object} incrFontMgr The incremental font manager.
+ * @param {String} fontname The fontname.
  */
 ForDebug.addDropIdbButton = function(incrFontMgr, fontname) {
   var old_onload = window.onload;
@@ -103,6 +107,8 @@ ForDebug.addDropIdbButton = function(incrFontMgr, fontname) {
 
 /**
  * Drop the IndexedDB database.
+ * @param {Object} incrFontMgr The incremental font manager.
+ * @param {String} fontname The fontname.
  * @return {Promise} The Promise for when the DB is dropped.
  */
 ForDebug.dropIdb = function(incrFontMgr, fontname) {
@@ -117,13 +123,13 @@ ForDebug.dropIdb = function(incrFontMgr, fontname) {
         resolve();
       };
       request.onblocked = function() {
-        console.log("deleteDatbase got blocked event");
+        console.log('deleteDatbase got blocked event');
       };
       request.onerror = function(e) {
         debugger;
         reject(e);
       };
-    })
+    });
   }).
   then(function() {
     return 'dropped ' + db_name;

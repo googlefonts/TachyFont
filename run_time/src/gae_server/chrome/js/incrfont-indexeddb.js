@@ -130,7 +130,8 @@ IncrementalFont.createManager = function(fontname) {
       console.log('need to get isTTF from base fileinfo');
       var fileinfo = {};
       fileinfo.isTTF = true;
-      var rle_basefont = IncrementalFontUtils.parseBaseHeader(fileinfo, xfer_bytes);
+      var rle_basefont =
+        IncrementalFontUtils.parseBaseHeader(fileinfo, xfer_bytes);
       return [fileinfo, rle_basefont];
     }).
     then(function(arr) {
@@ -142,7 +143,7 @@ IncrementalFont.createManager = function(fontname) {
       return [arr[0], basefont];
     }).
     then(function(arr) {
-      console.log('move setting the @font-face and CSS rule to incr-font-utils');
+      console.log('move setting the @font-face & CSS rule to incr-font-utils');
       IncrementalFont.obj_.setFont_(fontname, arr[1],
         'application/x-font-ttf');
       //console.log('make the class visible');
@@ -202,7 +203,6 @@ IncrementalFont.obj_ = function(fontname) {
 /**
  * Lazily data for these chars.
  * @param {string} element_name The name of the data item.
- * @private
  */
 IncrementalFont.obj_.prototype.loadNeededChars = function(element_name) {
   var that = this;
@@ -229,7 +229,7 @@ IncrementalFont.obj_.prototype.loadNeededChars = function(element_name) {
       console.log('do not need anymore characters');
       return null;
     }
-    neededCodes.sort(function(a, b){return a-b});
+    // neededCodes.sort(function(a, b){ return a - b}; );
     //console.log('neededCodes = ' + neededCodes);
     return IncrementalFontUtils.requestCodepoints(that.fontname, neededCodes).
     then(function(chardata) {
@@ -238,27 +238,24 @@ IncrementalFont.obj_.prototype.loadNeededChars = function(element_name) {
     });
   }).
   then(function(chardata) {
-//    console.log('need to decouple injectBundle from IncrementalFontLoader');
     return that.getBase.
     then(function(arr) {
       var fileinfo = arr[1];
       var fontdata = arr[2];
       if (chardata != null) {
-        //console.log('that = ' + Object.keys(that));
-        //console.log('base.byteLength = ' + base.byteLength);
-        //console.log('chardata.byteLength = ' + chardata.byteLength);
-        fontdata = IncrementalFontUtils.injectCharacters(fileinfo, fontdata, chardata);
+        fontdata = IncrementalFontUtils.injectCharacters(fileinfo, fontdata,
+          chardata);
         // Update the data.
-        console.log('update fontdata');
+        //console.log('update fontdata');
         that.getBase = Promise.all([arr[0], arr[1], fontdata]);
         that.getCharlist = Promise.all([that.getIDB_, charlist]);
         that.persistDelayed_(IncrementalFont.BASE);
         that.persistDelayed_(IncrementalFont.CHARLIST);
       }
-      console.log('move setting the @font-face and CSS rule to incr-font-utils');
-//        var blobURL = URL.createObjectURL(new Blob([fontdata],
-//            {type: 'application/font-sfnt'}));
-//        IncrementalFontUtils.setTheFont(that.fontname, blobURL, function() {});
+      console.log('move setting the @font-face & CSS rule to incr-font-utils');
+//    var blobURL = URL.createObjectURL(new Blob([fontdata],
+//        {type: 'application/font-sfnt'}));
+//    IncrementalFontUtils.setTheFont(that.fontname, blobURL, function() {});
       IncrementalFont.obj_.setFont_(that.fontname, fontdata,
       'application/x-font-ttf');
     });
@@ -280,7 +277,6 @@ IncrementalFont.obj_.prototype.persistDelayed_ = function(name) {
   //console.log('persistDelayed ' + name);
 
   // Note what needs to be persisted.
-  console.log('is there really an interesting case where only one is dirty?');
   if (name == IncrementalFont.BASE) {
     this.persistInfo[IncrementalFont.BASE_DIRTY] = true;
   } else if (name == IncrementalFont.FILEINFO) {
@@ -309,6 +305,7 @@ IncrementalFont.obj_.prototype.persist_ = function(name) {
     // anything still to persist.
 //    debugger;
     var base_dirty = that.persistInfo[IncrementalFont.BASE_DIRTY];
+    console.log('should base be renamed to file or font?');
     var fileinfo_dirty = that.persistInfo[IncrementalFont.FILEINFO_DIRTY];
     var charlist_dirty = that.persistInfo[IncrementalFont.CHARLIST_DIRTY];
     if (!fileinfo_dirty && !base_dirty && !charlist_dirty) {
@@ -363,6 +360,7 @@ IncrementalFont.obj_.prototype.persist_ = function(name) {
 
 /**
  * Save a data item.
+ * @param {Object} idb The IndexedDB object.
  * @param {string} name The name of the item.
  * @param {Array} data The data.
  * @return {Promise} Operation completion.
@@ -372,9 +370,9 @@ IncrementalFont.obj_.prototype.saveData_ = function(idb, name, data) {
   var that = this;
   return that.getIDB_.
   then(function(db) {
-    // the initialization form x = { varname: value } handles the key is a literal
-    // string. If a variable varname is used for the key then the string varname
-    // will be used ... NOT the value of the varname.
+    // the initialization form x = { varname: value } handles the key is a
+    // literal string. If a variable varname is used for the key then the
+    // string varname will be used ... NOT the value of the varname.
     return new Promise(function(resolve, reject) {
       var trans = db.transaction([name], 'readwrite');
       var store = trans.objectStore(name);
@@ -439,7 +437,7 @@ IncrementalFont.obj_.prototype.openIndexedDB = function(fontname) {
     dbOpen.onupgradeneeded = function(e) {
       var db = e.target.result;
       e.target.transaction.onerror = function(e) {
-        console.log('onupgradeneeded errro: ' + e.value);
+        console.log('onupgradeneeded error: ' + e.value);
         debugger;
         reject(e);
       };
@@ -452,7 +450,6 @@ IncrementalFont.obj_.prototype.openIndexedDB = function(fontname) {
       if (db.objectStoreNames.contains(IncrementalFont.CHARLIST)) {
         db.deleteObjectStore(IncrementalFont.CHARLIST);
       }
-      //console.log('before creates');
       console.log('probably can get rid of keypath');
       var store = db.createObjectStore(IncrementalFont.BASE,
         { keypath: 'id' });
@@ -460,7 +457,6 @@ IncrementalFont.obj_.prototype.openIndexedDB = function(fontname) {
         { keypath: 'id' });
       var store = db.createObjectStore(IncrementalFont.CHARLIST,
         { keypath: 'id' });
-      //console.log('after create');
     };
   }).then(function(db) {
     // TODO(bstell) timing call
