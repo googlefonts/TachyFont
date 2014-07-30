@@ -235,4 +235,55 @@ IncrementalFontUtils.setTheFont = function(fontname, font_src, callback) {
   font.load().then(callback);
 };
 
+/**
+ * Set a style's visibility.
+ * @param {Object} style The style object
+ * @param {string} font_src Data url of the font
+ * @param {boolean} visible True is setting visibility to visible.
+ */
+IncrementalFontUtils.setVisibility = function(style, fontname, visible) {
+  if (!style) {
+    style = document.createElement('style');
+    document.head.appendChild(style);
+  }
+  if (style.sheet.rules.length) {
+    style.sheet.deleteRule(0);
+  }
+  var visibility;
+  if (visible) {
+    visibility = 'visible';
+  } else {
+    visibility = 'hidden';
+  }
+  var rule = '.' + fontname + ' { font-family: ' + fontname + '; ' +
+    'visibility: ' + visibility + '; }'
+
+  style.sheet.insertRule(rule, 0);
+
+  return style;
+};
+
+
+/**
+ * Add the "@font-face" rule
+ * @param {string} fontname The CSS fontname
+ * @param {Array} data The font data.
+ * @param {string} mime_type The mime type of the font.
+ */
+IncrementalFontUtils.setFont = function(fontname, data, isTTF) {
+  var mime_type = '';
+  if (isTTF) {
+    mime_type = 'font/ttf'; // 'application/x-font-ttf';
+  } else {
+    mime_type = 'font/otf'; // 'application/font-sfnt';
+  }
+    
+  var blob = new Blob([data], { type: mime_type });
+  var blobUrl = window.URL.createObjectURL(blob);
+  var font = new FontFace(fontname, 'url(' + blobUrl + ')', {});
+  document.fonts.add(font);
+  font.load();
+};
+
+
 
