@@ -18,8 +18,9 @@ class BaseHeaderPrepare(object):
       bin_head.extend(struct.pack('>H',running_offset))
       running_offset += len(data)
       bin_head_data.extend(data)
-    bin_head.extend(struct.pack('>L',len(bin_head)+len(bin_head_data)+4))
     bin_head.extend(bin_head_data)
+    bin_head = bin_head[:4] + struct.pack('>L',len(bin_head)+4) + bin_head[4:]
+    
     return bin_head
       
     
