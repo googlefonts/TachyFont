@@ -252,6 +252,12 @@ BinaryFontEditor.prototype.tell = function() {
 BinaryFontEditor.magicHead = 'BSAC';
 
 /**
+ * Version of the supported base font
+ * @type number
+ */
+BinaryFontEditor.BASE_VERSION = 1;
+
+/**
  * Reading operations for the header
  * @type {Object}
  */
@@ -383,6 +389,9 @@ BinaryFontEditor.prototype.parseBaseHeader = function() {
     if (magic == BinaryFontEditor.magicHead) {
         results.headSize = this.getInt32_();
         results.version = this.getInt32_();
+        if (results.version != BinaryFontEditor.BASE_VERSION) {
+            throw 'Incompatible Base Font Version detected!';
+        }
         var count = this.getUint16_();
         var tags = [], tag, tagOffset, saveOffset,
                 dataStart = count * 6 + 4 + 4 + 2 + 4;//magic,ver,count,headSize
