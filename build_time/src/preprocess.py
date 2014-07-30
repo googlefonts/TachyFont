@@ -54,7 +54,7 @@ class Preprocess(object):
     output = self.folder + '/base'
     baseFonter = BaseFonter(self.fontfile)
     header_dict = FontInfo.getInformation(self.fontfile, FontInfo.TAGS.keys())
-    bin_header = BaseHeaderPrepare.prepare(0, header_dict)
+    bin_header = BaseHeaderPrepare.prepare(BaseFonter.BASE_VERSION, header_dict)
     baseFonter.base(output, bin_header, dump_tables)
     compressor = Compressor(Compressor.LZMA_CMD)
     compressor.compress(output, output + '.xz')
