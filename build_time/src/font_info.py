@@ -35,6 +35,10 @@ class FontInfo(object):
           'VMMC': 
             {'desc': 'Number of vmetrics in vmtx table', 
              'fn': InfoOps._getVMMC
+             },
+          'TYPE': 
+            {'desc':'Type of the font, either TTF or CFF', 
+             'fn': InfoOps._getTYPE
              }
         }
   

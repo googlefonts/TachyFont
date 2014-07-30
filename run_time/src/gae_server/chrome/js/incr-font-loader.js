@@ -19,14 +19,10 @@
 /**
  * Incremental font loader object
  * @param {string} fontname Name of the font which will be used as id for font
- * @param {boolean} isTTF True if it is TrueType font, else should be False
  * @constructor
  */
-function IncrementalFontLoader(fontname, isTTF) {
-  console.log('isTTF should come out of the base header not be passed in ' +
-    'by the web page');
+function IncrementalFontLoader(fontname) {
   this.fontname = fontname;
-  this.isTTF = isTTF;
   this.metaname = fontname.replace(/-/g, '_') + '_metadata';
   this.dirty = false;
   this.newChars = false;
@@ -245,7 +241,8 @@ IncrementalFontLoader.prototype.requestGlyphs = function(fs, text) {
                         then(function(arr) {
                           // time_end('request glyphs')
                           if (arr[0].length) {
-                            return IncrementalFontUtils.requestCodepoints(that.fontname, arr[0]);
+                            return IncrementalFontUtils.requestCodepoints(
+                                    that.fontname, arr[0]);
                           } else {
                             return null;
                           }
@@ -264,7 +261,8 @@ IncrementalFontLoader.prototype.injectBundle = function(bundle, callback) {
   // time_start('inject bundle')
   var that = this;
   if (bundle != null) {
-    var charsInjected = IncrementalFontUtils.injectCharacters(that, that.baseFont, bundle);
+    var charsInjected = IncrementalFontUtils.injectCharacters(that,
+        that.baseFont, bundle);
     var fileURL = URL.createObjectURL(new Blob([charsInjected],
         {type: 'application/font-sfnt'}));
     IncrementalFontUtils.setTheFont(that.fontname, fileURL, callback);

@@ -82,6 +82,14 @@ class InfoOps(object):
     if 'vhea' in font:
       return pack('>H',font['vhea'].numberOfVMetrics)
     return None
+  
+  @staticmethod
+  def _getTYPE(font):
+    if 'glyf' in font:
+      return '\1'
+    if 'CFF ' in font:
+      return '\0'
+    return None
     
     
     
