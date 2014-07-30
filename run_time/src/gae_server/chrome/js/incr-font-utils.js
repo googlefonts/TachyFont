@@ -122,17 +122,16 @@ IncrementalFontUtils.injectCharacters = function(obj, baseFont,
 
 
 /**
- * Parses base font header, set properties
- * @param {Object} obj The object with the font header information.
- * @param {ArrayBuffer} baseFont Base font with header
- * @return {ArrayBuffer} Base font without header
+ * Parses base font header, set properties.
+ * @param {ArrayBuffer} baseFont Base font with header.
+ * @return {Object} The header information.
  */
 IncrementalFontUtils.parseBaseHeader = function(baseFont) {
 
     var binEd = new BinaryFontEditor(new DataView(baseFont), 0);
     var results = binEd.parseBaseHeader();
     if (!results.headSize) {
-      throw "missing header info";
+      throw 'missing header info';
     }
     return results;
 };
@@ -238,7 +237,7 @@ IncrementalFontUtils.setTheFont = function(fontname, font_src, callback) {
 /**
  * Set a style's visibility.
  * @param {Object} style The style object
- * @param {string} font_src Data url of the font
+ * @param {string} fontname name of the font
  * @param {boolean} visible True is setting visibility to visible.
  */
 IncrementalFontUtils.setVisibility = function(style, fontname, visible) {
@@ -256,7 +255,7 @@ IncrementalFontUtils.setVisibility = function(style, fontname, visible) {
     visibility = 'hidden';
   }
   var rule = '.' + fontname + ' { font-family: ' + fontname + '; ' +
-    'visibility: ' + visibility + '; }'
+    'visibility: ' + visibility + '; }';
 
   style.sheet.insertRule(rule, 0);
 
@@ -268,7 +267,7 @@ IncrementalFontUtils.setVisibility = function(style, fontname, visible) {
  * Add the "@font-face" rule
  * @param {string} fontname The CSS fontname
  * @param {Array} data The font data.
- * @param {string} mime_type The mime type of the font.
+ * @param {string} isTTF True is the font is of type TTF.
  */
 IncrementalFontUtils.setFont = function(fontname, data, isTTF) {
   var mime_type = '';
@@ -277,13 +276,10 @@ IncrementalFontUtils.setFont = function(fontname, data, isTTF) {
   } else {
     mime_type = 'font/otf'; // 'application/font-sfnt';
   }
-    
+
   var blob = new Blob([data], { type: mime_type });
   var blobUrl = window.URL.createObjectURL(blob);
   var font = new FontFace(fontname, 'url(' + blobUrl + ')', {});
   document.fonts.add(font);
   font.load();
 };
-
-
-
