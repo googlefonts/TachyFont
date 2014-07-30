@@ -138,8 +138,8 @@ IncrementalFont.createManager = function(fontname) {
       '/base', 'GET', null, {}, 'arraybuffer').
     then(function(xfer_bytes) {
       var fileinfo = {};
-      var rle_basefont =
-        IncrementalFontUtils.parseBaseHeader(fileinfo, xfer_bytes);
+      IncrementalFontUtils.parseBaseHeader(fileinfo, xfer_bytes);
+      var rle_basefont = xfer_bytes.slice(fileinfo.headSize);
       return [fileinfo, rle_basefont];
     }).
     then(function(arr) {

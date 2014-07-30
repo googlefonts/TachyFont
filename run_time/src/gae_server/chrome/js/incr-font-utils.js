@@ -131,15 +131,15 @@ IncrementalFontUtils.parseBaseHeader = function(obj, baseFont) {
 
     var binEd = new BinaryFontEditor(new DataView(baseFont), 0);
     var results = binEd.parseBaseHeader();
-    if (results.headerInfo) {
-      obj.version = results.version;
-      obj.headSize = results.headSize;
-      for (var key in results.headerInfo) {
-        obj[key] = results.headerInfo[key];
-      }
-      baseFont = baseFont.slice(results.headSize);
+    if (!results.headerInfo) {
+      throw "missing header info";
     }
-    return baseFont;
+    obj.version = results.version;
+    obj.headSize = results.headSize;
+    for (var key in results.headerInfo) {
+      obj[key] = results.headerInfo[key];
+    }
+    return results;
 };
 
 
