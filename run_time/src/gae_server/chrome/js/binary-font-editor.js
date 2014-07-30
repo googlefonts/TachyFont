@@ -384,28 +384,30 @@ BinaryFontEditor.TAGS = {
  * @return {Object} Results of parsing the header.
  */
 BinaryFontEditor.prototype.parseBaseHeader = function() {
-    var results = {};
     var magic = this.readString_(4);
-    if (magic == BinaryFontEditor.magicHead) {
-        results.headSize = this.getInt32_();
-        results.version = this.getInt32_();
-        if (results.version != BinaryFontEditor.BASE_VERSION) {
-            throw 'Incompatible Base Font Version detected!';
+    if (magic != BinaryFontEditor.magicHead) {
+      throw 'magic number mismatch: expected ' + BinaryFontEditor.magicHead +
+        ' but got ' + magic;
+    }
+    var results = {};
+    results.headSize = this.getInt32_();
+    results.version = this.getInt32_();
+    if (results.version != BinaryFontEditor.BASE_VERSION) {
+        throw 'Incompatible Base Font Version detected!';
+    }
+    var count = this.getUint16_();
+    var tags = [], tag, tagOffset, saveOffset,
+            dataStart = count * 6 + 4 + 4 + 2 + 4;//magic,ver,count,headSize
+    for (var i = 0; i < count; i++) {
+        tag = this.readString_(4);
+        tagOffset = this.getUint16_();
+        if (!BinaryFontEditor.TAGS.hasOwnProperty(tag)) {//unknown tag
+            throw 'Unknown Base Font Header TAG';
         }
-        var count = this.getUint16_();
-        var tags = [], tag, tagOffset, saveOffset,
-                dataStart = count * 6 + 4 + 4 + 2 + 4;//magic,ver,count,headSize
-        for (var i = 0; i < count; i++) {
-            tag = this.readString_(4);
-            tagOffset = this.getUint16_();
-            if (!BinaryFontEditor.TAGS.hasOwnProperty(tag)) {//unknown tag
-                throw 'Unknown Base Font Header TAG';
-            }
-            saveOffset = this.tell();
-            this.seek(dataStart + tagOffset);
-            BinaryFontEditor.TAGS[tag]['fn'](this, results);
-            this.seek(saveOffset);
-        }
+        saveOffset = this.tell();
+        this.seek(dataStart + tagOffset);
+        BinaryFontEditor.TAGS[tag]['fn'](this, results);
+        this.seek(saveOffset);
     }
     return results;
 };
