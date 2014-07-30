@@ -127,17 +127,12 @@ IncrementalFontUtils.injectCharacters = function(obj, baseFont,
  * @param {ArrayBuffer} baseFont Base font with header
  * @return {ArrayBuffer} Base font without header
  */
-IncrementalFontUtils.parseBaseHeader = function(obj, baseFont) {
+IncrementalFontUtils.parseBaseHeader = function(baseFont) {
 
     var binEd = new BinaryFontEditor(new DataView(baseFont), 0);
     var results = binEd.parseBaseHeader();
-    if (!results.headerInfo) {
+    if (!results.headSize) {
       throw "missing header info";
-    }
-    obj.version = results.version;
-    obj.headSize = results.headSize;
-    for (var key in results.headerInfo) {
-      obj[key] = results.headerInfo[key];
     }
     return results;
 };
