@@ -125,7 +125,11 @@ IncrementalFontLoader.prototype.getBaseFont_ = function(inFS, fs, filename) {
     var that = this;
     return this.requestBaseFont_().
     then(function(xfer_bytes) {
-      IncrementalFontUtils.parseBaseHeader(that, xfer_bytes);
+      var fileinfo = IncrementalFontUtils.parseBaseHeader(xfer_bytes);
+      for (var key in fileinfo) {
+        // TODO(ahmetcelik) Do not pollute the object with fileinfo data.
+        that[key] = fileinfo[key];
+      }
       return xfer_bytes.slice(that.headSize);
     }).
     //then(function(data) {
