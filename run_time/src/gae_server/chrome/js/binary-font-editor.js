@@ -381,7 +381,6 @@ BinaryFontEditor.prototype.parseBaseHeader = function() {
     var results = {};
     var magic = this.readString_(4);
     if (magic == BinaryFontEditor.magicHead) {
-        var headerInfo = {};
         results.headSize = this.getInt32_();
         results.version = this.getInt32_();
         var count = this.getUint16_();
@@ -395,10 +394,9 @@ BinaryFontEditor.prototype.parseBaseHeader = function() {
             }
             saveOffset = this.tell();
             this.seek(dataStart + tagOffset);
-            BinaryFontEditor.TAGS[tag]['fn'](this, headerInfo);
+            BinaryFontEditor.TAGS[tag]['fn'](this, results);
             this.seek(saveOffset);
         }
-        results.headerInfo = headerInfo;
     }
     return results;
 };
