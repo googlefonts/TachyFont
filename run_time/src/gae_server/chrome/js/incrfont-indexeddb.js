@@ -272,7 +272,6 @@ IncrementalFont.obj_.prototype.loadNeededChars = function(element_name) {
  * @private
  */
 IncrementalFont.obj_.prototype.persistDelayed_ = function(name) {
-//  debugger;
   var that = this;
   //console.log('persistDelayed ' + name);
 
@@ -316,7 +315,7 @@ IncrementalFont.obj_.prototype.persist_ = function(name) {
     that.persistInfo[IncrementalFont.BASE_DIRTY] = false;
     that.persistInfo[IncrementalFont.FILEINFO_DIRTY] = false;
     that.persistInfo[IncrementalFont.CHARLIST_DIRTY] = false;
-    console.log('persistInfo = ' + Object.keys(that.persistInfo));
+    //console.log('persistInfo = ' + Object.keys(that.persistInfo));
 
     // Note that there is now a persist operation running.
     that.finishPersistingData = Promise.resolve().
