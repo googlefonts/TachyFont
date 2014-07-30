@@ -234,6 +234,7 @@ IncrementalFont.obj_.prototype.loadNeededChars = function(element_name) {
         charlist[c] = 1;
       }
     }
+    console.log('load ' +neededCodes.length + ' codes:');
     console.log(neededCodes);
     if (neededCodes.length == 0) {
       console.log('do not need anymore characters');
