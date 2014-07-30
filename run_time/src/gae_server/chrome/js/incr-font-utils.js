@@ -58,7 +58,6 @@ IncrementalFontUtils.injectCharacters = function(obj, baseFont,
   var flags = bundleBinEd.getUint8_();
 
   var isCFF = flags & IncrementalFontUtils.FLAGS.HAS_CFF;
-  console.log('count ' + count);
   for (var i = 0; i < count; i += 1) {
     var id = bundleBinEd.getUint16_();
     var hmtx, vmtx;
@@ -133,8 +132,6 @@ IncrementalFontUtils.parseBaseHeader = function(obj, baseFont) {
     var binEd = new BinaryFontEditor(new DataView(baseFont), 0);
     var results = binEd.parseBaseHeader();
     if (results.headerInfo) {
-      console.log('we should set a headerInfo member rather that randomly ' +
-        'setting values on the object like this');
       obj.version = results.version;
       obj.headSize = results.headSize;
       for (var key in results.headerInfo) {
@@ -238,7 +235,6 @@ IncrementalFontUtils.sanitizeBaseFont = function(obj, baseFont) {
  * @param {function()} callback Action to take when font is loaded
  */
 IncrementalFontUtils.setTheFont = function(fontname, font_src, callback) {
-  console.log(font_src);
   var font = new FontFace(fontname, 'url(' + font_src + ')', {});
   document.fonts.add(font);
   font.load().then(callback);
