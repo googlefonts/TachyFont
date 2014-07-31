@@ -108,8 +108,37 @@ IncrementalFontUtils.injectCharacters = function(obj, baseFont,
           }
         }
       }
+    } else {
+      baseBinEd.setGlyphDataOffset(obj.glyphDataOffset, obj.offsetSize,
+        id, offset);
+      var oldNextOne = baseBinEd.getGlyphDataOffset(obj.glyphDataOffset,
+        obj.offsetSize, id + 1);
+      baseBinEd.setGlyphDataOffset(obj.glyphDataOffset, obj.offsetSize, id + 1,
+        offset + length);
+      var nextId = id + 2;
+      var offsetCount = obj.numGlyphs + 1;
+      var currentIdOffset = offset + length, nextIdOffset;
+      if (oldNextOne < currentIdOffset && nextId - 1 < offsetCount - 1) {
+        baseBinEd.seek(obj.glyphOffset + currentIdOffset);
+        baseBinEd.setUint8_(14);
+      }
+      while (nextId < offsetCount) {
+          nextIdOffset = baseBinEd.getGlyphDataOffset(obj.glyphDataOffset,
+            obj.offsetSize, nextId);
+          if (nextIdOffset <= currentIdOffset) {
+            currentIdOffset++;
+            baseBinEd.setGlyphDataOffset(obj.glyphDataOffset, obj.offsetSize,
+                nextId, currentIdOffset);
+            if (nextId < offsetCount - 1) {
+                baseBinEd.seek(obj.glyphOffset + currentIdOffset);
+                baseBinEd.setUint8_(14);
+            }
+            nextId++;
+          } else {
+              break;
+          }
+      }
     }
-
 
     var bytes = bundleBinEd.getArrayOf_(bundleBinEd.getUint8_, length);
     baseBinEd.seek(obj.glyphOffset + offset);
@@ -123,7 +152,6 @@ IncrementalFontUtils.injectCharacters = function(obj, baseFont,
 
 /**
  * Parses base font header, set properties
- * @param {Object} obj The object with the font header information.
  * @param {ArrayBuffer} baseFont Base font with header
  * @return {ArrayBuffer} Base font without header
  */
@@ -132,7 +160,7 @@ IncrementalFontUtils.parseBaseHeader = function(baseFont) {
     var binEd = new BinaryFontEditor(new DataView(baseFont), 0);
     var results = binEd.parseBaseHeader();
     if (!results.headSize) {
-      throw "missing header info";
+      throw 'missing header info';
     }
     return results;
 };
@@ -223,9 +251,27 @@ IncrementalFontUtils.sanitizeBaseFont = function(obj, baseFont) {
     obj.dirty = true;
     var binEd = new BinaryFontEditor(new DataView(baseFont), 0);
     var glyphOffset = obj.glyphOffset;
-    var offsetCount = obj.numGlyphs + 1;
-    var end = Math.min(offsetCount,IncrementalFontUtils.LOCA_BLOCK_SIZE);
-    
+    var glyphCount = obj.numGlyphs;
+    var lastRealOffset = binEd.getGlyphDataOffset(obj.glyphDataOffset,
+            obj.offsetSize, 0);
+    var delta = 0, thisOne;
+    for (var i = 0; i < glyphCount + 1; i++) {
+        thisOne = binEd.getGlyphDataOffset(obj.glyphDataOffset,
+         obj.offsetSize, i);
+        if (lastRealOffset == thisOne) {
+            thisOne = lastRealOffset + delta;
+            binEd.setGlyphDataOffset(obj.glyphDataOffset,
+                obj.offsetSize, i, thisOne);
+            delta++;
+        } else {
+            lastRealOffset = thisOne;
+            delta = 1;
+        }
+        if (i < glyphCount) {
+            binEd.seek(glyphOffset + thisOne);
+            binEd.setUint8_(14);
+        }
+    }
   }
   return baseFont;
 };

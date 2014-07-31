@@ -53,10 +53,10 @@ def main(args):
 
   cleanfile = output_folder+'/'+filename + '_clean' + extension
   print('make cleaned up version: {0}'.format(cleanfile))
-  #cleanup.cleanup(fontfile, cmd_args.hinting, cleanfile)
+  cleanup.cleanup(fontfile, cmd_args.hinting, cleanfile)
 
   print('build closure')
-  #closure.dump_closure_map(cleanfile, output_folder)
+  closure.dump_closure_map(cleanfile, output_folder)
 
   print('start proprocess')
   preprocess = Preprocess(cleanfile, output_folder)
