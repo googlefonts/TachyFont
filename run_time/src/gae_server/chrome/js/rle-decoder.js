@@ -52,15 +52,14 @@ RLEDecoder.byteOp = function(op) {
 };
 
 /**
- * Decode given array_buffer and return decoded data
- * @param {ArrayBuffer} array_buffer Encoded data
+ * Decode given rle encoded data and return decoded data
+ * @param {DataView} data The Rle encoded data
  * @return {ArrayBuffer} Decoded data
  */
-RLEDecoder.rleDecode = function(array_buffer) {
+RLEDecoder.rleDecode = function(data) {
   // time_start('rle');
   var readOffset = 0;
   var writeOffset = 0;
-  var data = new DataView(array_buffer);
   var totalSize = data.getUint32(readOffset);
   var fill_byte;
   var byteOperation;

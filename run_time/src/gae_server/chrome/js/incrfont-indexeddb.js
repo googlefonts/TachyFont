@@ -136,7 +136,8 @@ IncrementalFont.createManager = function(fontname) {
       return [fileinfo, rle_basefont];
     }).
     then(function(arr) {
-      var raw_basefont = RLEDecoder.rleDecode(arr[1]);
+      var rle_fontdata = new DataView(arr[1]);
+      var raw_basefont = RLEDecoder.rleDecode(rle_fontdata);
       return [arr[0], raw_basefont];
     }).
     then(function(arr) {
@@ -198,6 +199,7 @@ IncrementalFont.obj_ = function(fontname) {
   this.getBase = null;
   this.getCharList = null;
   this.finishPersistingData = Promise.resolve();
+  //this.finishPendingCharsRequest = Promise.resolve();
 };
 
 

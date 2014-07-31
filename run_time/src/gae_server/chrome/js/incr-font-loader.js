@@ -130,7 +130,8 @@ IncrementalFontLoader.prototype.getBaseFont_ = function(inFS, fs, filename) {
         // TODO(ahmetcelik) Do not pollute the object with fileinfo data.
         that[key] = fileinfo[key];
       }
-      return xfer_bytes.slice(that.headSize);
+      var rle_fontdata = new DataView(xfer_bytes.slice(that.headSize));
+      return rle_fontdata;
     }).
     //then(function(data) {
     //  timer.start('rleDecode');
