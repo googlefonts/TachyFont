@@ -104,13 +104,7 @@ IncrementalFont.createManager = function(fontname) {
   //timer.end('openIndexedDB.open ' + fontname);
 
   //console.log('Create a class with visibility: hidden.');
-  console.log('move setting the @font-face and CSS rule to incr-font-utils');
-  var style = document.createElement('style');
-  //// WebKit hack
-  //style.appendChild(document.createTextNode(''));
-  document.head.appendChild(style);
-  style.sheet.insertRule('.' + fontname +
-    ' { font-family: nanum-brush; visibility: hidden; }', 0);
+  incrFontMgr.style = IncrementalFontUtils.setVisibility(null, fontname, false);
 
   incrFontMgr.getBase = incrFontMgr.getIDB_.
   then(function(idb) {
@@ -123,7 +117,7 @@ IncrementalFont.createManager = function(fontname) {
     //    * magic number
     //    * version
     //    * header length
-    console.log('consider reading fileinfo and base in the same operation.');
+    //console.log('consider reading fileinfo and base in the same operation.');
     var fileinfo = incrFontMgr.getData_(idb, IncrementalFont.FILEINFO);
     return Promise.all([idb, fileinfo]);
   }).
@@ -142,27 +136,27 @@ IncrementalFont.createManager = function(fontname) {
       return [fileinfo, rle_basefont];
     }).
     then(function(arr) {
-      var raw_basefont = RLEDecoder.rleDecode(arr[1]);
+      var rle_fontdata = new DataView(arr[1]);
+      var raw_basefont = RLEDecoder.rleDecode([null, rle_fontdata]);
       return [arr[0], raw_basefont];
     }).
     then(function(arr) {
       var basefont = IncrementalFontUtils.sanitizeBaseFont(arr[0], arr[1]);
-      return [arr[0], basefont];
+      return [incrFontMgr.getIDB_, arr[0], basefont];
     }).
     then(function(arr) {
-      console.log('move setting the @font-face & CSS rule to incr-font-utils');
-      IncrementalFont.obj_.setFont_(fontname, arr[1],
-        'application/x-font-ttf');
-      //console.log('make the class visible');
-      // style.sheet.rules.length
-      style.sheet.deleteRule(0);
-      style.sheet.insertRule('.' + fontname +
-        ' { font-family: ' + fontname + '; visibility: visible; }', 0);
-
       incrFontMgr.persistDelayed_(IncrementalFont.BASE);
       incrFontMgr.persistDelayed_(IncrementalFont.FILEINFO);
-      return Promise.all([incrFontMgr.getIDB_, arr[0], arr[1]]);
+      return arr;
     });
+  }).
+  then(function(arr) {
+    var fileinfo = arr[0];
+    IncrementalFontUtils.setFont(fontname, arr[2], fileinfo.isTTF);
+    //console.log('make the class visible');
+    IncrementalFontUtils.setVisibility(incrFontMgr.style, fontname, true);
+
+    return arr;
   });
 
   // Start the operation to get the list of already fetched chars.
@@ -198,12 +192,14 @@ IncrementalFont.obj_ = function(fontname) {
   this.persistInfo[IncrementalFont.BASE_DIRTY] = false;
   this.persistInfo[IncrementalFont.FILEINFO_DIRTY] = false;
   this.persistInfo[IncrementalFont.CHARLIST_DIRTY] = false;
+  this.style = null;
 
   // Promises
   this.getIDB_ = null;
   this.getBase = null;
   this.getCharList = null;
   this.finishPersistingData = Promise.resolve();
+  //this.finishPendingCharsRequest = Promise.resolve();
 };
 
 
@@ -216,7 +212,7 @@ IncrementalFont.obj_.prototype.loadNeededChars = function(element_name) {
   var chars = '';
   var charlist;
   try {
-    chars = document.getElementById(element_name).innerText;
+    chars = document.getElementById(element_name).textContent;
   } catch (e) {
     debugger;
   }
@@ -231,10 +227,12 @@ IncrementalFont.obj_.prototype.loadNeededChars = function(element_name) {
         charlist[c] = 1;
       }
     }
-    console.log('load ' +neededCodes.length + ' codes:');
-    console.log(neededCodes);
-    if (neededCodes.length == 0) {
-      console.log('do not need anymore characters');
+
+    if (neededCodes.length) {
+      console.log('load ' +neededCodes.length + ' codes:');
+      console.log(neededCodes);
+    } else {
+      //console.log('do not need anymore characters');
       return null;
     }
     // neededCodes.sort(function(a, b){ return a - b}; );
@@ -254,18 +252,12 @@ IncrementalFont.obj_.prototype.loadNeededChars = function(element_name) {
         fontdata = IncrementalFontUtils.injectCharacters(fileinfo, fontdata,
           chardata);
         // Update the data.
-        //console.log('update fontdata');
         that.getBase = Promise.all([arr[0], arr[1], fontdata]);
         that.getCharlist = Promise.all([that.getIDB_, charlist]);
         that.persistDelayed_(IncrementalFont.BASE);
         that.persistDelayed_(IncrementalFont.CHARLIST);
       }
-      console.log('move setting the @font-face & CSS rule to incr-font-utils');
-//    var blobURL = URL.createObjectURL(new Blob([fontdata],
-//        {type: 'application/font-sfnt'}));
-//    IncrementalFontUtils.setTheFont(that.fontname, blobURL, function() {});
-      IncrementalFont.obj_.setFont_(that.fontname, fontdata,
-      'application/x-font-ttf');
+      IncrementalFontUtils.setFont(that.fontname, fontdata, fileinfo.isTTF);
     });
   }).
   catch (function(e) {
@@ -310,9 +302,7 @@ IncrementalFont.obj_.prototype.persist_ = function(name) {
   this.finishPersistingData.then(function() {
     // Previous persists may have already saved the data so see if there is
     // anything still to persist.
-//    debugger;
     var base_dirty = that.persistInfo[IncrementalFont.BASE_DIRTY];
-    console.log('should base be renamed to file or font?');
     var fileinfo_dirty = that.persistInfo[IncrementalFont.FILEINFO_DIRTY];
     var charlist_dirty = that.persistInfo[IncrementalFont.CHARLIST_DIRTY];
     if (!fileinfo_dirty && !base_dirty && !charlist_dirty) {
@@ -398,23 +388,6 @@ IncrementalFont.obj_.prototype.saveData_ = function(idb, name, data) {
     });
   });
 };
-
-/**
- * Add the "@font-face" rule
- * @param {string} fontname The CSS fontname
- * @param {Array} data The font data.
- * @param {string} mime_type The mime type of the font.
- * @private
- */
-IncrementalFont.obj_.setFont_ = function(fontname, data, mime_type) {
-  var blob = new Blob([data], { type: mime_type });
-  var blobUrl = window.URL.createObjectURL(blob);
-  //console.log('fontname = ' + fontname);
-  var font = new FontFace(fontname, 'url(' + blobUrl + ')', {});
-  document.fonts.add(font);
-  font.load();
-};
-
 
 /**
  * Get the fontDB.
