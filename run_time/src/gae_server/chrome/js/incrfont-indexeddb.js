@@ -117,7 +117,7 @@ IncrementalFont.createManager = function(fontname) {
     //    * magic number
     //    * version
     //    * header length
-    console.log('consider reading fileinfo and base in the same operation.');
+    //console.log('consider reading fileinfo and base in the same operation.');
     var fileinfo = incrFontMgr.getData_(idb, IncrementalFont.FILEINFO);
     return Promise.all([idb, fileinfo]);
   }).
