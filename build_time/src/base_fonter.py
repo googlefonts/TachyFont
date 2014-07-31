@@ -32,7 +32,7 @@ class BaseFonter(object):
   """Create base font for the given font file"""
   
   LOCA_BLOCK_SIZE = 64
-  BASE_VERSION = 1
+  BASE_VERSION = 2
 
   def __init__(self, fontfile):
     self.fontfile = fontfile
@@ -86,22 +86,30 @@ class BaseFonter(object):
     offset = baseOffset + rawIndexFile.offsets[0]
     self.font.close()
     filler = Filler(output)
-    filler.fill(offset, size, '\x0e')
+    filler.fill(offset, size, '\x00')
     filler.close()
     
 
-  def __segment_table(self, locations, off_format):
+  def __segment_table(self, locations, off_format, fill_with_upper):
     n = len(locations)
     block_count = (n - 1) / BaseFonter.LOCA_BLOCK_SIZE
     for block_no in xrange(block_count):
       lower = block_no * BaseFonter.LOCA_BLOCK_SIZE
       upper = (block_no + 1) * BaseFonter.LOCA_BLOCK_SIZE
-      locations[lower:upper] = array.array(off_format, [locations[upper - 1]] * BaseFonter.LOCA_BLOCK_SIZE)
+      if fill_with_upper:
+        filler_value = locations[upper - 1]
+      else:
+        filler_value = locations[lower]
+      locations[lower:upper] = array.array(off_format, [filler_value] * BaseFonter.LOCA_BLOCK_SIZE)
     else:
       lower = block_count * BaseFonter.LOCA_BLOCK_SIZE
       upper = n
       assert upper - lower <= BaseFonter.LOCA_BLOCK_SIZE
-      locations[lower:upper] = array.array(off_format, [locations[-1]] * (upper - lower))
+      if fill_with_upper:
+        filler_value = locations[upper - 1]
+      else:
+        filler_value = locations[lower]
+      locations[lower:upper] = array.array(off_format, [filler_value] * (upper - lower))
 
   def __fill_char_strings(self,output):
     self.font = TTFont(output)
@@ -127,7 +135,15 @@ class BaseFonter(object):
     self.font.close()
     
     off_format = 'L'
-    self.__segment_table(locations, off_format)
+    self.__segment_table(locations, off_format, False)
+    #checking max fake CharString size
+    i = BaseFonter.LOCA_BLOCK_SIZE
+    max_diff = 0
+    while i < len(locations):
+      diff = locations[i] - locations[i-1]
+      max_diff = max(max_diff,diff)
+      i+=BaseFonter.LOCA_BLOCK_SIZE
+    assert max_diff < 65536 , 'Consider making LOCA_BLOCK_SIZE smaller'
     
     new_offsets = bytearray()
     offSize = -offSize
@@ -138,7 +154,7 @@ class BaseFonter(object):
     
     font_file = open(output,'r+b')
     font_file.seek(cffTableOffset + charStringOffset + 3)
-    font_file.write('\0' * ((count+1) * -offSize))
+    font_file.write(new_offsets)
     font_file.close()
 
   def __fill_loca(self, output):  # more advanced filling needed
@@ -155,7 +171,7 @@ class BaseFonter(object):
     locations = array.array(off_format)
     font_file.seek(loca_off);
     locations.fromstring(font_file.read(loca_len))
-    self.__segment_table(locations, off_format)
+    self.__segment_table(locations, off_format, True)
     font_file.seek(loca_off);
     loca_data = locations.tostring()
     assert len(loca_data)==loca_len
@@ -220,7 +236,7 @@ class BaseFonter(object):
     #self.font.save(output, reorderTables=False)
     if self.isCff:
       self.__end_char_strings(output)
-      #self.__fill_char_strings(output)
+      self.__fill_char_strings(output)
     else:
       self.__zero_glyf(output)
       self.__fill_loca(output)
