@@ -317,7 +317,7 @@ IncrementalFontLoader.prototype.persistState = function(ready, fs) {
 
     var baseUpdated = ready.then(function() {
       if (that.dirty)
-      fs.writeToTheFile(that.fontname + '.ttf', that.baseFont,
+      fs.writeToTheFile(that.fontname + '.ttf', that.baseFont.buffer,
         'application/font-sfnt');
     });
 
