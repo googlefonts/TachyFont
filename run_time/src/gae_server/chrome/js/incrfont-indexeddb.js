@@ -142,6 +142,11 @@ IncrementalFont.createManager = function(fontname) {
     then(function(arr) {
       var basefont = IncrementalFontUtils.sanitizeBaseFont(arr[0], arr[1]);
       return [incrFontMgr.getIDB_, arr[0], basefont];
+    }).
+    then(function(arr) {
+      incrFontMgr.persistDelayed_(IncrementalFont.BASE);
+      incrFontMgr.persistDelayed_(IncrementalFont.FILEINFO);
+      return arr;
     });
   }).
   then(function(arr) {
@@ -150,8 +155,6 @@ IncrementalFont.createManager = function(fontname) {
     //console.log('make the class visible');
     IncrementalFontUtils.setVisibility(incrFontMgr.style, fontname, true);
 
-    incrFontMgr.persistDelayed_(IncrementalFont.BASE);
-    incrFontMgr.persistDelayed_(IncrementalFont.FILEINFO);
     return arr;
   });
 
