@@ -43,7 +43,7 @@ IncrementalFontUtils.LOCA_BLOCK_SIZE = 64;
 /**
  * Inject glyphs in the glyphData to the baseFont
  * @param {Object} obj The object with the font header information.
- * @param {ArrayBuffer} baseFont Current base font
+ * @param {DataView} baseFont Current base font
  * @param {ArrayBuffer} glyphData New glyph data
  * @return {ArrayBuffer} Updated base font
  */
@@ -52,7 +52,7 @@ IncrementalFontUtils.injectCharacters = function(obj, baseFont,
   // time_start('inject')
   obj.dirty = true;
   var bundleBinEd = new BinaryFontEditor(new DataView(glyphData), 0);
-  var baseBinEd = new BinaryFontEditor(new DataView(baseFont), 0);
+  var baseBinEd = new BinaryFontEditor(baseFont, 0);
 
   var count = bundleBinEd.getUint16_();
   var flags = bundleBinEd.getUint8_();
@@ -224,14 +224,14 @@ IncrementalFontUtils.requestURL = function(url, method, data, headerParams,
 /**
  * Sanitize base font to pass OTS
  * @param {Object} obj The object with the font header information.
- * @param {ArrayBuffer} baseFont Base font as ArrayBuffer
+ * @param {DataView} baseFont Base font as DataView
  * @return {ArrayBuffer} Sanitized base font
  */
 IncrementalFontUtils.sanitizeBaseFont = function(obj, baseFont) {
 
   if (obj.isTTF) {
     obj.dirty = true;
-    var binEd = new BinaryFontEditor(new DataView(baseFont), 0);
+    var binEd = new BinaryFontEditor(baseFont, 0);
     var glyphOffset = obj.glyphOffset;
     var glyphCount = obj.numGlyphs;
     var glyphSize, thisOne, nextOne;
