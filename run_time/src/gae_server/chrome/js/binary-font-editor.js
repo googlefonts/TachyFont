@@ -393,7 +393,7 @@ BinaryFontEditor.prototype.parseBaseHeader = function() {
     results.headSize = this.getInt32_();
     results.version = this.getInt32_();
     if (results.version != BinaryFontEditor.BASE_VERSION) {
-        throw 'Incompatible Base Font Version detected!';
+        //throw 'Incompatible Base Font Version detected!';
     }
     var count = this.getUint16_();
     var tags = [], tag, tagOffset, saveOffset,
