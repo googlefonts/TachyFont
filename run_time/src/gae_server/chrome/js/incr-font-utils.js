@@ -300,7 +300,7 @@ IncrementalFontUtils.setVisibility = function(style, fontname, visible) {
     style = document.createElement('style');
     document.head.appendChild(style);
   }
-  if (style.sheet.rules.length) {
+  if (style.sheet.cssRules.length) {
     style.sheet.deleteRule(0);
   }
   var visibility;
