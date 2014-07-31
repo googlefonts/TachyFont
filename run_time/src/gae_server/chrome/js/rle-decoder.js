@@ -53,14 +53,19 @@ RLEDecoder.byteOp = function(op) {
 
 /**
  * Decode given rle encoded data and return decoded data
- * @param {DataView} data The Rle encoded data
+ * @param {array} arr Holds the Rle encoded header data and font data.
  * @return {ArrayBuffer} Decoded data
  */
-RLEDecoder.rleDecode = function(data) {
+RLEDecoder.rleDecode = function(arr) {
   // time_start('rle');
+  var header_data = arr[0];
+  var fontdata = arr[1];
   var readOffset = 0;
   var writeOffset = 0;
-  var totalSize = data.getUint32(readOffset);
+  var totalSize = fontdata.getUint32(readOffset);
+  if (header_data) {
+    debugger;
+  }
   var fill_byte;
   var byteOperation;
   var operationSize;
@@ -71,18 +76,18 @@ RLEDecoder.rleDecode = function(data) {
   var decodedData = new DataView(new ArrayBuffer(totalSize));
   // time_end('rle_alloc');
   while (writeOffset < totalSize) {
-    byteOperation = data.getUint8(readOffset);
+    byteOperation = fontdata.getUint8(readOffset);
     readOffset++;
     operationInfo = RLEDecoder.byteOp(byteOperation);
 
     if (operationInfo[0] == 0) {
-      operationSize = data.getUint8(readOffset);
+      operationSize = fontdata.getUint8(readOffset);
       readOffset += 1;
     } else if (operationInfo[0] == 1) {
-      operationSize = data.getUint16(readOffset);
+      operationSize = fontdata.getUint16(readOffset);
       readOffset += 2;
     } else if (operationInfo[0] == 2) {
-      operationSize = data.getUint32(readOffset);
+      operationSize = fontdata.getUint32(readOffset);
       readOffset += 4;
     }
     if (operationInfo[1] == 'copy') {
@@ -94,18 +99,18 @@ RLEDecoder.rleDecode = function(data) {
       // This loop tests for "less than" but increments by 4. We know this works
       // because the long_len was forced down to a multiple of 4.
       for (; i < long_len; i += 4) {
-        decodedData.setUint32(writeOffset, data.getUint32(readOffset));
+        decodedData.setUint32(writeOffset, fontdata.getUint32(readOffset));
         readOffset += 4;
         writeOffset += 4;
       }
       for (; i < operationSize; i++) {
-        decodedData.setUint8(writeOffset, data.getUint8(readOffset));
+        decodedData.setUint8(writeOffset, fontdata.getUint8(readOffset));
         readOffset++;
         writeOffset++;
       }
       // time_end('rle copy ' + operationSize);
     } else if (operationInfo[1] == 'fill') {
-      fill_byte = data.getUint8(readOffset);
+      fill_byte = fontdata.getUint8(readOffset);
       // time_start('rle fill ' + fill_byte + ' ' + operationSize);
       readOffset++;
       if (fill_byte != 0) {

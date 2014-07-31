@@ -137,7 +137,7 @@ IncrementalFont.createManager = function(fontname) {
     }).
     then(function(arr) {
       var rle_fontdata = new DataView(arr[1]);
-      var raw_basefont = RLEDecoder.rleDecode(rle_fontdata);
+      var raw_basefont = RLEDecoder.rleDecode([null, rle_fontdata]);
       return [arr[0], raw_basefont];
     }).
     then(function(arr) {
