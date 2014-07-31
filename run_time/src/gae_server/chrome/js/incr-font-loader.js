@@ -131,7 +131,7 @@ IncrementalFontLoader.prototype.getBaseFont_ = function(inFS, fs, filename) {
         that[key] = fileinfo[key];
       }
       var rle_fontdata = new DataView(xfer_bytes.slice(that.headSize));
-      return rle_fontdata;
+      return [null, rle_fontdata];
     }).
     //then(function(data) {
     //  timer.start('rleDecode');
