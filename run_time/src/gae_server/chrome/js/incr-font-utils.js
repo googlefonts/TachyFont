@@ -219,6 +219,13 @@ IncrementalFontUtils.sanitizeBaseFont = function(obj, baseFont) {
           binEd.setInt16_(-1);
       }
     }
+  } else {
+    obj.dirty = true;
+    var binEd = new BinaryFontEditor(new DataView(baseFont), 0);
+    var glyphOffset = obj.glyphOffset;
+    var offsetCount = obj.numGlyphs + 1;
+    var end = Math.min(offsetCount,IncrementalFontUtils.LOCA_BLOCK_SIZE);
+    
   }
   return baseFont;
 };
