@@ -32,7 +32,7 @@ class BaseFonter(object):
   """Create base font for the given font file"""
   
   LOCA_BLOCK_SIZE = 64
-  BASE_VERSION = 2
+  BASE_VERSION = 1
 
   def __init__(self, fontfile):
     self.fontfile = fontfile

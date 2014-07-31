@@ -255,7 +255,7 @@ BinaryFontEditor.magicHead = 'BSAC';
  * Version of the supported base font
  * @type number
  */
-BinaryFontEditor.BASE_VERSION = 2;
+BinaryFontEditor.BASE_VERSION = 1;
 
 /**
  * Reading operations for the header
