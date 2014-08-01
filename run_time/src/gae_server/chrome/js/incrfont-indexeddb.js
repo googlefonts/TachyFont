@@ -165,7 +165,7 @@ IncrementalFont.obj_ = function(fontname) {
   this.getBase = null;
   this.getCharList = null;
   this.finishPersistingData = Promise.resolve();
-  //this.finishPendingCharsRequest = Promise.resolve();
+  this.finishPendingCharsRequest = Promise.resolve();
 };
 
 
@@ -182,53 +182,65 @@ IncrementalFont.obj_.prototype.loadNeededChars = function(element_name) {
   } catch (e) {
     debugger;
   }
-  this.getCharList.
-  then(function(arr) {
-    charlist = arr[1];
-    var neededCodes = [];
-    for (var i = 0; i < chars.length; i++) {
-      var c = chars.charAt(i);
-      if (!charlist[c]) {
-        neededCodes.push(c.charCodeAt(0));
-        charlist[c] = 1;
-      }
-    }
+  var pending_resolve, pending_reject;
+  var old_finishPendingCharsRequest = this.finishPendingCharsRequest;
+  this.finishPendingCharsRequest = new Promise(function(resolve, reject) {
+    pending_resolve = resolve;
+    pending_reject = reject;
 
-    if (neededCodes.length) {
-      console.log('load ' + neededCodes.length + ' codes:');
-      console.log(neededCodes);
-    } else {
-      //console.log('do not need anymore characters');
-      return null;
-    }
-    // neededCodes.sort(function(a, b){ return a - b}; );
-    //console.log('neededCodes = ' + neededCodes);
-    return IncrementalFontUtils.requestCodepoints(that.fontname, neededCodes).
-    then(function(chardata) {
-      //console.log('requested char data length = ' + chardata.byteLength);
-      return chardata;
+    return old_finishPendingCharsRequest.
+    then(function() {
+      return that.getCharList.
+      then(function(arr) {
+        charlist = arr[1];
+        var neededCodes = [];
+        for (var i = 0; i < chars.length; i++) {
+          var c = chars.charAt(i);
+          if (!charlist[c]) {
+            neededCodes.push(c.charCodeAt(0));
+            charlist[c] = 1;
+          }
+        }
+    
+        if (neededCodes.length) {
+          console.log('load ' + neededCodes.length + ' codes:');
+          console.log(neededCodes);
+        } else {
+          //console.log('do not need anymore characters');
+          return null;
+        }
+        // neededCodes.sort(function(a, b){ return a - b}; );
+        //console.log('neededCodes = ' + neededCodes);
+        return IncrementalFontUtils.requestCodepoints(that.fontname, neededCodes).
+        then(function(chardata) {
+          //console.log('requested char data length = ' + chardata.byteLength);
+          return chardata;
+        });
+      }).
+      then(function(chardata) {
+        pending_resolve();
+        return that.getBase.
+        then(function(arr) {
+          var fileinfo = arr[1];
+          var fontdata = arr[2];
+          if (chardata != null) {
+            fontdata = IncrementalFontUtils.injectCharacters(fileinfo, fontdata,
+              chardata);
+            // Update the data.
+            that.getBase = Promise.all([arr[0], arr[1], fontdata]);
+            that.getCharlist = Promise.all([that.getIDB_, charlist]);
+            that.persistDelayed_(IncrementalFont.BASE);
+            that.persistDelayed_(IncrementalFont.CHARLIST);
+          }
+          IncrementalFontUtils.setFont(that.fontname, fontdata, fileinfo.isTTF);
+        });
+      });
+    }).
+    catch (function(e) {
+      console.log('loadNeededChars: ' + e.message);
+      debugger;
+      pending_reject();
     });
-  }).
-  then(function(chardata) {
-    return that.getBase.
-    then(function(arr) {
-      var fileinfo = arr[1];
-      var fontdata = arr[2];
-      if (chardata != null) {
-        fontdata = IncrementalFontUtils.injectCharacters(fileinfo, fontdata,
-          chardata);
-        // Update the data.
-        that.getBase = Promise.all([arr[0], arr[1], fontdata]);
-        that.getCharlist = Promise.all([that.getIDB_, charlist]);
-        that.persistDelayed_(IncrementalFont.BASE);
-        that.persistDelayed_(IncrementalFont.CHARLIST);
-      }
-      IncrementalFontUtils.setFont(that.fontname, fontdata, fileinfo.isTTF);
-    });
-  }).
-  catch (function(e) {
-    console.log('loadNeededChars: ' + e.message);
-    debugger;
   });
 };
 
