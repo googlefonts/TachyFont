@@ -152,12 +152,12 @@ IncrementalFontUtils.injectCharacters = function(obj, baseFont,
 
 /**
  * Parses base font header, set properties.
- * @param {ArrayBuffer} baseFont Base font with header.
+ * @param {DataView} baseFont Base font with header.
  * @return {Object} The header information.
  */
 IncrementalFontUtils.parseBaseHeader = function(baseFont) {
 
-    var binEd = new BinaryFontEditor(new DataView(baseFont), 0);
+    var binEd = new BinaryFontEditor(baseFont, 0);
     var results = binEd.parseBaseHeader();
     if (!results.headSize) {
       throw 'missing header info';

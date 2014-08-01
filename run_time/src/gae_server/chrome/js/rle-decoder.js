@@ -76,6 +76,11 @@ RLEDecoder.rleDecode = function(arr) {
   // time_start('rle_alloc');
   var decodedData = new DataView(new ArrayBuffer(totalSize));
   // time_end('rle_alloc');
+  if (header_data) {
+    for (i = 0; i < header_data.byteLength; i++) {
+      decodedData.setUint8(i, header_data.getUint8(i));
+    }
+  }
   while (writeOffset < totalSize) {
     byteOperation = fontdata.getUint8(readOffset);
     readOffset++;

@@ -122,8 +122,19 @@ IncrementalFont.createManager = function(fontname) {
     return Promise.all([idb, fileinfo]);
   }).
   then(function(arr) {
-    var fontdata = incrFontMgr.getData_(arr[0], IncrementalFont.BASE);
-    return Promise.all([arr[0], arr[1], fontdata]);
+    var idb = arr[0];
+    var fileinfo = arr[1];
+    var filedata = incrFontMgr.getData_(idb, IncrementalFont.BASE);
+    return Promise.all([idb, fileinfo, filedata]);
+  }).
+  then(function(arr) {
+    var idb = arr[0];
+    var fileinfo = arr[1];
+    var filearray = arr[2];
+    var fontdata = new DataView(filearray, fileinfo.headSize);
+    var filedata = new DataView(filearray);
+    var fileinfo1 = IncrementalFontUtils.parseBaseHeader(filedata);
+    return Promise.all([idb, fileinfo1, fontdata]);
   }).
   catch (function(e) {
     //timer.end('did not get the base data ' + fontname);
@@ -131,7 +142,8 @@ IncrementalFont.createManager = function(fontname) {
     return IncrementalFontUtils.requestURL('/fonts/' + incrFontMgr.fontname +
       '/base', 'GET', null, {}, 'arraybuffer').
     then(function(xfer_bytes) {
-      var fileinfo = IncrementalFontUtils.parseBaseHeader(xfer_bytes);
+      var xfer_data = new DataView(xfer_bytes);
+      var fileinfo = IncrementalFontUtils.parseBaseHeader(xfer_data);
       var header_data = xfer_bytes.slice(0, fileinfo.headSize);
       var rle_basefont = xfer_bytes.slice(fileinfo.headSize);
       return [fileinfo, header_data, rle_basefont];
@@ -157,7 +169,7 @@ IncrementalFont.createManager = function(fontname) {
     });
   }).
   then(function(arr) {
-    var fileinfo = arr[0];
+    var fileinfo = arr[1];
     IncrementalFontUtils.setFont(fontname, arr[2], fileinfo.isTTF);
     //console.log('make the class visible');
     IncrementalFontUtils.setVisibility(incrFontMgr.style, fontname, true);
@@ -328,7 +340,7 @@ IncrementalFont.obj_.prototype.persist_ = function(name) {
         return that.getBase.
         then(function(arr) {
           //console.log('save base');
-          return that.saveData_(arr[0], IncrementalFont.BASE, arr[2]);
+          return that.saveData_(arr[0], IncrementalFont.BASE, arr[2].buffer);
         });
       }
     }).
@@ -471,7 +483,7 @@ IncrementalFont.obj_.prototype.getData_ = function(idb, name) {
     };
 
     request.onerror = function(e) {
-      console.log('result = ' + result.value);
+      console.log('e = ' + e);
       debugger;
       reject(e);
     };
