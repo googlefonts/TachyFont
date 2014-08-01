@@ -61,29 +61,6 @@ IncrementalFont.CHARLIST = 'charlist';
 
 
 /**
- * The char list is dirty (needs to be persisted) key.
- */
-IncrementalFont.CHARLIST_DIRTY = 'charlist_dirty';
-
-/**
- * The fileinfo name.
- */
-IncrementalFont.FILEINFO = 'fileinfo';
-
-
-/**
- * The fileinfo is dirty (needs to be persisted) key.
- */
-IncrementalFont.FILEINFO_DIRTY = 'fileinfo_dirty';
-
-
-///**
-// * The the persist timeout key.
-// */
-//IncrementalFont.TIMEOUT_ID = 'timeoutID';
-
-
-/**
  * Get the incremental font object.
  * This class does the following:
  * 1. Create a class using the "@font-face" rule and with visibility=hidden
@@ -95,7 +72,10 @@ IncrementalFont.FILEINFO_DIRTY = 'fileinfo_dirty';
  * 7. When the base is available set the class visibility=visible
  *
  * @param {string} fontname The name of the font.
- * @return {Object} The incremental font object.
+ * @return {array} An array with:
+ *                 array[0] {Object} The IndexedDB object.
+ *                 array[1] {Object}  The fileinfo from the header.
+ *                 array[2] {DataView} The font data.
  */
 IncrementalFont.createManager = function(fontname) {
   var incrFontMgr = new IncrementalFont.obj_(fontname);
@@ -103,38 +83,20 @@ IncrementalFont.createManager = function(fontname) {
   incrFontMgr.getIDB_ = incrFontMgr.openIndexedDB(fontname);
   //timer.end('openIndexedDB.open ' + fontname);
 
-  //console.log('Create a class with visibility: hidden.');
+  // Create a class with visibility: hidden.
   incrFontMgr.style = IncrementalFontUtils.setVisibility(null, fontname, false);
 
   incrFontMgr.getBase = incrFontMgr.getIDB_.
   then(function(idb) {
-    // Consider storing the header with the font data. Then only one fetch
-    // would be needed. Use DataViews with offsets to access the header and
-    // font data in the ArrayBuffer.
-    //
-    // Notes:
-    // 1. Have the header started as:
-    //    * magic number
-    //    * version
-    //    * header length
-    //console.log('consider reading fileinfo and base in the same operation.');
-    var fileinfo = incrFontMgr.getData_(idb, IncrementalFont.FILEINFO);
-    return Promise.all([idb, fileinfo]);
-  }).
-  then(function(arr) {
-    var idb = arr[0];
-    var fileinfo = arr[1];
     var filedata = incrFontMgr.getData_(idb, IncrementalFont.BASE);
-    return Promise.all([idb, fileinfo, filedata]);
+    return Promise.all([idb, filedata]);
   }).
   then(function(arr) {
     var idb = arr[0];
-    var fileinfo = arr[1];
-    var filearray = arr[2];
-    var fontdata = new DataView(filearray, fileinfo.headSize);
-    var filedata = new DataView(filearray);
-    var fileinfo1 = IncrementalFontUtils.parseBaseHeader(filedata);
-    return Promise.all([idb, fileinfo1, fontdata]);
+    var filedata = new DataView(arr[1]);
+    var fileinfo = IncrementalFontUtils.parseBaseHeader(filedata);
+    var fontdata = new DataView(arr[1], fileinfo.headSize);
+    return Promise.all([idb, fileinfo, fontdata]);
   }).
   catch (function(e) {
     //timer.end('did not get the base data ' + fontname);
@@ -144,34 +106,21 @@ IncrementalFont.createManager = function(fontname) {
     then(function(xfer_bytes) {
       var xfer_data = new DataView(xfer_bytes);
       var fileinfo = IncrementalFontUtils.parseBaseHeader(xfer_data);
-      var header_data = xfer_bytes.slice(0, fileinfo.headSize);
-      var rle_basefont = xfer_bytes.slice(fileinfo.headSize);
-      return [fileinfo, header_data, rle_basefont];
-    }).
-    then(function(arr) {
-      var fileinfo = arr[0];
-      var header_data = new DataView(arr[1]);
-      var rle_fontdata = new DataView(arr[2]);
-
+      var header_data = new DataView(xfer_bytes, 0, fileinfo.headSize);
+      var rle_fontdata = new DataView(xfer_bytes, fileinfo.headSize);
       var raw_base = RLEDecoder.rleDecode([header_data, rle_fontdata]);
-      // TODO(bstell) eventually pass in the data with the header.
       var raw_basefont = new DataView(raw_base.buffer, header_data.byteLength);
-      return [arr[0], raw_basefont];
-    }).
-    then(function(arr) {
-      var basefont = IncrementalFontUtils.sanitizeBaseFont(arr[0], arr[1]);
-      return [incrFontMgr.getIDB_, arr[0], basefont];
-    }).
-    then(function(arr) {
+      var basefont =
+        IncrementalFontUtils.sanitizeBaseFont(fileinfo, raw_basefont);
       incrFontMgr.persistDelayed_(IncrementalFont.BASE);
-      incrFontMgr.persistDelayed_(IncrementalFont.FILEINFO);
-      return arr;
+      return [incrFontMgr.getIDB_, fileinfo, basefont];
     });
   }).
   then(function(arr) {
     var fileinfo = arr[1];
+    // Create the @font-face rule.
     IncrementalFontUtils.setFont(fontname, arr[2], fileinfo.isTTF);
-    //console.log('make the class visible');
+    // Make the class visible.
     IncrementalFontUtils.setVisibility(incrFontMgr.style, fontname, true);
 
     return arr;
@@ -186,8 +135,8 @@ IncrementalFont.createManager = function(fontname) {
   catch (function(e) {
     return {};
   }).
-  then(function(data) {
-    return Promise.all([incrFontMgr.getIDB_, data]);
+  then(function(charlist_data) {
+    return Promise.all([incrFontMgr.getIDB_, charlist_data]);
   });
 
   // For Debug: add a button to clear the IndexedDB.
@@ -208,7 +157,6 @@ IncrementalFont.obj_ = function(fontname) {
   this.charsURL = '/incremental_fonts/request';
   this.persistInfo = {};
   this.persistInfo[IncrementalFont.BASE_DIRTY] = false;
-  this.persistInfo[IncrementalFont.FILEINFO_DIRTY] = false;
   this.persistInfo[IncrementalFont.CHARLIST_DIRTY] = false;
   this.style = null;
 
@@ -247,7 +195,7 @@ IncrementalFont.obj_.prototype.loadNeededChars = function(element_name) {
     }
 
     if (neededCodes.length) {
-      console.log('load ' +neededCodes.length + ' codes:');
+      console.log('load ' + neededCodes.length + ' codes:');
       console.log(neededCodes);
     } else {
       //console.log('do not need anymore characters');
@@ -296,8 +244,6 @@ IncrementalFont.obj_.prototype.persistDelayed_ = function(name) {
   // Note what needs to be persisted.
   if (name == IncrementalFont.BASE) {
     this.persistInfo[IncrementalFont.BASE_DIRTY] = true;
-  } else if (name == IncrementalFont.FILEINFO) {
-    this.persistInfo[IncrementalFont.FILEINFO_DIRTY] = true;
   } else if (name == IncrementalFont.CHARLIST) {
     this.persistInfo[IncrementalFont.CHARLIST_DIRTY] = true;
   }
@@ -321,17 +267,14 @@ IncrementalFont.obj_.prototype.persist_ = function(name) {
     // Previous persists may have already saved the data so see if there is
     // anything still to persist.
     var base_dirty = that.persistInfo[IncrementalFont.BASE_DIRTY];
-    var fileinfo_dirty = that.persistInfo[IncrementalFont.FILEINFO_DIRTY];
     var charlist_dirty = that.persistInfo[IncrementalFont.CHARLIST_DIRTY];
-    if (!fileinfo_dirty && !base_dirty && !charlist_dirty) {
+    if (!base_dirty && !charlist_dirty) {
       return;
     }
 
     // What ever got in upto this point will get saved.
     that.persistInfo[IncrementalFont.BASE_DIRTY] = false;
-    that.persistInfo[IncrementalFont.FILEINFO_DIRTY] = false;
     that.persistInfo[IncrementalFont.CHARLIST_DIRTY] = false;
-    //console.log('persistInfo = ' + Object.keys(that.persistInfo));
 
     // Note that there is now a persist operation running.
     that.finishPersistingData = Promise.resolve().
@@ -339,17 +282,8 @@ IncrementalFont.obj_.prototype.persist_ = function(name) {
       if (base_dirty) {
         return that.getBase.
         then(function(arr) {
-          //console.log('save base');
+          console.log('save base');
           return that.saveData_(arr[0], IncrementalFont.BASE, arr[2].buffer);
-        });
-      }
-    }).
-    then(function() {
-      if (fileinfo_dirty) {
-        return that.getBase.
-        then(function(arr) {
-          //console.log('save fileinfo');
-          return that.saveData_(arr[0], IncrementalFont.FILEINFO, arr[1]);
         });
       }
     }).
@@ -357,7 +291,7 @@ IncrementalFont.obj_.prototype.persist_ = function(name) {
       if (charlist_dirty) {
         return that.getCharList.
         then(function(arr) {
-          //console.log('save charlist');
+          console.log('save charlist');
           return that.saveData_(arr[0], IncrementalFont.CHARLIST, arr[1]);
         });
       }
@@ -442,14 +376,10 @@ IncrementalFont.obj_.prototype.openIndexedDB = function(fontname) {
       if (db.objectStoreNames.contains(IncrementalFont.BASE)) {
         db.deleteObjectStore(IncrementalFont.BASE);
       }
-      if (db.objectStoreNames.contains(IncrementalFont.FILEINFO)) {
-        db.deleteObjectStore(IncrementalFont.FILEINFO);
-      }
       if (db.objectStoreNames.contains(IncrementalFont.CHARLIST)) {
         db.deleteObjectStore(IncrementalFont.CHARLIST);
       }
       var store = db.createObjectStore(IncrementalFont.BASE);
-      var store = db.createObjectStore(IncrementalFont.FILEINFO);
       var store = db.createObjectStore(IncrementalFont.CHARLIST);
     };
   }).then(function(db) {
