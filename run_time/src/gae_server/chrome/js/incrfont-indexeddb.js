@@ -231,8 +231,8 @@ IncrementalFont.obj_.prototype.loadNeededChars = function(element_name) {
             that.getCharlist = Promise.all([that.getIDB_, charlist]);
             that.persistDelayed_(IncrementalFont.BASE);
             that.persistDelayed_(IncrementalFont.CHARLIST);
+            IncrementalFontUtils.setFont(that.fontname, fontdata, fileinfo.isTTF);
           }
-          IncrementalFontUtils.setFont(that.fontname, fontdata, fileinfo.isTTF);
         });
       });
     }).
