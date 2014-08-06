@@ -139,11 +139,13 @@ IncrementalFontLoader.prototype.getBaseFont_ = function(inFS, fs, filename) {
     //  return data;
     //}).
     then(RLEDecoder.rleDecode).
-    //then(function(data) {
+    then(function(data) {
     //  timer.end('rleDecode');
     //  timer.start('sanitizeBase');
-    //  return data;
-    //}).
+      console.log('Is valid cmap12? ' + IncrementalFontUtils.checkCmap12(data,
+                                                                    that));
+      return data;
+    }).
     then(function(raw_base_font) {
       return IncrementalFontUtils.sanitizeBaseFont(that, raw_base_font);
     }).

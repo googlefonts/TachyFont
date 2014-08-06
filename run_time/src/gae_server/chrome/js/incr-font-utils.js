@@ -149,6 +149,57 @@ IncrementalFontUtils.injectCharacters = function(obj, baseFont,
   return baseFont;
 };
 
+/**
+ * Parses base font header, set properties.
+ * @param {DataView} baseFont Base font with header.
+ * @param {Object} headerInfo Header information
+ * @return {Object} The header information.
+ */
+IncrementalFontUtils.parseCmap12 = function(baseFont, headerInfo) {
+    if (!headerInfo.cmap12)
+        return [];
+    var binEd = new BinaryFontEditor(baseFont, headerInfo.cmap12.offset + 16);
+    var nGroups = headerInfo.cmap12.nGroups;
+    var segments = [];
+    var startCode, endCode, gid;
+    for (var i = 0; i < nGroups; i++) {
+        startCode = binEd.getUint32_();
+        endCode = binEd.getUint32_();
+        gid = binEd.getUint32_();
+        segments.push([startCode, endCode - startCode + 1, gid]);
+    }
+    return segments;
+};
+
+/**
+ * Checks cmap 12 segment table
+ * @param {DataView} baseFont Base font with header.
+ * @param {Object} headerInfo Header information
+ * @return {Object} The header information.
+ */
+IncrementalFontUtils.checkCmap12 = function(baseFont, headerInfo) {
+
+    var Cmap12SegsInFont = IncrementalFontUtils.parseCmap12(baseFont,
+                                                                headerInfo);
+    if (!headerInfo.compact_gos) {//missing info return false
+        return false;
+    }
+    var Cmap12SegsInHeader = headerInfo.compact_gos.segments;
+    var nGroups = headerInfo.cmap12.nGroups;
+    if (nGroups != Cmap12SegsInFont.length) {
+        throw 'Cmap 12 Segments lengths mismatches';
+    }
+    for (var i = 0; i < nGroups; i++) {
+        for (var j = 0; j < 3; j++) {
+            if (Cmap12SegsInFont[i][j] != Cmap12SegsInHeader[i][j]) {
+                throw 'Different Cmap 12 segments for ' + i + ',' + j +
+                        ' coord';
+                return false;
+            }
+        }
+    }
+    return true;
+};
 
 /**
  * Parses base font header, set properties.
@@ -249,7 +300,7 @@ IncrementalFontUtils.sanitizeBaseFont = function(obj, baseFont) {
     }
   } else {
     obj.dirty = true;
-    var binEd = new BinaryFontEditor(new DataView(baseFont), 0);
+    var binEd = new BinaryFontEditor(baseFont, 0);
     var glyphOffset = obj.glyphOffset;
     var glyphCount = obj.numGlyphs;
     var lastRealOffset = binEd.getGlyphDataOffset(obj.glyphDataOffset,
