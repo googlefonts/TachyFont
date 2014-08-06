@@ -1,6 +1,8 @@
 from fontTools.cffLib import Index
-from fontTools.ttLib import TTFont
 from struct import pack
+from fontTools_wrapper_funcs import change_method, _decompile_in_table_cmap
+from fontTools.ttLib.tables import _c_m_a_p
+from cmap_compacter import CmapCompacter
   
   
 class InfoOps(object):
@@ -90,6 +92,28 @@ class InfoOps(object):
     if 'CFF ' in font:
       return '\0'
     return None
+  
+  @staticmethod
+  def _getCCMP(font):
+    compacter = CmapCompacter(font)
+    data = compacter.generateGOSType(5)
+    return data
+  
+  @staticmethod
+  def _getCM12(font):
+    old_cmap_method = change_method(_c_m_a_p.table__c_m_a_p, _decompile_in_table_cmap,'decompile')
+    cmapTables = font['cmap']
+    change_method(_c_m_a_p.table__c_m_a_p,old_cmap_method,'decompile')
+    for table in cmapTables.tables:
+      if table.format == 12:
+        offset = table.offset
+        nGroups = table.nGroups
+        return pack('>LL',offset,nGroups)
+    return None
+
+  @staticmethod
+  def _getCM04(font):
+    pass
     
     
     

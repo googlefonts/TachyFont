@@ -39,6 +39,14 @@ class FontInfo(object):
           'TYPE': 
             {'desc':'Type of the font, either TTF or CFF', 
              'fn': InfoOps._getTYPE
+             },
+          'CCMP': 
+            {'desc':'Compact CMAP', 
+             'fn': InfoOps._getCCMP
+             },
+          'CM12': 
+            {'desc':'Start offset and number of groups in cmap format 12 table', 
+             'fn': InfoOps._getCM12
              }
         }
   
@@ -56,6 +64,5 @@ class FontInfo(object):
 
 
 if __name__ == '__main__':
-  fi = FontInfo(sys.argv[1])
-  bin_head = fi.getInformation(FontInfo.TAGS.keys())
+  bin_head = FontInfo.getInformation(sys.argv[1],FontInfo.TAGS.keys())
   pass
