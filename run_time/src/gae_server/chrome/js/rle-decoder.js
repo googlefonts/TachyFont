@@ -64,7 +64,8 @@ RLEDecoder.rleDecode = function(arr) {
   var writeOffset = 0;
   var totalSize = fontdata.getUint32(readOffset);
   if (header_data) {
-    debugger;
+    writeOffset = header_data.byteLength;
+    totalSize += writeOffset;
   }
   var fill_byte;
   var byteOperation;
@@ -75,6 +76,11 @@ RLEDecoder.rleDecode = function(arr) {
   // time_start('rle_alloc');
   var decodedData = new DataView(new ArrayBuffer(totalSize));
   // time_end('rle_alloc');
+  if (header_data) {
+    for (i = 0; i < header_data.byteLength; i++) {
+      decodedData.setUint8(i, header_data.getUint8(i));
+    }
+  }
   while (writeOffset < totalSize) {
     byteOperation = fontdata.getUint8(readOffset);
     readOffset++;
@@ -126,7 +132,7 @@ RLEDecoder.rleDecode = function(arr) {
 
   }
   // time_end('rle');
-  return decodedData.buffer;
+  return decodedData;
 };
 
 

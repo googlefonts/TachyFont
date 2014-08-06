@@ -125,12 +125,13 @@ IncrementalFontLoader.prototype.getBaseFont_ = function(inFS, fs, filename) {
     var that = this;
     return this.requestBaseFont_().
     then(function(xfer_bytes) {
-      var fileinfo = IncrementalFontUtils.parseBaseHeader(xfer_bytes);
+      var data = new DataView(xfer_bytes);
+      var fileinfo = IncrementalFontUtils.parseBaseHeader(data);
       for (var key in fileinfo) {
         // TODO(ahmetcelik) Do not pollute the object with fileinfo data.
         that[key] = fileinfo[key];
       }
-      var rle_fontdata = new DataView(xfer_bytes.slice(that.headSize));
+      var rle_fontdata = new DataView(xfer_bytes, that.headSize);
       return [null, rle_fontdata];
     }).
     //then(function(data) {
@@ -317,7 +318,7 @@ IncrementalFontLoader.prototype.persistState = function(ready, fs) {
 
     var baseUpdated = ready.then(function() {
       if (that.dirty)
-      fs.writeToTheFile(that.fontname + '.ttf', that.baseFont,
+      fs.writeToTheFile(that.fontname + '.ttf', that.baseFont.buffer,
         'application/font-sfnt');
     });
 
