@@ -340,7 +340,7 @@ BinaryFontEditor.readOps.TYPE = function(editor, font) {
  * @param {IncrementalFontLoader} font Font loader object
  */
 BinaryFontEditor.readOps.CM12 = function(editor, font) {
-    var cmap12 = {}; 
+    var cmap12 = {};
     cmap12.offset = editor.getUint32_();
     cmap12.nGroups = editor.getUint32_();
     font.cmap12 = cmap12;
@@ -351,16 +351,16 @@ BinaryFontEditor.readOps.CM12 = function(editor, font) {
  * @param {IncrementalFontLoader} font Font loader object
  */
 BinaryFontEditor.readOps.CCMP = function(editor, font) {
-    var compact_gos = {}; 
+    var compact_gos = {};
     compact_gos.type = editor.getUint8_();
     compact_gos.nGroups = editor.getUint16_();
     compact_gos.segments = [];
-    var startCode,length,gid;
+    var startCode, length, gid;
     for (var i = 0; i < compact_gos.nGroups; i++) {
         startCode = editor.getUint32_();
         length = editor.getUint32_();
         gid = editor.getUint32_();
-        compact_gos.segments.push([startCode,length,gid]);
+        compact_gos.segments.push([startCode, length, gid]);
     }
     font.compact_gos = compact_gos;
 };
