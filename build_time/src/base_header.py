@@ -30,7 +30,7 @@ class BaseHeaderPrepare(object):
     for tag, data in dict_of_objects.iteritems():
       assert len(tag) == 4
       bin_head.extend(tag)
-      bin_head.extend(struct.pack('>H',running_offset))
+      bin_head.extend(struct.pack('>L',running_offset)) #H is small for cmap
       running_offset += len(data)
       bin_head_data.extend(data)
     bin_head.extend(bin_head_data)
