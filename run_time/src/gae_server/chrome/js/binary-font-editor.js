@@ -435,10 +435,10 @@ BinaryFontEditor.prototype.parseBaseHeader = function() {
     }
     var count = this.getUint16_();
     var tags = [], tag, tagOffset, saveOffset,
-            dataStart = count * 6 + 4 + 4 + 2 + 4;//magic,ver,count,headSize
+            dataStart = count * 8 + 4 + 4 + 2 + 4;//magic,ver,count,headSize
     for (var i = 0; i < count; i++) {
         tag = this.readString_(4);
-        tagOffset = this.getUint16_();
+        tagOffset = this.getUint32_();
         if (!BinaryFontEditor.TAGS.hasOwnProperty(tag)) {//unknown tag
             throw 'Unknown Base Font Header TAG';
         }

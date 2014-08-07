@@ -117,11 +117,12 @@ class InfoOps(object):
   @staticmethod
   def _getCM12(font):
     old_cmap_method = change_method(_c_m_a_p.table__c_m_a_p, _decompile_in_table_cmap,'decompile')
+    cmap_offset = font.reader.tables['cmap'].offset
     cmapTables = font['cmap']
     change_method(_c_m_a_p.table__c_m_a_p,old_cmap_method,'decompile')
     for table in cmapTables.tables:
       if table.format == 12:
-        offset = table.offset
+        offset = cmap_offset + table.offset
         nGroups = table.nGroups
         return pack('>LL',offset,nGroups)
     return None
