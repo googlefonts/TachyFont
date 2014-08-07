@@ -13,19 +13,40 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 """
-from fontTools_wrapper_funcs import _decompile_in_cmap_format_12_13,\
-  change_method
+from fontTools_wrapper_funcs import change_method,_decompile_in_cmap_format_12_13
 from fontTools.ttLib.tables import _c_m_a_p
 import struct
+import bitarray
 
+
+def generateDeltaArray(input_arr):
+  input_len = len(input_arr)
+  assert input_len > 0
+  deltas = [None] * input_len
+  deltas[0] = input_arr[0]
+  idx = 1
+  while idx < input_len:
+    deltas[idx] = input_arr[idx]-input_arr[idx-1]
+    idx+=1
+  return deltas
+
+def add_to_extra_if_necessary(gos_data, extra_data, delta_code_result):
+  if type(delta_code_result) is list:
+    gos_data.extend(delta_code_result[0])
+    non_repr = NumberEncoders.NoNString(delta_code_result[1])
+    extra_data.extend(non_repr)
+  else:
+    gos_data.extend(delta_code_result)
+      
 class NumberEncoders(object):
-
 
   @staticmethod
   def NibbleBin(number):
+    if number == 0:
+      return [1,'0000']
     assert number > 0,'takes only positive numbers'
     count = 0
-    copy_number = number if number != 0 else 1
+    copy_number = number
     while copy_number:
       copy_number >>= 4
       count += 1
@@ -38,15 +59,15 @@ class NumberEncoders(object):
       result[0] -= 1
     else:
       result[0] += 7
-    nibble_count = NumberEncoders.NibbleBin(result[0])
-    return [nibble_count,result[1]]
+    nibble_count = NumberEncoders.NibbleBin(result[0])[1]
+    return nibble_count+result[1]
       
   @staticmethod
-  def AOE(number):
-    if number >= 15:
-      return [15,NumberEncoders.NoNString(number)]
+  def AOE(number, bit_count):
+    if number < 2 ** bit_count - 1:
+      return bin(number)[2:].zfill(bit_count)
     else:
-      return [number,None]
+      return ['1' * bit_count , number]
 
 class _GOSGenerators(object):
   
@@ -80,10 +101,26 @@ class _GOSGenerators(object):
         table_format_12 = table
         break
     assert table_format_12,'Format 12 must exist'
-    
+    ourData = table_format_12.cmap
+    deltaCodePoints = generateDeltaArray(ourData['startCodes'])
+    lengths = ourData['lengths']
+    gids = ourData['gids']
+    nGroups = len(gids)
+    gos_data = bitarray.bitarray(endian='big')
+    extra_data = bitarray.bitarray(endian='big')
+    gos_data.frombytes(struct.pack('>B',3))
+    gos_data.frombytes(struct.pack('>H',nGroups))
+    for idx in xrange(nGroups):
+      delta_code_result = NumberEncoders.AOE(deltaCodePoints[idx],5)
+      add_to_extra_if_necessary(gos_data, extra_data, delta_code_result)
+      len_result = NumberEncoders.AOE(lengths[idx],3)
+      add_to_extra_if_necessary(gos_data, extra_data, len_result)     
+      gos_data.frombytes(struct.pack('>H',gids[idx]))
     
     change_method(_c_m_a_p.cmap_format_12_or_13,old_12_method,'decompile')
-    return gos_data    
+    gos_bytes = gos_data.tobytes()
+    extra_bytes = extra_data.tobytes()
+    return gos_bytes + extra_bytes
   
 GOS_Types = {5:_GOSGenerators.type5,
              3:_GOSGenerators.type3}
