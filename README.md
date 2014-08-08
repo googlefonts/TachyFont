@@ -37,6 +37,7 @@ optional arguments:
   --changefont			Force to generate all things, overrides changebase option
   --output OUTPUT       Output folder, default is current folder
 ```
+Example:
 
     ./pyprepfnt --changefont --hinting --output ~/MYFONTDATA ~/MYFONTS/a_font_name.otf
 
