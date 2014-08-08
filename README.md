@@ -37,6 +37,9 @@ optional arguments:
   --changefont			Force to generate all things, overrides changebase option
   --output OUTPUT       Output folder, default is current folder
 ```
+
+    ./pyprepfnt --changefont --hinting --output ~/MYFONTDATA ~/MYFONTS/font.otf
+
 - Copy `base` and `base.gz` files into the `fonts/<font-name>/` folder
 - Copy `closure_data`, `closure_idx`, `codepoints`, `gids`, `glyph_data` and `glyph_table` files
 into the `data/<font-name>/` folder
