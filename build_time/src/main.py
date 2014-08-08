@@ -67,7 +67,7 @@ def main(args):
 
   print('start proprocess')
   preprocess = Preprocess(cleanfile, output_folder)
-  if generate_again_base:
+  if generate_again_base or generate_again_font:
     print('build base')
     preprocess.base_font()
   if generate_again_font:

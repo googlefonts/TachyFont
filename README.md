@@ -25,15 +25,17 @@ have not yet been finalized or written.
 - Run `pyprepfnt` with the font file
 
 ```
-usage: pyprepfnt [-h] [--hinting [HINTING]] [--output [OUTPUT]] fontfile
+usage: pyprepfnt [-h] [--changefont] [--changebase] [--hinting] [--output OUTPUT] fontfile
 
 positional arguments:
   fontfile             Input font file
 
 optional arguments:
-  -h, --help           show this help message and exit
-  --hinting [HINTING]  Enable hinting if True, default is False
-  --output [OUTPUT]    Output folder, default is current folder
+  -h, --help            show this help message and exit
+  --hinting  			Enable hinting if present
+  --changebase			Force change base font
+  --changefont			Force to generate all things, overrides changebase option
+  --output OUTPUT       Output folder, default is current folder
 ```
 - Copy `base` and `base.gz` files into the `fonts/<font-name>/` folder
 - Copy `closure_data`, `closure_idx`, `codepoints`, `gids`, `glyph_data` and `glyph_table` files
