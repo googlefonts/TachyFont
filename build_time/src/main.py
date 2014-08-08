@@ -34,8 +34,11 @@ def main(args):
   """
   parser = argparse.ArgumentParser(prog='pyprepfnt')
   parser.add_argument('fontfile',help='Input font file')
-  parser.add_argument('--hinting', nargs='?', default=False ,type=bool, help='Enable hinting if True, default is False')
-  parser.add_argument('--output', nargs='?', default='.' , help='Output folder, default is current folder')
+  parser.add_argument('--changefont', default=False , action='store_true', help='Font structure has changed, default is True')
+  parser.add_argument('--changebase', default=False , action='store_true', help='Base structure has changed, default is True')
+  parser.add_argument('--hinting',default=False, action='store_true', help='Enable hinting if specified, no hinting if not present')
+  parser.add_argument('--output', default='.' , help='Output folder, default is current folder')
+
   cmd_args = parser.parse_args(args)
 
   fontfile = cmd_args.fontfile
@@ -52,20 +55,26 @@ def main(args):
           raise
 
   cleanfile = output_folder+'/'+filename + '_clean' + extension
-  print('make cleaned up version: {0}'.format(cleanfile))
-  cleanup.cleanup(fontfile, cmd_args.hinting, cleanfile)
-
-  print('build closure')
-  closure.dump_closure_map(cleanfile, output_folder)
+  font_processed_before = os.path.isfile(cleanfile)
+  base_exists = os.path.isfile(output_folder+'/base')
+  generate_again_font = not font_processed_before or cmd_args.changefont
+  generate_again_base = not base_exists or cmd_args.changebase
+  if generate_again_font:
+    print('make cleaned up version: {0}'.format(cleanfile))
+    cleanup.cleanup(fontfile, cmd_args.hinting, cleanfile)
+    print('build closure')
+    closure.dump_closure_map(cleanfile, output_folder)
 
   print('start proprocess')
   preprocess = Preprocess(cleanfile, output_folder)
-  print('build base')
-  preprocess.base_font()
-  print('dump cmap')
-  preprocess.cmap_dump()
-  print('build glyph data')
-  preprocess.serial_glyphs()
+  if generate_again_base:
+    print('build base')
+    preprocess.base_font()
+  if generate_again_font:
+    print('dump cmap')
+    preprocess.cmap_dump()
+    print('build glyph data')
+    preprocess.serial_glyphs()
   print('done')
 
 def console_msg(msg):
