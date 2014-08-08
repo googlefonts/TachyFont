@@ -20,8 +20,11 @@ import bitarray
 
 
 def generateDeltaArray(input_arr):
+  """generates delta array for given array
+  e.g. [4,12,15,22] -> [4,8,3,7]
+  """
   input_len = len(input_arr)
-  assert input_len > 0
+  assert input_len > 0, 'Empty array is given'
   deltas = [None] * input_len
   deltas[0] = input_arr[0]
   idx = 1
@@ -31,9 +34,12 @@ def generateDeltaArray(input_arr):
   return deltas
 
 def add_to_extra_if_necessary(gos_data, extra_data, delta_code_result):
-  if type(delta_code_result) is list:
-    gos_data.extend(delta_code_result[0])
-    non_repr = NumberEncoders.NoNString(delta_code_result[1])
+  """Checks if number is too big to fit GOS, then add it to correct stream
+  """
+  if type(delta_code_result) is tuple:
+    escape_str, number = delta_code_result
+    gos_data.extend(escape_str)
+    non_repr = NumberEncoders.NoNString(number)
     extra_data.extend(non_repr)
   else:
     gos_data.extend(delta_code_result)
@@ -42,32 +48,50 @@ class NumberEncoders(object):
 
   @staticmethod
   def NibbleBin(number):
+    """Converts given number to binary using enough nibbles
+    16 -> (2,'00010000')
+    """
+    assert number >= 0,'takes only non-negative numbers'
     if number == 0:
-      return [1,'0000']
-    assert number > 0,'takes only positive numbers'
+      return (1,'0000')
     count = 0
     copy_number = number
     while copy_number:
       copy_number >>= 4
       count += 1
-    return [count,bin(number)[2:].zfill(count*4)]
+    return (count,bin(number)[2:].zfill(count*4))
         
   @staticmethod
   def NoNString(number):
-    result = NumberEncoders.NibbleBin(abs(number))
+    """Encode number using nibbles.
+    First nibbles is the number of nibbles needed. For non-negative numbers
+    it one less than nibble count, for negative numbers it is seven more than
+    nibble count
+    0<=first_nibble<8 : non-negative number
+    8<=first_nibble<16: negative number
+    -17 -> 100100010001  0x911 nibble count: 9-7=2
+     17 -> 000100010001  0x111 nibble count: 1+1=2
+    """
+    count, number_bin_str = NumberEncoders.NibbleBin(abs(number))
     if number >= 0:
-      result[0] -= 1
+      count -= 1
     else:
-      result[0] += 7
-    nibble_count = NumberEncoders.NibbleBin(result[0])[1]
-    return nibble_count+result[1]
+      count += 7
+    nibble_count_bin_str = NumberEncoders.NibbleBin(count)[1]
+    return nibble_count_bin_str + number_bin_str
       
   @staticmethod
   def AOE(number, bit_count):
+    """Binary string of given number using given bit count 
+      or escape it using all ones
+    (12,5) -> 01100
+    (12,3) -> (111,12)
+    """
+    assert number >= 0, 'positive numbers only'
     if number < 2 ** bit_count - 1:
       return bin(number)[2:].zfill(bit_count)
     else:
-      return ['1' * bit_count , number]
+      return ('1' * bit_count , number)
 
 class _GOSGenerators(object):
   
@@ -108,7 +132,7 @@ class _GOSGenerators(object):
     nGroups = len(gids)
     gos_data = bitarray.bitarray(endian='big')
     extra_data = bitarray.bitarray(endian='big')
-    gos_data.frombytes(struct.pack('>B',3))
+    gos_data.frombytes(struct.pack('>B',3)) #GOS type
     gos_data.frombytes(struct.pack('>H',nGroups))
     for idx in xrange(nGroups):
       delta_code_result = NumberEncoders.AOE(deltaCodePoints[idx],5)
@@ -121,7 +145,19 @@ class _GOSGenerators(object):
     gos_bytes = gos_data.tobytes()
     extra_bytes = extra_data.tobytes()
     return gos_bytes + extra_bytes
-  
+
+"""Type of the Group of Segments
+Type 5: For cmap format 12 subtable
+  startCode : 32 bit no encoding
+  length    : 32 bit no encoding
+  gid       : 32 bit no encoding
+Type 3: For cmap format 12 subtable
+  startCode : 5 bit AOE encoding
+  length    : 3 bit AOE encoding
+  gid       : 16 bit no encoding
+  Following GOS table, we have extra escaped number table
+  using for each number Number of Nibbles(NoN) encoding
+"""
 GOS_Types = {5:_GOSGenerators.type5,
              3:_GOSGenerators.type3}
 
