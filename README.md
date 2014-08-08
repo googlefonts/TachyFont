@@ -46,8 +46,7 @@ Example:
 into the `data/<font-name>/` folder
 - Use this `<font-name>` as `family-name` in styles, and pass this name to the javascript functions
 
-   In our example copy 'base' and 'base.gz' from 'a_font_name' folder to under 'gae_server/chrome/fonts/a_font_name/'.
-From 'a_font_name' folder copy remaining font data into the 'gae_server/chrome/data/a_font_name/'.
+    In our example copy `base` and `base.gz` from `a_font_name` folder into `gae_server/chrome/fonts/a_font_name/`. From `a_font_name` folder copy remaining font data into the `gae_server/chrome/data/a_font_name/`.
 
 # To run unit tests:
 - build_time/test/
