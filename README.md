@@ -17,8 +17,15 @@ provides no support for it.
 Build and Deployment
 ====================
 
-Incremental Fonts is, unfortunately, pre-alpha and notes for building / deploying 
+Incremental Fonts is pre-alpha and notes for building / deploying 
 have not yet been finalized or written.
+
+# The TTX/fontTools library
+
+This program uses an unreleased CFF 'flattening' feature in fontTools. Thus
+the fontTools in this repository must be used when preprocessing CFF fonts; ie:
+${PROJECT_LOC}/run_time/src/gae_server/third_party/fonttools-master/Lib/ needs
+to be on the PYTHONPATH.
 
 # Generating font data
 
