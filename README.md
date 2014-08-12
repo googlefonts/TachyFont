@@ -32,8 +32,8 @@ positional arguments:
 
 optional arguments:
   -h, --help            show this help message and exit
-  --hinting  			Enable hinting if present
-  --changebase			Force change base font
+  --hinting  			Does not remove hintings from glyphs if present
+  --changebase			Force regeneration of base font
   --changefont			Force to generate all things, overrides changebase option
   --output OUTPUT       Output folder, default is current folder
 ```
