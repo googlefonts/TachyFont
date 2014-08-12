@@ -18,10 +18,10 @@ from __future__ import print_function
 import sys
 import os
 import errno
-from fontTools.subset import Options
-import cleanup
-import closure
-from preprocess import Preprocess
+from fontTools.ttLib import TTFont
+from compressor import Compressor
+from cff_lib import CharSet, decompileDict, DictINDEX, FDSelect, INDEX
+from StringIO import StringIO
 import argparse
 
 
@@ -45,23 +45,126 @@ def main(args):
   basename = os.path.basename(fontfile)
   filename, extension = os.path.splitext(basename)
   output_folder = cmd_args.output+'/'+filename
-  print('put results in {0}'.format(output_folder))
-  try:
-      os.makedirs(output_folder)
-  except OSError as exception:
-      if exception.errno != errno.EEXIST:
-          raise
-
-  cleanfile = output_folder+'/'+filename + '_clean' + extension
-  print('make cleaned up version: {0}'.format(cleanfile))
-  cleanup.cleanup(fontfile, cmd_args.hinting, cleanfile)
-
-  print('start preprocess')
-  preprocess = Preprocess(cleanfile, output_folder)
-  print('build base')
-  preprocess.base_font(dump_tables=True)
+  dump_tables(fontfile, output_folder)
 
   print('done')
+
+def dump_tables(fontfile, output):
+  font = TTFont(fontfile,lazy=True)
+  dump_folder = output + '_tables'
+  print('dump results in {0}'.format(dump_folder))
+  try:
+    os.makedirs(dump_folder)
+  except OSError as exception:
+    if exception.errno != errno.EEXIST:
+      raise
+
+  # OpenType tables.
+  font_file = open(fontfile,'r+b')
+  tables = font.reader.tables
+  for name in font.reader.tables:
+    table = tables[name]
+    offset = table.offset
+    length = table.length
+    print('{0}: offset={1}, length={2}'.format(name, offset, length))
+    table_file_name = dump_folder + '/' + name.replace('/', '_')
+    table_file = open(table_file_name,'w+b')
+    font_file.seek(offset);
+    table_file.write(font_file.read(length))
+    table_file.close()
+    compressor = Compressor(Compressor.GZIP_INPLACE_CMD)
+    compressor.compress(table_file_name)
+    #print('{0}: offset={1:9d}\tlen={2:9d}\tcmp_len={3:9d}'.format(name, offset, length,os.path.getsize(table_file_name+'.gz')))
+
+  print('TODO(bstell) save and compress the CFF parts.')
+  if 'CFF ' in font:
+    dumpCFFTable(font)
+
+  font.close()
+
+def dumpCFFTable(font):
+  cff_reader = font.reader.tables['CFF ']
+  cff_data = font.reader['CFF ']
+  cff_file = StringIO(cff_data)
+  print('cff_reader.offset={0}'.format(cff_reader.offset))
+  print('cff_reader.length={0}'.format(cff_reader.length))
+ 
+  cff_file.seek(4) # seek past header
+  nameIndex = INDEX(cff_file)
+  start, count, offSize, past_end = nameIndex.getInfo()
+  print('Name INDEX: start={0}, count={1}, end={2}'.format(start, count, past_end))
+  nameIndex.showItems('Name INDEX', 0, 3)
+  
+  topDictIndex = DictINDEX(cff_file)
+  start, count, offSize, past_end = topDictIndex.getInfo()
+  print('Top DICT INDEX: start={0}, count={1}, end={2}'.format(start, count, past_end))
+  topDictIndex.showItems('Top DICT INDEX', 0, 0, 3)
+  # There is only one font in a CID font
+  font_dict = topDictIndex.getDict(0)
+ 
+  stringIndex = INDEX(cff_file)
+  start, count, offSize, past_end = stringIndex.getInfo()
+  print('String INDEX: start={0}, count={1}, end={2}'.format(start, count, past_end))
+  stringIndex.showItems('String INDEX', 0, 3)
+ 
+  globalSubrIndex = INDEX(cff_file)
+  start, count, offSize, past_end = globalSubrIndex.getInfo()
+  print('Global Subr INDEX: start={0}, count={1}, end={2}'.format(start, count, past_end))
+  globalSubrIndex.showItems('Global Subr INDEX', 0, 3)
+ 
+  print("CIDFonts do not have an Encodings value")
+ 
+  char_strings_offset = font_dict['CharStrings']
+  print('CharStrings = {0}'.format(char_strings_offset))
+  cff_file.seek(char_strings_offset)
+  charStringsIndex = INDEX(cff_file)
+  start, count, offSize, past_end = charStringsIndex.getInfo()
+  print('CharStrings INDEX: start={0}, count={1}, end={2}'.format(start, count, past_end))
+  num_glyphs = count
+ 
+  charset_offset = font_dict['charset']
+  print('charset = {0}'.format(charset_offset))
+  cff_file.seek(charset_offset)
+  charset = CharSet(cff_file, num_glyphs)
+  print('charset: size = {0}'.format(charset.get_size()))
+ 
+  fdselect_offset = font_dict['FDSelect']
+  print('FDSelect = {0}'.format(fdselect_offset))
+  cff_file.seek(fdselect_offset)
+  fdselect = FDSelect(cff_file, num_glyphs)
+  print('FDSelect: size = {0}'.format(fdselect.get_size()))
+ 
+  fdarray_offset = font_dict['FDArray']
+  print('FDArray = {0}'.format(fdarray_offset))
+  cff_file.seek(fdarray_offset)
+  fdarray = DictINDEX(cff_file)
+  start, count, offSize, past_end = fdarray.getInfo()
+  print('Top DICT INDEX: start={0}, count={1}, end={2}'.format(start, count, past_end))
+  fdarray.showItems('FDArray', 0, 0, 3)
+  fdarray.showItems('FDArray', 1, 0, 3)
+  fdcount = count
+  subr_len = 0
+  for i in range(fdcount):
+    private_dict = fdarray.getDict(i)
+    length, offset = private_dict['Private']
+    #print('private dict {0}: offset={1}, end={2}, length={3}'.format(
+    #  i, offset, offset+length, length))
+    cff_file.seek(offset)
+    data = cff_file.read(length)
+    dict = decompileDict(data)
+    if 'Subrs' in dict:
+      subrs_offset = dict['Subrs']
+      cff_file.seek(offset + subrs_offset)
+      subrsIndex = INDEX(cff_file)
+      start, count, offSize, past_end = subrsIndex.getInfo()
+      length = past_end - start
+      subr_len += length
+      #print('    subrs: start={0}, count={1}, end={2}'.format(
+      #  start, count, past_end))
+  print('total subr length = {0}'.format(subr_len))
+
+
+
 
 def console_msg(msg):
   pass
