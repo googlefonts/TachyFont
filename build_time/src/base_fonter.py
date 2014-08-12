@@ -200,6 +200,7 @@ class BaseFonter(object):
       font_file.seek(offset);
       table_file.write(font_file.read(length))
       table_file.close()
+      self.__rle(table_file_name)
       compressor = Compressor(Compressor.GZIP_INPLACE_CMD)
       compressor.compress(table_file_name)
       print('{0}: offset={1:9d}\tlen={2:9d}\tcmp_len={3:9d}'.format(name, offset, length,os.path.getsize(table_file_name+'.gz')))
