@@ -178,36 +178,6 @@ class BaseFonter(object):
     font_file.write(loca_data)
     font_file.close()
 
-    
-  def __dump_tables(self, output):
-    dump_folder = output + '_tables'
-    print('dump results in {0}'.format(dump_folder))
-    try:
-      os.makedirs(dump_folder)
-    except OSError as exception:
-      if exception.errno != errno.EEXIST:
-        raise
-
-    self.font = TTFont(output)
-    font_file = open(output,'r+b')
-    tables = self.font.reader.tables
-    for name in self.font.reader.tables:
-      table = tables[name]
-      offset = table.offset
-      length = table.length
-      table_file_name = dump_folder + '/' + name.replace('/', '_')
-      table_file = open(table_file_name,'w+b')
-      font_file.seek(offset);
-      table_file.write(font_file.read(length))
-      table_file.close()
-      self.__rle(table_file_name)
-      compressor = Compressor(Compressor.GZIP_INPLACE_CMD)
-      compressor.compress(table_file_name)
-      print('{0}: offset={1:9d}\tlen={2:9d}\tcmp_len={3:9d}'.format(name, offset, length,os.path.getsize(table_file_name+'.gz')))
-
-    self.font.close()
-    
-
   def __rle(self, output):
     rle_font = RleFont(output)
     rle_font.encode()
@@ -224,7 +194,7 @@ class BaseFonter(object):
     
     
 
-  def base(self, output, header_data, dump_tables):
+  def base(self, output, header_data):
     """Call this function get base font Call only once, since given font will be closed
     """
     of = open(output, 'wb')
@@ -241,8 +211,6 @@ class BaseFonter(object):
     else:
       self.__zero_glyf(output)
       self.__fill_loca(output)
-    if dump_tables:
-      self.__dump_tables(output)
     self.__rle(output)
     if header_data:
       self.__add_header(output, header_data)
