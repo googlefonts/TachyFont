@@ -32,20 +32,28 @@ to be on the PYTHONPATH.
 - Run `pyprepfnt` with the font file
 
 ```
-usage: pyprepfnt [-h] [--hinting [HINTING]] [--output [OUTPUT]] fontfile
+usage: pyprepfnt [-h] [--changefont] [--changebase] [--hinting] [--output OUTPUT] fontfile
 
 positional arguments:
   fontfile             Input font file
 
 optional arguments:
-  -h, --help           show this help message and exit
-  --hinting [HINTING]  Enable hinting if True, default is False
-  --output [OUTPUT]    Output folder, default is current folder
+  -h, --help            show this help message and exit
+  --hinting  			Does not remove hintings from glyphs if present
+  --changebase			Force regeneration of base font
+  --changefont			Force to generate all things, overrides changebase option
+  --output OUTPUT       Output folder, default is current folder
 ```
+Example:
+
+    ./pyprepfnt --changefont --hinting --output ~/MYFONTDATA ~/MYFONTS/a_font_name.otf
+
 - Copy `base` and `base.gz` files into the `fonts/<font-name>/` folder
 - Copy `closure_data`, `closure_idx`, `codepoints`, `gids`, `glyph_data` and `glyph_table` files
 into the `data/<font-name>/` folder
 - Use this `<font-name>` as `family-name` in styles, and pass this name to the javascript functions
+
+    In our example copy `base` and `base.gz` from `a_font_name` folder into `gae_server/chrome/fonts/a_font_name/`. From `a_font_name` folder copy remaining font data into the `gae_server/chrome/data/a_font_name/`.
 
 # To run unit tests:
 - build_time/test/
