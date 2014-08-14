@@ -15,6 +15,8 @@
 """
 import struct
 from fontTools.ttLib.tables import _c_m_a_p
+import array
+import sys
 
 
 def change_method(clazz,new_method,method_name):
@@ -67,3 +69,33 @@ def _decompile_in_table_cmap(self, data, ttFont):
     # subtable is referenced.
     table.decompileHeader(data[offset:offset+int(length)], ttFont)
     tables.append(table)
+
+def _decompile_in_cmap_format_4(self, data, ttFont):
+
+  data = self.data # decompileHeader assigns the data after the header to self.data
+  (segCountX2, searchRange, entrySelector, rangeShift) = \
+        struct.unpack(">4H", data[:8])
+  data = data[8:]
+  segCount = segCountX2 // 2
+  
+  allCodes = array.array("H")
+  allCodes.fromstring(data)
+  self.data = data = None
+
+  if sys.byteorder != "big":
+    allCodes.byteswap()
+  
+  # divide the data
+  endCode = allCodes[:segCount]
+  allCodes = allCodes[segCount+1:]  # the +1 is skipping the reservedPad field
+  startCode = allCodes[:segCount]
+  allCodes = allCodes[segCount:]
+  idDelta = allCodes[:segCount]
+  allCodes = allCodes[segCount:]
+  idRangeOffset = allCodes[:segCount]
+  glyphIndexArray = allCodes[segCount:]
+
+  self.cmap = {'startCode':startCode,'endCode':endCode,'idDelta':idDelta,
+               'idRangeOffset':idRangeOffset,'glyphIdArray':glyphIndexArray}
+
+

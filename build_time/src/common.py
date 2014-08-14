@@ -38,6 +38,7 @@ def reverse_cmap(font):
   """Build reverse cmap table for unicode Returns dict from name to unicode points
 
   """
+  #TODO use also getcmap(3,10) if present
   cmap = font['cmap'].getcmap(3, 1)
   if cmap:
     return {v: k for k, v in cmap.cmap.iteritems()}
