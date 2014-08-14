@@ -182,18 +182,27 @@ IncrementalFontUtils.parseCmap4 = function(baseFont, headerInfo) {
         return [];
     var binEd = new BinaryFontEditor(baseFont, headerInfo.cmap4.offset + 6);
     var segCount = binEd.getUint16_() / 2;
+    var glyphIdArrayLen = (headerInfo.cmap4.length - 16 - segCount * 8) / 2;
     headerInfo.cmap4.segCount = segCount;
+    headerInfo.cmap4.glyphIdArrayLen = glyphIdArrayLen;
     binEd.skip(6); //skip searchRange,entrySelector,rangeShift
     var segments = [];
-    var endCodes = binEd.getArrayOf_(binEd.getUint16_,segCount);
+    var glyphIdArray = [];
+    var endCodes = binEd.getArrayOf_(binEd.getUint16_, segCount);
     binEd.skip(2);//skip reservePad
-    var startCodes = binEd.getArrayOf_(binEd.getUint16_,segCount);
-    var idDeltas = binEd.getArrayOf_(binEd.getUint16_,segCount);
-    var idRangeOffsets = binEd.getArrayOf_(binEd.getUint16_,segCount);
+    var startCodes = binEd.getArrayOf_(binEd.getUint16_, segCount);
+    var idDeltas = binEd.getArrayOf_(binEd.getUint16_, segCount);
+    var idRangeOffsets = binEd.getArrayOf_(binEd.getUint16_, segCount);
+    if (glyphIdArrayLen > 0)
+        glyphIdArray = binEd.getArrayOf_(binEd.getUint16_, glyphIdArrayLen);
     for (var i = 0; i < segCount; i++) {
-        segments.push([startCodes[i], endCodes[i], idDeltas[i], idRangeOffsets[i]]);
+        segments.push(
+                [startCodes[i], endCodes[i], idDeltas[i], idRangeOffsets[i]]);
     }
-    return segments;
+    var arrays = {};
+    arrays.segments = segments;
+    arrays.glyphIdArray = glyphIdArray;
+    return arrays;
 };
 
 /**
@@ -227,19 +236,20 @@ IncrementalFontUtils.checkCmap12 = function(baseFont, headerInfo) {
 };
 
 /**
- * Checks cmap 12 segment table
+ * Checks cmap 4 segment table
  * @param {DataView} baseFont Base font with header.
  * @param {Object} headerInfo Header information
  * @return {Object} The header information.
  */
 IncrementalFontUtils.checkCmap4 = function(baseFont, headerInfo) {
 
-    var Cmap4SegsInFont = IncrementalFontUtils.parseCmap4(baseFont,
-                                                                headerInfo);
+    var Cmap4InFont = IncrementalFontUtils.parseCmap4(baseFont,
+                                                                headerInfo),
+        Cmap4SegsInFont = Cmap4InFont.segments;
     if (!headerInfo.compact_gos) {//missing info return false
         return false;
     }
-    var Cmap4SegsInHeader = headerInfo.compact_gos.cmap4;
+    var Cmap4SegsInHeader = headerInfo.compact_gos.cmap4.segments;
     var segCount = headerInfo.cmap4.segCount;
     for (var i = 0; i < segCount; i++) {
         for (var j = 0; j < 4; j++) {
@@ -248,6 +258,15 @@ IncrementalFontUtils.checkCmap4 = function(baseFont, headerInfo) {
                         ' coord';
                 return false;
             }
+        }
+    }
+    var idArrayInFont = Cmap4InFont.glyphIdArray,
+        idArrayInHeader = headerInfo.compact_gos.cmap4.glyphIdArray;
+    var glyphIdArrayLen = headerInfo.cmap4.glyphIdArrayLen;
+    for (var i = 0; i < glyphIdArrayLen; i++) {
+        if (idArrayInFont[i] != idArrayInHeader[i]) {
+            throw 'Different glyph IDs in the array for ' + i + ' index';
+            return false;
         }
     }
     return true;

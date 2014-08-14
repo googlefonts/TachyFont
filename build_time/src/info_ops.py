@@ -111,7 +111,7 @@ class InfoOps(object):
   @staticmethod
   def _getCCMP(font):
     compacter = CmapCompacter(font)
-    data = compacter.generateGOSTypes([5,4])
+    data = compacter.generateGOSTypes([3,4])
     return data
   
   @staticmethod
@@ -136,7 +136,8 @@ class InfoOps(object):
     for table in cmapTables.tables:
       if table.format == 4:
         offset = cmap_offset + table.offset
-        return pack('>L',offset)
+        length = table.length
+        return pack('>LL',offset,length)
     return None
     
     

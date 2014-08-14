@@ -204,12 +204,14 @@ class _GOSGenerators(object):
       add_to_extra_if_necessary(gos_data, extra_data, delta_code_result)
       len_result = NumberEncoders.AOE(lengths[idx],3)
       add_to_extra_if_necessary(gos_data, extra_data, len_result)     
-      gos_data.frombytes(struct.pack('>H',gids[idx]))
-    
+      gid_result = NumberEncoders.AOE(gids[idx],16)
+      add_to_extra_if_necessary(gos_data, extra_data, gid_result)
+      
     change_method(_c_m_a_p.cmap_format_12_or_13,old_12_method,'decompile')
-    gos_bytes = gos_data.tobytes()
-    extra_bytes = extra_data.tobytes()
-    return gos_bytes + extra_bytes
+    
+    whole_data = gos_data.tobytes() + extra_data.tobytes()
+    print 'type3 size',len(whole_data)
+    return whole_data
 
 """Type of the Group of Segments
 Type 5: For cmap format 12 subtable

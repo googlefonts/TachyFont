@@ -241,8 +241,8 @@ BinaryFontEditor.prototype.seek = function(newOffset) {
  * @param {number} len
  */
 BinaryFontEditor.prototype.skip = function(len) {
-    if(len<0)
-        throw 'Only nonnegative numbers are accepted'
+    if (len < 0)
+        throw 'Only nonnegative numbers are accepted';
     this.offset += len;
 };
 
@@ -254,11 +254,11 @@ BinaryFontEditor.prototype.tell = function() {
 };
 
 /**
- * 
+ * Creates nibble stream reader starting from current position
  * @return {function} NibbleOfNumber decoder function
  */
 BinaryFontEditor.prototype.nibbleReader = function() {
-    var that=this, value,nibbleByte,aligned = true;
+    var that = this, value, nibbleByte, aligned = true;
     return function() {
         if (aligned) {
            nibbleByte = that.getUint8_();
@@ -271,9 +271,14 @@ BinaryFontEditor.prototype.nibbleReader = function() {
     };
 };
 
+/**
+ * Starting from current positions read whole extra array table
+ * @param {type} extraLen
+ * @return {Array.<number>} array of extra numbers
+ */
 BinaryFontEditor.prototype.readExtraArray = function(extraLen) {
-    var readNextNibble = this.nibbleReader(), extraArray = [], 
-        extraData, sign,  numNibbles;
+    var readNextNibble = this.nibbleReader(), extraArray = [],
+        extraData, sign, numNibbles;
     for (var i = 0; i < extraLen; i++) {
         extraData = 0;
         numNibbles = readNextNibble();
@@ -290,16 +295,20 @@ BinaryFontEditor.prototype.readExtraArray = function(extraLen) {
         }
         extraData *= sign;
         extraArray.push(extraData);
-    }    
+    }
     return extraArray;
 };
 
+/**
+ * Read following group of segments
+ * @return {Object} Group of Segments returned
+ */
 BinaryFontEditor.prototype.readNextGOS = function() {
     var gos = {};
     var type = this.getUint8_();
     var nGroups = this.getUint16_();
     var segments = [];
-    
+
     if (type == 5) {
         var startCode, length, gid;
         for (var i = 0; i < nGroups; i++) {
@@ -313,10 +322,10 @@ BinaryFontEditor.prototype.readNextGOS = function() {
         var i = 0, nextByte, value;
         while (i < nGroups) {
             nextByte = this.getUint8_();
-            for (var j=0; j < 4; j++) {
-                if (i < nGroups){
-                    value = nextByte & (0xC0 >>> (2*j));
-                    value >>>= (6 - 2*j);
+            for (var j = 0; j < 4; j++) {
+                if (i < nGroups) {
+                    value = nextByte & (0xC0 >>> (2 * j));
+                    value >>>= (6 - 2 * j);
                     segments.push(value);
                     if (value == 3) {
                         extraOffset.push(i);
@@ -327,11 +336,35 @@ BinaryFontEditor.prototype.readNextGOS = function() {
                 }
             }
         }
-        var extraLen = extraOffset.length, 
+        var extraLen = extraOffset.length,
             extraArray = this.readExtraArray(extraLen);
         for (i = 0; i < extraLen; i++) {
             segments[extraOffset[i]] = extraArray[i];
-        }      
+        }
+    } else if (type == 3) {
+        var extraOffset = [];
+        var startCode, length, gid, segment;
+        for (var i = 0; i < nGroups; i++) {
+            segment = this.getOffset_(3); //lower 24 bits
+            startCode = (segment & 0xF80000) >> 19;
+            length = (segment & 0x70000) >> 16;
+            gid = segment & 0xFFFF;
+            segments.push([startCode, length, gid]);
+            if (startCode == 0x1F) {
+                extraOffset.push([i, 0]);
+            }
+            if (length == 0x7) {
+                extraOffset.push([i, 1]);
+            }
+        }
+        var extraLen = extraOffset.length,
+                extraArray = this.readExtraArray(extraLen);
+        for (var i = 0; i < extraLen; i++) {
+            segments[extraOffset[i][0]][extraOffset[i][1]] = extraArray[i];
+        }
+        for (var i = 1; i < nGroups; i++) {
+            segments[i][0] += segments[i - 1][0];
+        }
     }
     gos.segments = segments;
     gos.type = type;
@@ -448,6 +481,7 @@ BinaryFontEditor.readOps.CM12 = function(editor, font) {
 BinaryFontEditor.readOps.CM04 = function(editor, font) {
     var cmap4 = {};
     cmap4.offset = editor.getUint32_();
+    cmap4.length = editor.getUint32_();
     font.cmap4 = cmap4;
 };
 
@@ -457,93 +491,69 @@ BinaryFontEditor.readOps.CM04 = function(editor, font) {
  */
 BinaryFontEditor.readOps.CCMP = function(editor, font) {
     var compact_gos = {};
-    var GOSCount =  editor.getUint8_();
+    var GOSCount = editor.getUint8_();
     var GOSArray = [];
     for (var i = 0; i < GOSCount; i++) {
         GOSArray.push(editor.readNextGOS());
     }
-    
+    //If there is both cmap format 4 and format 12 arrays
     //Now generating cmap format 4 arrays
-    if (GOSArray.length == 2 && GOSArray[1].type == 4) {
+    if (font.cmap4 && font.cmap12 &&
+            GOSArray.length == 2 && GOSArray[1].type == 4) {
         var gos_type_4_lens = GOSArray[1];
         var gos_type_12 = GOSArray[0];
         var format_4_arrays = [];
         var glyphIdArray = [];
         var glyphIdIdx = 0;
-        var fmt12SegNum = 0;
+        var fmt12SegNum = 0, fmt12SegNumBegin, fmt12SegNumEnd;
         var fmt4SegCount = gos_type_4_lens.len;
         var startCode, endCode, idDelta, idRangeOffset, startGid, codeRange;
         for (var i = 0; i < fmt4SegCount - 1; i++) {
-            startCode = gos_type_12.segments[fmt12SegNum][0];
-            startGid = gos_type_12.segments[fmt12SegNum][2];
-            fmt12SegNum += gos_type_4_lens.segments[i] - 1;
-            endCode = gos_type_12.segments[fmt12SegNum][0] + gos_type_12.segments[fmt12SegNum][1] - 1;
-            codeRange = endCode - startCode + 1;
-            fmt12SegNum++;
+            fmt12SegNumBegin = fmt12SegNum;
+            fmt12SegNumEnd = fmt12SegNum + gos_type_4_lens.segments[i] - 1;
+            startGid = gos_type_12.segments[fmt12SegNumBegin][2];
+            startCode = gos_type_12.segments[fmt12SegNumBegin][0];
+            endCode = gos_type_12.segments[fmt12SegNumEnd][0] +
+                    gos_type_12.segments[fmt12SegNumEnd][1] - 1;
+            fmt12SegNum = fmt12SegNumEnd + 1;
             if (gos_type_4_lens.segments[i] == 1) {
                 idRangeOffset = 0;
                 idDelta = (startGid - startCode + 0x10000) & 0xFFFF;
             } else {
                 idDelta = 0;
                 idRangeOffset = 2 * (glyphIdIdx - i + fmt4SegCount);
+                codeRange = endCode - startCode + 1;
                 glyphIdIdx += codeRange;
+                var currentSeg = fmt12SegNumBegin,
+                    currentSegArr = gos_type_12.segments[currentSeg],
+                    gid;
+                for (var codePoint = startCode; codePoint <= endCode; ) {
+                    if (codePoint >= currentSegArr[0] &&
+                      codePoint <= (currentSegArr[0] + currentSegArr[1] - 1)) {
+                       gid = currentSegArr[2] + codePoint - currentSegArr[0];
+                       glyphIdArray.push(gid);
+                       codePoint++;
+                    }else if (codePoint >
+                            (currentSegArr[0] + currentSegArr[1] - 1)) {
+                        currentSeg++;
+                        if (currentSeg <= fmt12SegNumEnd)
+                            currentSegArr = gos_type_12.segments[currentSeg];
+                    }else if (codePoint < currentSegArr[0]) {
+                        glyphIdArray.push(0); //missing codepoint
+                        codePoint++;
+                    }
+                }
+                if (glyphIdIdx != glyphIdArray.length)
+                    throw 'glyphIdArray update failure';
             }
-            format_4_arrays.push([startCode,endCode,idDelta,idRangeOffset]);
+            format_4_arrays.push([startCode, endCode, idDelta, idRangeOffset]);
         }
-        format_4_arrays.push([0xFFFF,0xFFFF,1,0]); // last segment special
-        compact_gos.cmap4 = format_4_arrays;
+        format_4_arrays.push([0xFFFF, 0xFFFF, 1, 0]); // last segment special
+        compact_gos.cmap4 = {};
+        compact_gos.cmap4.segments = format_4_arrays;
+        compact_gos.cmap4.glyphIdArray = glyphIdArray;
     }
     compact_gos.cmap12 = GOSArray[0];
-    /* else if (compact_gos.type == 3) {
-        var extraOffset = [];
-        var startCode, length, gid, segment;
-        for (var i = 0; i < compact_gos.nGroups; i++) {
-            segment = editor.getOffset_(3); //lower 24 bits
-            startCode = (segment & 0xF80000) >> 19;
-            length = (segment & 0x70000) >> 16;
-            gid = segment & 0xFFFF;
-            compact_gos.segments.push([startCode, length, gid]);
-            if (startCode == 0x1F) {
-                extraOffset.push([i, 0]);
-            }
-            if (length == 0x7) {
-                extraOffset.push([i, 1]);
-            }
-        }
-        var pos = 0, nextByte, value;
-        var readNextNibble = function() {
-            if (pos % 8 == 0) {
-               nextByte = editor.getUint8_();
-               value = (nextByte & 0xF0) >>> 4;
-           } else {
-               value = (nextByte & 0x0F);
-           }
-           pos += 4;
-           return value;
-        };
-        var extraLen = extraOffset.length, numNibbles, extraData, sign, place;
-        for (var i = 0; i < extraLen; i++) {
-            extraData = 0;
-            numNibbles = readNextNibble();
-            if (numNibbles < 8) {
-                sign = 1;
-                numNibbles++;
-            } else {
-                sign = -1;
-                numNibbles -= 7;
-            }
-            for (var j = 0; j < numNibbles; j++) {
-                extraData <<= 4;
-                extraData |= readNextNibble();
-            }
-            extraData *= sign;
-            place = extraOffset[i];
-            compact_gos.segments[place[0]][place[1]] = extraData;
-        }
-        for (var i = 1; i < compact_gos.nGroups; i++) {
-            compact_gos.segments[i][0] += compact_gos.segments[i - 1][0];
-        }
-    }*/
     font.compact_gos = compact_gos;
 };
 
