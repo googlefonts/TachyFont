@@ -111,10 +111,12 @@ class _GOSGenerators(object):
     for i in xrange(nGroups):
       gos_data.extend(struct.pack('>LLL',ourData['startCodes'][i],ourData['lengths'][i],ourData['gids'][i]))
     change_method(_c_m_a_p.cmap_format_12_or_13,old_12_method,'decompile')
+    print 'type5 size',len(gos_data)
     return gos_data
 
   @staticmethod
   def type4(font):
+    old_12_method = change_method(_c_m_a_p.cmap_format_12_or_13,_decompile_in_cmap_format_12_13, 'decompile')
     old_4_method = change_method(_c_m_a_p.cmap_format_4,_decompile_in_cmap_format_4, 'decompile')
     cmapTable = font['cmap']
     cmap12 = cmapTable.getcmap(3, 10).cmap #format 12
@@ -157,17 +159,26 @@ class _GOSGenerators(object):
     #now checks if segments in good condition
     segLens = []
     idRangeOffsets = cmap4['idRangeOffset']
+    idDelta = cmap4['idDelta']
+
     for fmt4Seg,fmt12SegList in mapping.iteritems():
       lenFmt12Segs = len(fmt12SegList)
-      if lenFmt12Segs == 1: assert idRangeOffsets[fmt4Seg] == 0,'info {} {}'.format(fmt4Seg,fmt12SegList)
-      else: assert idRangeOffsets[fmt4Seg] != 0
+      cmap12SegStart = cmap12_startCodes[fmt12SegList[0]]
+      cmap12SegEnd = cmap12_startCodes[fmt12SegList[-1]] + cmap12_lengths[fmt12SegList[-1]] - 1
+      cmap4SegStart =cmap4_startCodes[fmt4Seg]
+      cmap4SegEnd = cmap4_endCodes[fmt4Seg]
       segLens.append(lenFmt12Segs)
-      
+      assert cmap12SegStart == cmap4SegStart and cmap12SegEnd == cmap4SegEnd 
+      if lenFmt12Segs == 1: assert idRangeOffsets[fmt4Seg] == 0 and idDelta[fmt4Seg] != 0
+      else: assert idRangeOffsets[fmt4Seg] != 0 and idDelta[fmt4Seg] == 0
+
     for segLen in segLens:
       enc_len = NumberEncoders.AOE(segLen,2)
       add_to_extra_if_necessary(gos_data, extra_data, enc_len)
 
+    change_method(_c_m_a_p.cmap_format_12_or_13,old_12_method,'decompile')
     change_method(_c_m_a_p.cmap_format_4,old_4_method,'decompile')
+    
     whole_data = gos_data.tobytes() + extra_data.tobytes()
     print 'type4 size',len(whole_data)
     return whole_data

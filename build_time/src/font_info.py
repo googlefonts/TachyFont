@@ -62,6 +62,10 @@ class FontInfo(object):
           'CM12': 
             {'desc':'Start offset and number of groups in cmap format 12 table', 
              'fn': InfoOps._getCM12
+             },
+          'CM04': 
+            {'desc':'Start offset of cmap format 4 table', 
+             'fn': InfoOps._getCM04
              }
         }
   

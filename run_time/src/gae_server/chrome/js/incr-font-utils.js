@@ -172,6 +172,31 @@ IncrementalFontUtils.parseCmap12 = function(baseFont, headerInfo) {
 };
 
 /**
+ * Parses base font header, set properties.
+ * @param {DataView} baseFont Base font with header.
+ * @param {Object} headerInfo Header information
+ * @return {Object} The header information.
+ */
+IncrementalFontUtils.parseCmap4 = function(baseFont, headerInfo) {
+    if (!headerInfo.cmap4)
+        return [];
+    var binEd = new BinaryFontEditor(baseFont, headerInfo.cmap4.offset + 6);
+    var segCount = binEd.getUint16_() / 2;
+    headerInfo.cmap4.segCount = segCount;
+    binEd.skip(6); //skip searchRange,entrySelector,rangeShift
+    var segments = [];
+    var endCodes = binEd.getArrayOf_(binEd.getUint16_,segCount);
+    binEd.skip(2);//skip reservePad
+    var startCodes = binEd.getArrayOf_(binEd.getUint16_,segCount);
+    var idDeltas = binEd.getArrayOf_(binEd.getUint16_,segCount);
+    var idRangeOffsets = binEd.getArrayOf_(binEd.getUint16_,segCount);
+    for (var i = 0; i < segCount; i++) {
+        segments.push([startCodes[i], endCodes[i], idDeltas[i], idRangeOffsets[i]]);
+    }
+    return segments;
+};
+
+/**
  * Checks cmap 12 segment table
  * @param {DataView} baseFont Base font with header.
  * @param {Object} headerInfo Header information
@@ -184,7 +209,7 @@ IncrementalFontUtils.checkCmap12 = function(baseFont, headerInfo) {
     if (!headerInfo.compact_gos) {//missing info return false
         return false;
     }
-    var Cmap12SegsInHeader = headerInfo.compact_gos.segments;
+    var Cmap12SegsInHeader = headerInfo.compact_gos.cmap12.segments;
     var nGroups = headerInfo.cmap12.nGroups;
     if (nGroups != Cmap12SegsInFont.length) {
         throw 'Cmap 12 Segments lengths mismatches';
@@ -193,6 +218,33 @@ IncrementalFontUtils.checkCmap12 = function(baseFont, headerInfo) {
         for (var j = 0; j < 3; j++) {
             if (Cmap12SegsInFont[i][j] != Cmap12SegsInHeader[i][j]) {
                 throw 'Different Cmap 12 segments for ' + i + ',' + j +
+                        ' coord';
+                return false;
+            }
+        }
+    }
+    return true;
+};
+
+/**
+ * Checks cmap 12 segment table
+ * @param {DataView} baseFont Base font with header.
+ * @param {Object} headerInfo Header information
+ * @return {Object} The header information.
+ */
+IncrementalFontUtils.checkCmap4 = function(baseFont, headerInfo) {
+
+    var Cmap4SegsInFont = IncrementalFontUtils.parseCmap4(baseFont,
+                                                                headerInfo);
+    if (!headerInfo.compact_gos) {//missing info return false
+        return false;
+    }
+    var Cmap4SegsInHeader = headerInfo.compact_gos.cmap4;
+    var segCount = headerInfo.cmap4.segCount;
+    for (var i = 0; i < segCount; i++) {
+        for (var j = 0; j < 4; j++) {
+            if (Cmap4SegsInHeader[i][j] != Cmap4SegsInFont[i][j]) {
+                throw 'Different Cmap 4 segments for ' + i + ',' + j +
                         ' coord';
                 return false;
             }

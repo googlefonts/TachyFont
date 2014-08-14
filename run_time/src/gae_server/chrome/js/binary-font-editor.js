@@ -238,10 +238,105 @@ BinaryFontEditor.prototype.seek = function(newOffset) {
 };
 
 /**
+ * @param {number} len
+ */
+BinaryFontEditor.prototype.skip = function(len) {
+    if(len<0)
+        throw 'Only nonnegative numbers are accepted'
+    this.offset += len;
+};
+
+/**
  * @return {number} current offset
  */
 BinaryFontEditor.prototype.tell = function() {
     return this.offset;
+};
+
+/**
+ * 
+ * @return {function} NibbleOfNumber decoder function
+ */
+BinaryFontEditor.prototype.nibbleReader = function() {
+    var that=this, value,nibbleByte,aligned = true;
+    return function() {
+        if (aligned) {
+           nibbleByte = that.getUint8_();
+           value = (nibbleByte & 0xF0) >>> 4;
+       } else {
+           value = (nibbleByte & 0x0F);
+       }
+       aligned = !aligned;
+       return value;
+    };
+};
+
+BinaryFontEditor.prototype.readExtraArray = function(extraLen) {
+    var readNextNibble = this.nibbleReader(), extraArray = [], 
+        extraData, sign,  numNibbles;
+    for (var i = 0; i < extraLen; i++) {
+        extraData = 0;
+        numNibbles = readNextNibble();
+        if (numNibbles < 8) {
+            sign = 1;
+            numNibbles++;
+        } else {
+            sign = -1;
+            numNibbles -= 7;
+        }
+        for (var j = 0; j < numNibbles; j++) {
+            extraData <<= 4;
+            extraData |= readNextNibble();
+        }
+        extraData *= sign;
+        extraArray.push(extraData);
+    }    
+    return extraArray;
+};
+
+BinaryFontEditor.prototype.readNextGOS = function() {
+    var gos = {};
+    var type = this.getUint8_();
+    var nGroups = this.getUint16_();
+    var segments = [];
+    
+    if (type == 5) {
+        var startCode, length, gid;
+        for (var i = 0; i < nGroups; i++) {
+            startCode = this.getUint32_();
+            length = this.getUint32_();
+            gid = this.getUint32_();
+            segments.push([startCode, length, gid]);
+        }
+    } else if (type == 4) {
+        var extraOffset = [];
+        var i = 0, nextByte, value;
+        while (i < nGroups) {
+            nextByte = this.getUint8_();
+            for (var j=0; j < 4; j++) {
+                if (i < nGroups){
+                    value = nextByte & (0xC0 >>> (2*j));
+                    value >>>= (6 - 2*j);
+                    segments.push(value);
+                    if (value == 3) {
+                        extraOffset.push(i);
+                    }
+                    i++;
+                } else {
+                    break;
+                }
+            }
+        }
+        var extraLen = extraOffset.length, 
+            extraArray = this.readExtraArray(extraLen);
+        for (i = 0; i < extraLen; i++) {
+            segments[extraOffset[i]] = extraArray[i];
+        }      
+    }
+    gos.segments = segments;
+    gos.type = type;
+    gos.len = nGroups;
+    return gos;
 };
 
 /**
@@ -350,20 +445,56 @@ BinaryFontEditor.readOps.CM12 = function(editor, font) {
  * @param {BinaryFontEditor} editor Editor used to parse header
  * @param {IncrementalFontLoader} font Font loader object
  */
+BinaryFontEditor.readOps.CM04 = function(editor, font) {
+    var cmap4 = {};
+    cmap4.offset = editor.getUint32_();
+    font.cmap4 = cmap4;
+};
+
+/**
+ * @param {BinaryFontEditor} editor Editor used to parse header
+ * @param {IncrementalFontLoader} font Font loader object
+ */
 BinaryFontEditor.readOps.CCMP = function(editor, font) {
     var compact_gos = {};
-    compact_gos.type = editor.getUint8_();
-    compact_gos.nGroups = editor.getUint16_();
-    compact_gos.segments = [];
-    if (compact_gos.type == 5) {
-        var startCode, length, gid;
-        for (var i = 0; i < compact_gos.nGroups; i++) {
-            startCode = editor.getUint32_();
-            length = editor.getUint32_();
-            gid = editor.getUint32_();
-            compact_gos.segments.push([startCode, length, gid]);
+    var GOSCount =  editor.getUint8_();
+    var GOSArray = [];
+    for (var i = 0; i < GOSCount; i++) {
+        GOSArray.push(editor.readNextGOS());
+    }
+    
+    //Now generating cmap format 4 arrays
+    if (GOSArray.length == 2 && GOSArray[1].type == 4) {
+        var gos_type_4_lens = GOSArray[1];
+        var gos_type_12 = GOSArray[0];
+        var format_4_arrays = [];
+        var glyphIdArray = [];
+        var glyphIdIdx = 0;
+        var fmt12SegNum = 0;
+        var fmt4SegCount = gos_type_4_lens.len;
+        var startCode, endCode, idDelta, idRangeOffset, startGid, codeRange;
+        for (var i = 0; i < fmt4SegCount - 1; i++) {
+            startCode = gos_type_12.segments[fmt12SegNum][0];
+            startGid = gos_type_12.segments[fmt12SegNum][2];
+            fmt12SegNum += gos_type_4_lens.segments[i] - 1;
+            endCode = gos_type_12.segments[fmt12SegNum][0] + gos_type_12.segments[fmt12SegNum][1] - 1;
+            codeRange = endCode - startCode + 1;
+            fmt12SegNum++;
+            if (gos_type_4_lens.segments[i] == 1) {
+                idRangeOffset = 0;
+                idDelta = (startGid - startCode + 0x10000) & 0xFFFF;
+            } else {
+                idDelta = 0;
+                idRangeOffset = 2 * (glyphIdIdx - i + fmt4SegCount);
+                glyphIdIdx += codeRange;
+            }
+            format_4_arrays.push([startCode,endCode,idDelta,idRangeOffset]);
         }
-    } else if (compact_gos.type == 3) {
+        format_4_arrays.push([0xFFFF,0xFFFF,1,0]); // last segment special
+        compact_gos.cmap4 = format_4_arrays;
+    }
+    compact_gos.cmap12 = GOSArray[0];
+    /* else if (compact_gos.type == 3) {
         var extraOffset = [];
         var startCode, length, gid, segment;
         for (var i = 0; i < compact_gos.nGroups; i++) {
@@ -412,7 +543,7 @@ BinaryFontEditor.readOps.CCMP = function(editor, font) {
         for (var i = 1; i < compact_gos.nGroups; i++) {
             compact_gos.segments[i][0] += compact_gos.segments[i - 1][0];
         }
-    }
+    }*/
     font.compact_gos = compact_gos;
 };
 
@@ -460,6 +591,10 @@ BinaryFontEditor.TAGS = {
     'CM12':
             {'desc': 'Start offset and number of groups in cmap fmt 12 table',
                 'fn': BinaryFontEditor.readOps.CM12
+            },
+    'CM04':
+            {'desc': 'Start offset of cmap fmt 4 table',
+                'fn': BinaryFontEditor.readOps.CM04
             },
     'CCMP':
             {'desc': 'Compact cmap, groups of segments',

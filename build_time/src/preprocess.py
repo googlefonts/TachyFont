@@ -63,6 +63,7 @@ class Preprocess(object):
 
   def cmap_dump(self):
     font = TTFont(self.fontfile)
+    #codepoint should be L cmap = font['cmap'].getcmap(3, 10) #format 12
     cmap = font['cmap'].getcmap(3, 1).cmap  # unicode table
     assert cmap, 'Unicode cmap table required'
 

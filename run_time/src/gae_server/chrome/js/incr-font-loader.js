@@ -144,6 +144,8 @@ IncrementalFontLoader.prototype.getBaseFont_ = function(inFS, fs, filename) {
     //  timer.start('sanitizeBase');
       console.log('Is valid cmap12? ' + IncrementalFontUtils.checkCmap12(data,
                                                                     that));
+      console.log('Is valid cmap4? ' + IncrementalFontUtils.checkCmap4(data,
+                                                                    that));
       return data;
     }).
     then(function(raw_base_font) {
