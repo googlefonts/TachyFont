@@ -143,10 +143,12 @@ class _GOSGenerators(object):
     fmt12Seg = 0
     mapping = defaultdict(list)
     while fmt12Seg < fmt12SegCount and fmt4Seg < fmt4SegCount:
+      
       cmap12SegStart = cmap12_startCodes[fmt12Seg]
       cmap12SegEnd = cmap12_startCodes[fmt12Seg] + cmap12_lengths[fmt12Seg] - 1
       cmap4SegStart =cmap4_startCodes[fmt4Seg]
       cmap4SegEnd = cmap4_endCodes[fmt4Seg]
+      
       if cmap12SegStart>= cmap4SegStart  and cmap12SegEnd <= cmap4SegEnd:
         mapping[fmt4Seg].append(fmt12Seg)
         fmt12Seg += 1
@@ -156,6 +158,8 @@ class _GOSGenerators(object):
         #case of where format12 segment overlap end of format4 segment
         print cmap12SegStart,cmap12SegEnd,cmap4_startCodes[fmt4Seg],cmap4_endCodes[fmt4Seg]
         raise('unexpected tables')
+    assert fmt4Seg == fmt4SegCount, 'all format 4 segments consumed'
+    
     #now checks if segments in good condition
     segLens = []
     idRangeOffsets = cmap4['idRangeOffset']
@@ -163,14 +167,20 @@ class _GOSGenerators(object):
 
     for fmt4Seg,fmt12SegList in mapping.iteritems():
       lenFmt12Segs = len(fmt12SegList)
+      
       cmap12SegStart = cmap12_startCodes[fmt12SegList[0]]
       cmap12SegEnd = cmap12_startCodes[fmt12SegList[-1]] + cmap12_lengths[fmt12SegList[-1]] - 1
       cmap4SegStart =cmap4_startCodes[fmt4Seg]
       cmap4SegEnd = cmap4_endCodes[fmt4Seg]
+      
       segLens.append(lenFmt12Segs)
+      
       assert cmap12SegStart == cmap4SegStart and cmap12SegEnd == cmap4SegEnd 
-      if lenFmt12Segs == 1: assert idRangeOffsets[fmt4Seg] == 0 and idDelta[fmt4Seg] != 0
-      else: assert idRangeOffsets[fmt4Seg] != 0 and idDelta[fmt4Seg] == 0
+      
+      if lenFmt12Segs == 1: 
+        assert idRangeOffsets[fmt4Seg] == 0 and idDelta[fmt4Seg] != 0
+      else: 
+        assert idRangeOffsets[fmt4Seg] != 0 and idDelta[fmt4Seg] == 0
 
     for segLen in segLens:
       enc_len = NumberEncoders.AOE(segLen,2)
