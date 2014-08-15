@@ -365,6 +365,58 @@ BinaryFontEditor.prototype.readNextGOS = function() {
         for (var i = 1; i < nGroups; i++) {
             segments[i][0] += segments[i - 1][0];
         }
+    } else if( type == 2) {
+        var extraOffset = [];
+        var deltaStartCode, length, deltaGid, segment;
+        for (var i = 0; i < nGroups; i++) {
+            segment = this.getUint8_(); 
+            deltaStartCode = (segment & 0xE0) >> 5;
+            length = (segment & 0x18) >> 3;
+            deltaGid = segment & 0x07;
+            segments.push([deltaStartCode, length, deltaGid]);
+            if (deltaStartCode == 0x07) {
+                extraOffset.push([i, 0]);
+            }
+            if (length == 0x03) {
+                extraOffset.push([i, 1]);
+            }
+            if (deltaGid == 0x07) {
+                extraOffset.push([i, 2]);
+            }            
+        }
+        var extraLen = extraOffset.length,
+                extraArray = this.readExtraArray(extraLen);
+        for (var i = 0; i < extraLen; i++) {
+            segments[extraOffset[i][0]][extraOffset[i][1]] = extraArray[i];
+        }
+        for (var i = 1; i < nGroups; i++) {
+            segments[i][0] += segments[i - 1][0];
+            segments[i][2] += segments[i - 1][2];
+        }  
+    } else if (type == 6) {
+        var extraOffset = [];
+        var deltaFirst, deltaNleft, segment;
+        for (var i = 0; i < nGroups; i++) {
+            segment = this.getUint8_(); 
+            deltaFirst = (segment & 0xF8) >> 3;
+            deltaNleft = (segment & 0x07);
+            segments.push([deltaFirst, deltaNleft]);
+            if (deltaFirst == 0x1F) {
+                extraOffset.push([i, 0]);
+            }
+            if (deltaNleft == 0x7) {
+                extraOffset.push([i, 1]);
+            }
+        }
+        var extraLen = extraOffset.length,
+                extraArray = this.readExtraArray(extraLen);
+        for (var i = 0; i < extraLen; i++) {
+            segments[extraOffset[i][0]][extraOffset[i][1]] = extraArray[i];
+        }
+        for (var i = 1; i < nGroups; i++) {
+            segments[i][0] += segments[i - 1][0];
+            segments[i][1] += segments[i - 1][1];
+        }
     }
     gos.segments = segments;
     gos.type = type;
@@ -558,6 +610,17 @@ BinaryFontEditor.readOps.CCMP = function(editor, font) {
 };
 
 /**
+ * @param {BinaryFontEditor} editor Editor used to parse header
+ * @param {IncrementalFontLoader} font Font loader object
+ */
+BinaryFontEditor.readOps.CS02 = function(editor, font) {
+    var charset = {};
+    charset.offset = editor.getUint32_();
+    charset.gos = editor.readNextGOS();
+    font.charset_fmt_2 = charset; 
+};
+
+/**
  * Tags defined in the header of the basefont
  * @enum {Object}
  */
@@ -609,6 +672,10 @@ BinaryFontEditor.TAGS = {
     'CCMP':
             {'desc': 'Compact cmap, groups of segments',
                 'fn': BinaryFontEditor.readOps.CCMP
+            },
+    'CS02':
+            {'desc': 'CFF Charset format 2 in compacted format',
+                'fn': BinaryFontEditor.readOps.CS02
             }
 };
 

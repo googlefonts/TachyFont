@@ -206,6 +206,54 @@ IncrementalFontUtils.parseCmap4 = function(baseFont, headerInfo) {
 };
 
 /**
+ * Parses base font header, set properties.
+ * @param {DataView} baseFont Base font with header.
+ * @param {Object} headerInfo Header information
+ * @return {Object} The header information.
+ */
+IncrementalFontUtils.parseCharsetFormat2 = function(baseFont, headerInfo) {
+    if (!headerInfo.charset_fmt_2)
+        return [];
+    var binEd = new BinaryFontEditor(baseFont, headerInfo.charset_fmt_2.offset + 1);
+    var nGroups = headerInfo.charset_fmt_2.gos.len;
+    var segments = [];
+    var first, nLeft;
+    for (var i = 0; i < nGroups; i++) {
+        first = binEd.getUint16_();
+        nLeft = binEd.getUint16_();
+        segments.push([first, nLeft]);
+    }
+    return segments;
+};
+
+/**
+ * Checks cmap 12 segment table
+ * @param {DataView} baseFont Base font with header.
+ * @param {Object} headerInfo Header information
+ * @return {Object} The header information.
+ */
+IncrementalFontUtils.checkCharsetFormat2 = function(baseFont, headerInfo) {
+
+    var CharsetFormat2InFont = IncrementalFontUtils.parseCharsetFormat2(baseFont,
+                                                                headerInfo);
+    if (!headerInfo.charset_fmt_2) {//missing info return false
+        return false;
+    }
+    var CharsetFormat2InHeader = headerInfo.charset_fmt_2.gos.segments;
+    var nGroups = headerInfo.charset_fmt_2.gos.len;
+    for (var i = 0; i < nGroups; i++) {
+        for (var j = 0; j < 2; j++) {
+            if (CharsetFormat2InFont[i][j] != CharsetFormat2InHeader[i][j]) {
+                throw 'Different Charset format 2 segments for ' + i + ',' + j +
+                        ' coord';
+                return false;
+            }
+        }
+    }
+    return true;
+};
+
+/**
  * Checks cmap 12 segment table
  * @param {DataView} baseFont Base font with header.
  * @param {Object} headerInfo Header information

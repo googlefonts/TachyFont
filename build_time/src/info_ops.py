@@ -111,7 +111,7 @@ class InfoOps(object):
   @staticmethod
   def _getCCMP(font):
     compacter = CmapCompacter(font)
-    data = compacter.generateGOSTypes([3,4])
+    data = compacter.generateGOSTypes([2,4])
     return data
   
   @staticmethod
@@ -120,10 +120,12 @@ class InfoOps(object):
     cmap_offset = font.reader.tables['cmap'].offset
     cmapTables = font['cmap']
     change_method(_c_m_a_p.table__c_m_a_p,old_cmap_method,'decompile')
+    
     for table in cmapTables.tables:
       if table.format == 12:
         offset = cmap_offset + table.offset
         nGroups = table.nGroups
+        print 'cmap12 size',table.length,'bytes'
         return pack('>LL',offset,nGroups)
     return None
 
@@ -137,8 +139,19 @@ class InfoOps(object):
       if table.format == 4:
         offset = cmap_offset + table.offset
         length = table.length
+        print 'cmap4 size',table.length,'bytes'
         return pack('>LL',offset,length)
     return None
+
+  @staticmethod
+  def _getCS02(font):
+    isCFF = 'CFF ' in font
+    if isCFF:
+      compacter = CmapCompacter(font)
+      data = compacter.generateGOSType(6)
+      return data
+    else:
+      return None
     
     
     
