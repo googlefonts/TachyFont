@@ -226,12 +226,12 @@ IncrementalFont.obj_.prototype.loadNeededChars = function(element_name) {
           if (chardata != null) {
             fontdata = IncrementalFontUtils.injectCharacters(fileinfo, fontdata,
               chardata);
+            IncrementalFontUtils.setFont(that.fontname, fontdata, fileinfo.isTTF);
             // Update the data.
             that.getBase = Promise.all([arr[0], arr[1], fontdata]);
             that.getCharlist = Promise.all([that.getIDB_, charlist]);
             that.persistDelayed_(IncrementalFont.BASE);
             that.persistDelayed_(IncrementalFont.CHARLIST);
-            IncrementalFontUtils.setFont(that.fontname, fontdata, fileinfo.isTTF);
           }
         });
       });
