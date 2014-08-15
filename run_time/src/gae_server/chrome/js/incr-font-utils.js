@@ -43,7 +43,7 @@ IncrementalFontUtils.LOCA_BLOCK_SIZE = 64;
  * The Style Sheet ID
  * @const {number}
  */
-IncrementalFontUtils.STYLESHEET_ID = "Incremental\u00A0Font\u00A0Utils";
+IncrementalFontUtils.STYLESHEET_ID = 'Incremental\u00A0Font\u00A0Utils';
 
 /**
  * Inject glyphs in the glyphData to the baseFont
@@ -375,7 +375,7 @@ IncrementalFontUtils.setVisibility = function(style, fontname, visible) {
 
 
 /**
- * Add the "@font-face" rule
+ * Add the '@font-face' rule
  * @param {string} fontname The CSS fontname
  * @param {Array} data The font data.
  * @param {string} isTTF True is the font is of type TTF.
@@ -425,17 +425,17 @@ IncrementalFontUtils.setFont = function(fontname, data, isTTF) {
   var blob;
   try {
     blob = new Blob([data], { type: mime_type });
-  } catch(e) {
+  } catch (e) {
     // IE 11 does not like using DataView here.
-    if (e.name == "InvalidStateError") {
+    if (e.name == 'InvalidStateError') {
       var buffer = data.buffer.slice(data.byteOffset);
-      blob = new Blob( [buffer], { type: mime_type});
+      blob = new Blob([buffer], { type: mime_type});
     }
   }
   var blobUrl = window.URL.createObjectURL(blob);
   sheet.insertRule('@font-face {\n' +
-  '    font-family: ' + fontname + ';\n' + 
-  '    src: url(' + blobUrl + ') format(' + 'opentype' + ');' +
-  '}', 0);
+                   '    font-family: ' + fontname + ';\n' +
+                   '    src: url(' + blobUrl + ') format(' + 'opentype' + ');' +
+                   '}', 0);
 
 };
