@@ -153,171 +153,69 @@ IncrementalFontUtils.injectCharacters = function(obj, baseFont,
  * Parses base font header, set properties.
  * @param {DataView} baseFont Base font with header.
  * @param {Object} headerInfo Header information
- * @return {Object} The header information.
  */
-IncrementalFontUtils.parseCmap12 = function(baseFont, headerInfo) {
+IncrementalFontUtils.writeCmap12 = function(baseFont, headerInfo) {
     if (!headerInfo.cmap12)
-        return [];
+        return;
     var binEd = new BinaryFontEditor(baseFont, headerInfo.cmap12.offset + 16);
     var nGroups = headerInfo.cmap12.nGroups;
-    var segments = [];
-    var startCode, endCode, gid;
+    var segments = headerInfo.compact_gos.cmap12.segments;
     for (var i = 0; i < nGroups; i++) {
-        startCode = binEd.getUint32_();
-        endCode = binEd.getUint32_();
-        gid = binEd.getUint32_();
-        segments.push([startCode, endCode - startCode + 1, gid]);
+        binEd.setUint32_(segments[i][0]);
+        binEd.setUint32_(segments[i][0] + segments[i][1] - 1);
+        binEd.setUint32_(segments[i][2]);
     }
-    return segments;
 };
 
 /**
  * Parses base font header, set properties.
  * @param {DataView} baseFont Base font with header.
  * @param {Object} headerInfo Header information
- * @return {Object} The header information.
  */
-IncrementalFontUtils.parseCmap4 = function(baseFont, headerInfo) {
+IncrementalFontUtils.writeCmap4 = function(baseFont, headerInfo) {
     if (!headerInfo.cmap4)
-        return [];
+        return;
+    var segments = headerInfo.compact_gos.cmap4.segments;
+    var glyphIdArray = headerInfo.compact_gos.cmap4.glyphIdArray;
     var binEd = new BinaryFontEditor(baseFont, headerInfo.cmap4.offset + 6);
     var segCount = binEd.getUint16_() / 2;
     var glyphIdArrayLen = (headerInfo.cmap4.length - 16 - segCount * 8) / 2;
     headerInfo.cmap4.segCount = segCount;
     headerInfo.cmap4.glyphIdArrayLen = glyphIdArrayLen;
     binEd.skip(6); //skip searchRange,entrySelector,rangeShift
-    var segments = [];
-    var glyphIdArray = [];
-    var endCodes = binEd.getArrayOf_(binEd.getUint16_, segCount);
-    binEd.skip(2);//skip reservePad
-    var startCodes = binEd.getArrayOf_(binEd.getUint16_, segCount);
-    var idDeltas = binEd.getArrayOf_(binEd.getUint16_, segCount);
-    var idRangeOffsets = binEd.getArrayOf_(binEd.getUint16_, segCount);
-    if (glyphIdArrayLen > 0)
-        glyphIdArray = binEd.getArrayOf_(binEd.getUint16_, glyphIdArrayLen);
     for (var i = 0; i < segCount; i++) {
-        segments.push(
-                [startCodes[i], endCodes[i], idDeltas[i], idRangeOffsets[i]]);
+        binEd.setUint16_(segments[i][1]);
     }
-    var arrays = {};
-    arrays.segments = segments;
-    arrays.glyphIdArray = glyphIdArray;
-    return arrays;
+    binEd.skip(2);//skip reservePad
+    for (var i = 0; i < segCount; i++) {
+        binEd.setUint16_(segments[i][0]);
+    }
+    for (var i = 0; i < segCount; i++) {
+        binEd.setUint16_(segments[i][2]);
+    }
+    for (var i = 0; i < segCount; i++) {
+        binEd.setUint16_(segments[i][3]);
+    }
+    if (glyphIdArrayLen > 0)
+        binEd.setArrayOf_(binEd.setUint16_, glyphIdArray);
 };
 
 /**
  * Parses base font header, set properties.
  * @param {DataView} baseFont Base font with header.
  * @param {Object} headerInfo Header information
- * @return {Object} The header information.
  */
-IncrementalFontUtils.parseCharsetFormat2 = function(baseFont, headerInfo) {
+IncrementalFontUtils.writeCharsetFormat2 = function(baseFont, headerInfo) {
     if (!headerInfo.charset_fmt_2)
-        return [];
-    var binEd = new BinaryFontEditor(baseFont, headerInfo.charset_fmt_2.offset + 1);
+        return;
+    var binEd = new BinaryFontEditor(baseFont,
+                                        headerInfo.charset_fmt_2.offset + 1);
     var nGroups = headerInfo.charset_fmt_2.gos.len;
-    var segments = [];
-    var first, nLeft;
+    var segments = headerInfo.charset_fmt_2.gos.segments;
     for (var i = 0; i < nGroups; i++) {
-        first = binEd.getUint16_();
-        nLeft = binEd.getUint16_();
-        segments.push([first, nLeft]);
+        binEd.setUint16_(segments[i][0]);
+        binEd.setUint16_(segments[i][1]);
     }
-    return segments;
-};
-
-/**
- * Checks cmap 12 segment table
- * @param {DataView} baseFont Base font with header.
- * @param {Object} headerInfo Header information
- * @return {Object} The header information.
- */
-IncrementalFontUtils.checkCharsetFormat2 = function(baseFont, headerInfo) {
-
-    var CharsetFormat2InFont = IncrementalFontUtils.parseCharsetFormat2(baseFont,
-                                                                headerInfo);
-    if (!headerInfo.charset_fmt_2) {//missing info return false
-        return false;
-    }
-    var CharsetFormat2InHeader = headerInfo.charset_fmt_2.gos.segments;
-    var nGroups = headerInfo.charset_fmt_2.gos.len;
-    for (var i = 0; i < nGroups; i++) {
-        for (var j = 0; j < 2; j++) {
-            if (CharsetFormat2InFont[i][j] != CharsetFormat2InHeader[i][j]) {
-                throw 'Different Charset format 2 segments for ' + i + ',' + j +
-                        ' coord';
-                return false;
-            }
-        }
-    }
-    return true;
-};
-
-/**
- * Checks cmap 12 segment table
- * @param {DataView} baseFont Base font with header.
- * @param {Object} headerInfo Header information
- * @return {Object} The header information.
- */
-IncrementalFontUtils.checkCmap12 = function(baseFont, headerInfo) {
-
-    var Cmap12SegsInFont = IncrementalFontUtils.parseCmap12(baseFont,
-                                                                headerInfo);
-    if (!headerInfo.compact_gos) {//missing info return false
-        return false;
-    }
-    var Cmap12SegsInHeader = headerInfo.compact_gos.cmap12.segments;
-    var nGroups = headerInfo.cmap12.nGroups;
-    if (nGroups != Cmap12SegsInFont.length) {
-        throw 'Cmap 12 Segments lengths mismatches';
-    }
-    for (var i = 0; i < nGroups; i++) {
-        for (var j = 0; j < 3; j++) {
-            if (Cmap12SegsInFont[i][j] != Cmap12SegsInHeader[i][j]) {
-                throw 'Different Cmap 12 segments for ' + i + ',' + j +
-                        ' coord';
-                return false;
-            }
-        }
-    }
-    return true;
-};
-
-/**
- * Checks cmap 4 segment table
- * @param {DataView} baseFont Base font with header.
- * @param {Object} headerInfo Header information
- * @return {Object} The header information.
- */
-IncrementalFontUtils.checkCmap4 = function(baseFont, headerInfo) {
-
-    var Cmap4InFont = IncrementalFontUtils.parseCmap4(baseFont,
-                                                                headerInfo),
-        Cmap4SegsInFont = Cmap4InFont.segments;
-    if (!headerInfo.compact_gos) {//missing info return false
-        return false;
-    }
-    var Cmap4SegsInHeader = headerInfo.compact_gos.cmap4.segments;
-    var segCount = headerInfo.cmap4.segCount;
-    for (var i = 0; i < segCount; i++) {
-        for (var j = 0; j < 4; j++) {
-            if (Cmap4SegsInHeader[i][j] != Cmap4SegsInFont[i][j]) {
-                throw 'Different Cmap 4 segments for ' + i + ',' + j +
-                        ' coord';
-                return false;
-            }
-        }
-    }
-    var idArrayInFont = Cmap4InFont.glyphIdArray,
-        idArrayInHeader = headerInfo.compact_gos.cmap4.glyphIdArray;
-    var glyphIdArrayLen = headerInfo.cmap4.glyphIdArrayLen;
-    for (var i = 0; i < glyphIdArrayLen; i++) {
-        if (idArrayInFont[i] != idArrayInHeader[i]) {
-            throw 'Different glyph IDs in the array for ' + i + ' index';
-            return false;
-        }
-    }
-    return true;
 };
 
 /**

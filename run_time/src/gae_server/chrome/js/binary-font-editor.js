@@ -365,11 +365,11 @@ BinaryFontEditor.prototype.readNextGOS = function() {
         for (var i = 1; i < nGroups; i++) {
             segments[i][0] += segments[i - 1][0];
         }
-    } else if( type == 2) {
+    } else if (type == 2) {
         var extraOffset = [];
         var deltaStartCode, length, deltaGid, segment;
         for (var i = 0; i < nGroups; i++) {
-            segment = this.getUint8_(); 
+            segment = this.getUint8_();
             deltaStartCode = (segment & 0xE0) >> 5;
             length = (segment & 0x18) >> 3;
             deltaGid = segment & 0x07;
@@ -382,7 +382,7 @@ BinaryFontEditor.prototype.readNextGOS = function() {
             }
             if (deltaGid == 0x07) {
                 extraOffset.push([i, 2]);
-            }            
+            }
         }
         var extraLen = extraOffset.length,
                 extraArray = this.readExtraArray(extraLen);
@@ -392,12 +392,12 @@ BinaryFontEditor.prototype.readNextGOS = function() {
         for (var i = 1; i < nGroups; i++) {
             segments[i][0] += segments[i - 1][0];
             segments[i][2] += segments[i - 1][2];
-        }  
+        }
     } else if (type == 6) {
         var extraOffset = [];
         var deltaFirst, deltaNleft, segment;
         for (var i = 0; i < nGroups; i++) {
-            segment = this.getUint8_(); 
+            segment = this.getUint8_();
             deltaFirst = (segment & 0xF8) >> 3;
             deltaNleft = (segment & 0x07);
             segments.push([deltaFirst, deltaNleft]);
@@ -617,7 +617,7 @@ BinaryFontEditor.readOps.CS02 = function(editor, font) {
     var charset = {};
     charset.offset = editor.getUint32_();
     charset.gos = editor.readNextGOS();
-    font.charset_fmt_2 = charset; 
+    font.charset_fmt_2 = charset;
 };
 
 /**
