@@ -19,6 +19,7 @@ from fontTools.ttLib.tables import _c_m_a_p
 import struct
 import bitarray
 from _collections import defaultdict
+from fontTools.cffLib import readCard8, readCard16
 
 
 def generateDeltaArray(input_arr):
@@ -88,14 +89,58 @@ class NumberEncoders(object):
       or escape it using all ones
     (12,5) -> 01100
     (12,3) -> (111,12)
+    (-1,2) -> (11,-1)
     """
-    assert number >= 0, 'positive numbers only'
-    if number < 2 ** bit_count - 1:
+    if number < 0: #escape negative numbers
+      return ('1' * bit_count , number)
+    elif number < 2 ** bit_count - 1:
       return bin(number)[2:].zfill(bit_count)
     else:
       return ('1' * bit_count , number)
 
+
 class _GOSGenerators(object):
+  
+  @staticmethod
+  def type6(font):
+    cffTableOffset = font.reader.tables['CFF '].offset
+    cffTable = font['CFF '].cff
+    assert len(cffTable.fontNames) == 1 #only one font should be present
+    charsetOffset = cffTable[cffTable.fontNames[0]].rawDict['charset']
+    numGlyphs = font['maxp'].numGlyphs
+    inner_file = font.reader.file
+    inner_file.seek(cffTableOffset+charsetOffset)
+    format = readCard8(inner_file);
+    if format != 2:
+      return None
+    seenGlyphCount = 0
+    firstArr = []
+    nLeftArr = []
+    while seenGlyphCount < numGlyphs:
+      first = readCard16(inner_file)
+      nLeft = readCard16(inner_file)
+      firstArr.append(first)
+      nLeftArr.append(nLeft)
+      seenGlyphCount += nLeft + 1
+    rangeCount = len(firstArr)
+    print 'charset size',rangeCount*4+1,'bytes'
+    gos_data = bitarray.bitarray(endian='big')
+    extra_data = bitarray.bitarray(endian='big')
+    gos_data.frombytes(struct.pack('>L',cffTableOffset+charsetOffset))
+    gos_data.frombytes(struct.pack('>B',6)) #GOS type
+    gos_data.frombytes(struct.pack('>H',rangeCount))
+    deltaFirst = generateDeltaArray(firstArr)
+    deltaNLeft = generateDeltaArray(nLeftArr)
+    for idx in xrange(rangeCount):
+      first_enc = NumberEncoders.AOE(deltaFirst[idx],5)
+      add_to_extra_if_necessary(gos_data, extra_data, first_enc)
+      nLeft_enc = NumberEncoders.AOE(deltaNLeft[idx],3)
+      add_to_extra_if_necessary(gos_data, extra_data, nLeft_enc)
+    
+    whole_data = gos_data.tobytes() + extra_data.tobytes()
+    print 'type6 size',len(whole_data)
+    return whole_data       
+    
   
   @staticmethod
   def type5(font):
@@ -223,21 +268,65 @@ class _GOSGenerators(object):
     print 'type3 size',len(whole_data)
     return whole_data
 
+  @staticmethod
+  def type2(font):
+    old_12_method = change_method(_c_m_a_p.cmap_format_12_or_13,_decompile_in_cmap_format_12_13, 'decompile')
+    cmapTable = font['cmap']
+    cmap12 = cmapTable.getcmap(3, 10).cmap #format 12
+    assert cmap12,'cmap format 12 table is needed'
+    ourData = cmap12
+    deltaCodePoints = generateDeltaArray(ourData['startCodes'])
+    lengths = ourData['lengths']
+    deltaGids = generateDeltaArray(ourData['gids'])
+    nGroups = len(deltaGids)
+    gos_data = bitarray.bitarray(endian='big')
+    extra_data = bitarray.bitarray(endian='big')
+    gos_data.frombytes(struct.pack('>B',2)) #GOS type
+    gos_data.frombytes(struct.pack('>H',nGroups))
+    for idx in xrange(nGroups):
+      delta_code_result = NumberEncoders.AOE(deltaCodePoints[idx],3)
+      add_to_extra_if_necessary(gos_data, extra_data, delta_code_result)
+      len_result = NumberEncoders.AOE(lengths[idx],2)
+      add_to_extra_if_necessary(gos_data, extra_data, len_result)     
+      gid_result = NumberEncoders.AOE(deltaGids[idx],3)
+      add_to_extra_if_necessary(gos_data, extra_data, gid_result)
+      
+    change_method(_c_m_a_p.cmap_format_12_or_13,old_12_method,'decompile')
+    
+    whole_data = gos_data.tobytes() + extra_data.tobytes()
+    print 'type2 size',len(whole_data)
+    return whole_data
+
 """Type of the Group of Segments
+Type 6: For CFF CharSet format 2 Table
+  first : 5 bit AOE encoding
+  nLeft : 3 bit AOE encoding
 Type 5: For cmap format 12 subtable
   startCode : 32 bit no encoding
   length    : 32 bit no encoding
   gid       : 32 bit no encoding
+Type 4: For cmap format 4 subtable
+  segListLen: 2 bit AOE encoding, it's mapped format 12 segments count
+  Following GOS table, we have extra escaped number table
+  using for each number Number of Nibbles(NoN) encoding
 Type 3: For cmap format 12 subtable
-  startCode : 5 bit AOE encoding
-  length    : 3 bit AOE encoding
-  gid       : 16 bit no encoding
+  startCode(delta) : 5 bit AOE encoding
+  length           : 3 bit AOE encoding
+  gid              : 16 bit no encoding
+  Following GOS table, we have extra escaped number table
+  using for each number Number of Nibbles(NoN) encoding
+Type 2: For cmap format 12 subtable
+  startCode(delta) : 3 bit AOE encoding
+  length           : 2 bit AOE encoding
+  gid(delta)       : 3 bit AOE encoding
   Following GOS table, we have extra escaped number table
   using for each number Number of Nibbles(NoN) encoding
 """
-GOS_Types = {5:_GOSGenerators.type5,
+GOS_Types = {6:_GOSGenerators.type6,
+             5:_GOSGenerators.type5,
              4:_GOSGenerators.type4,
-             3:_GOSGenerators.type3}
+             3:_GOSGenerators.type3,
+             2:_GOSGenerators.type2}
 
 
 class CmapCompacter(object):

@@ -66,6 +66,10 @@ class FontInfo(object):
           'CM04': 
             {'desc':'Start offset of cmap format 4 table', 
              'fn': InfoOps._getCM04
+             },
+          'CS02': 
+            {'desc':'CFF Charset format 2 in much more compacted way', 
+             'fn': InfoOps._getCS02
              }
         }
   
