@@ -16,7 +16,7 @@
 
 from fontTools.ttLib import TTFont
 from filler import Filler
-from fontTools.cffLib import Index
+from fontTools.cffLib import Index, readCard8, readCard16
 import array
 import errno
 from rle_font import RleFont
@@ -25,6 +25,10 @@ from compressor import Compressor
 import sys
 import struct
 from io import SEEK_CUR
+from fontTools.ttLib.tables import _c_m_a_p
+from fontTools_wrapper_funcs import change_method, _decompile_in_table_cmap,\
+  _decompile_in_cmap_format_4, _decompile_in_cmap_format_12_13
+import io
 
 
 
@@ -70,6 +74,58 @@ class BaseFonter(object):
     filler = Filler(output)
     filler.fill(glyf_off, glyf_len, '\x00')
     filler.close()
+
+  def __zero_charset_fmt2(self,output):
+    font = TTFont(output)
+    cffTableOffset = font.reader.tables['CFF '].offset
+    cffTable = font['CFF '].cff
+    assert len(cffTable.fontNames) == 1 #only one font should be present
+    charsetOffset = cffTable[cffTable.fontNames[0]].rawDict['charset']
+    numGlyphs = font['maxp'].numGlyphs
+    inner_file = font.reader.file
+    inner_file.seek(cffTableOffset+charsetOffset)
+    format = readCard8(inner_file);
+    if format != 2:
+      return None
+    seenGlyphCount = 0
+    size = 0
+    while seenGlyphCount < numGlyphs:
+      inner_file.seek(2,io.SEEK_CUR)
+      nLeft = readCard16(inner_file)
+      seenGlyphCount += nLeft + 1
+      size += 1
+    font.close()
+    filler = Filler(output)
+    filler.fill(cffTableOffset+charsetOffset+1, 4*size, '\x00')
+    filler.close()
+  
+  def __zero_cmaps(self,output):
+    font = TTFont(output)
+    old_cmap_method = change_method(_c_m_a_p.table__c_m_a_p, _decompile_in_table_cmap,'decompile')
+    old_12_method = change_method(_c_m_a_p.cmap_format_12_or_13,_decompile_in_cmap_format_12_13, 'decompile')
+    old_4_method = change_method(_c_m_a_p.cmap_format_4,_decompile_in_cmap_format_4, 'decompile')
+    
+    cmap_offset = font.reader.tables['cmap'].offset
+    cmapTables = font['cmap']
+    cmap12 = cmapTables.getcmap(3, 10) #format 12
+    cmap4 = cmapTables.getcmap(3, 1) #format 4
+    
+    ranges_to_zero = []
+    if cmap12:
+      ranges_to_zero.append((cmap_offset+cmap12.offset+16,cmap12.length-16))
+    if cmap4:
+      ranges_to_zero.append((cmap_offset+cmap4.offset+14,cmap4.length-14))
+      
+    change_method(_c_m_a_p.cmap_format_12_or_13,old_12_method,'decompile')
+    change_method(_c_m_a_p.cmap_format_4,old_4_method,'decompile')
+    change_method(_c_m_a_p.table__c_m_a_p,old_cmap_method,'decompile')
+    
+    font.close()
+    
+    for block in ranges_to_zero:
+      filler = Filler(output)
+      filler.fill(block[0], block[1], '\x00')
+      filler.close()
 
   def __end_char_strings(self, output):
     self.font = TTFont(output)
@@ -204,13 +260,18 @@ class BaseFonter(object):
     self.__zero_mtx('hmtx', output)
     self.__zero_mtx('vmtx', output)
     self.font.close()
-    #self.font.save(output, reorderTables=False)
+    
     if self.isCff:
       self.__end_char_strings(output)
       self.__fill_char_strings(output)
+      self.__zero_charset_fmt2(output)
     else:
       self.__zero_glyf(output)
       self.__fill_loca(output)
+    
+    self.__zero_cmaps(output)
     self.__rle(output)
+    
     if header_data:
       self.__add_header(output, header_data)
+      
