@@ -110,9 +110,15 @@ class InfoOps(object):
   
   @staticmethod
   def _getCCMP(font):
-    compacter = CmapCompacter(font)
-    data = compacter.generateGOSTypes([2,4])
-    return data
+    cmapTables = font['cmap']
+    cmap12 = cmapTables.getcmap(3, 10) #format 12
+    cmap4 = cmapTables.getcmap(3, 1) #format 4
+    if cmap4 and cmap12:
+      compacter = CmapCompacter(font)
+      data = compacter.generateGOSTypes([2,4])
+      return data
+    else:
+      return None
   
   @staticmethod
   def _getCM12(font):
@@ -121,12 +127,13 @@ class InfoOps(object):
     cmapTables = font['cmap']
     change_method(_c_m_a_p.table__c_m_a_p,old_cmap_method,'decompile')
     
-    for table in cmapTables.tables:
-      if table.format == 12:
-        offset = cmap_offset + table.offset
-        nGroups = table.nGroups
-        print 'cmap12 size',table.length,'bytes'
-        return pack('>LL',offset,nGroups)
+    cmap12 = cmapTables.getcmap(3, 10) #format 12
+    if cmap12:
+      offset = cmap_offset + cmap12.offset
+      nGroups =cmap12.nGroups
+      print 'cmap12 size',cmap12.length,'bytes'
+      return pack('>LL',offset,nGroups)      
+
     return None
 
   @staticmethod
@@ -135,12 +142,14 @@ class InfoOps(object):
     cmap_offset = font.reader.tables['cmap'].offset
     cmapTables = font['cmap']
     change_method(_c_m_a_p.table__c_m_a_p,old_cmap_method,'decompile')
-    for table in cmapTables.tables:
-      if table.format == 4:
-        offset = cmap_offset + table.offset
-        length = table.length
-        print 'cmap4 size',table.length,'bytes'
-        return pack('>LL',offset,length)
+    cmap12 = cmapTables.getcmap(3, 10) #format 12
+    cmap4 = cmapTables.getcmap(3, 1) #format 4
+    if cmap4 and cmap12:
+      offset = cmap_offset + cmap4.offset
+      length = cmap4.length
+      print 'cmap4 size',cmap4.length,'bytes'
+      return pack('>LL',offset,length)      
+
     return None
 
   @staticmethod

@@ -177,10 +177,7 @@ class _GOSGenerators(object):
     fmt12SegCount = len(cmap12_startCodes)
     fmt4SegCount = len(cmap4_startCodes)
     
-    gos_data = bitarray.bitarray(endian='big')
-    extra_data = bitarray.bitarray(endian='big')
-    gos_data.frombytes(struct.pack('>B',4)) #GOS type
-    gos_data.frombytes(struct.pack('>H',fmt4SegCount))
+
 
     
     #finds segment mappings
@@ -203,8 +200,11 @@ class _GOSGenerators(object):
         #case of where format12 segment overlap end of format4 segment
         print cmap12SegStart,cmap12SegEnd,cmap4_startCodes[fmt4Seg],cmap4_endCodes[fmt4Seg]
         raise('unexpected tables')
-    assert fmt4Seg == fmt4SegCount, 'all format 4 segments consumed'
-    
+    assert fmt4Seg >= fmt4SegCount - 2, 'all format 4 segments consumed,possibly except last one(startCode0xFFFF)'
+    gos_data = bitarray.bitarray(endian='big')
+    extra_data = bitarray.bitarray(endian='big')
+    gos_data.frombytes(struct.pack('>B',4)) #GOS type
+    gos_data.frombytes(struct.pack('>H',min(fmt4SegCount-1,fmt4Seg+1)))    
     #now checks if segments in good condition
     segLens = []
     idRangeOffsets = cmap4['idRangeOffset']
