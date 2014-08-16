@@ -39,6 +39,11 @@ IncrementalFontUtils.FLAGS = {
  */
 IncrementalFontUtils.LOCA_BLOCK_SIZE = 64;
 
+/**
+ * The Style Sheet ID
+ * @const {number}
+ */
+IncrementalFontUtils.STYLESHEET_ID = 'Incremental\u00A0Font\u00A0Utils';
 
 /**
  * Inject glyphs in the glyphData to the baseFont
@@ -387,7 +392,7 @@ IncrementalFontUtils.setVisibility = function(style, fontname, visible) {
 
 
 /**
- * Add the "@font-face" rule
+ * Add the '@font-face' rule
  * @param {string} fontname The CSS fontname
  * @param {Array} data The font data.
  * @param {string} isTTF True is the font is of type TTF.
@@ -400,9 +405,54 @@ IncrementalFontUtils.setFont = function(fontname, data, isTTF) {
     mime_type = 'font/otf'; // 'application/font-sfnt';
   }
 
-  var blob = new Blob([data], { type: mime_type });
+  // Get the style sheet.
+  var style = document.getElementById(IncrementalFontUtils.STYLESHEET_ID);
+  if (!style) {
+    style = document.createElement('style');
+    style.id = IncrementalFontUtils.STYLESHEET_ID;
+    document.head.appendChild(style);
+  }
+  var sheet = style.sheet;
+
+  // Delete the rule for this font (if it exists).
+  var rule;
+  var rules = sheet.cssRules || sheet.rules;
+  if (rules) {
+    for (var i = 0; i < rules.length; i++) {
+      var this_rule = rules[i];
+      if (this_rule.type == CSSRule.FONT_FACE_RULE) {
+        //console.log('found an @font-face rule');
+        var style = this_rule.style;
+        var font_family = style.fontFamily;
+        // TODO(bstell) consider using weight/slant.
+        if (font_family == fontname) {
+          //console.log('found ' + fontname);
+          rule = this_rule;
+          if (sheet.deleteRule) {
+            sheet.deleteRule(i);
+          } else if (sheet.removeRule) {
+            sheet.removeRule(i);
+          }
+          break;
+        }
+      }
+    }
+  }
+
+  var blob;
+  try {
+    blob = new Blob([data], { type: mime_type });
+  } catch (e) {
+    // IE 11 does not like using DataView here.
+    if (e.name == 'InvalidStateError') {
+      var buffer = data.buffer.slice(data.byteOffset);
+      blob = new Blob([buffer], { type: mime_type});
+    }
+  }
   var blobUrl = window.URL.createObjectURL(blob);
-  var font = new FontFace(fontname, 'url(' + blobUrl + ')', {});
-  document.fonts.add(font);
-  font.load();
+  sheet.insertRule('@font-face {\n' +
+                   '    font-family: ' + fontname + ';\n' +
+                   '    src: url(' + blobUrl + ') format(' + 'opentype' + ');' +
+                   '}', 0);
+
 };
