@@ -13,6 +13,10 @@ Status
 
 Incremental Fonts is an open source project.
 
+The API is still evolving.
+
+Incremental fonts works for both OpenType/TrueType and OpenType/CFF fonts.
+
 It is not an official Google project, and Google provides no support for it.
 
 Browser Support
