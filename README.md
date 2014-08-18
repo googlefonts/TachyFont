@@ -11,8 +11,32 @@ Incremental Fonts is a system for incrementally / lazily loading font.  It inclu
 Status
 ======
 
-Incremental Fonts is an unofficial project.  It is not an official Google project, and Google
-provides no support for it.
+Incremental Fonts is an open source project.
+
+It is not an official Google project, and Google provides no support for it.
+
+Browser Support
+===============
+As of 2014-08-18:
+
+The IndexedDB version has has a limited amount of testing on:
+
+* Chrome
+   * Android
+   * Windows
+   * Ubuntu
+
+* FireFox
+   * Windows
+
+* IE
+    * IE10 and IE 11 on WIndows 7
+
+Safari
+* Currently untested. 
+   * It is expected the IndexedDB version will work for Safari 8.
+   * It is possible that for Safari 7 the fast loading will work but the data
+     will not be presisted.
 
 Build and Deployment
 ====================
