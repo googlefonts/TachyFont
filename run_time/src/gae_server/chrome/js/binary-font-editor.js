@@ -560,7 +560,7 @@ BinaryFontEditor.readOps.CCMP = function(editor, font) {
         var fmt12SegNum = 0, fmt12SegNumBegin, fmt12SegNumEnd;
         var fmt4SegCount = gos_type_4_lens.len;
         var startCode, endCode, idDelta, idRangeOffset, startGid, codeRange;
-        for (var i = 0; i < fmt4SegCount - 1; i++) {
+        for (var i = 0; i < fmt4SegCount ; i++) {
             fmt12SegNumBegin = fmt12SegNum;
             fmt12SegNumEnd = fmt12SegNum + gos_type_4_lens.segments[i] - 1;
             startGid = gos_type_12.segments[fmt12SegNumBegin][2];

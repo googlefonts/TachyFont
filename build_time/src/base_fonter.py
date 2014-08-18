@@ -109,7 +109,7 @@ class BaseFonter(object):
     cmapTables = font['cmap']
     cmap12 = cmapTables.getcmap(3, 10) #format 12
     cmap4 = cmapTables.getcmap(3, 1) #format 4
-    
+
     ranges_to_zero = []
     if cmap12:
       ranges_to_zero.append((cmap_offset+cmap12.offset+16,cmap12.length-16))
@@ -122,6 +122,9 @@ class BaseFonter(object):
     
     font.close()
     
+    if len(ranges_to_zero)<2: #return if both doesn't exist
+      return
+     
     for block in ranges_to_zero:
       filler = Filler(output)
       filler.fill(block[0], block[1], '\x00')
