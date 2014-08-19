@@ -1,5 +1,8 @@
 # Tachyfon
 ### \[tak-i-fon\]
+
+## Fast fonts (but not as fast as a Tachyon).
+
 AKA:
 * Lazily loaded web fonts
 * Incremental Fonts
