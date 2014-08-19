@@ -36,8 +36,7 @@ The IndexedDB version has has a limited amount of testing on:
 * IE
     * IE10 and IE 11 on WIndows 7
 
-Safari
-* Currently untested. 
+* Safari - currently untested. 
    * It is expected the IndexedDB version will work for Safari 8.
    * It is possible that for Safari 7 the fast loading will work but the data
      will not be presisted.
