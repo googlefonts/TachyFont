@@ -85,6 +85,8 @@ IncrementalFont.createManager = function(fontname) {
 
   // Create a class with visibility: hidden.
   incrFontMgr.style = IncrementalFontUtils.setVisibility(null, fontname, false);
+  console.log('add a \'document.addEventListener("DOMContentLoaded", ...)\'' +
+    'to automatically get the char data')
 
   incrFontMgr.getBase = incrFontMgr.getIDB_.
   then(function(idb) {
