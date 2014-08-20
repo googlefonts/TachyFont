@@ -22,6 +22,7 @@ from glyf_serializer import GlyfSerializer
 from cff_serializer import CffSerializer
 from font_info import FontInfo
 from base_header import BaseHeaderPrepare
+import os
 
 
 class Preprocess(object):
@@ -60,6 +61,7 @@ class Preprocess(object):
     compressor.compress(output, output + '.xz')
     compressor = Compressor(Compressor.GZIP_CMD)
     compressor.compress(output, output + '.gz')
+    print 'base.gz size',os.path.getsize( output + '.gz');
 
   def cmap_dump(self):
     font = TTFont(self.fontfile)
