@@ -61,10 +61,13 @@ def main(args):
   generate_again_base = not base_exists or cmd_args.changebase
   if generate_again_font:
     print('make cleaned up version: {0}'.format(cleanfile))
-    cleanup.cleanup(fontfile, cmd_args.hinting, cleanfile)
+    try:
+      cleanup.cleanup(fontfile, cmd_args.hinting, cleanfile)
+    except:
+      print('Exception for file '+cleanfile)
     print('build closure')
     closure.dump_closure_map(cleanfile, output_folder)
-
+  print('clean font size '+str(os.path.getsize(cleanfile)))
   print('start proprocess')
   preprocess = Preprocess(cleanfile, output_folder)
   if generate_again_base or generate_again_font:
