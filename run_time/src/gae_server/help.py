@@ -82,7 +82,7 @@ def _parse_array_fmt(fmt, count, data):
 def _build_cmap(cp_file, gid_file):
   """Build cmap dictionary from codepoints to glyph ids using given files
   """
-  keys = _parse_array_from_file(cp_file, 'H', 'big')
+  keys = _parse_array_from_file(cp_file, 'I', 'big')
   gids = _parse_array_from_file(gid_file, 'H', 'big')
   cmap = dict.fromkeys(keys)
 
