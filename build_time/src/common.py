@@ -39,7 +39,9 @@ def reverse_cmap(font):
 
   """
   #TODO use also getcmap(3,10) if present
-  cmap = font['cmap'].getcmap(3, 1)
+  cmap = font['cmap'].getcmap(3, 10)
+  if not cmap:
+    cmap = font['cmap'].getcmap(3, 1)
   if cmap:
     return {v: k for k, v in cmap.cmap.iteritems()}
   else:

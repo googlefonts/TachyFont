@@ -64,8 +64,12 @@ class Preprocess(object):
   def cmap_dump(self):
     font = TTFont(self.fontfile)
     #TODO(ahmetcelik) cmap in format 12 should be used if it exists
-    cmap = font['cmap'].getcmap(3, 1).cmap  # unicode table
-    assert cmap, 'Unicode cmap table required'
+    cmapTable = font['cmap'].getcmap(3, 10)
+    if not cmapTable:
+      cmapTable = font['cmap'].getcmap(3, 1)
+    assert cmapTable,'Unicode cmap table required'
+    cmap = cmapTable.cmap  # unicode table
+ 
 
     codepoints = []
     glyphs = []
@@ -79,7 +83,7 @@ class Preprocess(object):
     font.close()
 
     cp_dumper = Dumper(self.folder + '/codepoints')
-    cp_dumper.dump_array(codepoints, 'H', '>')
+    cp_dumper.dump_array(codepoints, 'I', '>')
     cp_dumper.close()
 
     gid_dumper = Dumper(self.folder + '/gids')
