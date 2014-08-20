@@ -251,8 +251,11 @@ IncrementalFontUtils.requestCodepoints = function(url, fontname, codes) {
   return IncrementalFontUtils.requestURL(
     url + '/incremental_fonts/request',
     'POST',
-    JSON.stringify({'font': fontname, 'arr': codes}), 
-    {'Content-Type': 'application/json'},
+    JSON.stringify({'font': fontname, 'arr': codes}),
+    // Google App Engine servers do not support CORS so we cannot say
+    // the 'Content-Type' is 'application/json'.
+    //{'Content-Type': 'application/json'},
+    {'Content-Type': 'text/plain'},
     'arraybuffer');
 };
 
@@ -274,22 +277,22 @@ IncrementalFontUtils.requestURL = function(url, method, data, headerParams,
   //var cnt = fetchCnt++;
   //timer.start('fetch ' + cnt + ' ' + url);
   return new Promise(function(resolve, reject) {
-    var oReq = new XMLHttpRequest();
-    oReq.open(method, url, true);
+    var xhr = new XMLHttpRequest();
+    xhr.open(method, url, true);
     for (var param in headerParams)
-      oReq.setRequestHeader(param, headerParams[param]);
-    oReq.responseType = responseType;
-    oReq.onload = function(oEvent) {
-      if (oReq.status == 200) {
+      xhr.setRequestHeader(param, headerParams[param]);
+    xhr.responseType = responseType;
+    xhr.onload = function(oEvent) {
+      if (xhr.status == 200) {
         //timer.end('fetch ' + cnt + ' ' + url);
-        resolve(oReq.response);
+        resolve(xhr.response);
       } else
-        reject(oReq.status + ' ' + oReq.statusText);
+        reject(xhr.status + ' ' + xhr.statusText);
     };
-    oReq.onerror = function() {
+    xhr.onerror = function() {
       reject(Error('Network Error'));
     };
-    oReq.send(data);
+    xhr.send(data);
   });
 };
 
