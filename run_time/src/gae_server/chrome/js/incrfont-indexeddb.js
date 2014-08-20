@@ -72,13 +72,18 @@ IncrementalFont.CHARLIST = 'charlist';
  * 7. When the base is available set the class visibility=visible
  *
  * @param {string} fontname The name of the font.
+ * @param {?string} url The URL of the Tachyfon server.
  * @return {array} An array with:
  *                 array[0] {Object} The IndexedDB object.
  *                 array[1] {Object}  The fileinfo from the header.
  *                 array[2] {DataView} The font data.
  */
-IncrementalFont.createManager = function(fontname) {
-  var incrFontMgr = new IncrementalFont.obj_(fontname);
+IncrementalFont.createManager = function(fontname, url) {
+  if (!url) {
+    url = window.location.protocol + "//" + window.location.hostname + 
+        (window.location.port ? ':' + window.location.port: '');
+  }
+  var incrFontMgr = new IncrementalFont.obj_(fontname, url);
   //timer.start('openIndexedDB.open ' + fontname);
   incrFontMgr.getIDB_ = incrFontMgr.openIndexedDB(fontname);
   //timer.end('openIndexedDB.open ' + fontname);
@@ -103,8 +108,8 @@ IncrementalFont.createManager = function(fontname) {
   catch (function(e) {
     //timer.end('did not get the base data ' + fontname);
     console.log('Did not get base from IDB, need to fetch it: ' + fontname);
-    return IncrementalFontUtils.requestURL('/fonts/' + incrFontMgr.fontname +
-      '/base', 'GET', null, {}, 'arraybuffer').
+    return IncrementalFontUtils.requestURL(incrFontMgr.url + '/fonts/' + 
+      incrFontMgr.fontname + '/base', 'GET', null, {}, 'arraybuffer').
     then(function(xfer_bytes) {
       var xfer_data = new DataView(xfer_bytes);
       var fileinfo = IncrementalFontUtils.parseBaseHeader(xfer_data);
@@ -112,6 +117,9 @@ IncrementalFont.createManager = function(fontname) {
       var rle_fontdata = new DataView(xfer_bytes, fileinfo.headSize);
       var raw_base = RLEDecoder.rleDecode([header_data, rle_fontdata]);
       var raw_basefont = new DataView(raw_base.buffer, header_data.byteLength);
+      IncrementalFontUtils.writeCmap12(raw_basefont, fileinfo);
+      IncrementalFontUtils.writeCmap4(raw_basefont, fileinfo);
+      IncrementalFontUtils.writeCharsetFormat2(raw_basefont, fileinfo);
       var basefont =
         IncrementalFontUtils.sanitizeBaseFont(fileinfo, raw_basefont);
       incrFontMgr.persistDelayed_(IncrementalFont.BASE);
@@ -151,11 +159,13 @@ IncrementalFont.createManager = function(fontname) {
 /**
  * IncrFontIDB.obj_ - A class to handle interacting the IndexedDB.
  * @param {string} fontname The name of the font.
+ * @param {string} url The URL of the Incremental Font server.
  * @constructor
  * @private
  */
-IncrementalFont.obj_ = function(fontname) {
+IncrementalFont.obj_ = function(fontname, url) {
   this.fontname = fontname;
+  this.url = url;
   this.charsURL = '/incremental_fonts/request';
   this.persistInfo = {};
   this.persistInfo[IncrementalFont.BASE_DIRTY] = false;
@@ -213,7 +223,8 @@ IncrementalFont.obj_.prototype.loadNeededChars = function(element_name) {
         }
         // neededCodes.sort(function(a, b){ return a - b}; );
         //console.log('neededCodes = ' + neededCodes);
-        return IncrementalFontUtils.requestCodepoints(that.fontname, neededCodes).
+        return IncrementalFontUtils.requestCodepoints(that.url, that.fontname, 
+          neededCodes).
         then(function(chardata) {
           //console.log('requested char data length = ' + chardata.byteLength);
           return chardata;

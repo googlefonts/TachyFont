@@ -241,19 +241,19 @@ IncrementalFontUtils.parseBaseHeader = function(baseFont) {
 
 /**
  * Request codepoints from server
+ * @param {String} url The url of the Incremental Font server.
  * @param {String} fontname The fontname.
  * @param {Array.<number>} codes Codepoints to be requested
  * @return {Promise} Promise to return ArrayBuffer for the response bundle
  */
-IncrementalFontUtils.requestCodepoints = function(fontname, codes) {
+IncrementalFontUtils.requestCodepoints = function(url, fontname, codes) {
 
-  return IncrementalFontUtils.requestURL('/incremental_fonts/request', 'POST',
-  JSON.stringify({
-      'font': fontname,
-      'arr': codes
-  }), {
-    'Content-Type': 'application/json'
-  }, 'arraybuffer');
+  return IncrementalFontUtils.requestURL(
+    url + '/incremental_fonts/request',
+    'POST',
+    JSON.stringify({'font': fontname, 'arr': codes}), 
+    {'Content-Type': 'application/json'},
+    'arraybuffer');
 };
 
 
