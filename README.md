@@ -1,7 +1,7 @@
 # Tachyfon
 ### \[tak-i-fon\]
 
-## Fast fonts (but not as fast as a Tachyon).
+## Fast fonts (but not as fast as a [Tachyon](http://en.wikipedia.org/wiki/Tachyon)).
 
 AKA:
 * Lazily loaded web fonts
@@ -41,12 +41,12 @@ The IndexedDB version has has a limited amount of testing on:
    * Windows
 
 * IE
-    * IE10 and IE 11 on WIndows 7
+    * IE10 and IE11 on Windows 7
 
 * Safari - currently untested. 
    * It is expected the IndexedDB version will work for Safari 8.
    * It is possible that for Safari 7 the fast loading will work but the data
-     will not be presisted.
+     will not be persisted.
 
 Build and Deployment
 ====================
