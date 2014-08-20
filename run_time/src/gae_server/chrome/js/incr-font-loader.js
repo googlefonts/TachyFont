@@ -252,7 +252,7 @@ IncrementalFontLoader.prototype.requestGlyphs = function(fs, text) {
                           // time_end('request glyphs')
                           if (arr[0].length) {
                             return IncrementalFontUtils.requestCodepoints(
-                                    that.fontname, arr[0]);
+                                    location.origin, that.fontname, arr[0]);
                           } else {
                             return null;
                           }
