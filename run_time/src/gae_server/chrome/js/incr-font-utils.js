@@ -240,6 +240,26 @@ IncrementalFontUtils.parseBaseHeader = function(baseFont) {
 
 
 /**
+ * Send a log message to the server
+ * @param {String} url The url of the Incremental Font server.
+ * @param {String} msg The message to log.
+ * @return {Promise} Promise to return ArrayBuffer for the response bundle
+ */
+IncrementalFontUtils.logger = function(url, msg) {
+
+  return IncrementalFontUtils.requestURL(
+    url + '/incremental_fonts/logger',
+    'POST',
+    msg,
+    // Google App Engine servers do not support CORS so we cannot say
+    // the 'Content-Type' is 'application/json'.
+    //{'Content-Type': 'application/json'},
+    {'Content-Type': 'text/plain'},
+    'text');
+};
+
+
+/**
  * Request codepoints from server
  * @param {String} url The url of the Incremental Font server.
  * @param {String} fontname The fontname.
@@ -258,8 +278,6 @@ IncrementalFontUtils.requestCodepoints = function(url, fontname, codes) {
     {'Content-Type': 'text/plain'},
     'arraybuffer');
 };
-
-
 
 
 //var fetchCnt = 0;

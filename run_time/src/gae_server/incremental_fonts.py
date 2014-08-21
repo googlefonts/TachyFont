@@ -17,6 +17,7 @@
 import webapp2
 from os import path
 from incremental_fonts_utils import prepare_bundle
+import logging
 
 BASE_DIR = path.dirname(__file__)
 
@@ -44,7 +45,20 @@ class GlyphRequest(webapp2.RequestHandler):
     self.response.write(prepare_bundle(self.request))
 
 
+class DoLogging(webapp2.RequestHandler):
+  """Dump logging messages into the server logs.
+
+  """
+  logger = logging.getLogger()
+  logger.setLevel(logging.INFO)
+
+  def post(self):
+    self.response.headers.add_header('Access-Control-Allow-Origin', '*')
+    logging.info(self.request.body + '')
+
+
 app = webapp2.WSGIApplication([
     ('/incremental_fonts/request', GlyphRequest),
+    ('/incremental_fonts/logger', DoLogging),
     ('/incremental_fonts/.*', IncrementalFonts)
 ], debug=True)
