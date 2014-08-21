@@ -61,7 +61,7 @@ class Preprocess(object):
     compressor.compress(output, output + '.xz')
     compressor = Compressor(Compressor.GZIP_CMD)
     compressor.compress(output, output + '.gz')
-    print 'base.gz size',os.path.getsize( output + '.gz');
+    print(os.path.getsize( output + '.gz'));
 
   def cmap_dump(self):
     font = TTFont(self.fontfile)

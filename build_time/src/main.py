@@ -43,11 +43,11 @@ def main(args):
 
   fontfile = cmd_args.fontfile
   # TODO(bstell) use Logger
-  print('preprocess {0}'.format(cmd_args.fontfile))
+  #print('preprocess {0}'.format(cmd_args.fontfile))
   basename = os.path.basename(fontfile)
   filename, extension = os.path.splitext(basename)
   output_folder = cmd_args.output+'/'+filename
-  print('put results in {0}'.format(output_folder))
+  #print('put results in {0}'.format(output_folder))
   try:
       os.makedirs(output_folder)
   except OSError as exception:
@@ -60,25 +60,25 @@ def main(args):
   generate_again_font = not font_processed_before or cmd_args.changefont
   generate_again_base = not base_exists or cmd_args.changebase
   if generate_again_font:
-    print('make cleaned up version: {0}'.format(cleanfile))
-    try:
-      cleanup.cleanup(fontfile, cmd_args.hinting, cleanfile)
-    except:
-      print('Exception for file '+cleanfile)
-    print('build closure')
+    #print('make cleaned up version: {0}'.format(cleanfile))
+    #try:
+    cleanup.cleanup(fontfile, cmd_args.hinting, cleanfile)
+    #except:
+      #print('Exception for file '+cleanfile)
+    #print('build closure')
     closure.dump_closure_map(cleanfile, output_folder)
-  print('clean font size '+str(os.path.getsize(cleanfile)))
-  print('start proprocess')
+  print(filename+','+str(os.path.getsize(cleanfile))+',',end='')
+  #print('start proprocess')
   preprocess = Preprocess(cleanfile, output_folder)
   if generate_again_base or generate_again_font:
-    print('build base')
+    #print('build base')
     preprocess.base_font()
   if generate_again_font:
-    print('dump cmap')
+    #print('dump cmap')
     preprocess.cmap_dump()
-    print('build glyph data')
+    #print('build glyph data')
     preprocess.serial_glyphs()
-  print('done')
+  #print('done')
 
 def console_msg(msg):
   pass

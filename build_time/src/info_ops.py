@@ -13,11 +13,13 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 """
+from __future__ import print_function
 from fontTools.cffLib import Index
 from struct import pack
 from fontTools_wrapper_funcs import change_method, _decompile_in_table_cmap
 from fontTools.ttLib.tables import _c_m_a_p
 from cmap_compacter import CmapCompacter
+
   
   
 class InfoOps(object):
@@ -46,7 +48,9 @@ class InfoOps(object):
   def _getGLCN(font):
     assert 'maxp' in font 
     #for CFF it is also same because, tool supports only CFF which has only one font
-    return pack('>H',font['maxp'].numGlyphs)
+    numGlyphs = font['maxp'].numGlyphs
+    print(numGlyphs , end=',')
+    return pack('>H',numGlyphs)
   
   @staticmethod
   def _getLCOF(font):
@@ -131,7 +135,7 @@ class InfoOps(object):
     if cmap12:
       offset = cmap_offset + cmap12.offset
       nGroups =cmap12.nGroups
-      print 'cmap12 size',cmap12.length,'bytes'
+      #print 'cmap12 size',cmap12.length,'bytes'
       return pack('>LL',offset,nGroups)      
 
     return None
@@ -147,7 +151,7 @@ class InfoOps(object):
     if cmap4 and cmap12:
       offset = cmap_offset + cmap4.offset
       length = cmap4.length
-      print 'cmap4 size',cmap4.length,'bytes'
+      #print 'cmap4 size',cmap4.length,'bytes'
       return pack('>LL',offset,length)      
 
     return None
