@@ -16,7 +16,7 @@
 
 import webapp2
 from os import path
-from help import prepare_bundle
+from incremental_fonts_utils import prepare_bundle
 
 BASE_DIR = path.dirname(__file__)
 
@@ -34,6 +34,8 @@ class GlyphRequest(webapp2.RequestHandler):
   """
 
   def post(self):
+    self.response.headers.add_header('Access-Control-Allow-Origin', '*')
+
     #HACK 
     #Since GAE is brain dead, it decides using gzip compression only for text 
     #resources and does not allow the application to decide. 

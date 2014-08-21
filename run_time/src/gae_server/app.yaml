@@ -14,6 +14,7 @@
 
 application: sample-app
 #application: green-pear
+#application: google.com:lazadont
 #application: ilffwc
 version: 1
 runtime: python27
@@ -40,11 +41,13 @@ handlers:
   
 - url: /fonts
   static_dir: fonts/
-  mime_type: text/richtext 
-  #HACK 
-  #Since GAE is brain dead, it decides using gzip compression only for text 
-  #resources and does not allow the application to decide. 
-  #Therefore, we set mime_type for binary data as text.
+  # HACK 
+  # GAE is brain dead and only uses gzip compression for text resources; ie:
+  # it does not allow the application to decide. Therefore, we set mime_type
+  # for binary data to text to get gzip compression.
+  mime_type: text/richtext
+  http_headers:
+    Access-Control-Allow-Origin: '*' 
   
 - url: /incremental_fonts/.*
   script: incremental_fonts.app
