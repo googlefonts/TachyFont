@@ -85,6 +85,16 @@ IncrementalFont.createManager = function(fontname, url) {
   }
   var incrFontMgr = new IncrementalFont.obj_(fontname, url);
   //timer.start('openIndexedDB.open ' + fontname);
+  IncrementalFontUtils.logger(incrFontMgr.url, 
+    'need to report info');
+  console.log('It would be good to report status of:\n\
+      * idb\n\
+      * chars needed\n\
+      * webfont in cache\n\
+      * timing\n\
+      * way to collect the info\n\
+      * way to clear old info\n\
+      * errors');
   incrFontMgr.getIDB_ = incrFontMgr.openIndexedDB(fontname);
   //timer.end('openIndexedDB.open ' + fontname);
 
