@@ -92,6 +92,9 @@ IncrementalFont.createManager = function(fontname, url) {
   incrFontMgr.style = IncrementalFontUtils.setVisibility(null, fontname, false);
   console.log('add a \'document.addEventListener("DOMContentLoaded", ...)\'' +
     'to automatically get the char data')
+  document.addEventListener("DOMContentLoaded", function(event) {
+    incrFontMgr.loadNeededChars();
+  });
 
   incrFontMgr.getBase = incrFontMgr.getIDB_.
   then(function(idb) {
@@ -189,11 +192,12 @@ IncrementalFont.obj_.prototype.loadNeededChars = function(element_name) {
   var that = this;
   var chars = '';
   var charlist;
-  try {
-    chars = document.getElementById(element_name).textContent;
-  } catch (e) {
-    debugger;
+  var element;
+  element = document.getElementById(element_name);
+  if (!element) {
+    element = document.body;
   }
+  chars = element.textContent;
   var pending_resolve, pending_reject;
   var old_finishPendingCharsRequest = this.finishPendingCharsRequest;
   this.finishPendingCharsRequest = new Promise(function(resolve, reject) {
