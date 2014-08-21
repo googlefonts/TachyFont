@@ -16,7 +16,7 @@
 
 import webapp2
 from os import path
-from help import prepare_bundle
+from incremental_fonts_utils import prepare_bundle
 
 BASE_DIR = path.dirname(__file__)
 
