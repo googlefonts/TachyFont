@@ -50,11 +50,11 @@
   </style>
   <script>
     // Time the loading of the web font.
-    var fontname = 'NotoSansKrThin';
-    var fonturl = '/incremental_fonts/webfonts/noto-sans-kr-thin/NotoSansKR-Thin.woff';
     // For reasons that are completely unclear it appears that the return value
-    // has to be stored.
-    var x = IncrementalFontUtils.loadWebFont(fontname, fonturl, 'woff');
+    // has to be stored for FontFace to work correctly.
+    var x = IncrementalFontUtils.loadWebFont('NotoSansKrThin', 
+      '/incremental_fonts/webfonts/noto-sans-kr-thin/NotoSansKR-Thin.woff',
+      'woff');
   </script>
 </head>
 
