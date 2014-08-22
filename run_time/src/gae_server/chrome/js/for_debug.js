@@ -30,18 +30,14 @@ var timer = new Timer();
 var columns = ['Item', 'Start', 'End', 'Length'];
 
 /**
- * The existing onload function.
+ * If timing data was collected display them on DOM ready.
  */
-ForDebug.old_onload = window.onload;
-/**
- * Display the results on window.onload.
- */
-window.onload = function() {
+document.addEventListener("DOMContentLoaded", function(event) {
   setTimeout(function() {
     var num_timings = timer.numberOfTimingRecords();
     if (num_timings) {
       var table = document.createElement('table');
-      table.id = 'timingTablex';
+      table.id = 'timingTable';
       table.style.fontSize = '125%';
       table.style.fontFamily = 'sans-serif';
       var row = table.insertRow(0);
@@ -58,11 +54,8 @@ window.onload = function() {
       document.body.insertBefore(br, first_child);
       timer.display_timing(table);
     }
-    if (ForDebug.old_onload) {
-      ForDebug.old_onload(window);
-    }
-  }, 500);
-};
+  }, 1);
+});
 
 /**
  * Add a "drop DB" button.
@@ -70,8 +63,7 @@ window.onload = function() {
  * @param {String} fontname The fontname.
  */
 ForDebug.addDropIdbButton = function(incrFontMgr, fontname) {
-  var old_onload = window.onload;
-  window.onload = function() {
+  document.addEventListener("DOMContentLoaded", function(event) {
     var span = document.createElement('span');
     span.style.position = 'absolute';
     span.style.top = '10px';
@@ -87,10 +79,7 @@ ForDebug.addDropIdbButton = function(incrFontMgr, fontname) {
     msg_span.id = 'dropIdb_msg';
     span.appendChild(msg_span);
     document.body.appendChild(span);
-    if (old_onload) {
-      old_onload(window);
-    }
-  };
+  });
   function dropIdb() {
     var msg_span = document.getElementById('dropIdb_msg');
     ForDebug.dropIdb(incrFontMgr, fontname).
