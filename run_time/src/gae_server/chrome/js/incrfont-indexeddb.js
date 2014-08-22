@@ -79,19 +79,29 @@ IncrementalFont.CHARLIST = 'charlist';
  *                 array[2] {DataView} The font data.
  */
 IncrementalFont.createManager = function(fontname, url) {
+  timer.start('load base: ' + fontname);
+  console.log('check to see if a webfont is in cache');
   if (!url) {
     url = window.location.protocol + "//" + window.location.hostname + 
         (window.location.port ? ':' + window.location.port: '');
   }
   var incrFontMgr = new IncrementalFont.obj_(fontname, url);
   //timer.start('openIndexedDB.open ' + fontname);
+  IncrementalFontUtils.logger(incrFontMgr.url, 
+    'need to report info');
+  console.log('It would be good to report status of:\n\
+      * idb\n\
+      * chars needed\n\
+      * webfont in cache\n\
+      * timing\n\
+      * way to collect the info\n\
+      * way to clear old info\n\
+      * errors');
   incrFontMgr.getIDB_ = incrFontMgr.openIndexedDB(fontname);
   //timer.end('openIndexedDB.open ' + fontname);
 
   // Create a class with visibility: hidden.
   incrFontMgr.style = IncrementalFontUtils.setVisibility(null, fontname, false);
-  console.log('add a \'document.addEventListener("DOMContentLoaded", ...)\'' +
-    'to automatically get the char data')
   document.addEventListener("DOMContentLoaded", function(event) {
     incrFontMgr.loadNeededChars();
   });
@@ -111,9 +121,13 @@ IncrementalFont.createManager = function(fontname, url) {
   catch (function(e) {
     //timer.end('did not get the base data ' + fontname);
     console.log('Did not get base from IDB, need to fetch it: ' + fontname);
-    return IncrementalFontUtils.requestURL(incrFontMgr.url + '/fonts/' + 
-      incrFontMgr.fontname + '/base', 'GET', null, {}, 'arraybuffer').
+    timer.start('fetch ' + fontname);
+    return IncrementalFontUtils.requestURL(incrFontMgr.url + 
+      '/incremental_fonts/incrfonts/' + incrFontMgr.fontname + '/base', 'GET', 
+      null, {}, 'arraybuffer').
     then(function(xfer_bytes) {
+      timer.end('fetch ' + fontname);
+      timer.start('process ' + fontname);
       var xfer_data = new DataView(xfer_bytes);
       var fileinfo = IncrementalFontUtils.parseBaseHeader(xfer_data);
       var header_data = new DataView(xfer_bytes, 0, fileinfo.headSize);
@@ -126,10 +140,12 @@ IncrementalFont.createManager = function(fontname, url) {
       var basefont =
         IncrementalFontUtils.sanitizeBaseFont(fileinfo, raw_basefont);
       incrFontMgr.persistDelayed_(IncrementalFont.BASE);
+      timer.end('process ' + fontname);
       return [incrFontMgr.getIDB_, fileinfo, basefont];
     });
   }).
   then(function(arr) {
+    timer.end('load base: ' + fontname);
     var fileinfo = arr[1];
     // Create the @font-face rule.
     IncrementalFontUtils.setFont(fontname, arr[2], fileinfo.isTTF);

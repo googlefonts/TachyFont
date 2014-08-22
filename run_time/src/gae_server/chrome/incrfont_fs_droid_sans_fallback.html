@@ -23,7 +23,7 @@
   @font-face {
     font-family: DroidSansFallback;
     font-style: normal;
-    src: url('../fonts/v1DroidSansFallback/DroidSansFallback.woff') format('woff');
+    src: url('/incremental_fonts/webfonts/droid-sans-fallback/DroidSansFallback.woff') format('woff');
   }
   td {
     vertical-align: top;
@@ -202,9 +202,6 @@ http://qwed01...우낀세상02/18http://qwed01...우낀세상02/18최근에받�
     TEXTS.forEach(function(text) {
       sequence = sequence.then(function() {return fontLoader.incrUpdate(
                   filesystem, text, makeVisible);});
-    });
-    sequence.then(function() {
-      timer.display_timing(document.getElementById('timingTable'));
     });
   </script>
   

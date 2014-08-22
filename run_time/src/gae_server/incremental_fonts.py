@@ -15,8 +15,11 @@
 """
 
 import webapp2
-from os import path
+from os import path, stat
 from incremental_fonts_utils import prepare_bundle
+import logging
+import StringIO
+from time import time, sleep
 
 BASE_DIR = path.dirname(__file__)
 
@@ -41,10 +44,65 @@ class GlyphRequest(webapp2.RequestHandler):
     #resources and does not allow the application to decide. 
     #Therefore, we set mime_type for binary data as text.
     self.response.headers['Content-Type'] = 'text/richtext'
-    self.response.write(prepare_bundle(self.request))
+    f = StringIO.StringIO(prepare_bundle(self.request))
+    slow_write(f, self.response.out, 2.5)
+
+
+class DoLogging(webapp2.RequestHandler):
+  """Dump logging messages into the server logs.
+
+  """
+  logger = logging.getLogger()
+  logger.setLevel(logging.INFO)
+
+  def post(self):
+    self.response.headers.add_header('Access-Control-Allow-Origin', '*')
+    logging.info(self.request.body + '')
+
+
+class IncrFont(webapp2.RequestHandler):
+  chunk_size = 512
+
+  # 3G (at least according to WebPageTest.org) is 1.6 Mbps / 768 Kbps
+  # so download is 200 KBps; 5 mS / KB 
+  def get(self, fontname):
+    self.response.headers['Content-Type'] = 'text/plain'
+    self.response.headers['Content-Type'] = 'text/richtext'
+    filename = BASE_DIR + '/fonts/' + fontname
+    f = open(filename, 'rb')
+    slow_write(f, self.response.out, 2.5)
+
+class WebFont(webapp2.RequestHandler):
+  chunk_size = 512
+
+  # 3G (at least according to WebPageTest.org) is 1.6 Mbps / 768 Kbps
+  # so download is 200 KBps; 5 mS / KB 
+  def get(self, fontname):
+    self.response.headers['Content-Type'] = 'application/binary'
+    filename = BASE_DIR + '/fonts/' + fontname
+    f = open(filename, 'rb')
+    slow_write(f, self.response.out, 5)
+
+def slow_write(in_file, out_file, ms_per_k):
+  chunk_size = 512
+  t0 = time()
+  chunks_sent = 0
+  delay_per_chunk = (ms_per_k / 1024.0) / 1024 * chunk_size
+  while True:
+    chunk = in_file.read(chunk_size)
+    if not chunk:
+      break
+    chunks_sent += 1
+    needed_sleep_time = chunks_sent * delay_per_chunk - (time() - t0)
+    if (needed_sleep_time > 0):
+      sleep(needed_sleep_time)
+    out_file.write(chunk)
 
 
 app = webapp2.WSGIApplication([
     ('/incremental_fonts/request', GlyphRequest),
+    ('/incremental_fonts/logger', DoLogging),
+    (r'/incremental_fonts/webfonts/(.*)', WebFont),
+    (r'/incremental_fonts/incrfonts/(.*)', IncrFont),
     ('/incremental_fonts/.*', IncrementalFonts)
 ], debug=True)

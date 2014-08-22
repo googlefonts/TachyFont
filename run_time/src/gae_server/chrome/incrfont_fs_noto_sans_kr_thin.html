@@ -23,7 +23,7 @@
   @font-face {
     font-family: NotoSansKR;
     font-style: normal;
-    src: url('../fonts/v1NotoSansKR-Thin/NotoSansKR-Thin.woff') format('woff');
+    src: url('/incremental_fonts/webfonts/noto-sans-kr-thin/NotoSansKR-Thin.woff') format('woff');
   }
   td {
     vertical-align: top;
@@ -204,9 +204,6 @@ http://qwed01...우낀세상02/18http://qwed01...우낀세상02/18최근에받�
     TEXTS.forEach(function(text) {
       sequence = sequence.then(function() {return fontLoader.incrUpdate(
                   filesystem, text, makeVisible);});
-    });
-    sequence.then(function() {
-      timer.display_timing(document.getElementById('timingTable'));
     });
     fontLoader.persistState(sequence,filesystem);
   </script>
