@@ -44,15 +44,18 @@
   </script>
   <link rel="stylesheet" type="text/css" href="css/table_styles.css">
   <style>
-    @font-face {
-      font-family: NotoSansKrThin;
-      font-style: normal;
-      src: url('/incremental_fonts/webfonts/noto-sans-kr-thin/NotoSansKR-Thin.woff') format('woff');
-    }
     td {
       vertical-align: top;
     }
   </style>
+  <script>
+    // Time the loading of the web font.
+    var fontname = 'NotoSansKrThin';
+    var fonturl = '/incremental_fonts/webfonts/noto-sans-kr-thin/NotoSansKR-Thin.woff';
+    // For reasons that are completely unclear it appears that the return value
+    // has to be stored.
+    var x = IncrementalFontUtils.loadWebFont(fontname, fonturl);
+  </script>
 </head>
 
 <body>
