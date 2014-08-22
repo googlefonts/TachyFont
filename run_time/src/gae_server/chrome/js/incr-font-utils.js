@@ -483,12 +483,20 @@ IncrementalFontUtils.setFont = function(fontname, data, isTTF) {
  * Add the '@font-face' rule
  * @param {string} fontname The CSS fontname
  * @param {string} url The url of the webfont.
+ * @param {string} fonttype The type of the font; eg truetype or opentype.
  */
-IncrementalFontUtils.loadWebFont = function(fontname, fonturl) {
+IncrementalFontUtils.loadWebFont = function(fontname, fonturl, fonttype) {
   if (typeof window.FontFace == 'undefined') {
-  	alert('need to write code load the web font');
+    var style = document.createElement('style');
+    var sheet = style.sheet;
+    sheet.insertRule('@font-face {\n' +
+      '    font-family: ' + fontname + ';\n' +
+      '    src: url(' + fonturl + ') format(' + fonttype + ');' +
+      '}', 0);
+    document.head.appendChild(style);
   	return;
   }
+
   var timeout_id;
   function font_loading_timeout() {
     timer.end('load ' + fontname);
