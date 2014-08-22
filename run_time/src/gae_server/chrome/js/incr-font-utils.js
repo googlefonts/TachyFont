@@ -499,11 +499,11 @@ IncrementalFontUtils.loadWebFont = function(fontname, fonturl, fonttype) {
 
   var timeout_id;
   function font_loading_timeout() {
-    timer.end('load ' + fontname);
+    timer.end('load web font ' + fontname);
     timeout_id = setTimeout(font_loading_timeout, 100);
   }
 
-  timer.start('load ' + fontname);
+  timer.start('load web font ' + fontname);
   font_loading_timeout();
   var face;
   face = new FontFace(fontname, "url(" + fonturl + ")", {});
