@@ -199,7 +199,7 @@ IncrementalFont.obj_ = function(fontname, url) {
   this.finishPendingCharsRequest = Promise.resolve();
 };
 
-
+var global_load_cnt = 0;
 /**
  * Lazily data for these chars.
  * @param {string} element_name The name of the data item.
@@ -209,6 +209,7 @@ IncrementalFont.obj_.prototype.loadNeededChars = function(element_name) {
   var chars = '';
   var charlist;
   var element;
+  var load_cnt;
   element = document.getElementById(element_name);
   if (!element) {
     element = document.body;
@@ -237,6 +238,8 @@ IncrementalFont.obj_.prototype.loadNeededChars = function(element_name) {
         if (neededCodes.length) {
           console.log('load ' + neededCodes.length + ' codes:');
           console.log(neededCodes);
+          load_cnt = global_load_cnt++;
+          timer.start(that.fontname + ' load chars #' + load_cnt)
         } else {
           //console.log('do not need anymore characters');
           return null;
@@ -260,6 +263,7 @@ IncrementalFont.obj_.prototype.loadNeededChars = function(element_name) {
             fontdata = IncrementalFontUtils.injectCharacters(fileinfo, fontdata,
               chardata);
             IncrementalFontUtils.setFont(that.fontname, fontdata, fileinfo.isTTF);
+            timer.end(that.fontname + ' load chars #' + load_cnt)
             // Update the data.
             that.getBase = Promise.all([arr[0], arr[1], fontdata]);
             that.getCharlist = Promise.all([that.getIDB_, charlist]);
