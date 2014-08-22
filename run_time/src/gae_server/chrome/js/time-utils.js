@@ -28,17 +28,18 @@ function Timer() {
 }
 
 Timer.columns = ['Item', 'Start', 'End', 'mS'];
+Timer.showDetails = false;
 
 /**
  * Save start of the an event and display msg on the console
  * @param {string} msg
  */
 Timer.prototype.start = function(msg) {
-  console.time('@@@ ' + msg);
-  console.timeStamp('@@@ begin ' + msg);
+  if (Timer.showDetails) console.time('@@@ ' + msg);
+  if (Timer.showDetails) console.timeStamp('@@@ begin ' + msg);
   var cur_time = Date.now() - this.start_time;
   this.results.push('begin ' + msg + ' at ' + cur_time + '\n');
-  console.log('@@@ begin ' + msg + ' at ' + cur_time);
+  if (Timer.showDetails) console.log('@@@ begin ' + msg + ' at ' + cur_time);
   var info = {};
   if (this.timing_info[msg]) {
     console.log('**** duplicate: "' + msg + '"');
@@ -54,11 +55,11 @@ Timer.prototype.start = function(msg) {
  * @param {string} msg
  */
 Timer.prototype.end = function(msg) {
-  console.timeEnd('@@@ ' + msg);
-  console.timeStamp('@@@ end ' + msg);
+  if (Timer.showDetails) console.timeEnd('@@@ ' + msg);
+  if (Timer.showDetails) console.timeStamp('@@@ end ' + msg);
   var cur_time = Date.now() - this.start_time;
   this.results.push('end ' + msg + ' at ' + cur_time + '\n');
-  console.log('@@@ end ' + msg + ' at ' + cur_time);
+  if (Timer.showDetails) console.log('@@@ end ' + msg + ' at ' + cur_time);
   var info = this.timing_info[msg];
   if (info)
     info['end'] = cur_time;

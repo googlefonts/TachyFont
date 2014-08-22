@@ -416,7 +416,7 @@ IncrementalFontUtils.setVisibility = function(style, fontname, visible) {
  * Add the '@font-face' rule
  * @param {string} fontname The CSS fontname
  * @param {Array} data The font data.
- * @param {string} isTTF True is the font is of type TTF.
+ * @param {boolean} isTTF True is the font is of type TTF.
  */
 IncrementalFontUtils.setFont = function(fontname, data, isTTF) {
   var mime_type = '';
@@ -477,3 +477,42 @@ IncrementalFontUtils.setFont = function(fontname, data, isTTF) {
                    '}', 0);
 
 };
+
+
+/**
+ * Add the '@font-face' rule
+ * @param {string} fontname The CSS fontname
+ * @param {string} url The url of the webfont.
+ * @param {string} fonttype The type of the font; eg truetype or opentype.
+ */
+IncrementalFontUtils.loadWebFont = function(fontname, fonturl, fonttype) {
+  if (typeof window.FontFace == 'undefined') {
+    var style = document.createElement('style');
+    var sheet = style.sheet;
+    sheet.insertRule('@font-face {\n' +
+      '    font-family: ' + fontname + ';\n' +
+      '    src: url(' + fonturl + ') format(' + fonttype + ');' +
+      '}', 0);
+    document.head.appendChild(style);
+  	return;
+  }
+
+  var timeout_id;
+  function font_loading_timeout() {
+    timer.end('load web font ' + fontname);
+    timeout_id = setTimeout(font_loading_timeout, 100);
+  }
+
+  timer.start('load web font ' + fontname);
+  font_loading_timeout();
+  var face;
+  face = new FontFace(fontname, "url(" + fonturl + ")", {});
+  face.load().then(function (loadedFace) {
+    document.fonts.add(loadedFace);
+    document.body.style.fontFamily = fontname;
+    timer.end('load web font ' + fontname);
+    clearTimeout(timeout_id);
+  });
+  return face;
+}
+
