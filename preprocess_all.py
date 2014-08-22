@@ -57,18 +57,18 @@ def copy(src,destination):
 def main(args):
 	makedir(Paths.COOKED)
 	for name,subdirs,files in os.walk(Paths.SOURCE):
-		print name,subdirs,files
 		if subdirs and not files:
 			version_dirs = subdirs[:]
 		if not subdirs and files:
 			version = version_dirs.pop(0)
-			print version
 			assert name.endswith(version)
 			for font_file in files:
 				outdir = Paths.COOKED+version
 				font_filename, font_extension = os.path.splitext(font_file)
+				if font_extension not in ['.otf','.ttf']:
+					continue
 				destdir = '/'+version+font_filename
-				print 'Found {}. Use following name in javascript: {}'.format(name+'/'+font_file,version+font_filename)
+				print 'Found \'{}\'. Use following name in javascript: {}'.format(name+'/'+font_file,version+font_filename)
 				process(name+'/'+font_file,outdir)
 				for dest_folder in Paths.FILE_PLACES:
 					dest  = dest_folder+destdir

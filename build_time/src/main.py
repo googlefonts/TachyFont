@@ -37,10 +37,12 @@ def main(args):
   parser.add_argument('--changefont', default=False , action='store_true', help='Font structure has changed, default is True')
   parser.add_argument('--changebase', default=False , action='store_true', help='Base structure has changed, default is True')
   parser.add_argument('--hinting',default=False, action='store_true', help='Enable hinting if specified, no hinting if not present')
+  parser.add_argument('--verbose',default=False, action='store_true', help='Extra messages are printed')
   parser.add_argument('--output', default='.' , help='Output folder, default is current folder')
 
   cmd_args = parser.parse_args(args)
 
+  verbose = cmd_args.verbose
   fontfile = cmd_args.fontfile
   # TODO(bstell) use Logger
   #print('preprocess {0}'.format(cmd_args.fontfile))
@@ -67,7 +69,8 @@ def main(args):
       #print('Exception for file '+cleanfile)
     #print('build closure')
     closure.dump_closure_map(cleanfile, output_folder)
-  print(filename+','+str(os.path.getsize(cleanfile))+',',end='')
+  if verbose:
+    print(filename+','+str(os.path.getsize(cleanfile))+',',end='')
   #print('start proprocess')
   preprocess = Preprocess(cleanfile, output_folder)
   if generate_again_base or generate_again_font:
