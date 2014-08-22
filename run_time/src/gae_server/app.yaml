@@ -39,15 +39,6 @@ handlers:
 - url: /chrome/
   static_dir: chrome/
   
-- url: /fonts
-  static_dir: fonts/
-  # HACK 
-  # GAE is brain dead and only uses gzip compression for text resources; ie:
-  # it does not allow the application to decide. Therefore, we set mime_type
-  # for binary data to text to get gzip compression.
-  mime_type: text/richtext
-  http_headers:
-    Access-Control-Allow-Origin: '*' 
   
 - url: /incremental_fonts/.*
   script: incremental_fonts.app

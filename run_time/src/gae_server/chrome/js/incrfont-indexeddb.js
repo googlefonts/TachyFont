@@ -121,8 +121,9 @@ IncrementalFont.createManager = function(fontname, url) {
   catch (function(e) {
     //timer.end('did not get the base data ' + fontname);
     console.log('Did not get base from IDB, need to fetch it: ' + fontname);
-    return IncrementalFontUtils.requestURL(incrFontMgr.url + '/fonts/' + 
-      incrFontMgr.fontname + '/base', 'GET', null, {}, 'arraybuffer').
+    return IncrementalFontUtils.requestURL(incrFontMgr.url + 
+      '/incremental_fonts/webfonts/' + incrFontMgr.fontname + '/base', 'GET', 
+      null, {}, 'arraybuffer').
     then(function(xfer_bytes) {
       var xfer_data = new DataView(xfer_bytes);
       var fileinfo = IncrementalFontUtils.parseBaseHeader(xfer_data);

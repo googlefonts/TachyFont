@@ -104,7 +104,7 @@ IncrementalFontLoader.prototype.determineCharacters_ = function(codes, text) {
  * @private
  */
 IncrementalFontLoader.prototype.requestBaseFont_ = function() {
-  return IncrementalFontUtils.requestURL('/fonts/' + this.fontname + '/base',
+  return IncrementalFontUtils.requestURL('/incremental_fonts/webfonts/' + this.fontname + '/base',
   'GET', null, {},
     'arraybuffer');
 };
