@@ -106,12 +106,11 @@ ForDebug.dropIdb = function(incrFontMgr, fontname, callback) {
       callback('dropped ' + db_name);
     };
     request.onblocked = function() {
-      callback('dropping ' + db_name + ' blocked');
-      console.log('deleteDatbase got blocked event');
+      callback('blocked dropping ' + db_name);
     };
     request.onerror = function(e) {
       debugger;
-      callback('dropping ' + db_name + ' failed: ' + e.code + '/' + e.message);
+      callback('failed to drop ' + db_name + ': ' + e.code + '/' + e.message);
     };
   });
 };
