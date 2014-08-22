@@ -510,7 +510,7 @@ IncrementalFontUtils.loadWebFont = function(fontname, fonturl, fonttype) {
   face.load().then(function (loadedFace) {
     document.fonts.add(loadedFace);
     document.body.style.fontFamily = fontname;
-    timer.end('load ' + fontname);
+    timer.end('load web font ' + fontname);
     clearTimeout(timeout_id);
   });
   return face;
