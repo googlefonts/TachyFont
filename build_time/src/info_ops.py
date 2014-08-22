@@ -49,6 +49,7 @@ class InfoOps(object):
     assert 'maxp' in font 
     #for CFF it is also same because, tool supports only CFF which has only one font
     numGlyphs = font['maxp'].numGlyphs
+    print(numGlyphs,end=',')
     return pack('>H',numGlyphs)
   
   @staticmethod
