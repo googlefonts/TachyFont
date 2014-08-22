@@ -24,7 +24,10 @@ function Timer() {
     this.start_time = Date.now();
     this.results = [];
     this.timing_info = {};
+    this.table = null;
 }
+
+Timer.columns = ['Item', 'Start', 'End', 'mS'];
 
 /**
  * Save start of the an event and display msg on the console
@@ -43,6 +46,7 @@ Timer.prototype.start = function(msg) {
   info['name'] = msg;
   info['start'] = cur_time;
   this.timing_info[msg] = info;
+  this.display_timing();
 };
 
 /**
@@ -60,6 +64,7 @@ Timer.prototype.end = function(msg) {
     info['end'] = cur_time;
   else
     console.log('**** missing start for "' + msg + '"');
+  this.display_timing();
 };
 
 
@@ -76,7 +81,58 @@ Timer.prototype.numberOfTimingRecords = function() {
  * Display the timing info on the page.
  * @param {Object} table DOM table element.
  */
-Timer.prototype.display_timing = function(table) {
+Timer.prototype.getTable = function() {
+  if (this.table) {
+    return this.table;
+  }
+  if (!document.body) {
+    return null;
+  }
+  var table = document.getElementById('timingTablex');
+  if (!table) {
+    table = document.createElement('table');
+    table.id = 'timingTablex';
+    table.style.fontSize = '125%';
+    table.style.fontFamily = 'sans-serif';
+    table.style.marginLeft = 'auto';
+    table.style.marginRight = 'auto';
+    table.style.backgroundColor = 'LightPink';
+    table.style.border = '3px solid gray';
+    var row = table.insertRow(0);
+    for (var i = 0; i < Timer.columns.length; i++) {
+      var cell = row.insertCell(i);
+      cell.style.fontWeight = '900';
+      cell.style.textAlign = 'center';
+      cell.innerHTML = Timer.columns[i];
+    }
+    var div = document.createElement('div');
+    div.style.position = 'absolute';
+    div.style.top = '200px';
+    div.style.width = '100%';
+
+    var span = document.createElement('div');
+    span.style.marginLeft = 'auto';
+    span.style.marginRight = 'auto';
+
+    div.appendChild(span);
+    span.appendChild(table);
+    document.body.appendChild(div);
+  }
+  this.table = table;
+
+  return this.table;
+};
+
+
+/**
+ * Display the timing info on the page.
+ * @param {Object} table DOM table element.
+ */
+Timer.prototype.display_timing = function() {
+  var table = this.getTable();
+  if (!table) {
+    return;
+  }
   var arr = [];
   for (var key in this.timing_info) {
     arr.push(this.timing_info[key]);
@@ -84,6 +140,11 @@ Timer.prototype.display_timing = function(table) {
   arr.sort(function(a, b) {
     return a['start'] - b['start'];
   });
+
+  // Remove all but the header row.
+  while (table.rows.length > 1) {
+    table.deleteRow(1);
+  }
 
   for (var i = 0; i < arr.length; i++) {
     var info = arr[i];
