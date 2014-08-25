@@ -40,7 +40,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
 });
 
 
-ForDebug.getCookie = function(name) {
+ForDebug.getCookie = function(name, fallback) {
   name += '=';
   var cookies = document.cookie.split(';');
   for(var i = 0; i < cookies.length; i++) {
@@ -52,10 +52,20 @@ ForDebug.getCookie = function(name) {
       return cookie.substring(name.length, cookie.length);
     }
   }
-  return "";
+  return fallback;
 
 };
 
+ForDebug.Bandwidths = [
+  { name: 'Full', value: '0' },
+  { name: 'Argentina - 1.0 Mbps', value: '1000' },
+  { name: 'India - 1.3 Mbps', value: '1300' },
+  { name: '3G - 1.6 Mbps', value: '1600' },
+  { name: 'China - 4.8 Mbps', value: '4800' },
+  { name: 'Japan - 5.7 Mbps', value: '5700' },
+  { name: 'South Korea - 14.7 Mbps', value: '14700' },
+  { name: 'Taiwan - 3.4 Mbps', value: '3400' },
+];
 
 /**
  * Add a Bandwidth control.
@@ -65,37 +75,37 @@ ForDebug.addBandwidthControl = function(incrFontMgr) {
   document.addEventListener("DOMContentLoaded", function(event) {
     var span = document.createElement('span');
     span.style.position = 'absolute';
-    span.style.top = '50px';
+    span.style.top = '100px';
     span.style.right = '10px';
-    span.style.backgroundColor = 'white';
+    span.style.backgroundColor = 'lightYellow';
     span.style.border = '1px solid gray';
-    console.log('need to add a bandwidth control');
     var label = document.createElement('span');
-    label.innerHTML = 'Bandwidth: ';
+    label.innerHTML = "<a href='http://www.akamai.com/stateoftheinternet/'" +
+    		"target='_blank'>mobile bandwidth 2014</a> " +
+    		"(<a href='http://www.akamai.com/dl/akamai/akamai-soti-q114.pdf'" +
+    		"target='_blank'>pg 31</a>): ";
     span.appendChild(label);
 
-    var cookie_value = ForDebug.getCookie('bandwidth');
+    var cookie_value = ForDebug.getCookie('bandwidth', '0');
     var select = document.createElement("select");
-    var option_none = document.createElement("option");
-    option_none.text = "full";
-    select.add(option_none);
-    var option_3g = document.createElement("option");
-    option_3g.text = "3G";
-    console.log('set the value to 1600')
-    option_3g.value = "1600";
-    select.add(option_3g);
-    // This code to set the selectedIndex is crude.
-    if (cookie_value == '3G') {
-      select.selectedIndex = select.options.length - 1;
-    } else {
-      select.selectedIndex = 0;
+    select.selectedIndex = 0;
+    for (var i = 0; i < ForDebug.Bandwidths.length; i++) {
+      var option_info = ForDebug.Bandwidths[i];
+      console.log(option_info.name + ' = ' + option_info.value)
+      var option = document.createElement("option");
+      option.text = option_info.name;
+      option.value = option_info.value;
+      select.add(option);
+      if (cookie_value == option_info.value) {
+        select.selectedIndex = i;
+      }
     }
+
     function setBandwidthCookie(select) {
       console.log('select.selectedIndex = ' + select.selectedIndex);
       var selectedOption = select.options[select.selectedIndex];
       console.log('selectedOption.value = ' + selectedOption.value);
       document.cookie = 'bandwidth=' + selectedOption.value;
-
     }
     setBandwidthCookie(select);
     
