@@ -102,7 +102,7 @@ class NumberEncoders(object):
 class _GOSGenerators(object):
   
   @staticmethod
-  def type6(font):
+  def type6_7(font):
     cffTableOffset = font.reader.tables['CFF '].offset
     cffTable = font['CFF '].cff
     assert len(cffTable.fontNames) == 1 #only one font should be present
@@ -111,14 +111,17 @@ class _GOSGenerators(object):
     inner_file = font.reader.file
     inner_file.seek(cffTableOffset+charsetOffset)
     format = readCard8(inner_file);
-    if format != 2:
+    if format != 2 or format != 1:
       return None
     seenGlyphCount = 0
     firstArr = []
     nLeftArr = []
     while seenGlyphCount < numGlyphs:
       first = readCard16(inner_file)
-      nLeft = readCard16(inner_file)
+      if format == 2:
+        nLeft = readCard16(inner_file)
+      elif format == 1:
+        nLeft = readCard8(inner_file)
       firstArr.append(first)
       nLeftArr.append(nLeft)
       seenGlyphCount += nLeft + 1
@@ -127,7 +130,10 @@ class _GOSGenerators(object):
     gos_data = bitarray.bitarray(endian='big')
     extra_data = bitarray.bitarray(endian='big')
     gos_data.frombytes(struct.pack('>L',cffTableOffset+charsetOffset))
-    gos_data.frombytes(struct.pack('>B',6)) #GOS type
+    if format == 2:
+      gos_data.frombytes(struct.pack('>B',6)) #format 2
+    elif format == 1:
+      gos_data.frombytes(struct.pack('>B',7)) #format 1
     gos_data.frombytes(struct.pack('>H',rangeCount))
     deltaFirst = generateDeltaArray(firstArr)
     deltaNLeft = generateDeltaArray(nLeftArr)
@@ -298,6 +304,9 @@ class _GOSGenerators(object):
     return whole_data
 
 """Type of the Group of Segments
+Type 7: For CFF CharSet format 1 Table
+  first : 5 bit AOE encoding
+  nLeft : 3 bit AOE encoding
 Type 6: For CFF CharSet format 2 Table
   first : 5 bit AOE encoding
   nLeft : 3 bit AOE encoding
@@ -322,7 +331,8 @@ Type 2: For cmap format 12 subtable
   Following GOS table, we have extra escaped number table
   using for each number Number of Nibbles(NoN) encoding
 """
-GOS_Types = {6:_GOSGenerators.type6,
+GOS_Types = {7:_GOSGenerators.type6_7,
+             6:_GOSGenerators.type6_7,
              5:_GOSGenerators.type5,
              4:_GOSGenerators.type4,
              3:_GOSGenerators.type3,
