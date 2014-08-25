@@ -84,9 +84,9 @@ ForDebug.addBandwidthControl = function(incrFontMgr) {
     span.style.border = '1px solid gray';
     var label = document.createElement('span');
     label.innerHTML = "<a href='http://www.akamai.com/stateoftheinternet/'" +
-    		"target='_blank'>mobile bandwidth 2014</a> " +
+    		"target='_blank'>Akami mobile bandwidth</a> " +
     		"(<a href='http://www.akamai.com/dl/akamai/akamai-soti-q114.pdf'" +
-    		"target='_blank'>pg 31</a>): ";
+    		"target='_blank'>2014 report pg 31</a>): ";
     span.appendChild(label);
 
     var cookie_value = ForDebug.getCookie('bandwidth', '0');
