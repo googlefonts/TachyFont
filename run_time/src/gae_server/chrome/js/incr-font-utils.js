@@ -275,7 +275,7 @@ IncrementalFontUtils.requestCodepoints = function(url, fontname, codes) {
     // Google App Engine servers do not support CORS so we cannot say
     // the 'Content-Type' is 'application/json'.
     //{'Content-Type': 'application/json'},
-    {'Content-Type': 'text/plain'},
+    {'Content-Type': 'text/plain', 'X-TachyFon-bandwidth': '1600'},
     'arraybuffer');
 };
 
@@ -506,7 +506,7 @@ IncrementalFontUtils.loadWebFont = function(fontname, fonturl, fonttype) {
   timer.start('load web font ' + fontname);
   font_loading_timeout();
   var face;
-  face = new FontFace(fontname, "url(" + fonturl + ")", {});
+  face = new FontFace(fontname, "url(" + fonturl + "?bandwidth=1600" + ")", {});
   face.load().then(function (loadedFace) {
     document.fonts.add(loadedFace);
     document.body.style.fontFamily = fontname;

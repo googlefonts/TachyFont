@@ -124,7 +124,7 @@ IncrementalFont.createManager = function(fontname, url) {
     timer.start('fetch ' + fontname);
     return IncrementalFontUtils.requestURL(incrFontMgr.url + 
       '/incremental_fonts/incrfonts/' + incrFontMgr.fontname + '/base', 'GET', 
-      null, {}, 'arraybuffer').
+      null, { 'X-TachyFon-bandwidth': '1600' }, 'arraybuffer').
     then(function(xfer_bytes) {
       timer.end('fetch ' + fontname);
       timer.start('process ' + fontname);
@@ -170,6 +170,9 @@ IncrementalFont.createManager = function(fontname, url) {
 
   // For Debug: add a button to clear the IndexedDB.
   ForDebug.addDropIdbButton(incrFontMgr, fontname);
+
+  // For Debug: add a control to set the bandwidth.
+  ForDebug.addBandwidthControl(incrFontMgr, fontname);
 
   return incrFontMgr;
 };

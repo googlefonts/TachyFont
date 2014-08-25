@@ -37,15 +37,15 @@ class GlyphRequest(webapp2.RequestHandler):
   """
 
   def post(self):
+    bandwidth = self.request.headers.get('X-TachyFon-bandwidth')
     self.response.headers.add_header('Access-Control-Allow-Origin', '*')
-
     #HACK 
     #Since GAE is brain dead, it decides using gzip compression only for text 
     #resources and does not allow the application to decide. 
     #Therefore, we set mime_type for binary data as text.
     self.response.headers['Content-Type'] = 'text/richtext'
     f = StringIO.StringIO(prepare_bundle(self.request))
-    slow_write(f, self.response.out, 2.5)
+    bandwidth_limited_write(f, self.response.out, bandwidth, True)
 
 
 class DoLogging(webapp2.RequestHandler):
@@ -66,11 +66,12 @@ class IncrFont(webapp2.RequestHandler):
   # 3G (at least according to WebPageTest.org) is 1.6 Mbps / 768 Kbps
   # so download is 200 KBps; 5 mS / KB 
   def get(self, fontname):
+    bandwidth = self.request.headers.get('X-TachyFon-bandwidth')
     self.response.headers['Content-Type'] = 'text/plain'
     self.response.headers['Content-Type'] = 'text/richtext'
     filename = BASE_DIR + '/fonts/' + fontname
     f = open(filename, 'rb')
-    slow_write(f, self.response.out, 2.5)
+    bandwidth_limited_write(f, self.response.out, bandwidth, True)
 
 class WebFont(webapp2.RequestHandler):
   chunk_size = 512
@@ -78,12 +79,28 @@ class WebFont(webapp2.RequestHandler):
   # 3G (at least according to WebPageTest.org) is 1.6 Mbps / 768 Kbps
   # so download is 200 KBps; 5 mS / KB 
   def get(self, fontname):
+    bandwidth = self.request.get('bandwidth')
     self.response.headers['Content-Type'] = 'application/binary'
     filename = BASE_DIR + '/fonts/' + fontname
     f = open(filename, 'rb')
-    slow_write(f, self.response.out, 5)
+    bandwidth_limited_write(f, self.response.out, bandwidth, False)
 
-def slow_write(in_file, out_file, ms_per_k):
+def bandwidth_limited_write(in_file, out_file, Kbps_str, post_delay_compression):
+  try:
+    Kbps = float(Kbps_str)
+  except:
+    Kbps = 0
+  if not Kbps:
+    while True:
+      data = in_file.read()
+      if not data:
+        return
+      out_file.write(data)
+
+  KBps = Kbps / 8
+  ms_per_k = 1000 / KBps
+  if post_delay_compression:
+    ms_per_k /= 2
   chunk_size = 512
   t0 = time()
   chunks_sent = 0
