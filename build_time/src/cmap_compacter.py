@@ -123,7 +123,7 @@ class _GOSGenerators(object):
       nLeftArr.append(nLeft)
       seenGlyphCount += nLeft + 1
     rangeCount = len(firstArr)
-    print 'charset size',rangeCount*4+1,'bytes'
+    #print 'charset size',rangeCount*4+1,'bytes'
     gos_data = bitarray.bitarray(endian='big')
     extra_data = bitarray.bitarray(endian='big')
     gos_data.frombytes(struct.pack('>L',cffTableOffset+charsetOffset))
@@ -138,7 +138,7 @@ class _GOSGenerators(object):
       add_to_extra_if_necessary(gos_data, extra_data, nLeft_enc)
     
     whole_data = gos_data.tobytes() + extra_data.tobytes()
-    print 'type6 size',len(whole_data)
+    #print 'type6 size',len(whole_data)
     return whole_data       
     
   
@@ -156,7 +156,7 @@ class _GOSGenerators(object):
     for i in xrange(nGroups):
       gos_data.extend(struct.pack('>LLL',ourData['startCodes'][i],ourData['lengths'][i],ourData['gids'][i]))
     change_method(_c_m_a_p.cmap_format_12_or_13,old_12_method,'decompile')
-    print 'type5 size',len(gos_data)
+    #print 'type5 size',len(gos_data)
     return gos_data
 
   @staticmethod
@@ -235,7 +235,7 @@ class _GOSGenerators(object):
     change_method(_c_m_a_p.cmap_format_4,old_4_method,'decompile')
     
     whole_data = gos_data.tobytes() + extra_data.tobytes()
-    print 'type4 size',len(whole_data)
+    #print 'type4 size',len(whole_data)
     return whole_data
   
   
@@ -265,7 +265,7 @@ class _GOSGenerators(object):
     change_method(_c_m_a_p.cmap_format_12_or_13,old_12_method,'decompile')
     
     whole_data = gos_data.tobytes() + extra_data.tobytes()
-    print 'type3 size',len(whole_data)
+    #print 'type3 size',len(whole_data)
     return whole_data
 
   @staticmethod
@@ -294,7 +294,7 @@ class _GOSGenerators(object):
     change_method(_c_m_a_p.cmap_format_12_or_13,old_12_method,'decompile')
     
     whole_data = gos_data.tobytes() + extra_data.tobytes()
-    print 'type2 size',len(whole_data)
+    #print 'type2 size',len(whole_data)
     return whole_data
 
 """Type of the Group of Segments

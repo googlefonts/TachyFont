@@ -277,4 +277,29 @@ class BaseFonter(object):
     
     if header_data:
       self.__add_header(output, header_data)
+
+  def dump_base(self, output):
+    """Call this function get base font Call only once, since given font will be closed
+    """
+    of = open(output, 'wb')
+    self.font.reader.file.seek(0)
+    of.write(self.font.reader.file.read())
+    of.close()
+    self.__zero_mtx('hmtx', output)
+    self.__zero_mtx('vmtx', output)
+    self.font.close()
+    
+    if self.isCff:
+      self.__end_char_strings(output)
+      self.__fill_char_strings(output)
+      self.__zero_charset_fmt2(output)
+    else:
+      self.__zero_glyf(output)
+      self.__fill_loca(output)
+    
+    self.__zero_cmaps(output)
+    #self.__rle(output)
+    
+    #if header_data:
+    #  self.__add_header(output, header_data)
       

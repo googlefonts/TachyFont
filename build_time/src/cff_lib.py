@@ -255,8 +255,10 @@ class CharSet():
     len_4 = 0
     len_other = 0
     format = readCard8(file)
+    print 'charset format is',format
     if format == 0:
-      raise RuntimeError('code not written')
+      print 'format 0 not parsed'
+      self.size = -1
     elif format == 1 or format == 2:
       num_segments = 0
       glyphs_covered = 1 # charset does not include .notdef

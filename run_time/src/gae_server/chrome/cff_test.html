@@ -19,7 +19,7 @@
 <html>
 <!--
 
-This file is used as to test cff font file loading
+This file is used as to test a cff font file loading
 
 -->
 <head>
@@ -36,7 +36,7 @@ This file is used as to test cff font file loading
 <script>
     var TEMPORARY_FS_REQUEST_SIZE = 8 * 1024 * 1024;
     var EMPTY_FS = true;
-    var FONTNAME = 'cff';
+    var FONTNAME = 'v1noto-subset';
     var TEXTS = [];
     var fontLoader = new IncrementalFontLoader(FONTNAME);
     var filesystem = new FilesystemHelper(
@@ -51,7 +51,7 @@ This file is used as to test cff font file loading
 </head>
 <body>
 
- <div id="abc" style="font-family: cff;">
+ <div id="abc" style="font-family: v1noto-subset;">
     ABCDEFGHIJKLMNOPQRSTUVXYZ
  </div>
   

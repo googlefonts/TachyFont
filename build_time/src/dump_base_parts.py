@@ -23,6 +23,11 @@ from compressor import Compressor
 from cff_lib import CharSet, decompileDict, DictINDEX, FDSelect, INDEX
 from StringIO import StringIO
 import argparse
+from rle_font import RleFont
+from cleanup import cleanup
+from base_fonter import BaseFonter
+from font_info import FontInfo
+from base_header import BaseHeaderPrepare
 
 
 def main(args):
@@ -35,8 +40,11 @@ def main(args):
   """
   parser = argparse.ArgumentParser(prog='pyprepfnt')
   parser.add_argument('fontfile',help='Input font file')
-  parser.add_argument('--hinting', nargs='?', default=False ,type=bool, help='Enable hinting if True, default is False')
-  parser.add_argument('--output', nargs='?', default='.' , help='Output folder, default is current folder')
+  parser.add_argument('--changefont', default=False , action='store_true', help='Font structure has changed, default is True')
+  parser.add_argument('--changebase', default=False , action='store_true', help='Base structure has changed, default is True')
+  parser.add_argument('--hinting',default=False, action='store_true', help='Enable hinting if specified, no hinting if not present')
+  parser.add_argument('--output', default='.' , help='Output folder, default is current folder')
+
   cmd_args = parser.parse_args(args)
 
   fontfile = cmd_args.fontfile
@@ -45,7 +53,18 @@ def main(args):
   basename = os.path.basename(fontfile)
   filename, extension = os.path.splitext(basename)
   output_folder = cmd_args.output+'/'+filename
-  dump_tables(fontfile, output_folder)
+  try:
+      os.makedirs(output_folder)
+  except OSError as exception:
+      if exception.errno != errno.EEXIST:
+          raise
+    
+  cleanfile = output_folder+'/'+filename + '_clean' + extension
+  is_clean = os.path.isfile(cleanfile)
+  if not is_clean:
+    cleanup(fontfile, cmd_args.hinting, cleanfile)
+  
+  dump_tables(cleanfile, output_folder)
 
   print('done')
 
@@ -58,23 +77,33 @@ def dump_tables(fontfile, output):
   except OSError as exception:
     if exception.errno != errno.EEXIST:
       raise
-
+    
+  header_dict = FontInfo.getInformation(fontfile, FontInfo.TAGS.keys())
+  bin_header = BaseHeaderPrepare.prepare(BaseFonter.BASE_VERSION, header_dict)
+  print('Base header total size=',len(bin_header))
+  
+  base_fonter = BaseFonter(fontfile)
+  base_dump =  dump_folder + '/base_dump'
+  base_fonter.dump_base(base_dump)
   # OpenType tables.
-  font_file = open(fontfile,'r+b')
+  dump_file = open(base_dump,'r+b')
   tables = font.reader.tables
   for name in font.reader.tables:
     table = tables[name]
     offset = table.offset
     length = table.length
-    print('{0}: offset={1}, length={2}'.format(name, offset, length))
+    #print('{0}: offset={1}, length={2}'.format(name, offset, length))
     table_file_name = dump_folder + '/' + name.replace('/', '_')
     table_file = open(table_file_name,'w+b')
-    font_file.seek(offset);
-    table_file.write(font_file.read(length))
+    dump_file.seek(offset);
+    table_file.write(dump_file.read(length))
     table_file.close()
+    rle_table = RleFont(table_file_name)
+    rle_table.encode()
+    rle_table.write(table_file_name)
     compressor = Compressor(Compressor.GZIP_INPLACE_CMD)
     compressor.compress(table_file_name)
-    #print('{0}: offset={1:9d}\tlen={2:9d}\tcmp_len={3:9d}'.format(name, offset, length,os.path.getsize(table_file_name+'.gz')))
+    print('{0}: offset={1:9d}\tlen={2:9d}\tcmp_len={3:9d}'.format(name, offset, length,os.path.getsize(table_file_name+'.gz')))
 
   print('TODO(bstell) save and compress the CFF parts.')
   if 'CFF ' in font:
