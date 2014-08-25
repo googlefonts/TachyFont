@@ -39,6 +39,76 @@ document.addEventListener("DOMContentLoaded", function(event) {
   }, 1);
 });
 
+
+ForDebug.getCookie = function(name) {
+  name += '=';
+  var cookies = document.cookie.split(';');
+  for(var i = 0; i < cookies.length; i++) {
+    var cookie = cookies[i];
+    while (cookie.charAt(0)==' ') {
+      cookie = cookie.substring(1);
+    }
+    if (cookie.indexOf(name) != -1) {
+      return cookie.substring(name.length, cookie.length);
+    }
+  }
+  return "";
+
+};
+
+
+/**
+ * Add a Bandwidth control.
+ * @param {Object} incrFontMgr The incremental font manager.
+ */
+ForDebug.addBandwidthControl = function(incrFontMgr) {
+  document.addEventListener("DOMContentLoaded", function(event) {
+    var span = document.createElement('span');
+    span.style.position = 'absolute';
+    span.style.top = '50px';
+    span.style.right = '10px';
+    span.style.backgroundColor = 'white';
+    span.style.border = '1px solid gray';
+    console.log('need to add a bandwidth control');
+    var label = document.createElement('span');
+    label.innerHTML = 'Bandwidth: ';
+    span.appendChild(label);
+
+    var cookie_value = ForDebug.getCookie('bandwidth');
+    var select = document.createElement("select");
+    var option_none = document.createElement("option");
+    option_none.text = "full";
+    select.add(option_none);
+    var option_3g = document.createElement("option");
+    option_3g.text = "3G";
+    console.log('set the value to 1600')
+    option_3g.value = "1600";
+    select.add(option_3g);
+    // This code to set the selectedIndex is crude.
+    if (cookie_value == '3G') {
+      select.selectedIndex = select.options.length - 1;
+    } else {
+      select.selectedIndex = 0;
+    }
+    function setBandwidthCookie(select) {
+      console.log('select.selectedIndex = ' + select.selectedIndex);
+      var selectedOption = select.options[select.selectedIndex];
+      console.log('selectedOption.value = ' + selectedOption.value);
+      document.cookie = 'bandwidth=' + selectedOption.value;
+
+    }
+    setBandwidthCookie(select);
+    
+    select.onchange = function(event) {
+      var select = event.srcElement;
+      setBandwidthCookie(select);
+    };
+
+    span.appendChild(select);
+    document.body.appendChild(span);
+  });
+};
+
 /**
  * Add a "drop DB" button.
  * @param {Object} incrFontMgr The incremental font manager.
@@ -50,6 +120,8 @@ ForDebug.addDropIdbButton = function(incrFontMgr, fontname) {
     span.style.position = 'absolute';
     span.style.top = '10px';
     span.style.right = '10px';
+    span.style.backgroundColor = 'white';
+    span.style.border = '1px solid gray';
     var msg_span = document.createElement('span');
     msg_span.id = 'dropIdb_msg';
     span.appendChild(msg_span);
@@ -63,7 +135,7 @@ ForDebug.addDropIdbButton = function(incrFontMgr, fontname) {
   });
   function dropIdb() {
     var msg_span = document.getElementById('dropIdb_msg');
-    ForDebug.dropIdb(incrFontMgr, fontname, function(msg) {
+    ForDebug.dropIdb_(incrFontMgr, fontname, function(msg) {
       msg_span.innerHTML = msg;
     });
   }
@@ -76,8 +148,9 @@ ForDebug.addDropIdbButton = function(incrFontMgr, fontname) {
  * @param {String} fontname The fontname.
  * @param {function} call Call this function with the status.
  * @return {Promise} The Promise for when the DB is dropped.
+ * @private
  */
-ForDebug.dropIdb = function(incrFontMgr, fontname, callback) {
+ForDebug.dropIdb_ = function(incrFontMgr, fontname, callback) {
   var db_name = IncrementalFont.DB_NAME + '/' + fontname;
   return incrFontMgr.getIDB_
   .then(function(db) {
