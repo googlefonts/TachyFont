@@ -86,7 +86,10 @@ class WebFont(webapp2.RequestHandler):
     bandwidth_limited_write(f, self.response.out, bandwidth, False)
 
 def bandwidth_limited_write(in_file, out_file, Kbps_str, post_delay_compression):
-  Kbps = float(Kbps_str)
+  try:
+    Kbps = float(Kbps_str)
+  except:
+    Kbps = 0
   if not Kbps:
     while True:
       data = in_file.read()
