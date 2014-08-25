@@ -294,7 +294,7 @@ IncrementalFontUtils.requestCodepoints = function(url, fontname, codes) {
 IncrementalFontUtils.requestURL = function(url, method, data, headerParams, 
                                            responseType) {
   //var cnt = fetchCnt++;
-  //timer.start('fetch ' + cnt + ' ' + url);
+  //timer1.start('fetch ' + cnt + ' ' + url);
   return new Promise(function(resolve, reject) {
     var xhr = new XMLHttpRequest();
     xhr.open(method, url, true);
@@ -303,7 +303,7 @@ IncrementalFontUtils.requestURL = function(url, method, data, headerParams,
     xhr.responseType = responseType;
     xhr.onload = function(oEvent) {
       if (xhr.status == 200) {
-        //timer.end('fetch ' + cnt + ' ' + url);
+        //timer1.end('fetch ' + cnt + ' ' + url);
         resolve(xhr.response);
       } else
         reject(xhr.status + ' ' + xhr.statusText);
@@ -500,18 +500,18 @@ IncrementalFontUtils.loadWebFont = function(fontname, fonturl, fonttype) {
 
   var timeout_id;
   function font_loading_timeout() {
-    timer.end('load web font ' + fontname);
+    timer2.end('load web font ' + fontname);
     timeout_id = setTimeout(font_loading_timeout, 100);
   }
 
-  timer.start('load web font ' + fontname);
+  timer2.start('load web font ' + fontname);
   font_loading_timeout();
   var bandwidth = ForDebug.getCookie('bandwidth', '0')
   var face = new FontFace(fontname, "url(" + fonturl + "?bandwidth=" + bandwidth + ")", {});
   face.load().then(function (loadedFace) {
     document.fonts.add(loadedFace);
     document.body.style.fontFamily = fontname;
-    timer.end('load web font ' + fontname);
+    timer2.end('load web font ' + fontname);
     clearTimeout(timeout_id);
   });
   return face;

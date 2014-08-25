@@ -42,7 +42,7 @@
     var EMPTY_FS = true;
     var FONTNAME = 'v1DroidSansFallback';
     var TEXTS = [];
-    var timer = new Timer();
+    var timer1 = new Timer('lightGreen', '10px', '');
     var fontLoader = new IncrementalFontLoader(FONTNAME);
     var filesystem = new FilesystemHelper(
             FilesystemHelper.requestTemporaryFileSystem(
@@ -54,9 +54,9 @@
           elem.style.visibility = 'visible';
     };
 
-    //timer.start('get base to file system');
+    //timer1.start('get base to file system');
     var baseReady = fontLoader.getBaseToFileSystem(filesystem, makeVisible);
-    //timer.end('get base to file system');
+    //timer1.end('get base to file system');
   </script>
 
 </head>

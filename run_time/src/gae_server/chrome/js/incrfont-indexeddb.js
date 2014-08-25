@@ -79,14 +79,14 @@ IncrementalFont.CHARLIST = 'charlist';
  *                 array[2] {DataView} The font data.
  */
 IncrementalFont.createManager = function(fontname, url) {
-  timer.start('load base: ' + fontname);
+  timer1.start('load base: ' + fontname);
   console.log('check to see if a webfont is in cache');
   if (!url) {
     url = window.location.protocol + "//" + window.location.hostname + 
         (window.location.port ? ':' + window.location.port: '');
   }
   var incrFontMgr = new IncrementalFont.obj_(fontname, url);
-  //timer.start('openIndexedDB.open ' + fontname);
+  //timer1.start('openIndexedDB.open ' + fontname);
   IncrementalFontUtils.logger(incrFontMgr.url, 
     'need to report info');
   console.log('It would be good to report status of:\n\
@@ -98,7 +98,7 @@ IncrementalFont.createManager = function(fontname, url) {
       * way to clear old info\n\
       * errors');
   incrFontMgr.getIDB_ = incrFontMgr.openIndexedDB(fontname);
-  //timer.end('openIndexedDB.open ' + fontname);
+  //timer1.end('openIndexedDB.open ' + fontname);
 
   // Create a class with visibility: hidden.
   incrFontMgr.style = IncrementalFontUtils.setVisibility(null, fontname, false);
@@ -119,16 +119,16 @@ IncrementalFont.createManager = function(fontname, url) {
     return Promise.all([idb, fileinfo, fontdata]);
   }).
   catch (function(e) {
-    //timer.end('did not get the base data ' + fontname);
+    //timer1.end('did not get the base data ' + fontname);
     console.log('Did not get base from IDB, need to fetch it: ' + fontname);
-    timer.start('fetch ' + fontname);
+    timer1.start('fetch ' + fontname);
     var bandwidth = ForDebug.getCookie('bandwidth', '0')
     return IncrementalFontUtils.requestURL(incrFontMgr.url + 
       '/incremental_fonts/incrfonts/' + incrFontMgr.fontname + '/base', 'GET', 
       null, { 'X-TachyFon-bandwidth': bandwidth }, 'arraybuffer').
     then(function(xfer_bytes) {
-      timer.end('fetch ' + fontname);
-      timer.start('process ' + fontname);
+      timer1.end('fetch ' + fontname);
+      timer1.start('process ' + fontname);
       var xfer_data = new DataView(xfer_bytes);
       var fileinfo = IncrementalFontUtils.parseBaseHeader(xfer_data);
       var header_data = new DataView(xfer_bytes, 0, fileinfo.headSize);
@@ -141,12 +141,12 @@ IncrementalFont.createManager = function(fontname, url) {
       var basefont =
         IncrementalFontUtils.sanitizeBaseFont(fileinfo, raw_basefont);
       incrFontMgr.persistDelayed_(IncrementalFont.BASE);
-      timer.end('process ' + fontname);
+      timer1.end('process ' + fontname);
       return [incrFontMgr.getIDB_, fileinfo, basefont];
     });
   }).
   then(function(arr) {
-    timer.end('load base: ' + fontname);
+    timer1.end('load base: ' + fontname);
     var fileinfo = arr[1];
     // Create the @font-face rule.
     IncrementalFontUtils.setFont(fontname, arr[2], fileinfo.isTTF);
@@ -243,7 +243,7 @@ IncrementalFont.obj_.prototype.loadNeededChars = function(element_name) {
           console.log('load ' + neededCodes.length + ' codes:');
           console.log(neededCodes);
           load_cnt = global_load_cnt++;
-          timer.start(that.fontname + ' load chars #' + load_cnt)
+          timer1.start(that.fontname + ' load chars #' + load_cnt)
         } else {
           //console.log('do not need anymore characters');
           return null;
@@ -267,7 +267,7 @@ IncrementalFont.obj_.prototype.loadNeededChars = function(element_name) {
             fontdata = IncrementalFontUtils.injectCharacters(fileinfo, fontdata,
               chardata);
             IncrementalFontUtils.setFont(that.fontname, fontdata, fileinfo.isTTF);
-            timer.end(that.fontname + ' load chars #' + load_cnt)
+            timer1.end(that.fontname + ' load chars #' + load_cnt)
             // Update the data.
             that.getBase = Promise.all([arr[0], arr[1], fontdata]);
             that.getCharlist = Promise.all([that.getIDB_, charlist]);
@@ -404,9 +404,9 @@ IncrementalFont.obj_.prototype.openIndexedDB = function(fontname) {
 
   var openIDB = new Promise(function(resolve, reject) {
     var db_name = IncrementalFont.DB_NAME + '/' + fontname;
-    //timer.start('indexedDB.open ' + db_name);
+    //timer1.start('indexedDB.open ' + db_name);
     var dbOpen = indexedDB.open(db_name, IncrementalFont.version);
-    //timer.end('indexedDB.open ' + db_name);
+    //timer1.end('indexedDB.open ' + db_name);
 
     dbOpen.onsuccess = function(e) {
       var db = e.target.result;

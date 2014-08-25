@@ -20,11 +20,14 @@
  * Init a timer
  * @constructor
  */
-function Timer() {
+function Timer(backgroundColor, leftMargin, rightMargin) {
     this.start_time = Date.now();
     this.results = [];
     this.timing_info = {};
     this.table = null;
+    this.backgroundColor = backgroundColor;
+    this.leftMargin = leftMargin;
+    this.rightMargin = rightMargin;
 }
 
 Timer.columns = ['Item', 'Start', 'End', 'mS'];
@@ -89,36 +92,28 @@ Timer.prototype.getTable = function() {
   if (!document.body) {
     return null;
   }
-  var table = document.getElementById('timingTablex');
-  if (!table) {
-    table = document.createElement('table');
-    table.id = 'timingTablex';
-    table.style.fontSize = '125%';
-    table.style.fontFamily = 'sans-serif';
-    table.style.marginLeft = 'auto';
-    table.style.marginRight = 'auto';
-    table.style.backgroundColor = 'LightPink';
-    table.style.border = '3px solid gray';
-    var row = table.insertRow(0);
-    for (var i = 0; i < Timer.columns.length; i++) {
-      var cell = row.insertCell(i);
-      cell.style.fontWeight = '900';
-      cell.style.textAlign = 'center';
-      cell.innerHTML = Timer.columns[i];
-    }
-    var div = document.createElement('div');
-    div.style.position = 'absolute';
-    div.style.top = '200px';
-    div.style.width = '100%';
-
-    var span = document.createElement('div');
-    span.style.marginLeft = 'auto';
-    span.style.marginRight = 'auto';
-
-    div.appendChild(span);
-    span.appendChild(table);
-    document.body.appendChild(div);
+  var table = document.createElement('table');
+  table.style.fontSize = '125%';
+  table.style.fontFamily = 'sans-serif';
+  table.style.marginLeft = this.leftMargin;
+  table.style.marginRight = this.rightMargin;
+  table.style.backgroundColor = this.backgroundColor;
+  table.style.border = '3px solid gray';
+  var row = table.insertRow(0);
+  for (var i = 0; i < Timer.columns.length; i++) {
+    var cell = row.insertCell(i);
+    cell.style.fontWeight = '900';
+    cell.style.textAlign = 'center';
+    cell.innerHTML = Timer.columns[i];
   }
+  var div = document.createElement('div');
+  div.style.position = 'absolute';
+  div.style.top = '200px';
+  div.style.left = this.leftMargin;
+  div.style.right = this.rightMargin;
+
+  div.appendChild(table);
+  document.body.appendChild(div);
   this.table = table;
 
   return this.table;
