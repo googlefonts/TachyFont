@@ -25,16 +25,19 @@ var ForDebug = {};
 
 // This is here only for measuring the timings during development.
 // This is not needed for regular use.
-var timer = new Timer();
+var timer1 = new Timer('lightGreen', '10px', '');
+var timer2 = new Timer('lightPink', '', '10px');
 
 /**
  * If timing data was collected display them on DOM ready.
  */
 document.addEventListener("DOMContentLoaded", function(event) {
   setTimeout(function() {
-    var num_timings = timer.numberOfTimingRecords();
-    if (num_timings) {
-      timer.display_timing();
+    if (timer1.numberOfTimingRecords()) {
+      timer1.display_timing();
+    }
+    if (timer2.numberOfTimingRecords()) {
+      timer2.display_timing();
     }
   }, 1);
 });

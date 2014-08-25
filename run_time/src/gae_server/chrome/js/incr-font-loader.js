@@ -135,13 +135,13 @@ IncrementalFontLoader.prototype.getBaseFont_ = function(inFS, fs, filename) {
       return [null, rle_fontdata];
     }).
     //then(function(data) {
-    //  timer.start('rleDecode');
+    //  timer1.start('rleDecode');
     //  return data;
     //}).
     then(RLEDecoder.rleDecode).
     then(function(data) {
-    //  timer.end('rleDecode');
-    //  timer.start('sanitizeBase');
+    //  timer1.end('rleDecode');
+    //  timer1.start('sanitizeBase');
         IncrementalFontUtils.writeCmap12(data, that);
         IncrementalFontUtils.writeCmap4(data, that);
         IncrementalFontUtils.writeCharsetFormat2(data, that);
@@ -151,7 +151,7 @@ IncrementalFontLoader.prototype.getBaseFont_ = function(inFS, fs, filename) {
       return IncrementalFontUtils.sanitizeBaseFont(that, raw_base_font);
     }).
     then(function(sanitized_base) {
-      //timer.end('sanitizeBase');
+      //timer1.end('sanitizeBase');
       return sanitized_base;
     });
 
@@ -177,7 +177,7 @@ IncrementalFontLoader.prototype.getBaseToFileSystem = function(fs, callback) {
       //  return sanitized_base;
       //}).
       then(function(sanitized_base) {
-        //timer.start('write base to filesystem');
+        //timer1.start('write base to filesystem');
         if (!doesBaseExist) {
           that.baseFont = sanitized_base;
           var fileURL = URL.createObjectURL(new Blob([sanitized_base],
@@ -194,7 +194,7 @@ IncrementalFontLoader.prototype.getBaseToFileSystem = function(fs, callback) {
         //  'application/octet-stream');
       });/*.
       then(function(data) {
-        //timer.end('write base to filesystem');
+        //timer1.end('write base to filesystem');
         return data;
       })*/
 
