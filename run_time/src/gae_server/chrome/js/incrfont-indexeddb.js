@@ -122,9 +122,10 @@ IncrementalFont.createManager = function(fontname, url) {
     //timer.end('did not get the base data ' + fontname);
     console.log('Did not get base from IDB, need to fetch it: ' + fontname);
     timer.start('fetch ' + fontname);
+    var bandwidth = ForDebug.getCookie('bandwidth', '0')
     return IncrementalFontUtils.requestURL(incrFontMgr.url + 
       '/incremental_fonts/incrfonts/' + incrFontMgr.fontname + '/base', 'GET', 
-      null, { 'X-TachyFon-bandwidth': '1600' }, 'arraybuffer').
+      null, { 'X-TachyFon-bandwidth': bandwidth }, 'arraybuffer').
     then(function(xfer_bytes) {
       timer.end('fetch ' + fontname);
       timer.start('process ' + fontname);
