@@ -25,8 +25,8 @@ var ForDebug = {};
 
 // This is here only for measuring the timings during development.
 // This is not needed for regular use.
-var timer1 = new Timer('lightGreen', '10px', '');
-var timer2 = new Timer('lightPink', '', '10px');
+var timer1 = new Timer('lightGreen', '200px', '10px', '');
+var timer2 = new Timer('lightPink', '200px', '', '10px');
 
 /**
  * If timing data was collected display them on DOM ready.

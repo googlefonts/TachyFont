@@ -20,12 +20,13 @@
  * Init a timer
  * @constructor
  */
-function Timer(backgroundColor, leftMargin, rightMargin) {
+function Timer(backgroundColor, top, leftMargin, rightMargin) {
     this.start_time = Date.now();
     this.results = [];
     this.timing_info = {};
     this.table = null;
     this.backgroundColor = backgroundColor;
+    this.top = top;
     this.leftMargin = leftMargin;
     this.rightMargin = rightMargin;
 }
@@ -108,7 +109,7 @@ Timer.prototype.getTable = function() {
   }
   var div = document.createElement('div');
   div.style.position = 'absolute';
-  div.style.top = '200px';
+  div.style.top = this.top;
   div.style.left = this.leftMargin;
   div.style.right = this.rightMargin;
 

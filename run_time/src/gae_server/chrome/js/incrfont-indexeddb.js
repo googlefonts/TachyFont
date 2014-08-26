@@ -79,7 +79,7 @@ IncrementalFont.CHARLIST = 'charlist';
  *                 array[2] {DataView} The font data.
  */
 IncrementalFont.createManager = function(fontname, url) {
-  timer1.start('load base: ' + fontname);
+  timer1.start('load base:<br>' + fontname);
   console.log('check to see if a webfont is in cache');
   if (!url) {
     url = window.location.protocol + "//" + window.location.hostname + 
@@ -146,7 +146,7 @@ IncrementalFont.createManager = function(fontname, url) {
     });
   }).
   then(function(arr) {
-    timer1.end('load base: ' + fontname);
+    timer1.end('load base:<br>' + fontname);
     var fileinfo = arr[1];
     // Create the @font-face rule.
     IncrementalFontUtils.setFont(fontname, arr[2], fileinfo.isTTF);
