@@ -69,6 +69,9 @@ to be on the PYTHONPATH.
 under new 'src_font/v2' folder.
 - Make sure you've added `fontTools` into `PYTHONPATH`.
 - Simply double click to `preprocess_all.py` Python 2.7 script and choose `Run in Terminal`.
+- Alternatively, open a terminal in current folder, then run
+
+    `./preprocess_all.py`.
 - You will see
 
     `Found |font-path|. Use following name in javascript: |font-identifier|`
