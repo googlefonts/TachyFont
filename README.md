@@ -63,6 +63,17 @@ to be on the PYTHONPATH.
 
 # Generating font data
 
+# Simple Usage
+
+Put all of your fonts under 'src_font/v1' folder initially. If you use new version of same font put it 
+under new 'src_font/v2' folder. Make sure you've added fontTools into PYTHONPATH.
+Then, simply double click to `preprocess_all.py` Python 2.7 script and choose `Run in Terminal`.
+You will see 'Found |font-path|. Use following name in javascript: |font-identifier|'
+Pass this into your javascript code when asked specify font name. 
+
+
+# Advanced Usage
+
 - Run `pyprepfnt` with the font file
 
 ```
