@@ -75,7 +75,7 @@ class BaseFonter(object):
     filler.fill(glyf_off, glyf_len, '\x00')
     filler.close()
 
-  def __zero_charset_fmt2(self,output):
+  def __zero_charset_fmt(self,output):
     font = TTFont(output)
     cffTableOffset = font.reader.tables['CFF '].offset
     cffTable = font['CFF '].cff
@@ -85,18 +85,22 @@ class BaseFonter(object):
     inner_file = font.reader.file
     inner_file.seek(cffTableOffset+charsetOffset)
     format = readCard8(inner_file);
-    if format != 2:
+    if format != 2 or format != 1:
       return None
+    record_len = 4 if format == 2 else 3
     seenGlyphCount = 0
     size = 0
     while seenGlyphCount < numGlyphs:
       inner_file.seek(2,io.SEEK_CUR)
-      nLeft = readCard16(inner_file)
+      if format == 2:
+        nLeft = readCard16(inner_file)
+      else: #format 1
+        nLeft = readCard8(inner_file)
       seenGlyphCount += nLeft + 1
       size += 1
     font.close()
     filler = Filler(output)
-    filler.fill(cffTableOffset+charsetOffset+1, 4*size, '\x00')
+    filler.fill(cffTableOffset+charsetOffset+1, record_len*size, '\x00')
     filler.close()
   
   def __zero_cmaps(self,output):
@@ -267,7 +271,7 @@ class BaseFonter(object):
     if self.isCff:
       self.__end_char_strings(output)
       self.__fill_char_strings(output)
-      self.__zero_charset_fmt2(output)
+      self.__zero_charset_fmt(output)
     else:
       self.__zero_glyf(output)
       self.__fill_loca(output)
@@ -292,7 +296,7 @@ class BaseFonter(object):
     if self.isCff:
       self.__end_char_strings(output)
       self.__fill_char_strings(output)
-      self.__zero_charset_fmt2(output)
+      self.__zero_charset_fmt(output)
     else:
       self.__zero_glyf(output)
       self.__fill_loca(output)
