@@ -441,7 +441,7 @@ IncrementalFontUtils.setFont = function(fontname, data, isTTF) {
   var sheet = style.sheet;
 
   // Delete the rule for this font (if it exists).
-  var rule;
+  var rule_to_delete = -1;
   var rules = sheet.cssRules || sheet.rules;
   if (rules) {
     for (var i = 0; i < rules.length; i++) {
@@ -449,16 +449,10 @@ IncrementalFontUtils.setFont = function(fontname, data, isTTF) {
       if (this_rule.type == CSSRule.FONT_FACE_RULE) {
         //console.log('found an @font-face rule');
         var style = this_rule.style;
-        var font_family = style.fontFamily;
+        var font_family = style.getPropertyValue('font-family');
         // TODO(bstell) consider using weight/slant.
         if (font_family == fontname) {
-          //console.log('found ' + fontname);
-          rule = this_rule;
-          if (sheet.deleteRule) {
-            sheet.deleteRule(i);
-          } else if (sheet.removeRule) {
-            sheet.removeRule(i);
-          }
+          rule_to_delete = i;
           break;
         }
       }
@@ -488,9 +482,18 @@ IncrementalFontUtils.setFont = function(fontname, data, isTTF) {
     ' format("' + format + '")' + 
     ';' +
     '}';
-  console.log('rule_str: \n' + rule_str)
 
-  sheet.insertRule(rule_str, 0);
+  sheet.insertRule(rule_str, sheet.cssRules.length);
+
+  if (rule_to_delete >= 0) {
+    if (sheet.deleteRule) {
+      sheet.deleteRule(rule_to_delete);
+    } else if (sheet.removeRule) {
+      sheet.removeRule(rule_to_delete);
+    } else {
+      console.log('no delete/drop rule');
+    }
+  }
 
 };
 
@@ -502,10 +505,10 @@ IncrementalFontUtils.setFont = function(fontname, data, isTTF) {
  * @param {string} fonttype The type of the font; eg truetype or opentype.
  */
 IncrementalFontUtils.loadWebFont = function(fontname, fonturl, fonttype) {
-  timer2.start('load web font ' + fontname);
+  timer2.start('load web font:<br>' + fontname);
   var timeout_id;
   function font_loading_timeout() {
-    timer2.end('load web font ' + fontname);
+    timer2.end('load web font:<br>' + fontname);
     timeout_id = setTimeout(font_loading_timeout, 100);
   }
   font_loading_timeout();
@@ -525,7 +528,7 @@ IncrementalFontUtils.loadWebFont = function(fontname, fonturl, fonttype) {
     // A lazy way to time the web font.
     window.addEventListener("load", function(event) {
       clearTimeout(timeout_id);
-      timer2.end('load web font ' + fontname);
+      timer2.end('load web font:<br>' + fontname);
     });
 
 
@@ -537,7 +540,7 @@ IncrementalFontUtils.loadWebFont = function(fontname, fonturl, fonttype) {
   face.load().then(function (loadedFace) {
     document.fonts.add(loadedFace);
     document.body.style.fontFamily = fontname;
-    timer2.end('load web font ' + fontname);
+    timer2.end('load web font:<br>' + fontname);
     clearTimeout(timeout_id);
   });
   return face;
