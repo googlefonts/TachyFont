@@ -18,6 +18,8 @@
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<!-- Force the web fonts to reload each time. -->
+<META HTTP-EQUIV="Pragma" CONTENT="no-cache">
 <title>Incremental Fonts IDB: Nanum Brush Script</title>
   <script src="js/binary-font-editor.js"></script>
   <script src="js/incrfont-indexeddb.js"></script>
@@ -42,15 +44,18 @@
   </script>
   <link rel="stylesheet" type="text/css" href="css/table_styles.css">
   <style>
-    @font-face {
-      font-family: NanumBrushScript;
-      font-style: normal;
-      src: url('/incremental_fonts/webfonts/v1NanumBrushScript-Regular/NanumBrushScript-Regular.woff') format('woff');
-    }
     td {
       vertical-align: top;
     }
   </style>
+  <script>
+    // Time the loading of the web font.
+    // For reasons that are completely unclear it appears that the return value
+    // has to be stored for FontFace to work correctly.
+    var x = IncrementalFontUtils.loadWebFont('NanumBrushScript', 
+      '/incremental_fonts/webfonts/v1NanumBrushScript-Regular/NanumBrushScript-Regular.woff',
+      'woff');
+  </script>
 </head>
 
 <body>

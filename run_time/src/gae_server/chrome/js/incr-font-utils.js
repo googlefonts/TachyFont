@@ -476,10 +476,21 @@ IncrementalFontUtils.setFont = function(fontname, data, isTTF) {
     }
   }
   var blobUrl = window.URL.createObjectURL(blob);
-  sheet.insertRule('@font-face {\n' +
-                   '    font-family: ' + fontname + ';\n' +
-                   '    src: url(' + blobUrl + ') format(' + 'opentype' + ');' +
-                   '}', 0);
+  var format;
+  if (isTTF) {
+    format = 'truetype';
+  } else {
+    format = 'opentype';
+  }
+  var rule_str = '@font-face {\n' +
+    '    font-family: ' + fontname + ';\n' +
+    '    src: url("' + blobUrl + '")' + 
+    ' format("' + format + '")' + 
+    ';' +
+    '}';
+  console.log('rule_str: \n' + rule_str)
+
+  sheet.insertRule(rule_str, 0);
 
 };
 
@@ -491,27 +502,38 @@ IncrementalFontUtils.setFont = function(fontname, data, isTTF) {
  * @param {string} fonttype The type of the font; eg truetype or opentype.
  */
 IncrementalFontUtils.loadWebFont = function(fontname, fonturl, fonttype) {
-  if (typeof window.FontFace == 'undefined') {
-    var style = document.createElement('style');
-    var sheet = style.sheet;
-    sheet.insertRule('@font-face {\n' +
-      '    font-family: ' + fontname + ';\n' +
-      '    src: url(' + fonturl + ') format(' + fonttype + ');' +
-      '}', 0);
-    document.head.appendChild(style);
-  	return;
-  }
-
+  timer2.start('load web font ' + fontname);
   var timeout_id;
   function font_loading_timeout() {
     timer2.end('load web font ' + fontname);
     timeout_id = setTimeout(font_loading_timeout, 100);
   }
-
-  timer2.start('load web font ' + fontname);
   font_loading_timeout();
-  var bandwidth = ForDebug.getCookie('bandwidth', '0')
-  var face = new FontFace(fontname, "url(" + fonturl + "?bandwidth=" + bandwidth + ")", {});
+
+  var bandwidth = ForDebug.getCookie('bandwidth', '0');
+  if (true || typeof window.FontFace == 'undefined') {
+    var style = document.createElement('style');
+    document.head.appendChild(style);
+    var sheet = style.sheet;
+    var rule_str = 
+      '@font-face {\n' +
+      '    font-family: "' + fontname + '";\n' + 
+      '    src: url("' + fonturl + "?bandwidth=" + bandwidth + 
+      '&ts=' + Date.now() + '") format("' + fonttype + '")\n' +
+      '}';
+    sheet.insertRule(rule_str, 0);
+    // A lazy way to time the web font.
+    window.addEventListener("load", function(event) {
+      clearTimeout(timeout_id);
+      timer2.end('load web font ' + fontname);
+    });
+
+
+  	return;
+  }
+
+  var face = new FontFace(fontname, "url(" + fonturl + 
+    "?bandwidth=" + bandwidth + '&ts=' + Date.now() + ")", {});
   face.load().then(function (loadedFace) {
     document.fonts.add(loadedFace);
     document.body.style.fontFamily = fontname;

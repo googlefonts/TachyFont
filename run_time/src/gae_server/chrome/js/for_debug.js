@@ -94,7 +94,6 @@ ForDebug.addBandwidthControl = function(incrFontMgr) {
     select.selectedIndex = 0;
     for (var i = 0; i < ForDebug.Bandwidths.length; i++) {
       var option_info = ForDebug.Bandwidths[i];
-      console.log(option_info.name + ' = ' + option_info.value)
       var option = document.createElement("option");
       option.text = option_info.name;
       option.value = option_info.value;
@@ -105,15 +104,13 @@ ForDebug.addBandwidthControl = function(incrFontMgr) {
     }
 
     function setBandwidthCookie(select) {
-      console.log('select.selectedIndex = ' + select.selectedIndex);
       var selectedOption = select.options[select.selectedIndex];
-      console.log('selectedOption.value = ' + selectedOption.value);
       document.cookie = 'bandwidth=' + selectedOption.value;
     }
     setBandwidthCookie(select);
     
     select.onchange = function(event) {
-      var select = event.srcElement;
+      var select = event.currentTarget;
       setBandwidthCookie(select);
     };
 
