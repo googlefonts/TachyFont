@@ -72,7 +72,6 @@ under new 'src_font/v2' folder.
 - You will see
 
     `Found |font-path|. Use following name in javascript: |font-identifier|`
-
 - Pass this |font-identifier| into your javascript code when asked to specify font name. 
 
 
