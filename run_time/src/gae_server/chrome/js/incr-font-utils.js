@@ -211,15 +211,19 @@ IncrementalFontUtils.writeCmap4 = function(baseFont, headerInfo) {
  * @param {Object} headerInfo Header information
  */
 IncrementalFontUtils.writeCharsetFormat2 = function(baseFont, headerInfo) {
-    if (!headerInfo.charset_fmt_2)
+    if (!headerInfo.charset_fmt)
         return;
     var binEd = new BinaryFontEditor(baseFont,
-                                        headerInfo.charset_fmt_2.offset + 1);
-    var nGroups = headerInfo.charset_fmt_2.gos.len;
-    var segments = headerInfo.charset_fmt_2.gos.segments;
+                                        headerInfo.charset_fmt.offset + 1);
+    var nGroups = headerInfo.charset_fmt.gos.len;
+    var segments = headerInfo.charset_fmt.gos.segments;
+    var is_fmt_2 = (headerInfo.charset_fmt.gos.type == 6);
     for (var i = 0; i < nGroups; i++) {
         binEd.setUint16_(segments[i][0]);
-        binEd.setUint16_(segments[i][1]);
+        if(is_fmt_2)
+            binEd.setUint16_(segments[i][1]);
+        else
+            binEd.setUint8_(segments[i][1]);
     }
 };
 

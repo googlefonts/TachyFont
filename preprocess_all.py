@@ -26,6 +26,7 @@ import errno
 
 
 class Paths:
+	TOOL = '/build_time/src/pyprepfnt'
 	BASE = os.path.dirname(os.path.abspath(__file__))
 	SOURCE = BASE + '/src_fonts/'
 	COOKED = BASE + '/cooked/'
@@ -41,7 +42,9 @@ def makedir(dir):
 
 def process(font_path,outdir):
 	is_otf = font_path.endswith('.otf')
-	argv = [Paths.BASE+'/pyprepfnt']
+	argv = [Paths.BASE+Paths.TOOL]
+	#to enable cache font uncomment
+	#argv.append('--changefont')
 	if is_otf:
 		argv.append('--hinting')
 	argv.append('--output')
@@ -78,4 +81,8 @@ def main(args):
 
 
 if __name__ == '__main__':
-	main(sys.argv[1:])
+	try:
+		main(sys.argv[1:])
+	except:
+		print "Unexpected error:", sys.exc_info()[0]
+	raw_input("Press Enter to exit...")

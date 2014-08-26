@@ -393,7 +393,7 @@ BinaryFontEditor.prototype.readNextGOS = function() {
             segments[i][0] += segments[i - 1][0];
             segments[i][2] += segments[i - 1][2];
         }
-    } else if (type == 6) {
+    } else if (type == 6 || type == 7) {
         var extraOffset = [];
         var deltaFirst, deltaNleft, segment;
         for (var i = 0; i < nGroups; i++) {
@@ -617,7 +617,7 @@ BinaryFontEditor.readOps.CS02 = function(editor, font) {
     var charset = {};
     charset.offset = editor.getUint32_();
     charset.gos = editor.readNextGOS();
-    font.charset_fmt_2 = charset;
+    font.charset_fmt = charset;
 };
 
 /**
