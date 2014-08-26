@@ -71,7 +71,7 @@ under new 'src_font/v2' folder.
 - Simply double click to `preprocess_all.py` Python 2.7 script and choose `Run in Terminal`.
 - You will see
 
-    Found |font-path|. Use following name in javascript: |font-identifier|
+    `Found |font-path|. Use following name in javascript: |font-identifier|`
 
 - Pass this |font-identifier| into your javascript code when asked to specify font name. 
 
