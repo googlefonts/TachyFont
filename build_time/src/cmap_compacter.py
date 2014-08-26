@@ -111,7 +111,7 @@ class _GOSGenerators(object):
     inner_file = font.reader.file
     inner_file.seek(cffTableOffset+charsetOffset)
     format = readCard8(inner_file);
-    if format != 2 or format != 1:
+    if format != 2 and format != 1:
       return None
     seenGlyphCount = 0
     firstArr = []
