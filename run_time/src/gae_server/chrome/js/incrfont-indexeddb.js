@@ -173,7 +173,10 @@ IncrementalFont.createManager = function(fontname, url) {
   ForDebug.addDropIdbButton(incrFontMgr, fontname);
 
   // For Debug: add a control to set the bandwidth.
-  ForDebug.addBandwidthControl(incrFontMgr, fontname);
+  ForDebug.addBandwidthControl(incrFontMgr);
+
+  // For Debug: add a control to set the timing text size.
+  ForDebug.addTimingTextSizeControl(incrFontMgr);
 
   return incrFontMgr;
 };

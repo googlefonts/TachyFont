@@ -119,6 +119,60 @@ ForDebug.addBandwidthControl = function(incrFontMgr) {
   });
 };
 
+ForDebug.TimingTextSizes = [
+  { name: 'Extra Large', value: '200%' },
+  { name: 'Large', value: '150%' },
+  { name: 'Regular', value: '100%' },
+];
+
+/**
+ * Add a control to set the timing text size.
+ * For the text to be readable on WebPageTest.org it needs to be quite large.
+ * For other uses it can be a normal size
+ * @param {Object} incrFontMgr The incremental font manager.
+ */
+ForDebug.addTimingTextSizeControl = function(incrFontMgr) {
+  document.addEventListener("DOMContentLoaded", function(event) {
+    var span = document.createElement('span');
+    span.style.position = 'absolute';
+    span.style.top = '140px';
+    span.style.right = '10px';
+    span.style.backgroundColor = 'lightYellow';
+    span.style.border = '1px solid gray';
+    var label = document.createElement('span');
+    label.innerHTML = "Timing Text Size: ";
+    span.appendChild(label);
+
+    var cookie_value = ForDebug.getCookie('timing-text-size', '0');
+    var select = document.createElement("select");
+    select.selectedIndex = 0;
+    for (var i = 0; i < ForDebug.TimingTextSizes.length; i++) {
+      var option_info = ForDebug.TimingTextSizes[i];
+      var option = document.createElement("option");
+      option.text = option_info.name;
+      option.value = option_info.value;
+      select.add(option);
+      if (cookie_value == option_info.value) {
+        select.selectedIndex = i;
+      }
+    }
+
+    function setTimingTextSizeCookie(select) {
+      var selectedOption = select.options[select.selectedIndex];
+      document.cookie = 'timing-text-size=' + selectedOption.value;
+    }
+    setTimingTextSizeCookie(select);
+    
+    select.onchange = function(event) {
+      var select = event.currentTarget;
+      setTimingTextSizeCookie(select);
+    };
+
+    span.appendChild(select);
+    document.body.appendChild(span);
+  });
+};
+
 /**
  * Add a "drop DB" button.
  * @param {Object} incrFontMgr The incremental font manager.

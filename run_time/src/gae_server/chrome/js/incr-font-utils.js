@@ -431,6 +431,36 @@ IncrementalFontUtils.setFont = function(fontname, data, isTTF) {
     mime_type = 'font/otf'; // 'application/font-sfnt';
   }
 
+  var blob;
+  try {
+    blob = new Blob([data], { type: mime_type });
+  } catch (e) {
+    // IE 11 does not like using DataView here.
+    if (e.name == 'InvalidStateError') {
+      var buffer = data.buffer.slice(data.byteOffset);
+      blob = new Blob([buffer], { type: mime_type});
+    }
+  }
+  var blobUrl = window.URL.createObjectURL(blob);
+
+  if (typeof FontFace == 'undefined') {
+    IncrementalFontUtils.setFont_oldStyle(fontname, blobUrl, isTTF)
+    return;
+  } else {
+    var font = new FontFace(fontname, 'url(' + blobUrl + ')', {});
+    document.fonts.add(font);
+    font.load();
+  }
+};
+
+
+/**
+ * Add the '@font-face' rule without using CSS Fonts Module Level 3.
+ * @param {string} fontname The CSS fontname
+ * @param {string} blobUrl The blob URL of the font data.
+ * @param {boolean} isTTF True is the font is of type TTF.
+ */
+IncrementalFontUtils.setFont_oldStyle = function(fontname, blobUrl, isTTF) {
   // Get the style sheet.
   var style = document.getElementById(IncrementalFontUtils.STYLESHEET_ID);
   if (!style) {
@@ -459,17 +489,6 @@ IncrementalFontUtils.setFont = function(fontname, data, isTTF) {
     }
   }
 
-  var blob;
-  try {
-    blob = new Blob([data], { type: mime_type });
-  } catch (e) {
-    // IE 11 does not like using DataView here.
-    if (e.name == 'InvalidStateError') {
-      var buffer = data.buffer.slice(data.byteOffset);
-      blob = new Blob([buffer], { type: mime_type});
-    }
-  }
-  var blobUrl = window.URL.createObjectURL(blob);
   var format;
   if (isTTF) {
     format = 'truetype';
