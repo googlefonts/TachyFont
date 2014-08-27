@@ -61,6 +61,9 @@ ForDebug.getCookie = function(name, fallback) {
 
 ForDebug.Bandwidths = [
   { name: 'Full', value: '0' },
+  { name: '10 Kbps', value: '10' },
+  { name: '100 Kbps', value: '100' },
+  { name: '250 Kbps', value: '250' },
   { name: 'Argentina - 1.0 Mbps', value: '1000' },
   { name: 'India - 1.3 Mbps', value: '1300' },
   { name: '3G - 1.6 Mbps', value: '1600' },
