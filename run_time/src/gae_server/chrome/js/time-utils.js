@@ -94,7 +94,7 @@ Timer.prototype.getTable = function() {
     return null;
   }
   var table = document.createElement('table');
-  table.style.fontSize = '125%';
+  table.style.fontSize = '150%';
   table.style.fontFamily = 'sans-serif';
   table.style.marginLeft = this.leftMargin;
   table.style.marginRight = this.rightMargin;
