@@ -75,48 +75,13 @@ ForDebug.Bandwidths = [
  * @param {Object} incrFontMgr The incremental font manager.
  */
 ForDebug.addBandwidthControl = function(incrFontMgr) {
-  document.addEventListener("DOMContentLoaded", function(event) {
-    var span = document.createElement('span');
-    span.style.position = 'absolute';
-    span.style.top = '100px';
-    span.style.right = '10px';
-    span.style.backgroundColor = 'lightYellow';
-    span.style.border = '1px solid gray';
-    var label = document.createElement('span');
-    label.innerHTML = "<a href='http://www.akamai.com/stateoftheinternet/'" +
-    		"target='_blank'>Akami mobile bandwidth</a> " +
-    		"(<a href='http://www.akamai.com/dl/akamai/akamai-soti-q114.pdf'" +
-    		"target='_blank'>2014 report pg 31</a>): ";
-    span.appendChild(label);
+  var label_innerHTML = "<a href='http://www.akamai.com/stateoftheinternet/'" +
+  "target='_blank'>Akami mobile bandwidth</a> " +
+  "(<a href='http://www.akamai.com/dl/akamai/akamai-soti-q114.pdf'" +
+  "target='_blank'>2014 report pg 31</a>): ";
 
-    var cookie_value = ForDebug.getCookie('bandwidth', '0');
-    var select = document.createElement("select");
-    select.selectedIndex = 0;
-    for (var i = 0; i < ForDebug.Bandwidths.length; i++) {
-      var option_info = ForDebug.Bandwidths[i];
-      var option = document.createElement("option");
-      option.text = option_info.name;
-      option.value = option_info.value;
-      select.add(option);
-      if (cookie_value == option_info.value) {
-        select.selectedIndex = i;
-      }
-    }
-
-    function setBandwidthCookie(select) {
-      var selectedOption = select.options[select.selectedIndex];
-      document.cookie = 'bandwidth=' + selectedOption.value;
-    }
-    setBandwidthCookie(select);
-    
-    select.onchange = function(event) {
-      var select = event.currentTarget;
-      setBandwidthCookie(select);
-    };
-
-    span.appendChild(select);
-    document.body.appendChild(span);
-  });
+  ForDebug.addDropDownCookieControl(ForDebug.Bandwidths, 100, 10, 
+    'lightYellow', label_innerHTML, 'bandwidth');
 };
 
 ForDebug.TimingTextSizes = [
@@ -131,23 +96,34 @@ ForDebug.TimingTextSizes = [
  * For other uses it can be a normal size
  * @param {Object} incrFontMgr The incremental font manager.
  */
-ForDebug.addTimingTextSizeControl = function(incrFontMgr) {
+ForDebug.addTimingTextSizeControl = function() {
+  ForDebug.addDropDownCookieControl(ForDebug.TimingTextSizes, 140, 10, 
+    'lightYellow', "Timing Text Size", 'timing-text-size');
+};
+
+/**
+ * Add a control to set the timing text size.
+ * For the text to be readable on WebPageTest.org it needs to be quite large.
+ * For other uses it can be a normal size
+ * @param {Object} incrFontMgr The incremental font manager.
+ */
+ForDebug.addDropDownCookieControl = function(options, top, right, background_color, label_innerHTML, cookie_name) {
   document.addEventListener("DOMContentLoaded", function(event) {
     var span = document.createElement('span');
     span.style.position = 'absolute';
-    span.style.top = '140px';
-    span.style.right = '10px';
-    span.style.backgroundColor = 'lightYellow';
+    span.style.top = top + 'px';
+    span.style.right = right + 'px';
+    span.style.backgroundColor = background_color;
     span.style.border = '1px solid gray';
     var label = document.createElement('span');
-    label.innerHTML = "Timing Text Size: ";
+    label.innerHTML = label_innerHTML + ": ";
     span.appendChild(label);
 
-    var cookie_value = ForDebug.getCookie('timing-text-size', '0');
+    var cookie_value = ForDebug.getCookie(cookie_name, '0');
     var select = document.createElement("select");
     select.selectedIndex = 0;
-    for (var i = 0; i < ForDebug.TimingTextSizes.length; i++) {
-      var option_info = ForDebug.TimingTextSizes[i];
+    for (var i = 0; i < options.length; i++) {
+      var option_info = options[i];
       var option = document.createElement("option");
       option.text = option_info.name;
       option.value = option_info.value;
@@ -157,15 +133,15 @@ ForDebug.addTimingTextSizeControl = function(incrFontMgr) {
       }
     }
 
-    function setTimingTextSizeCookie(select) {
+    function setOptionChange(select) {
       var selectedOption = select.options[select.selectedIndex];
-      document.cookie = 'timing-text-size=' + selectedOption.value;
+      document.cookie = cookie_name + '=' + selectedOption.value;
     }
-    setTimingTextSizeCookie(select);
+    setOptionChange(select);
     
     select.onchange = function(event) {
       var select = event.currentTarget;
-      setTimingTextSizeCookie(select);
+      setOptionChange(select);
     };
 
     span.appendChild(select);
