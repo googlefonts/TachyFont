@@ -79,7 +79,7 @@ IncrementalFont.CHARLIST = 'charlist';
  *                 array[2] {DataView} The font data.
  */
 IncrementalFont.createManager = function(fontname, url) {
-  timer1.start('load base:<br>' + fontname);
+  timer1.start('load base');
   console.log('check to see if a webfont is in cache');
   if (!url) {
     url = window.location.protocol + "//" + window.location.hostname + 
@@ -119,16 +119,12 @@ IncrementalFont.createManager = function(fontname, url) {
     return Promise.all([idb, fileinfo, fontdata]);
   }).
   catch (function(e) {
-    //timer1.end('did not get the base data ' + fontname);
-    console.log('Did not get base from IDB, need to fetch it: ' + fontname);
-    timer1.start('fetch ' + fontname);
     var bandwidth = ForDebug.getCookie('bandwidth', '0')
     return IncrementalFontUtils.requestURL(incrFontMgr.url + 
       '/incremental_fonts/incrfonts/' + incrFontMgr.fontname + '/base', 'GET', 
       null, { 'X-TachyFon-bandwidth': bandwidth }, 'arraybuffer').
     then(function(xfer_bytes) {
-      timer1.end('fetch ' + fontname);
-      timer1.start('process ' + fontname);
+      timer1.start('uncompact base');
       var xfer_data = new DataView(xfer_bytes);
       var fileinfo = IncrementalFontUtils.parseBaseHeader(xfer_data);
       var header_data = new DataView(xfer_bytes, 0, fileinfo.headSize);
@@ -141,15 +137,16 @@ IncrementalFont.createManager = function(fontname, url) {
       var basefont =
         IncrementalFontUtils.sanitizeBaseFont(fileinfo, raw_basefont);
       incrFontMgr.persistDelayed_(IncrementalFont.BASE);
-      timer1.end('process ' + fontname);
+      timer1.end('uncompact base');
       return [incrFontMgr.getIDB_, fileinfo, basefont];
     });
   }).
   then(function(arr) {
-    timer1.end('load base:<br>' + fontname);
+    timer1.end('load base');
     var fileinfo = arr[1];
     // Create the @font-face rule.
-    IncrementalFontUtils.setFont(fontname, arr[2], fileinfo.isTTF);
+    IncrementalFontUtils.setFont(fontname, arr[2], fileinfo.isTTF,
+      'display empty base');
     // Make the class visible.
     IncrementalFontUtils.setVisibility(incrFontMgr.style, fontname, true);
 
@@ -241,12 +238,11 @@ IncrementalFont.obj_.prototype.loadNeededChars = function(element_name) {
             charlist[c] = 1;
           }
         }
-    
+
         if (neededCodes.length) {
           console.log('load ' + neededCodes.length + ' codes:');
           console.log(neededCodes);
           load_cnt = global_load_cnt++;
-          timer1.start(that.fontname + ' load chars #' + load_cnt)
         } else {
           //console.log('do not need anymore characters');
           return null;
@@ -269,8 +265,8 @@ IncrementalFont.obj_.prototype.loadNeededChars = function(element_name) {
           if (chardata != null) {
             fontdata = IncrementalFontUtils.injectCharacters(fileinfo, fontdata,
               chardata);
-            IncrementalFontUtils.setFont(that.fontname, fontdata, fileinfo.isTTF);
-            timer1.end(that.fontname + ' load chars #' + load_cnt)
+            IncrementalFontUtils.setFont(that.fontname, fontdata, 
+              fileinfo.isTTF, 'display ' + Object.keys(charlist).length + ' chars');
             // Update the data.
             that.getBase = Promise.all([arr[0], arr[1], fontdata]);
             that.getCharlist = Promise.all([that.getIDB_, charlist]);
