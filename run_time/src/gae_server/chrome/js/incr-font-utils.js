@@ -416,14 +416,14 @@ IncrementalFontUtils.setVisibility = function(style, fontname, visible) {
   return style;
 };
 
-
 /**
  * Add the '@font-face' rule
  * @param {string} fontname The CSS fontname
  * @param {Array} data The font data.
  * @param {boolean} isTTF True is the font is of type TTF.
  */
-IncrementalFontUtils.setFont = function(fontname, data, isTTF) {
+IncrementalFontUtils.setFont = function(fontname, data, isTTF, msg) {
+  timer1.start(msg);
   var mime_type = '';
   if (isTTF) {
     mime_type = 'font/ttf'; // 'application/x-font-ttf';
@@ -524,10 +524,10 @@ IncrementalFontUtils.setFont_oldStyle = function(fontname, blobUrl, isTTF) {
  * @param {string} fonttype The type of the font; eg truetype or opentype.
  */
 IncrementalFontUtils.loadWebFont = function(fontname, fonturl, fonttype) {
-  timer2.start('load web font:<br>' + fontname);
+  timer2.start('load web font');
   var timeout_id;
   function font_loading_timeout() {
-    timer2.end('load web font:<br>' + fontname);
+    timer2.end('load web font');
     timeout_id = setTimeout(font_loading_timeout, 100);
   }
   font_loading_timeout();
@@ -547,7 +547,7 @@ IncrementalFontUtils.loadWebFont = function(fontname, fonturl, fonttype) {
     // A lazy way to time the web font.
     window.addEventListener("load", function(event) {
       clearTimeout(timeout_id);
-      timer2.end('load web font:<br>' + fontname);
+      timer2.end('load web font');
     });
 
 
