@@ -94,7 +94,8 @@ Timer.prototype.getTable = function() {
     return null;
   }
   var table = document.createElement('table');
-  table.style.fontSize = '150%';
+  var text_size = ForDebug.getCookie('timing-text-size', '200%')
+  table.style.fontSize = text_size;
   table.style.fontFamily = 'sans-serif';
   table.style.marginLeft = this.leftMargin;
   table.style.marginRight = this.rightMargin;
