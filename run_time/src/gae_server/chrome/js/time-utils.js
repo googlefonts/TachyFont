@@ -153,8 +153,8 @@ Timer.prototype.display_timing = function() {
     if (end) {
       delta = end - start;
     } else {
-      end = '?';
-      delta = '?';
+      end = '-';
+      delta = '-';
     }
     var row = table.insertRow(table.rows.length);
     var cell = 0;
