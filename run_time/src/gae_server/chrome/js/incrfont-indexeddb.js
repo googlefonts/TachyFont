@@ -102,9 +102,13 @@ IncrementalFont.createManager = function(fontname, url) {
 
   // Create a class with visibility: hidden.
   incrFontMgr.style = IncrementalFontUtils.setVisibility(null, fontname, false);
-  document.addEventListener("DOMContentLoaded", function(event) {
+  if (document.readyState == 'loading') {
+    document.addEventListener("DOMContentLoaded", function(event) {
+      incrFontMgr.loadNeededChars();
+    });
+  } else {
     incrFontMgr.loadNeededChars();
-  });
+  }
 
   incrFontMgr.getBase = incrFontMgr.getIDB_.
   then(function(idb) {
