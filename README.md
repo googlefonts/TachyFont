@@ -1,5 +1,5 @@
 # Tachyfon
-### \[tak-i-fon\]
+### \[tac-ee-fon\]
 
 ## Fast fonts (but not as fast as a [Tachyon](http://en.wikipedia.org/wiki/Tachyon)).
 
