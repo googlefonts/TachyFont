@@ -23,10 +23,7 @@
 
 var ForDebug = {};
 
-/**
- * If timing data was collected display them on DOM ready.
- */
-document.addEventListener("DOMContentLoaded", function(event) {
+ForDebug.updateDisplay_ = function() {
   setTimeout(function() {
     if (timer1.numberOfTimingRecords()) {
       timer1.display_timing();
@@ -35,8 +32,19 @@ document.addEventListener("DOMContentLoaded", function(event) {
       timer2.display_timing();
     }
   }, 1);
-});
+};
 
+
+/**
+ * If timing data was collected display them on DOM ready.
+ */
+if (document.readyState == 'loading') {
+  document.addEventListener("DOMContentLoaded", function(event) {
+    ForDebug.updateDisplay_();
+  });
+} else {
+  ForDebug.updateDisplay_();
+}
 
 ForDebug.getCookie = function(name, fallback) {
   name += '=';
@@ -106,45 +114,53 @@ ForDebug.addTimingTextSizeControl = function() {
  * @param {Object} incrFontMgr The incremental font manager.
  */
 ForDebug.addDropDownCookieControl = function(options, top, right, background_color, label_innerHTML, cookie_name) {
-  document.addEventListener("DOMContentLoaded", function(event) {
-    var span = document.createElement('span');
-    span.style.position = 'absolute';
-    span.style.top = top + 'px';
-    span.style.right = right + 'px';
-    span.style.backgroundColor = background_color;
-    span.style.border = '1px solid gray';
-    var label = document.createElement('span');
-    label.innerHTML = label_innerHTML + ": ";
-    span.appendChild(label);
+  if (document.readyState == 'loading') {
+    document.addEventListener("DOMContentLoaded", function(event) {
+      ForDebug.addDropDownCookieControl_(options, top, right, background_color, label_innerHTML, cookie_name);
+    });
+  } else {
+    ForDebug.addDropDownCookieControl_(options, top, right, background_color, label_innerHTML, cookie_name);
+  }
+};
 
-    var cookie_value = ForDebug.getCookie(cookie_name, '0');
-    var select = document.createElement("select");
-    select.selectedIndex = 0;
-    for (var i = 0; i < options.length; i++) {
-      var option_info = options[i];
-      var option = document.createElement("option");
-      option.text = option_info.name;
-      option.value = option_info.value;
-      select.add(option);
-      if (cookie_value == option_info.value) {
-        select.selectedIndex = i;
-      }
-    }
+ForDebug.addDropDownCookieControl_ = function(options, top, right, background_color, label_innerHTML, cookie_name) {
+  var span = document.createElement('span');
+  span.style.position = 'absolute';
+  span.style.top = top + 'px';
+  span.style.right = right + 'px';
+  span.style.backgroundColor = background_color;
+  span.style.border = '1px solid gray';
+  var label = document.createElement('span');
+  label.innerHTML = label_innerHTML + ": ";
+  span.appendChild(label);
 
-    function setOptionChange(select) {
-      var selectedOption = select.options[select.selectedIndex];
-      document.cookie = cookie_name + '=' + selectedOption.value;
+  var cookie_value = ForDebug.getCookie(cookie_name, '0');
+  var select = document.createElement("select");
+  select.selectedIndex = 0;
+  for (var i = 0; i < options.length; i++) {
+    var option_info = options[i];
+    var option = document.createElement("option");
+    option.text = option_info.name;
+    option.value = option_info.value;
+    select.add(option);
+    if (cookie_value == option_info.value) {
+      select.selectedIndex = i;
     }
+  }
+
+  function setOptionChange(select) {
+    var selectedOption = select.options[select.selectedIndex];
+    document.cookie = cookie_name + '=' + selectedOption.value;
+  }
+  setOptionChange(select);
+  
+  select.onchange = function(event) {
+    var select = event.currentTarget;
     setOptionChange(select);
-    
-    select.onchange = function(event) {
-      var select = event.currentTarget;
-      setOptionChange(select);
-    };
+  };
 
-    span.appendChild(select);
-    document.body.appendChild(span);
-  });
+  span.appendChild(select);
+  document.body.appendChild(span);
 };
 
 /**
@@ -153,24 +169,39 @@ ForDebug.addDropDownCookieControl = function(options, top, right, background_col
  * @param {String} fontname The fontname.
  */
 ForDebug.addDropIdbButton = function(incrFontMgr, fontname) {
-  document.addEventListener("DOMContentLoaded", function(event) {
-    var span = document.createElement('span');
-    span.style.position = 'absolute';
-    span.style.top = '10px';
-    span.style.right = '10px';
-    span.style.backgroundColor = 'white';
-    span.style.border = '1px solid gray';
-    var msg_span = document.createElement('span');
-    msg_span.id = 'dropIdb_msg';
-    span.appendChild(msg_span);
-    var button = document.createElement('button');
-    button.onclick = dropIdb;
-    var label = document.createTextNode('drop DB');
-    button.appendChild(label);
-    span.appendChild(button);
+  if (document.readyState == 'loading') {
+    document.addEventListener("DOMContentLoaded", function(event) {
+      ForDebug.addDropIdbButton_(incrFontMgr, fontname);
+    });
+  } else {
+    ForDebug.addDropIdbButton_(incrFontMgr, fontname);
+  }
+};
 
-    document.body.appendChild(span);
-  });
+
+/**
+ * Add a "drop DB" button.
+ * @param {Object} incrFontMgr The incremental font manager.
+ * @param {String} fontname The fontname.
+ */
+ForDebug.addDropIdbButton_ = function(incrFontMgr, fontname) {
+  var span = document.createElement('span');
+  span.style.position = 'absolute';
+  span.style.top = '10px';
+  span.style.right = '10px';
+  span.style.backgroundColor = 'white';
+  span.style.border = '1px solid gray';
+  var msg_span = document.createElement('span');
+  msg_span.id = 'dropIdb_msg';
+  span.appendChild(msg_span);
+  var button = document.createElement('button');
+  button.onclick = dropIdb;
+  var label = document.createTextNode('drop DB');
+  button.appendChild(label);
+  span.appendChild(button);
+
+  document.body.appendChild(span);
+
   function dropIdb() {
     var msg_span = document.getElementById('dropIdb_msg');
     ForDebug.dropIdb_(incrFontMgr, fontname, function(msg) {
