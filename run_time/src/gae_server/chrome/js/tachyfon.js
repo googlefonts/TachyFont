@@ -18,6 +18,22 @@
 
 
 /**
+ * TachyFon - A namespace.
+ * @param {string} fontname The fontname.
+ * @param {Object} params Optional parameters.
+ */
+function TachyFon(fontname, params) {
+  this.fontname = fontname;
+  this.params = params;
+  this.incrfont = null;
+  TachyFonEnv.ready(this, function(tachyfon) {
+    console.log('TachyFon: ready');
+    tachyfon.incrfont = IncrementalFont.createManager(tachyfon.fontname);
+  });
+}
+
+
+/**
  * TachyFonEnv - A namespace.
  */
 function TachyFonEnv() {
@@ -30,15 +46,16 @@ TachyFonEnv.css_list_ = [];
 TachyFonEnv.css_list_loaded_cnt = 0;
 
 TachyFonEnv.init_ = function() {
-  //debugger;
-  TachyFonEnv.add_css('css/table_styles.css');
+  // Browser fix-ups.
+  if (typeof Promise == 'undefined') {
+    TachyFonEnv.add_js('js/promise-1.0.0.js');
+  }
+
+  // Load the needed support files.
   TachyFonEnv.add_js('js/binary-font-editor.js');
   TachyFonEnv.add_js('js/incrfont-indexeddb.js');
   TachyFonEnv.add_js('js/incr-font-utils.js');
   TachyFonEnv.add_js('js/rle-decoder.js');
-  TachyFonEnv.add_js('js/time-utils.js');
-  TachyFonEnv.add_js('js/for_debug.js');
-  TachyFonEnv.add_js('js/promise-1.0.0.js');
   TachyFonEnv.ready(27, function(closure) {
     console.log('ready: ' + closure);
   });
@@ -69,12 +86,12 @@ TachyFonEnv.add_css = function(url) {
  * @param {string} url The URL of the Javascript.
  */
 TachyFonEnv.add_js = function(url) {
-//  console.log('add script \"' + url + '\'');
+  console.log('add script \"' + url + '\'');
   TachyFonEnv.js_list_.push(url);
   var script = document.createElement('script');
   script.src = url;
   script.onload = function() {
-//    console.log('loaded ' + url);
+    console.log('loaded ' + url);
     TachyFonEnv.js_list_loaded_cnt += 1;
     TachyFonEnv.handle_ready_();
   };
