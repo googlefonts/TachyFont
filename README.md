@@ -9,22 +9,38 @@ AKA:
 
 Overview
 ========
-Incremental Fonts is a system for incrementally / lazily loading font.  It includes:
+Incremental Fonts is a system for incrementally / lazily loading font.  It 
+currently includes:
 
 - Python build time code to preprocess fonts for faster serving.
 - A Google App Engine python based server.
 - Javascript to request/assemble the needed parts and tell the browser to use it.
 
-Status
-======
+In the future the server could be built in Java (perhaps using Apache Tomcat?)
 
 Incremental Fonts is an open source project.
 
-The API is still evolving.
+- Apache 2.0 license
 
 Incremental fonts works for both OpenType/TrueType and OpenType/CFF fonts.
 
-It is not an official Google project, and Google provides no support for it.
+TachyFon is not an official Google project, and Google provides no support for it.
+
+Status
+======
+
+Overall status 2014-08-27:
+
+- TachyFon is at the proof of concept stage and suitable for giving a demo.
+   * The "Noto Sans KR Thin" OTF is 4.2 MB
+   * TachyFon can display the characters for a typical Korean web page in
+     about 90K.
+
+- There is a demo server at [http://green-pear.appspot.com/chrome/tachyfon_demos.html](http://green-pear.appspot.com/chrome/tachyfon_demos.html)
+   * It is not guaranteed to always be working.
+
+- the API is still evolving.
+- the includes need to be cleaned up
 
 Browser Support
 ===============
@@ -33,15 +49,20 @@ As of 2014-08-18:
 The IndexedDB version has has a limited amount of testing on:
 
 * Chrome
-   * Android
-   * Windows
-   * Ubuntu
+   * tested and working on
+      * Android
+      * Windows
+      * Ubuntu
 
 * FireFox
-   * Windows
+   * tested and working on
+      * Ubuntu
+      * Windows 7
 
 * IE
-    * IE10 and IE11 on Windows 7
+    * tested
+       * IE complains about the font embedding bits on
+          * IE10 and IE11 on Windows 7
 
 * Safari - currently untested. 
    * It is expected the IndexedDB version will work for Safari 8.
@@ -63,16 +84,19 @@ to be on the PYTHONPATH.
 
 # Generating font data
 
-# Simple Usage
+# Basic Usage
+
+- Every font and every revision **MUST** have a separate name.
+- It is highly recommended that a revision number be included in the path.
 
 - Put all of your fonts under 'src_font/v1' folder initially. If you use new version of same font put it 
 under new 'src_font/v2' folder.
 - Make sure you've added `fontTools` into `PYTHONPATH`.
-- Simply double click to `preprocess_all.py` Python 2.7 script and choose `Run in Terminal`.
-- Alternatively, open a terminal in current folder, then run
+- From an Ubuntu GUI, double click to `preprocess_all.py` Python 2.7 script and choose `Run in Terminal`.
+- To preprocess via the command line: cd into the folder with the fonts and run
 
     `./preprocess_all.py`.
-- You will see
+- When you run the command it will report the identifier to use in your web page; eg,
 
     `Found |font-path|. Use following name in javascript: |font-identifier|`
 - Pass this `|font-identifier|` into your javascript code when asked to specify font name. 
