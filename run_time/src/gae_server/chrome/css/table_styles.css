@@ -13,3 +13,6 @@ table, th, td {
 .td_wrap {
   word-wrap: break-word;
 }
+td {
+  vertical-align: top;
+}
