@@ -26,8 +26,15 @@ function TachyFon(fontname, params) {
   this.fontname = fontname;
   this.params = params;
   this.incrfont = null;
+
+  var style = document.createElement('style');
+  document.head.appendChild(style);
+  var rule = '.' + fontname + ' { font-family: ' + fontname + '; ' +
+    'visibility: hidden; }';
+  style.sheet.insertRule(rule, 0);
+
   TachyFonEnv.ready(this, function(tachyfon) {
-    console.log('TachyFon: ready');
+    //console.log('TachyFon: ready');
     tachyfon.incrfont = IncrementalFont.createManager(tachyfon.fontname);
   });
 }
@@ -45,6 +52,19 @@ TachyFonEnv.ready_list_ = [];
 TachyFonEnv.css_list_ = [];
 TachyFonEnv.css_list_loaded_cnt = 0;
 
+//Support running without demo features.
+function Timer() {}
+Timer.prototype.start = function() {};
+Timer.prototype.end = function() {};
+var timer1 = new Timer();
+var timer2 = new Timer();
+
+function ForDebug() {}
+ForDebug.getCookie = function(name, fallback) { return fallback; }
+ForDebug.addDropIdbButton = function(incrFontMgr, fontname) {}
+ForDebug.addBandwidthControl = function() {}
+ForDebug.addTimingTextSizeControl = function() {}
+
 TachyFonEnv.init_ = function() {
   // Browser fix-ups.
   if (typeof Promise == 'undefined') {
@@ -56,9 +76,6 @@ TachyFonEnv.init_ = function() {
   TachyFonEnv.add_js('js/incrfont-indexeddb.js');
   TachyFonEnv.add_js('js/incr-font-utils.js');
   TachyFonEnv.add_js('js/rle-decoder.js');
-  TachyFonEnv.ready(27, function(closure) {
-    console.log('ready: ' + closure);
-  });
 };
 
 /**
@@ -66,14 +83,14 @@ TachyFonEnv.init_ = function() {
  * @param {string} url The URL of the CSS.
  */
 TachyFonEnv.add_css = function(url) {
-//  console.log('add css \"' + url + '\'');
+  //console.log('add css \"' + url + '\'');
   TachyFonEnv.css_list_.push(url);
   var link = document.createElement('link');
   link.setAttribute('href', url);
   link.setAttribute('rel', 'stylesheet');
   link.setAttribute('type', 'text/css');
   link.onload = function() {
-//    console.log('loaded ' + url);
+    //console.log('loaded ' + url);
     TachyFonEnv.css_list_loaded_cnt += 1;
     TachyFonEnv.handle_ready_();
   }
@@ -86,12 +103,12 @@ TachyFonEnv.add_css = function(url) {
  * @param {string} url The URL of the Javascript.
  */
 TachyFonEnv.add_js = function(url) {
-  console.log('add script \"' + url + '\'');
+  //console.log('add script \"' + url + '\'');
   TachyFonEnv.js_list_.push(url);
   var script = document.createElement('script');
   script.src = url;
   script.onload = function() {
-    console.log('loaded ' + url);
+    //console.log('loaded ' + url);
     TachyFonEnv.js_list_loaded_cnt += 1;
     TachyFonEnv.handle_ready_();
   };
@@ -114,7 +131,7 @@ TachyFonEnv.handle_ready_ = function() {
   if (TachyFonEnv.css_list_.length != TachyFonEnv.css_list_loaded_cnt) {
     return;
   }
-//  console.log('ready');
+  //console.log('ready');
   for (var i = 0; i < TachyFonEnv.ready_list_.length; i++) {
     var callback_obj = TachyFonEnv.ready_list_[i];
     callback_obj.callback(callback_obj.closure);
@@ -129,7 +146,7 @@ TachyFonEnv.handle_ready_ = function() {
  * @param {function} call Call this function when the env is ready.
  */
 TachyFonEnv.ready = function(closure, callback) {
-//  console.log('add callback');
+  //console.log('add callback');
   var callback_obj = {}; // Make this minifiable.
   callback_obj.callback = callback;
   callback_obj.closure = closure;
