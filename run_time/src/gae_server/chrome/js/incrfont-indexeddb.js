@@ -1,5 +1,7 @@
 'use strict';
-
+//
+// THIS FILE IS DEPRECATED! DO NOT USE!
+//
 /*
  * Copyright 2014 Google Inc. All rights reserved.
  *
