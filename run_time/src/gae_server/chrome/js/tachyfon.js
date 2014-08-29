@@ -72,20 +72,21 @@ IncrementalFont.CHARLIST = 'charlist';
  * 7. When the base is available set the class visibility=visible
  *
  * @param {string} fontname The name of the font.
+ * @param {?number} chunk_size Break char requests into multiple of this size.
  * @param {?string} url The URL of the Tachyfon server.
  * @return {array} An array with:
  *                 array[0] {Object} The IndexedDB object.
  *                 array[1] {Object}  The fileinfo from the header.
  *                 array[2] {DataView} The font data.
  */
-IncrementalFont.createManager = function(fontname, url) {
+IncrementalFont.createManager = function(fontname, req_size, url) {
   timer1.start('load base');
   console.log('check to see if a webfont is in cache');
   if (!url) {
     url = window.location.protocol + "//" + window.location.hostname + 
         (window.location.port ? ':' + window.location.port: '');
   }
-  var incrFontMgr = new IncrementalFont.obj_(fontname, url);
+  var incrFontMgr = new IncrementalFont.obj_(fontname, req_size, url);
   //timer1.start('openIndexedDB.open ' + fontname);
 //  IncrementalFontUtils.logger(incrFontMgr.url, 
 //    'need to report info');
@@ -187,12 +188,14 @@ IncrementalFont.createManager = function(fontname, url) {
 /**
  * IncrFontIDB.obj_ - A class to handle interacting the IndexedDB.
  * @param {string} fontname The name of the font.
+ * @param {?number} req_size Break char requests into multiple of this size.
  * @param {string} url The URL of the Incremental Font server.
  * @constructor
  * @private
  */
-IncrementalFont.obj_ = function(fontname, url) {
+IncrementalFont.obj_ = function(fontname, req_size, url) {
   this.fontname = fontname;
+  this.req_size = req_size;
   this.url = url;
   this.charsURL = '/incremental_fonts/request';
   this.persistInfo = {};
@@ -224,69 +227,92 @@ IncrementalFont.obj_.prototype.loadNeededChars = function(element_name) {
     element = document.body;
   }
   chars = element.textContent;
-  var pending_resolve, pending_reject;
-  var old_finishPendingCharsRequest = this.finishPendingCharsRequest;
-  this.finishPendingCharsRequest = new Promise(function(resolve, reject) {
-    pending_resolve = resolve;
-    pending_reject = reject;
-
-    return old_finishPendingCharsRequest.
-    then(function() {
-      return that.getCharList.
-      then(function(arr) {
-        charlist = arr[1];
-        var neededCodes = [];
-        for (var i = 0; i < chars.length; i++) {
-          var c = chars.charAt(i);
-          if (!charlist[c]) {
-            neededCodes.push(c.charCodeAt(0));
+  this.finishPendingCharsRequest = this.finishPendingCharsRequest.
+  then(function() {
+    var pending_resolve, pending_reject;
+    return new Promise(function(resolve, reject) {
+      pending_resolve = resolve;
+      pending_reject = reject;
+  
+        return that.getCharList.
+        then(function(arr) {
+          charlist = arr[1];
+          // Make a tmp copy in case we are chunking the requests.
+          var tmp_charlist = {};
+          for (var key in charlist) {
+            tmp_charlist[key] = charlist[key];
+          }
+          var neededCodes = [];
+          for (var i = 0; i < chars.length; i++) {
+            var c = chars.charAt(i);
+            if (!tmp_charlist[c]) {
+              neededCodes.push(c.charCodeAt(0));
+              tmp_charlist[c] = 1;
+            }
+          }
+  
+          if (neededCodes.length) {
+            console.log('load ' + neededCodes.length + ' codes:');
+            console.log(neededCodes);
+            load_cnt = global_load_cnt++;
+          } else {
+            //console.log('do not need anymore characters');
+            return null;
+          }
+          // neededCodes.sort(function(a, b){ return a - b}; );
+          //console.log('neededCodes = ' + neededCodes);
+          //console.log('neededCodes.length = ' + neededCodes.length);
+          var remaining = [];
+          if (that.req_size) {
+            var remaining = neededCodes.slice(that.req_size);
+            var neededCodes = neededCodes.slice(0, that.req_size);
+            //console.log('neededCodes.length = ' + neededCodes.length);
+            //console.log('remaining.length = ' + remaining.length);
+          }
+          for (var i = 0; i < neededCodes.length; i++) {
+            var c = String.fromCharCode(neededCodes[i]);;
             charlist[c] = 1;
           }
-        }
-
-        if (neededCodes.length) {
-          console.log('load ' + neededCodes.length + ' codes:');
-          console.log(neededCodes);
-          load_cnt = global_load_cnt++;
-        } else {
-          //console.log('do not need anymore characters');
-          return null;
-        }
-        // neededCodes.sort(function(a, b){ return a - b}; );
-        //console.log('neededCodes = ' + neededCodes);
-        return IncrementalFontUtils.requestCodepoints(that.url, that.fontname, 
-          neededCodes).
+          return IncrementalFontUtils.requestCodepoints(that.url, that.fontname, 
+            neededCodes).
+          then(function(chardata) {
+            if (remaining.length) {
+              setTimeout(function() {
+                that.loadNeededChars(element_name);
+              }, 1);
+            }
+            //console.log('requested char data length = ' + chardata.byteLength);
+            return chardata;
+          });
+        }).
         then(function(chardata) {
-          //console.log('requested char data length = ' + chardata.byteLength);
-          return chardata;
+          return that.getBase.
+          then(function(arr) {
+            pending_resolve();
+            var fileinfo = arr[1];
+            var fontdata = arr[2];
+            if (chardata != null) {
+              fontdata = IncrementalFontUtils.injectCharacters(fileinfo, fontdata,
+                chardata);
+              if (Object.keys(charlist).length != 100)
+              IncrementalFontUtils.setFont(that.fontname, fontdata, 
+                fileinfo.isTTF, 'display ' + Object.keys(charlist).length + ' chars');
+              // Update the data.
+              that.getBase = Promise.all([arr[0], arr[1], fontdata]);
+              that.getCharlist = Promise.all([that.getIDB_, charlist]);
+              that.persistDelayed_(IncrementalFont.BASE);
+              that.persistDelayed_(IncrementalFont.CHARLIST);
+            }
+          });
         });
       }).
-      then(function(chardata) {
-        pending_resolve();
-        return that.getBase.
-        then(function(arr) {
-          var fileinfo = arr[1];
-          var fontdata = arr[2];
-          if (chardata != null) {
-            fontdata = IncrementalFontUtils.injectCharacters(fileinfo, fontdata,
-              chardata);
-            IncrementalFontUtils.setFont(that.fontname, fontdata, 
-              fileinfo.isTTF, 'display ' + Object.keys(charlist).length + ' chars');
-            // Update the data.
-            that.getBase = Promise.all([arr[0], arr[1], fontdata]);
-            that.getCharlist = Promise.all([that.getIDB_, charlist]);
-            that.persistDelayed_(IncrementalFont.BASE);
-            that.persistDelayed_(IncrementalFont.CHARLIST);
-          }
-        });
+      catch (function(e) {
+        console.log('loadNeededChars: ' + e.message);
+        debugger;
+        pending_reject();
       });
-    }).
-    catch (function(e) {
-      console.log('loadNeededChars: ' + e.message);
-      debugger;
-      pending_reject();
-    });
   });
+  return this.finishPendingCharsRequest;
 };
 
 /**
@@ -1235,6 +1261,7 @@ function TachyFon(fontname, params) {
   this.fontname = fontname;
   this.params = params;
   this.incrfont = null;
+  this.params = params || {};
 
   var style = document.createElement('style');
   document.head.appendChild(style);
@@ -1244,7 +1271,8 @@ function TachyFon(fontname, params) {
 
   TachyFonEnv.ready(this, function(tachyfon) {
     //console.log('TachyFon: ready');
-    tachyfon.incrfont = IncrementalFont.createManager(tachyfon.fontname);
+    tachyfon.incrfont = IncrementalFont.createManager(tachyfon.fontname,
+      tachyfon.params['req_size'], tachyfon.params['url']);
   });
 }
 
