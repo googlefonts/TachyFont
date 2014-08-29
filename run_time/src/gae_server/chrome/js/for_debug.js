@@ -69,7 +69,7 @@ ForDebug.Bandwidths = [
   { name: '250 Kbps', value: '250' },
   { name: 'Argentina - 1.0 Mbps', value: '1000' },
   { name: 'India - 1.3 Mbps', value: '1300' },
-  { name: '3G mobile - 384 Kbps', value: '384' },
+  { name: '3G moving - 384 Kbps', value: '384' },
   { name: '3G stationary - 1.6 Mbps', value: '1600' },
   { name: 'China - 4.8 Mbps', value: '4800' },
   { name: 'Japan - 5.7 Mbps', value: '5700' },
