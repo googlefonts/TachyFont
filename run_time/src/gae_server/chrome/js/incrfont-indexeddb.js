@@ -123,7 +123,7 @@ IncrementalFont.createManager = function(fontname, url) {
     return Promise.all([idb, fileinfo, fontdata]);
   }).
   catch (function(e) {
-    var bandwidth = ForDebug.getCookie('bandwidth', '0')
+    var bandwidth = ForDebug.getCookie('bandwidth', '0');
     return IncrementalFontUtils.requestURL(incrFontMgr.url + 
       '/incremental_fonts/incrfonts/' + incrFontMgr.fontname + '/base', 'GET', 
       null, { 'X-TachyFon-bandwidth': bandwidth }, 'arraybuffer').
