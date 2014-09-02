@@ -1979,9 +1979,9 @@ ForDebug.addTimingTextSizeControl = function() {}
 
 TachyFonEnv.init_ = function() {
   // Browser fix-ups.
-  if (typeof Promise == 'undefined') {
-    TachyFonEnv.add_js('js/promise-1.0.0.js');
-  }
+//  if (typeof Promise == 'undefined') {
+//    TachyFonEnv.add_js('js/promise-1.0.0.js');
+//  }
 
   // Load the needed support files.
 //  TachyFonEnv.add_js('js/binary-font-editor.js');
