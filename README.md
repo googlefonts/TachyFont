@@ -86,21 +86,36 @@ to be on the PYTHONPATH.
 
 # Basic Usage
 
-- Every font and every revision **MUST** have a separate name.
+- Every font and every revision **MUST** have a separate path/filename.
 - It is highly recommended that a revision number be included in the path.
 
-- Put all of your fonts under 'src_font/v1' folder initially. If you use new version of same font put it 
-under new 'src_font/v2' folder.
-- Make sure you've added `fontTools` into `PYTHONPATH`.
-- From an Ubuntu GUI, double click to `preprocess_all.py` Python 2.7 script and choose `Run in Terminal`.
-- To preprocess via the command line: cd into the folder with the fonts and run
+- You may need to install bitarray
+   - pip install bitarray
+   - Note: you may need to run this command as root or use sudo
 
-    `./preprocess_all.py`.
+- Put all of your fonts under 'src_font/v1' folder initially. If you use new 
+version of same font put it under new 'src_font/v2' folder.
+- Make sure you've added `fontTools` into `PYTHONPATH`; eg,
+   - cd ${TOPDIR}
+   - PYTHONPATH=${TOPDIR}/run_time/src/gae_server/third_party/fonttools-master/Lib/:${PYTHONPATH}
+
+- From an Ubuntu GUI, double click to `preprocess_all.py` Python 2.7 script and choose `Run in Terminal`.
+
+- To preprocess via the command line: cd into the ${TOPDIR} and run
+
+    `./preprocess_all.py`  (This can take a while)
+
 - When you run the command it will report the identifier to use in your web page; eg,
 
-    `Found |font-path|. Use following name in javascript: |font-identifier|`
-- Pass this `|font-identifier|` into your javascript code when asked to specify font name. 
+    `Found <font-path>. Use following name in javascript: <font-identifier>`
 
+- Pass this `<font-identifier>` into your javascript code when asked to specify font name. 
+
+- Right now the command is a work-in-progress and leaves the results in the 
+'cooked' dir. You will need to manually:
+
+   - copy the 'base' file to ${TOPDIR}/run_time/src/gae_server/fonts/\<font-identifier\>
+   - copy the c* and g* files to ${TOPDIR}/run_time/src/gae_server/data/\<font-identifier\>
 
 # Advanced Usage
 
