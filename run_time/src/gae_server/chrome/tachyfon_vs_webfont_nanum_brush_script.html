@@ -18,34 +18,16 @@
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-<title>Incremental Fonts IDB: Nanum Brush Script</title>
-  <script src="js/binary-font-editor.js"></script>
-  <script src="js/incrfont-indexeddb.js"></script>
-  <script src="js/incr-font-utils.js"></script>
-  <script src="js/rle-decoder.js"></script>
+  <title>TachyFon vs Web Font: Nanum Brush Script</title>
+  <script src="js/tachyfon.js"></script>
+  <!--  STUFF ONLY NEEDED FOR A DEMO -->
+  <link rel="stylesheet" type="text/css" href="css/table_styles.css">
   <script src="js/time-utils.js"></script>
   <script src="js/for_debug.js"></script>
-  <script src="js/promise-1.0.0.js"></script>
   <script>
-    /* This single line of code does the following:
-     * 1. Create a class using the @font-face rule and with visibility=hidden
-     * 2. Create an incremental font manager object.
-     * 3. Open the IndexedDB.
-     * 4. Start the operation to get the base.
-     * 5. Start the operation to get the list of fetched/not-fetched chars.
-     * 6. Create a @font-face rule (need the data to make the blob URL).
-     * 7. When the base is available set the class visibility=visible
-     * 8. Later it saves any new data to disk.
-     */
-    var nanumBrushIFM = IncrementalFont.createManager('v1NanumBrushScript-Regular'
-      /* [, req_size [, url_to_tachyfon_srver]] */);
+    // Load a TachyFon font!
+    var font1 = new TachyFon('v1NanumBrushScript-Regular', { 'req_size': 200 });
   </script>
-  <link rel="stylesheet" type="text/css" href="css/table_styles.css">
-  <style>
-    td {
-      vertical-align: top;
-    }
-  </style>
   <script>
     // Time the loading of the web font.
     // For reasons that are completely unclear it appears that the return value
@@ -84,7 +66,7 @@ DaumTistory로그인대항해시대공략bset블로그홈|지역로그|태그|�
           Note: this call can be inserted multiple times and it will get any
                 new characters in the element up to that point. 
         -->
-        <script>nanumBrushIFM.loadNeededChars('incrfont');</script>
+        <script>font1.loadNeededChars('incrfont');</script>
 ,당신은놓치고큰그림을.한국과중국은다시몇세기를간다풍부한역사를공유하고,그래서그기간동안전통요리의교
 환이될것이라고매우생각할수있습니다.역사계정에따르면,한국현대중국요리의탄생은대부분의서쪽해안항구도
 시에중국인사람들의합의로거슬러올라갈수인천19세기후반합니다.서울과인천에서두미만600킬로미터-한국어
@@ -97,7 +79,6 @@ DaumTistory로그인대항해시대공략bset블로그홈|지역로그|태그|�
 닙니다.아래한국어중국어음식을구성하는가장잘알려진메인반찬의일부입니다.한국카톨릭교하는매우까다로운
 언어이기때문에romanizations아래에나타납니다당신이레스토랑메뉴에서볼동일하지않을수있습니다.당신
 은또한한국어(왼쪽)와중국어번체(오른쪽)스크립트를참조할수있습니다.Jjajangmy
-        <script>nanumBrushIFM.loadNeededChars('incrfont');</script>
 eon(짜장면/酢酱面)그것은유비쿼터스검은콩소스국수접시의당신의지역한국어중국어레스토랑에서은혜는모
 든테이블.Jjajangmyeon의소스는일반적으로해산물,절단돼지고기조각,그리고호박이나오이슬라이스야채를
 포함한다.Jjajangmyeon의서명두꺼운면은하얀밀가루로만들어집니다.사실상의미Jjajangmyeon,"튀김소
@@ -130,7 +111,6 @@ http://qwed01...우낀세상02/18http://qwed01...우낀세상02/18최근에받�
 123456789101112131415161718192021222324252627282930태그목록웹하드링크tistory티스토리
 가입하기!rssTOTAL:13,765TODAY:15YESTERDAY:80지역로그:태그:미디어로그:방명록:관리자:글쓰기우낀
 세상'sBlogispoweredbyDaum/DesignedbyTistory
-        <script>nanumBrushIFM.loadNeededChars('incrfont');</script>
       </span></div></td>
       <td id="webfont" style='font-family: NanumBrushScript;'> 
       <div style="overflow: hidden; height:900px;">
