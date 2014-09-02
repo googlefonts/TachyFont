@@ -152,7 +152,7 @@ IncrementalFont.createManager = function(fontname, req_size, url) {
     var fileinfo = arr[1];
     // Create the @font-face rule.
     IncrementalFontUtils.setFont(fontname, arr[2], fileinfo.isTTF,
-      'display empty base');
+      'display base');
     // Make the class visible.
     IncrementalFontUtils.setVisibility(incrFontMgr.style, fontname, true);
 
@@ -213,7 +213,7 @@ IncrementalFont.obj_ = function(fontname, req_size, url) {
 
 var global_load_cnt = 0;
 /**
- * Lazily data for these chars.
+ * Lazily load the data for these chars.
  * @param {string} element_name The name of the data item.
  */
 IncrementalFont.obj_.prototype.loadNeededChars = function(element_name) {
@@ -257,6 +257,7 @@ IncrementalFont.obj_.prototype.loadNeededChars = function(element_name) {
             load_cnt = global_load_cnt++;
           } else {
             //console.log('do not need anymore characters');
+            timer1.start('already can display all chars')
             return null;
           }
           // neededCodes.sort(function(a, b){ return a - b}; );
@@ -1259,8 +1260,9 @@ value) {
  */
 function TachyFon(fontname, params) {
   this.fontname = fontname;
-  this.params = params;
-  this.incrfont = null;
+  this.incrfont = new Promise(function(resolve) {
+    this.incrfont_resolve = resolve;
+  }.bind(this));
   this.params = params || {};
 
   var style = document.createElement('style');
@@ -1271,11 +1273,22 @@ function TachyFon(fontname, params) {
 
   TachyFonEnv.ready(this, function(tachyfon) {
     //console.log('TachyFon: ready');
-    tachyfon.incrfont = IncrementalFont.createManager(tachyfon.fontname,
+    var incrfont = IncrementalFont.createManager(tachyfon.fontname,
       tachyfon.params['req_size'], tachyfon.params['url']);
+    tachyfon.incrfont_resolve(incrfont);
   });
 }
 
+/**
+ * Lazily load the data for these chars.
+ * @param {string} element_name The name of the data item.
+ */
+TachyFon.prototype.loadNeededChars = function(element_name) {
+  this.incrfont.
+  then(function(incrfont) {
+    incrfont.loadNeededChars(element_name);
+  })
+};
 
 /**
  * Incremental font loader utilities. A separate namespace is not longer needed.
@@ -1773,48 +1786,49 @@ IncrementalFontUtils.setFont_oldStyle = function(fontname, blobUrl, isTTF) {
  * @param {string} url The url of the webfont.
  * @param {string} fonttype The type of the font; eg truetype or opentype.
  */
-//IncrementalFontUtils.loadWebFont = function(fontname, fonturl, fonttype) {
-//  timer2.start('load web font');
-//  var timeout_id;
-//  function font_loading_timeout() {
-//    timer2.end('load web font');
-//    timeout_id = setTimeout(font_loading_timeout, 100);
-//  }
-//  font_loading_timeout();
-//
-//  var bandwidth = ForDebug.getCookie('bandwidth', '0');
-//  if (true || typeof window.FontFace == 'undefined') {
-//    var style = document.createElement('style');
-//    document.head.appendChild(style);
-//    var sheet = style.sheet;
-//    var rule_str = 
-//      '@font-face {\n' +
-//      '    font-family: "' + fontname + '";\n' + 
-//      '    src: url("' + fonturl + "?bandwidth=" + bandwidth + 
-//      '&ts=' + Date.now() + '") format("' + fonttype + '")\n' +
-//      '}';
-//    sheet.insertRule(rule_str, 0);
-//    // A lazy way to time the web font.
-//    window.addEventListener("load", function(event) {
-//      clearTimeout(timeout_id);
-//      timer2.end('load web font');
-//    });
-//
-//
-//    return;
-//  }
-//
-//  var face = new FontFace(fontname, "url(" + fonturl + 
-//    "?bandwidth=" + bandwidth + '&ts=' + Date.now() + ")", {});
-//  face.load().then(function (loadedFace) {
-//    document.fonts.add(loadedFace);
-//    document.body.style.fontFamily = fontname;
-//    timer2.end('load web font:<br>' + fontname);
-//    clearTimeout(timeout_id);
-//  });
-//  return face; // NOTE: the face has to be stored in a global variable or
-//               // the font seems to disappear.
-//}
+// THIS SHOULD NOT BE IN TACHYFONT.JS
+IncrementalFontUtils.loadWebFont = function(fontname, fonturl, fonttype) {
+  timer2.start('load web font');
+  var timeout_id;
+  function font_loading_timeout() {
+    timer2.end('load web font');
+    timeout_id = setTimeout(font_loading_timeout, 100);
+  }
+  font_loading_timeout();
+
+  var bandwidth = ForDebug.getCookie('bandwidth', '0');
+  if (true || typeof window.FontFace == 'undefined') {
+    var style = document.createElement('style');
+    document.head.appendChild(style);
+    var sheet = style.sheet;
+    var rule_str = 
+      '@font-face {\n' +
+      '    font-family: "' + fontname + '";\n' + 
+      '    src: url("' + fonturl + "?bandwidth=" + bandwidth + 
+      '&ts=' + Date.now() + '") format("' + fonttype + '")\n' +
+      '}';
+    sheet.insertRule(rule_str, 0);
+    // A lazy way to time the web font.
+    window.addEventListener("load", function(event) {
+      clearTimeout(timeout_id);
+      timer2.end('load web font');
+    });
+
+
+    return;
+  }
+
+  var face = new FontFace(fontname, "url(" + fonturl + 
+    "?bandwidth=" + bandwidth + '&ts=' + Date.now() + ")", {});
+  face.load().then(function (loadedFace) {
+    document.fonts.add(loadedFace);
+    document.body.style.fontFamily = fontname;
+    timer2.end('load web font:<br>' + fontname);
+    clearTimeout(timeout_id);
+  });
+  return face; // NOTE: the face has to be stored in a global variable or
+               // the font seems to disappear.
+}
 
 /**
  * RLEDecoder class to decode RLE'd data
@@ -1965,9 +1979,9 @@ ForDebug.addTimingTextSizeControl = function() {}
 
 TachyFonEnv.init_ = function() {
   // Browser fix-ups.
-  if (typeof Promise == 'undefined') {
-    TachyFonEnv.add_js('js/promise-1.0.0.js');
-  }
+//  if (typeof Promise == 'undefined') {
+//    TachyFonEnv.add_js('js/promise-1.0.0.js');
+//  }
 
   // Load the needed support files.
 //  TachyFonEnv.add_js('js/binary-font-editor.js');

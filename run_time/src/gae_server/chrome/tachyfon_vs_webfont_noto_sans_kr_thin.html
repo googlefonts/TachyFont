@@ -18,36 +18,18 @@
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-<!-- Force the web fonts to reload each time. -->
-<META HTTP-EQUIV="Pragma" CONTENT="no-cache">
-<title>Incremental Fonts IDB: Noto Sans KR Thin</title>
-  <script src="js/binary-font-editor.js"></script>
-  <script src="js/incrfont-indexeddb.js"></script>
-  <script src="js/incr-font-utils.js"></script>
-  <script src="js/rle-decoder.js"></script>
+  <title>TachyFon vs Web Font: Noto Sans KR Thin</title>
+  <script src="js/tachyfon.js"></script>
+  <!-- This is needed for IE -->
+  <script src="js/promise-1.0.0.js"></script>
+  <!--  STUFF ONLY NEEDED FOR A DEMO -->
+  <link rel="stylesheet" type="text/css" href="css/table_styles.css">
   <script src="js/time-utils.js"></script>
   <script src="js/for_debug.js"></script>
-  <script src="js/promise-1.0.0.js"></script>
   <script>
-    /* This single line of code does the following:
-     * 1. Create a class using the @font-face rule and with visibility=hidden
-     * 2. Create an incremental font manager object.
-     * 3. Open the IndexedDB.
-     * 4. Start the operation to get the base.
-     * 5. Start the operation to get the list of fetched/not-fetched chars.
-     * 6. Create a @font-face rule (need the data to make the blob URL).
-     * 7. When the base is available set the class visibility=visible
-     * 8. Later it saves any new data to disk.
-     */
-    var notoSansKrThinIFM = IncrementalFont.createManager('v1NotoSansKR-Thin'
-      /* [, req_size [, url_to_tachyfon_srver]] */);
+    // Load a TachyFon font!
+    var font1 = new TachyFon('v1NotoSansKR-Thin', { 'req_size': 200 });
   </script>
-  <link rel="stylesheet" type="text/css" href="css/table_styles.css">
-  <style>
-    td {
-      vertical-align: top;
-    }
-  </style>
   <script>
     // Time the loading of the web font.
     // For reasons that are completely unclear it appears that the return value
@@ -86,7 +68,7 @@ DaumTistory로그인대항해시대공략bset블로그홈|지역로그|태그|�
           Note: this call can be inserted multiple times and it will get any
                 new characters in the element up to that point. 
         -->
-        <script>notoSansKrThinIFM.loadNeededChars('incrfont');</script>
+        <script>font1.loadNeededChars('incrfont');</script>
 ,당신은놓치고큰그림을.한국과중국은다시몇세기를간다풍부한역사를공유하고,그래서그기간동안전통요리의교
 환이될것이라고매우생각할수있습니다.역사계정에따르면,한국현대중국요리의탄생은대부분의서쪽해안항구도
 시에중국인사람들의합의로거슬러올라갈수인천19세기후반합니다.서울과인천에서두미만600킬로미터-한국어
