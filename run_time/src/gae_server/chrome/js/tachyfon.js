@@ -103,7 +103,7 @@ IncrementalFont.createManager = function(fontname, req_size, url) {
 
   // Create a class with visibility: hidden.
   incrFontMgr.style = IncrementalFontUtils.setVisibility(null, fontname, false);
-  console.log('need to do "cleanup" loading in chunks');
+  // When the page finishes loading: automatically load needed chars.
   if (document.readyState == 'loading') {
     document.addEventListener("DOMContentLoaded", function(event) {
       incrFontMgr.loadNeededChars();
@@ -144,7 +144,7 @@ IncrementalFont.createManager = function(fontname, req_size, url) {
         IncrementalFontUtils.sanitizeBaseFont(fileinfo, raw_basefont);
       incrFontMgr.persistDelayed_(IncrementalFont.BASE);
       timer1.end('uncompact base');
-      return [incrFontMgr.getIDB_, fileinfo, basefont];
+      return [fileinfo, basefont];
     });
   }).
   then(function(arr) {
@@ -169,7 +169,7 @@ IncrementalFont.createManager = function(fontname, req_size, url) {
     return {};
   }).
   then(function(charlist_data) {
-    return Promise.all([incrFontMgr.getIDB_, charlist_data]);
+    return charlist_data;
   });
 
   // For Debug: add a button to clear the IndexedDB.
@@ -211,7 +211,6 @@ IncrementalFont.obj_ = function(fontname, req_size, url) {
   this.finishPendingCharsRequest = Promise.resolve();
 };
 
-var global_load_cnt = 0;
 /**
  * Lazily load the data for these chars.
  * @param {string} element_name The name of the data item.
@@ -221,7 +220,6 @@ IncrementalFont.obj_.prototype.loadNeededChars = function(element_name) {
   var chars = '';
   var charlist;
   var element;
-  var load_cnt;
   element = document.getElementById(element_name);
   if (!element) {
     element = document.body;
@@ -235,8 +233,8 @@ IncrementalFont.obj_.prototype.loadNeededChars = function(element_name) {
       pending_reject = reject;
   
         return that.getCharList.
-        then(function(arr) {
-          charlist = arr[1];
+        then(function(charlist_) {
+          charlist = charlist_;
           // Make a tmp copy in case we are chunking the requests.
           var tmp_charlist = {};
           for (var key in charlist) {
@@ -254,10 +252,9 @@ IncrementalFont.obj_.prototype.loadNeededChars = function(element_name) {
           if (neededCodes.length) {
             console.log('load ' + neededCodes.length + ' codes:');
             console.log(neededCodes);
-            load_cnt = global_load_cnt++;
           } else {
             //console.log('do not need anymore characters');
-            timer1.start('already can display all chars')
+            timer1.start('display all chars')
             return null;
           }
           // neededCodes.sort(function(a, b){ return a - b}; );
@@ -290,17 +287,16 @@ IncrementalFont.obj_.prototype.loadNeededChars = function(element_name) {
           return that.getBase.
           then(function(arr) {
             pending_resolve();
-            var fileinfo = arr[1];
-            var fontdata = arr[2];
+            var fileinfo = arr[0];
+            var fontdata = arr[1];
             if (chardata != null) {
               fontdata = IncrementalFontUtils.injectCharacters(fileinfo, fontdata,
                 chardata);
-              if (Object.keys(charlist).length != 100)
               IncrementalFontUtils.setFont(that.fontname, fontdata, 
                 fileinfo.isTTF, 'display ' + Object.keys(charlist).length + ' chars');
               // Update the data.
-              that.getBase = Promise.all([arr[0], arr[1], fontdata]);
-              that.getCharlist = Promise.all([that.getIDB_, charlist]);
+              that.getBase = Promise.all([fileinfo, fontdata]);
+              that.getCharlist = Promise.resolve(charlist);
               that.persistDelayed_(IncrementalFont.BASE);
               that.persistDelayed_(IncrementalFont.CHARLIST);
             }
@@ -366,6 +362,9 @@ IncrementalFont.obj_.prototype.persist_ = function(name) {
       if (base_dirty) {
         return that.getBase.
         then(function(arr) {
+          return Promise.all([that.getIDB_, arr[0], arr[1]]);
+        }).
+        then(function(arr) {
           console.log('save base');
           return that.saveData_(arr[0], IncrementalFont.BASE, arr[2].buffer);
         });
@@ -374,6 +373,9 @@ IncrementalFont.obj_.prototype.persist_ = function(name) {
     then(function() {
       if (charlist_dirty) {
         return that.getCharList.
+        then(function(charlist) {
+          return Promise.all([that.getIDB_, charlist]);
+        }).
         then(function(arr) {
           console.log('save charlist');
           return that.saveData_(arr[0], IncrementalFont.CHARLIST, arr[1]);
@@ -466,9 +468,6 @@ IncrementalFont.obj_.prototype.openIndexedDB = function(fontname) {
       var store = db.createObjectStore(IncrementalFont.BASE);
       var store = db.createObjectStore(IncrementalFont.CHARLIST);
     };
-  }).then(function(db) {
-    // TODO(bstell) timing call
-    return db;
   });
   return openIDB;
 };
