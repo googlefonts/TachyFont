@@ -95,8 +95,10 @@ to be on the PYTHONPATH.
 
 - Put all of your fonts under 'src_font/v1' folder initially. If you use new 
 version of same font put it under new 'src_font/v2' folder.
+
 - Make sure you've added `fontTools` into `PYTHONPATH`; eg,
-   - cd ${TOPDIR}
+   - cd <topdir>
+   - TOPDIR=${PWD}
    - PYTHONPATH=${TOPDIR}/run_time/src/gae_server/third_party/fonttools-master/Lib/:${PYTHONPATH}
 
 - From an Ubuntu GUI, double click to `preprocess_all.py` Python 2.7 script and choose `Run in Terminal`.
