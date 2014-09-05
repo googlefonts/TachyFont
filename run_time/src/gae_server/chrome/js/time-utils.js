@@ -23,12 +23,12 @@
  * Init a timer
  * @constructor
  */
-function Timer(backgroundColor, top, leftMargin, rightMargin) {
+function Timer(top, leftMargin, rightMargin) {
     this.start_time = Date.now();
     this.results = [];
     this.timing_info = {};
     this.table = null;
-    this.backgroundColor = backgroundColor;
+    this.backgroundColor = 'lightPink';
     this.top = top;
     this.leftMargin = leftMargin;
     this.rightMargin = rightMargin;
@@ -126,8 +126,19 @@ Timer.prototype.getTable = function() {
 
 
 /**
+ * Note that the timing is done: change the background color.
+ */
+Timer.prototype.done = function() {
+  this.backgroundColor = 'lightGreen';
+ var table = this.getTable();
+  if (!table) {
+    return;
+  }
+  table.style.backgroundColor = this.backgroundColor;
+};
+
+/**
  * Display the timing info on the page.
- * @param {Object} table DOM table element.
  */
 Timer.prototype.display_timing = function() {
   var table = this.getTable();
@@ -188,6 +199,6 @@ Timer.prototype._appendTimingCell = function(row, pos, value, align) {
 
 //This is here only for measuring the timings during development.
 //This is not needed for regular use.
-var timer1 = new Timer('lightGreen', '200px', '10px', '');
-var timer2 = new Timer('lightPink', '200px', '', '10px');
+var timer1 = new Timer('200px', '10px', '');
+var timer2 = new Timer('200px', '', '10px');
 
