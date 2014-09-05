@@ -122,7 +122,7 @@ IncrementalFont.createManager = function(fontname, req_size, url) {
     var filedata = new DataView(arr[1]);
     var fileinfo = IncrementalFontUtils.parseBaseHeader(filedata);
     var fontdata = new DataView(arr[1], fileinfo.headSize);
-    return Promise.all([idb, fileinfo, fontdata]);
+    return Promise.all([fileinfo, fontdata]);
   }).
   catch (function(e) {
     var bandwidth = ForDebug.getCookie('bandwidth', '0');
@@ -149,12 +149,12 @@ IncrementalFont.createManager = function(fontname, req_size, url) {
   }).
   then(function(arr) {
     timer1.end('load base');
-    var fileinfo = arr[1];
+    var fileinfo = arr[0];
     // Create the @font-face rule.
-    IncrementalFontUtils.setFont(fontname, arr[2], fileinfo.isTTF, '');
-    timer1.done();
+    //IncrementalFontUtils.setFont(fontname, arr[2], fileinfo.isTTF, '');
+    //timer1.done();
     // Make the class visible.
-    IncrementalFontUtils.setVisibility(incrFontMgr.style, fontname, true);
+    //IncrementalFontUtils.setVisibility(incrFontMgr.style, fontname, true);
 
     return arr;
   });
@@ -216,7 +216,6 @@ IncrementalFont.obj_ = function(fontname, req_size, url) {
  * @param {string} element_name The name of the data item.
  */
 IncrementalFont.obj_.prototype.loadNeededChars = function(element_name) {
-  return;
   var that = this;
   var chars = '';
   var charlist;
@@ -256,8 +255,6 @@ IncrementalFont.obj_.prototype.loadNeededChars = function(element_name) {
             console.log(neededCodes);
           } else {
             //console.log('do not need anymore characters');
-            timer1.start('TachyFon ready');
-            timer1.done();
             return null;
           }
           // neededCodes.sort(function(a, b){ return a - b}; );
@@ -299,6 +296,8 @@ IncrementalFont.obj_.prototype.loadNeededChars = function(element_name) {
                 msg = 'display ' + Object.keys(charlist).length + ' chars';
               } else {
                 msg = 'TachyFon ready';
+                IncrementalFontUtils.setVisibility(that.style, that.fontname, true);
+                timer1.done();
               }
               IncrementalFontUtils.setFont(that.fontname, fontdata, 
                 fileinfo.isTTF, msg);
@@ -307,6 +306,12 @@ IncrementalFont.obj_.prototype.loadNeededChars = function(element_name) {
               that.getCharlist = Promise.resolve(charlist);
               that.persistDelayed_(IncrementalFont.BASE);
               that.persistDelayed_(IncrementalFont.CHARLIST);
+            } else {
+              var msg = 'TachyFon ready';
+              IncrementalFontUtils.setFont(that.fontname, fontdata, 
+                fileinfo.isTTF, msg);
+              IncrementalFontUtils.setVisibility(that.style, that.fontname, true);
+              timer1.done();
             }
           });
         });
@@ -1679,7 +1684,7 @@ IncrementalFontUtils.setVisibility = function(style, fontname, visible) {
   var rule = '.' + fontname + ' { font-family: ' + fontname + '; ' +
     'visibility: ' + visibility + '; }';
 
-  style.sheet.insertRule(rule, 0);
+  style.sheet.insertRule(rule, style.sheet.cssRules.length);
 
   return style;
 };
