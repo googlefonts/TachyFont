@@ -23,7 +23,7 @@
  * Init a timer
  * @constructor
  */
-function Timer(top, leftMargin, rightMargin) {
+function Timer(top, leftMargin, rightMargin, display_level) {
     this.start_time = Date.now();
     this.results = [];
     this.timing_info = {};
@@ -32,9 +32,17 @@ function Timer(top, leftMargin, rightMargin) {
     this.top = top;
     this.leftMargin = leftMargin;
     this.rightMargin = rightMargin;
+    if (display_level == null)
+        display_level = 0;
+    this.display_level = display_level;
 }
 
-Timer.columns = ['Item', 'Start', 'End', 'mS'];
+Timer.columns = [
+  {'label': 'Item', 'display_level': 0},
+  {'label': 'Start', 'display_level': 1},
+  {'label': 'End', 'display_level': 1},
+  {'label': 'mS', 'display_level': 0},
+];
 Timer.showDetails = false;
 
 /**
@@ -106,10 +114,14 @@ Timer.prototype.getTable = function() {
   table.style.border = '3px solid gray';
   var row = table.insertRow(0);
   for (var i = 0; i < Timer.columns.length; i++) {
-    var cell = row.insertCell(i);
+    var column = Timer.columns[i];
+    if (column.display_level > this.display_level) {
+      continue;
+    }
+    var cell = row.insertCell(-1);
     cell.style.fontWeight = '900';
     cell.style.textAlign = 'center';
-    cell.innerHTML = Timer.columns[i];
+    cell.innerHTML = column.label;
   }
   var div = document.createElement('div');
   div.style.position = 'absolute';
@@ -172,10 +184,18 @@ Timer.prototype.display_timing = function() {
     }
     var row = table.insertRow(table.rows.length);
     var cell = 0;
-    this._appendTimingCell(row, cell++, name, 'left');
-    this._appendTimingCell(row, cell++, start, 'right');
-    this._appendTimingCell(row, cell++, end, 'right');
-    this._appendTimingCell(row, cell++, delta, 'right');
+    if (this.display_level >= Timer.columns[0].display_level) {
+      this._appendTimingCell(row, cell++, name, 'left');
+    }
+    if (this.display_level >= Timer.columns[1].display_level) {
+      this._appendTimingCell(row, cell++, start, 'right');
+    }
+    if (this.display_level >= Timer.columns[2].display_level) {
+      this._appendTimingCell(row, cell++, end, 'right');
+    }
+    if (this.display_level >= Timer.columns[3].display_level) {
+      this._appendTimingCell(row, cell++, delta, 'right');
+    }
   }
 };
 

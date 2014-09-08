@@ -80,7 +80,8 @@ IncrementalFont.CHARLIST = 'charlist';
  *                 array[2] {DataView} The font data.
  */
 IncrementalFont.createManager = function(fontname, req_size, url) {
-  timer1.start('load base');
+  //timer1.start('load base');
+  timer1.start('load Tachyfon base+data');
   console.log('check to see if a webfont is in cache');
   if (!url) {
     url = window.location.protocol + "//" + window.location.hostname + 
@@ -148,7 +149,7 @@ IncrementalFont.createManager = function(fontname, req_size, url) {
     });
   }).
   then(function(arr) {
-    timer1.end('load base');
+    //timer1.end('load base');
     var fileinfo = arr[0];
     // Create the @font-face rule.
     //IncrementalFontUtils.setFont(fontname, arr[2], fileinfo.isTTF, '');
@@ -295,7 +296,8 @@ IncrementalFont.obj_.prototype.loadNeededChars = function(element_name) {
               if (remaining.length) {
                 msg = 'display ' + Object.keys(charlist).length + ' chars';
               } else {
-                msg = 'TachyFon ready';
+                msg = '';
+                timer1.end('load Tachyfon base+data');
                 IncrementalFontUtils.setVisibility(that.style, that.fontname, true);
                 timer1.done();
               }
@@ -307,7 +309,8 @@ IncrementalFont.obj_.prototype.loadNeededChars = function(element_name) {
               that.persistDelayed_(IncrementalFont.BASE);
               that.persistDelayed_(IncrementalFont.CHARLIST);
             } else {
-              var msg = 'TachyFon ready';
+              var msg = '';
+              timer1.end('load Tachyfon base+data');
               IncrementalFontUtils.setFont(that.fontname, fontdata, 
                 fileinfo.isTTF, msg);
               IncrementalFontUtils.setVisibility(that.style, that.fontname, true);
