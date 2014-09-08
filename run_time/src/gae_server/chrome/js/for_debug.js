@@ -87,7 +87,7 @@ ForDebug.addBandwidthControl = function(incrFontMgr) {
   "(<a href='http://www.akamai.com/dl/akamai/akamai-soti-q114.pdf'" +
   "target='_blank'>2014 report pg 31</a>): ";
 
-  ForDebug.addDropDownCookieControl(ForDebug.Bandwidths, 100, 10, 
+  ForDebug.addDropDownCookieControl(ForDebug.Bandwidths, 120, 10, 
     'lightYellow', label_innerHTML, 'bandwidth');
 };
 
@@ -104,7 +104,7 @@ ForDebug.TimingTextSizes = [
  * @param {Object} incrFontMgr The incremental font manager.
  */
 ForDebug.addTimingTextSizeControl = function() {
-  ForDebug.addDropDownCookieControl(ForDebug.TimingTextSizes, 140, 10, 
+  ForDebug.addDropDownCookieControl(ForDebug.TimingTextSizes, 160, 10, 
     'lightYellow', "Timing Text Size", 'timing-text-size');
 };
 
@@ -197,7 +197,7 @@ ForDebug.addDropIdbButton_ = function(incrFontMgr, fontname) {
   span.appendChild(msg_span);
   var button = document.createElement('button');
   button.onclick = dropIdb;
-  var label = document.createTextNode('drop DB');
+  var label = document.createTextNode('drop IndexedDB data');
   button.appendChild(label);
   span.appendChild(button);
 
