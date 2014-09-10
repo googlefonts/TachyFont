@@ -1073,8 +1073,8 @@ table.ms-picker-table td.ms-picker-dayother,table.ms-picker-table td.ms-picker-d
 	background-color:transparent;
 	border:none;;
 }
-ul                   { list-style-image: url(bull1_classic.gif) }
-ul ul                   { list-style-image: url(bull2_classic.gif) }
+/* ul                   { list-style-image: url(bull1_classic.gif) } */
+/* ul ul                   { list-style-image: url(bull2_classic.gif) } */
 ul ul ul                   { list-style-image: url(bull3_classic.gif) }
 .ms-BlogNavigator div.ms-navheader{
 background-color:transparent;
