@@ -726,7 +726,7 @@ div.ms-quicklaunchouter
     padding: 0px 0px 0px 15px;
     font-size: 11px;
    	color: white;
-    background: url(img/bgfooter.gif) no-repeat left top #1d498b;
+    /* background: url(img/bgfooter.gif) no-repeat left top #1d498b; */
 
 
     }
