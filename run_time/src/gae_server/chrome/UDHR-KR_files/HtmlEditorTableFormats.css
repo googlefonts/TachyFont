@@ -1,0 +1,477 @@
+/* _lcid="1033" _version="12.0.4518"
+    _LocalBinding */
+.ms-rteTable-1   {
+	border-width: 0px;
+	border-style: none;
+	border-collapse: collapse;
+	font-family: Tahoma;  
+}
+.ms-rteTable-1 tr.ms-rteTableHeaderRow-1      {
+	margin: 10px;
+	padding: 10px;
+	color: #3F4D6B;
+	background: #D6E8FF;
+	text-align: left;
+	font-size: 10pt;  
+	font-style: normal;
+	font-family: Tahoma;  
+	text-transform: capitalize;
+	font-weight: bold;
+	border-spacing: 10px;
+	line-height: 14pt;
+	vertical-align: top;
+}
+.ms-rteTable-1 td.ms-rteTableHeaderFirstCol-1    {
+	padding: 0in 5.4pt 0in 5.4pt;
+	color: #3a4663;
+	line-height: 14pt;
+}
+.ms-rteTable-1 td.ms-rteTableHeaderLastCol-1  {
+	padding: 0in 5.4pt 0in 5.4pt; 
+	color: #3a4663;
+	line-height: 14pt;
+}
+.ms-rteTable-1 td.ms-rteTableHeaderOddCol-1 {
+	padding:0in 5.4pt 0in 5.4pt; 
+	color: #3a4663;
+	line-height: 14pt;
+}
+.ms-rteTable-1 td.ms-rteTableHeaderEvenCol-1 
+{
+	padding:0in 5.4pt 0in 5.4pt; color: #3a4663;
+	line-height: 14pt;
+}
+.ms-rteTable-1 tr.ms-rteTableOddRow-1  {
+	color: #666666;
+	background-color: #F2F3F4;
+	font-size: 10pt;   
+	vertical-align: top;
+}
+.ms-rteTable-1 tr.ms-rteTableEvenRow-1   {
+	color: #666666;
+	background-color: #E7EBF7;
+	font-size: 10pt;   
+	vertical-align: top;
+}
+.ms-rteTable-1 td.ms-rteTableFirstCol-1  {
+	padding: 0in 5.4pt 0in 5.4pt;
+}
+.ms-rteTable-1 td.ms-rteTableLastCol-1 {padding:0in 5.4pt 0in 5.4pt;}
+.ms-rteTable-1 td.ms-rteTableOddCol-1  {
+	padding: 0in 5.4pt 0in 5.4pt;
+}
+.ms-rteTable-1 td.ms-rteTableEvenCol-1 {
+	padding:0in 5.4pt 0in 5.4pt;
+}
+.ms-rteTable-1 tr.ms-rteTableFooterRow-1     {
+	background-color: #D6E8FF;
+	color: #4A5A80;
+	font-weight: 500;
+	font-size: 10pt;  
+	font-family: Tahoma;  
+	line-height: 11pt;
+}
+.ms-rteTable-1 td.ms-rteTableFooterFirstCol-1  {
+	padding: 0in 5.4pt 0in 5.4pt;
+	border-top: solid gray 1.0pt;
+	text-align: left;
+}
+.ms-rteTable-1 td.ms-rteTableFooterLastCol-1 {
+	padding:0in 5.4pt 0in 5.4pt;
+	border-top:solid gray 1.0pt;
+	text-align:left;
+}
+.ms-rteTable-1 td.ms-rteTableFooterOddCol-1  {
+	padding: 0in 5.4pt 0in 5.4pt;
+	text-align: left;
+	border-top: solid gray 1.0pt;
+}
+.ms-rteTable-1 td.ms-rteTableFooterEvenCol-1  {
+	padding: 0in 5.4pt 0in 5.4pt;
+	text-align: left;
+	border-top: solid gray 1.0pt;
+}
+.ms-rteTable-2   {
+	border-collapse: collapse;
+	border: solid 0px;
+	font-family: Tahoma;   
+}
+.ms-rteTable-2 tr.ms-rteTableHeaderRow-2     {
+	border-width: 1.0pt 1.0pt 3.0pt 1.0pt;
+	margin-top: 0in;
+	margin-right: 0in;
+	margin-bottom: 10.0pt;
+	margin-left: 0in;
+	line-height: 115%;
+	font-size: 11.0pt;  
+	font-family: "Calibri","sans-serif";  
+	width: 119.7pt;
+	border: solid white 1.0pt;
+	border-bottom: solid white 3.0pt;
+	background: #4F81BD;
+	padding: 0in 5.4pt 0in 5.4pt;
+	color: #FFFFFF;	
+}
+.ms-rteTable-2 td.ms-rteTableHeaderFirstCol-2   {
+	border-width: 1.0pt 1.0pt 3.0pt 1.0pt;
+	border: solid white 1.0pt;
+	border-bottom: solid white 3.0pt;
+	padding: 0in 5.4pt 0in 5.4pt;
+}
+.ms-rteTable-2 td.ms-rteTableHeaderLastCol-2  {
+	border-width: 1.0pt 1.0pt 3.0pt 1.0pt;
+	border: solid white 1.0pt;
+	border-bottom: solid white 3.0pt;
+	padding: 0in 5.4pt 0in 5.4pt;
+}
+.ms-rteTable-2 td.ms-rteTableHeaderOddCol-2 {
+	border-width: 1.0pt 1.0pt 3.0pt 1.0pt;
+	border: solid white 1.0pt;
+	border-bottom: solid white 3.0pt;
+	padding: 0in 5.4pt 0in 5.4pt;
+}
+.ms-rteTable-2 td.ms-rteTableHeaderEvenCol-2 {
+	border-width: 1.0pt 1.0pt 3.0pt 1.0pt;
+	border: solid white 1.0pt;
+	border-bottom: solid white 3.0pt;
+	padding: 0in 5.4pt 0in 5.4pt;
+}
+.ms-rteTable-2 tr.ms-rteTableOddRow-2 {
+	color: #666666;
+	background-color: #F2F3F4;
+	font-size: 10pt;   
+	vertical-align: top;
+}
+.ms-rteTable-2 tr.ms-rteTableEvenRow-2 {
+	color: #666666;
+	background-color: #E7EBF7;
+	font-size: 10pt;   
+	vertical-align: top;	
+}
+.ms-rteTable-2 td.ms-rteTableFirstCol-2  {
+	margin-top: 0in;
+	margin-right: 0in;
+	margin-bottom: 10.0pt;
+	margin-left: 0in;
+	line-height: 115%;
+	font-size: 11.0pt;  
+	font-family: "Calibri","sans-serif";  
+	width: 119.7pt;
+	border-top: none;
+	border-left: solid white 1.0pt;
+	border-bottom: none;
+	border-right: solid white 3.0pt;
+	background: #4F81BD;
+	padding: 0in 5.4pt 0in 5.4pt;
+	color: #FFFFFF;
+}
+.ms-rteTable-2 td.ms-rteTableLastCol-2 {
+	padding:0in 5.4pt 0in 5.4pt;
+}
+.ms-rteTable-2 td.ms-rteTableOddCol-2  {
+	padding: 0in 5.4pt 0in 5.4pt;
+}
+.ms-rteTable-2 td.ms-rteTableEvenCol-2 {
+	padding:0in 5.4pt 0in 5.4pt;
+}
+.ms-rteTable-2 tr.ms-rteTableFooterRow-2    {
+	color: #666666;
+	background-color: #FFFFFF;
+	font-size: 10pt;  
+	vertical-align: top;
+	padding: 0in 5.4pt 0in 5.4pt;
+}
+.ms-rteTable-2 td.ms-rteTableFooterFirstCol-2  {
+	margin-top: 0in;
+	margin-right: 0in;
+	margin-bottom: 10.0pt;
+	margin-left: 0in;
+	line-height: 115%;
+	font-size: 11.0pt;  
+	font-family: "Calibri","sans-serif";  
+	width: 119.7pt;
+	border-top: none;
+	border-left: solid white 1.0pt;
+	border-bottom: none;
+	border-right: solid white 3.0pt;
+	background: #4F81BD;
+	padding: 0in 5.4pt 0in 5.4pt;
+	color: #FFFFFF;
+}
+.ms-rteTable-2 td.ms-rteTableFooterLastCol-2 {
+	padding: 0in 5.4pt 0in 5.4pt;
+}
+.ms-rteTable-2 td.ms-rteTableFooterOddCol-2  {
+	padding: 0in 5.4pt 0in 5.4pt;
+}
+.ms-rteTable-2 td.ms-rteTableFooterEvenCol-2  {
+	padding: 0in 5.4pt 0in 5.4pt;
+}
+.ms-rteTable-3   {
+	border-collapse: collapse;
+	border: solid 0px;
+	font-family: Tahoma;   
+}
+.ms-rteTable-3 tr.ms-rteTableHeaderRow-3   {
+	margin: 10px;
+	padding: 10px;
+	color: #3a4663;
+	text-align: left;
+	font-size: 10pt;  
+	font-style: normal;
+	font-family: Verdana;  
+	text-transform: capitalize;
+	font-weight: normal;
+	border-spacing: 10px;
+	vertical-align: top;
+	background-color: #C4D1E3;
+}
+.ms-rteTable-3 td.ms-rteTableHeaderFirstCol-3    {
+	padding: 0in 5.4pt 0in 5.4pt;
+	color: #3a4663;
+	line-height: 14pt;
+}
+.ms-rteTable-3 td.ms-rteTableHeaderLastCol-3   {
+	padding: 0in 5.4pt 0in 5.4pt;
+	color: #3a4663;
+	line-height: 14pt;
+}
+.ms-rteTable-3 td.ms-rteTableHeaderOddCol-3  {
+	padding: 0in 5.4pt 0in 5.4pt;
+	color: #3a4663;
+	line-height: 14pt;
+}
+.ms-rteTable-3 td.ms-rteTableHeaderEvenCol-3 
+ {
+	padding: 0in 5.4pt 0in 5.4pt;
+	color: #3a4663;
+	line-height: 14pt;
+}
+.ms-rteTable-3 tr.ms-rteTableOddRow-3 {
+	color:#666666;
+	vertical-align: top;
+	font-size: 10pt;  
+}
+.ms-rteTable-3 tr.ms-rteTableEvenRow-3 {
+	color:#666666;
+	vertical-align: top;
+	font-size: 10pt;  
+}
+.ms-rteTable-3 td.ms-rteTableFirstCol-3   {
+	padding: 0in 5.4pt 0in 5.4pt;
+	background-color: #E7EBF7;
+}
+.ms-rteTable-3 td.ms-rteTableLastCol-3  {
+	padding: 0in 5.4pt 0in 5.4pt;
+	background-color:#E7EBF7;
+}
+.ms-rteTable-3 td.ms-rteTableOddCol-3   {
+	padding: 0in 5.4pt 0in 5.4pt;
+	background-color:#F7F3F7;
+}
+.ms-rteTable-3 td.ms-rteTableEvenCol-3  {
+	padding: 0in 5.4pt 0in 5.4pt;
+	background-color:#E7EBF7
+}
+.ms-rteTable-3 tr.ms-rteTableFooterRow-3      {
+	background-color: #C4D1E3;
+	color: #3a4663;
+	font-weight: normal;
+	font-size: 10pt;  
+	font-family: Verdana;  
+	line-height: 11pt;
+}
+.ms-rteTable-3 td.ms-rteTableFooterFirstCol-3   {
+	padding: 0in 5.4pt 0in 5.4pt;
+	text-align: left;
+}
+.ms-rteTable-3 td.ms-rteTableFooterLastCol-3   {
+	padding: 0in 5.4pt 0in 5.4pt;
+	text-align: left;
+}
+.ms-rteTable-3 td.ms-rteTableFooterOddCol-3   {
+	padding: 0in 5.4pt 0in 5.4pt;
+	text-align: left;
+}
+.ms-rteTable-3 td.ms-rteTableFooterEvenCol-3   {
+	padding: 0in 5.4pt 0in 5.4pt;
+	text-align: left;
+}
+.ms-rteTable-4   {
+	border-collapse: collapse;
+	border: solid 0px;
+	font-family: Tahoma;   
+}
+.ms-rteTable-4 tr.ms-rteTableHeaderRow-4     {
+	border-width: 1.0pt 1.0pt 3.0pt 1.0pt;
+	margin-top: 0in;
+	margin-right: 0in;
+	margin-bottom: 10.0pt;
+	margin-left: 0in;
+	line-height: 115%;
+	font-size: 11.0pt;  
+	font-family: "Calibri","sans-serif";  
+	width: 119.7pt;
+	background: #4F81BD;
+	padding: 0in 5.4pt 0in 5.4pt;
+	color: #FFFFFF;	
+}
+.ms-rteTable-4 td.ms-rteTableHeaderFirstCol-4   {
+	padding: 0in 5.4pt 0in 5.4pt;
+}
+.ms-rteTable-4 td.ms-rteTableHeaderLastCol-4  {
+	padding: 0in 5.4pt 0in 5.4pt;
+}
+.ms-rteTable-4 td.ms-rteTableHeaderOddCol-4 {
+	padding: 0in 5.4pt 0in 5.4pt;
+}
+.ms-rteTable-4 td.ms-rteTableHeaderEvenCol-4 {
+	padding: 0in 5.4pt 0in 5.4pt;
+}
+.ms-rteTable-4 tr.ms-rteTableOddRow-4 {
+	border-width: 1pt;
+	color: #666666;
+	font-size: 10pt;  
+	vertical-align: top;
+	border-bottom-style: solid;
+	border-bottom-color: #4F81BD;
+}
+.ms-rteTable-4 tr.ms-rteTableEvenRow-4 {
+	color: #666666;
+	font-size: 10pt;  
+	vertical-align: top;	
+}
+.ms-rteTable-4 td.ms-rteTableFirstCol-4  {
+	border-width: 1pt;
+	border-color: #4F81BD;
+	padding: 0in 5.4pt 0in 5.4pt;
+	border-bottom-style: solid;
+	border-left-style: solid;
+}
+.ms-rteTable-4 td.ms-rteTableLastCol-4 {
+	border-width: 1pt;
+	border-color: #4F81BD;
+	border-bottom-style: solid;
+	border-right-style: solid;
+	padding: 0in 5.4pt 0in 5.4pt;
+}
+.ms-rteTable-4 td.ms-rteTableOddCol-4  {
+	border-width: 1pt;
+	border-color: #4F81BD;
+	padding: 0in 5.4pt 0in 5.4pt;
+	border-bottom-style: solid;
+}
+.ms-rteTable-4 td.ms-rteTableEvenCol-4 {
+	border-width: 1pt;
+	border-color: #4F81BD;
+	padding: 0in 5.4pt 0in 5.4pt;
+	border-bottom-style: solid;
+}
+.ms-rteTable-4 tr.ms-rteTableFooterRow-4    {
+	color: #355C8C;
+	background-color: #FFFFFF;
+	font-size: 10pt;  
+	vertical-align: top;
+	padding: 0in 5.4pt 0in 5.4pt;
+}
+.ms-rteTable-4 td.ms-rteTableFooterFirstCol-4  {
+	border-width: 1pt;
+	border-color: #4F81BD;
+	border-bottom-style: solid;
+	border-left-style: solid;
+	padding: 0in 5.4pt 0in 5.4pt;
+}
+.ms-rteTable-4 td.ms-rteTableFooterLastCol-4 {
+	border-width: 1pt;
+	border-color: #4F81BD;
+	border-bottom-style: solid;
+	border-right-style: solid;
+	padding: 0in 5.4pt 0in 5.4pt;
+}
+.ms-rteTable-4 td.ms-rteTableFooterOddCol-4  {
+	border-width: 1pt;
+	border-color: #4F81BD;
+	border-bottom-style: solid;
+	padding: 0in 5.4pt 0in 5.4pt;
+}
+.ms-rteTable-4 td.ms-rteTableFooterEvenCol-4  {
+	border-width: 1pt;
+	border-color: #4F81BD;
+	border-bottom-style: solid;
+	padding: 0in 5.4pt 0in 5.4pt;
+}
+.ms-rteTable-5   {
+	border-collapse: collapse;
+	border: solid 0px;
+	font-family: Tahoma   
+}
+.ms-rteTable-5 tr.ms-rteTableHeaderRow-5     {
+	margin: 10px;
+	padding: 10px;
+	color: #3A4663;
+	text-align: left;
+	font-size: 10pt;  
+	font-style: normal;
+	font-family: Tahoma;  
+	text-transform: capitalize;
+	font-weight: 500;
+	border-spacing: 10px;
+	line-height: 11pt;
+	vertical-align: top;
+}
+.ms-rteTable-5 td.ms-rteTableHeaderFirstCol-5   {
+	padding: 0in 5.4pt 0in 5.4pt;
+	color: #3a4663;
+}
+.ms-rteTable-5 td.ms-rteTableHeaderLastCol-5  {
+	padding: 0in 5.4pt 0in 5.4pt; 
+	color: #3a4663;
+}
+.ms-rteTable-5 td.ms-rteTableHeaderOddCol-5 {
+	padding:0in 5.4pt 0in 5.4pt; 
+	color: #3a4663;
+}
+.ms-rteTable-5 td.ms-rteTableHeaderEvenCol-5 
+{padding:0in 5.4pt 0in 5.4pt; color: #3a4663;
+}
+.ms-rteTable-5 tr.ms-rteTableOddRow-5 {
+	color: #666666;
+	vertical-align: top;
+	font-size: 10pt; 
+}
+.ms-rteTable-5 tr.ms-rteTableEvenRow-5 {
+	color: #666666;
+	vertical-align: top;	
+	font-size: 10pt; 
+}
+.ms-rteTable-5 td.ms-rteTableFirstCol-5  {
+	padding: 0in 5.4pt 0in 5.4pt;
+}
+.ms-rteTable-5 td.ms-rteTableLastCol-5 {padding:0in 5.4pt 0in 5.4pt;}
+.ms-rteTable-5 td.ms-rteTableOddCol-5  {
+	padding: 0in 5.4pt 0in 5.4pt;
+}
+.ms-rteTable-5 td.ms-rteTableEvenCol-5 {padding:0in 5.4pt 0in 5.4pt;}
+.ms-rteTable-5 tr.ms-rteTableFooterRow-5    {
+	color: #3a4663;
+	font-weight: 500;
+	font-size: 10pt; 
+	font-family: Tahoma;  
+	line-height: 11pt;
+}
+.ms-rteTable-5 td.ms-rteTableFooterFirstCol-5  {
+	padding: 0in 5.4pt 0in 5.4pt;
+	text-align: left;
+}
+.ms-rteTable-5 td.ms-rteTableFooterLastCol-5 {
+	padding:0in 5.4pt 0in 5.4pt;
+	text-align:left;
+}
+.ms-rteTable-5 td.ms-rteTableFooterOddCol-5  {
+	padding: 0in 5.4pt 0in 5.4pt;
+	text-align: left;
+}
+.ms-rteTable-5 td.ms-rteTableFooterEvenCol-5  {
+	padding: 0in 5.4pt 0in 5.4pt;
+	text-align: left;
+}
