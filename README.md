@@ -61,13 +61,13 @@ The IndexedDB version has has a limited amount of testing on:
 
 * IE
     * tested
-       * IE complains about the font embedding bits on
+       * IE fails to display the font
+       * might be that TachyFon is failing their version of [OTS](https://code.google.com/p/ots/)
           * IE10 and IE11 on Windows 7
 
-* Safari - currently untested. 
-   * It is expected the IndexedDB version will work for Safari 8.
-   * It is possible that for Safari 7 the fast loading will work but the data
-     will not be persisted.
+* Safari 
+   * Safari 7 tested - fast load but does not persist data (IndexedDB not supported)
+   * Safari 8 It is expected the IndexedDB version will work allow persisting.
 
 Build and Deployment
 ====================
