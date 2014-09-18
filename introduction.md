@@ -23,9 +23,13 @@ Chinese, Japanese, and Korean (CJK) fonts often have 20,000+ characters. CJK fon
 However, over 95% of CJK pages have less than 800 characters on a given page. So of the typical 20,000+ characters in a CJK font, only 5% of the font is needed on a given page. For example the [Korean version of the Universal Declaration of Human Rights](http://www.ohchr.org/EN/UDHR/Pages/Language.aspx?LangID=kkn) uses only 396 different characters.
 
 ## TachyFont - Incremental Loaded Web Fonts
-TachyFont dramatically reduces the download time by automatically fetching only on the font data needed on the given page. For CJK pages this means that only around 5% of the font need be downloaded.
+### Initial download
+TachyFont dramatically reduces the download time by automatically fetching only on the font data needed on the given page. For CJK pages this means that only around 5% of the font need be downloaded. 
 
+For example, NotoSansKR has 22K+ characters and is 4.2 MB. Using TachyFont the [Korean UDHR](http://www.ohchr.org/EN/UDHR/Pages/Language.aspx?LangID=kkn) would only need to download 73 KB (2.2%).
+
+### Subsequent downlads
 Tachyfont also reduces future download time by automatically saving (persisting) the data locally and merging in any new data as needed. Over time the download requirement will continue to drop. 
 
-
+Continuing the NotoSansKR example: after the initial download it is very likely that subsequent pages would need less than 35 KB (1%).
 
