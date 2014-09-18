@@ -26,10 +26,10 @@ However, over 95% of CJK pages have less than 800 characters on a given page. So
 ### Initial download
 TachyFont dramatically reduces the download time by automatically fetching only on the font data needed on the given page. For CJK pages this means that only around 5% of the font need be downloaded. 
 
-For example, NotoSansKR has 22K+ characters and is 4.2 MB. Using TachyFont the [Korean UDHR](http://www.ohchr.org/EN/UDHR/Pages/Language.aspx?LangID=kkn) would only need to download 73 KB (2.2%).
+For example, NotoSansKR has 22K+ characters and is 4.2 MB. Using TachyFont the [Korean UDHR](http://www.ohchr.org/EN/UDHR/Pages/Language.aspx?LangID=kkn) would only need to download 73 KB, which is 2.2% of the compressed font size.
 
 ### Subsequent downlads
 Tachyfont also reduces future download time by automatically saving (persisting) the data locally and merging in any new data as needed. Over time the download requirement will continue to drop. 
 
-Continuing the NotoSansKR example: after the initial download it is very likely that subsequent pages would need less than 35 KB (1%).
+Continuing the NotoSansKR example: after the initial download it is very likely that subsequent pages would need less than 35 KB, which is 1% of the compressed font size.
 
