@@ -73,7 +73,7 @@ IncrementalFont.CHARLIST = 'charlist';
  *
  * @param {string} fontname The name of the font.
  * @param {?number} chunk_size Break char requests into multiple of this size.
- * @param {?string} url The URL of the Tachyfon server.
+ * @param {?string} url The URL of the Tachyfont server.
  * @return {array} An array with:
  *                 array[0] {Object} The IndexedDB object.
  *                 array[1] {Object}  The fileinfo from the header.
@@ -81,7 +81,7 @@ IncrementalFont.CHARLIST = 'charlist';
  */
 IncrementalFont.createManager = function(fontname, req_size, url) {
   //timer1.start('load base');
-  timer1.start('load Tachyfon base+data');
+  timer1.start('load Tachyfont base+data');
   console.log('check to see if a webfont is in cache');
   if (!url) {
     url = window.location.protocol + "//" + window.location.hostname + 
@@ -297,7 +297,7 @@ IncrementalFont.obj_.prototype.loadNeededChars = function(element_name) {
                 msg = 'display ' + Object.keys(charlist).length + ' chars';
               } else {
                 msg = '';
-                timer1.end('load Tachyfon base+data');
+                timer1.end('load Tachyfont base+data');
                 IncrementalFontUtils.setVisibility(that.style, that.fontname, true);
                 timer1.done();
               }
@@ -310,7 +310,7 @@ IncrementalFont.obj_.prototype.loadNeededChars = function(element_name) {
               that.persistDelayed_(IncrementalFont.CHARLIST);
             } else {
               var msg = '';
-              timer1.end('load Tachyfon base+data');
+              timer1.end('load Tachyfont base+data');
               IncrementalFontUtils.setFont(that.fontname, fontdata, 
                 fileinfo.isTTF, msg);
               IncrementalFontUtils.setVisibility(that.style, that.fontname, true);
@@ -1286,11 +1286,11 @@ function TachyFont(fontname, params) {
     'visibility: hidden; }';
   style.sheet.insertRule(rule, 0);
 
-  TachyFontEnv.ready(this, function(tachyfon) {
+  TachyFontEnv.ready(this, function(tachyfont) {
     //console.log('TachyFont: ready');
-    var incrfont = IncrementalFont.createManager(tachyfon.fontname,
-      tachyfon.params['req_size'], tachyfon.params['url']);
-    tachyfon.incrfont_resolve(incrfont);
+    var incrfont = IncrementalFont.createManager(tachyfont.fontname,
+      tachyfont.params['req_size'], tachyfont.params['url']);
+    tachyfont.incrfont_resolve(incrfont);
   });
 }
 

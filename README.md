@@ -1,5 +1,5 @@
-# Tachyfon
-### \[tac-ee-fon\]
+# TachyFont
+### \[tac-ee-font\]
 
 ## Fast fonts (but not as fast as a [Tachyon](http://en.wikipedia.org/wiki/Tachyon)).
 
@@ -44,7 +44,7 @@ Overall status 2014-08-27:
          * That is 2.3% of the WOFF size.
          * Note: all sizes are the compressed sizes.
 
-- There is a demo server at [http://green-pear.appspot.com/chrome/tachyfon_demos.html](http://green-pear.appspot.com/chrome/tachyfon_demos.html)
+- There is a demo server at [http://green-pear.appspot.com/chrome/tachyfont_demos.html](http://green-pear.appspot.com/chrome/tachyfont_demos.html)
    * It is not guaranteed to always be working.
 
 - the API is still evolving.
