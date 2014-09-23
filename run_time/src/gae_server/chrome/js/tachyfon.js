@@ -129,7 +129,7 @@ IncrementalFont.createManager = function(fontname, req_size, url) {
     var bandwidth = ForDebug.getCookie('bandwidth', '0');
     return IncrementalFontUtils.requestURL(incrFontMgr.url + 
       '/incremental_fonts/incrfonts/' + incrFontMgr.fontname + '/base', 'GET', 
-      null, { 'X-TachyFon-bandwidth': bandwidth }, 'arraybuffer').
+      null, { 'X-TachyFont-bandwidth': bandwidth }, 'arraybuffer').
     then(function(xfer_bytes) {
       //timer1.start('uncompact base');
       var xfer_data = new DataView(xfer_bytes);
@@ -1269,11 +1269,11 @@ value) {
 
 
 /**
- * TachyFon - A namespace.
+ * TachyFont - A namespace.
  * @param {string} fontname The fontname.
  * @param {Object} params Optional parameters.
  */
-function TachyFon(fontname, params) {
+function TachyFont(fontname, params) {
   this.fontname = fontname;
   this.incrfont = new Promise(function(resolve) {
     this.incrfont_resolve = resolve;
@@ -1286,8 +1286,8 @@ function TachyFon(fontname, params) {
     'visibility: hidden; }';
   style.sheet.insertRule(rule, 0);
 
-  TachyFonEnv.ready(this, function(tachyfon) {
-    //console.log('TachyFon: ready');
+  TachyFontEnv.ready(this, function(tachyfon) {
+    //console.log('TachyFont: ready');
     var incrfont = IncrementalFont.createManager(tachyfon.fontname,
       tachyfon.params['req_size'], tachyfon.params['url']);
     tachyfon.incrfont_resolve(incrfont);
@@ -1298,7 +1298,7 @@ function TachyFon(fontname, params) {
  * Lazily load the data for these chars.
  * @param {string} element_name The name of the data item.
  */
-TachyFon.prototype.loadNeededChars = function(element_name) {
+TachyFont.prototype.loadNeededChars = function(element_name) {
   this.incrfont.
   then(function(incrfont) {
     incrfont.loadNeededChars(element_name);
@@ -1568,7 +1568,7 @@ IncrementalFontUtils.requestCodepoints = function(url, fontname, codes) {
     // Google App Engine servers do not support CORS so we cannot say
     // the 'Content-Type' is 'application/json'.
     //{'Content-Type': 'application/json'},
-    {'Content-Type': 'text/plain', 'X-TachyFon-bandwidth': bandwidth},
+    {'Content-Type': 'text/plain', 'X-TachyFont-bandwidth': bandwidth},
     'arraybuffer');
 };
 
@@ -1798,7 +1798,7 @@ IncrementalFontUtils.setFont_oldStyle = function(fontname, blobUrl, isTTF) {
 /**
  * Load a web font.
  * This is currently only used for demos but in the future loading web fonts
- * could become an integral part of TachyFon.
+ * could become an integral part of TachyFont.
  * @param {string} fontname The CSS fontname
  * @param {string} url The url of the webfont.
  * @param {string} fonttype The type of the font; eg truetype or opentype.
@@ -1972,16 +1972,16 @@ RLEDecoder.rleDecode = function(arr) {
 
 
 /**
- * TachyFonEnv - A namespace.
+ * TachyFontEnv - A namespace.
  */
-function TachyFonEnv() {
+function TachyFontEnv() {
 }
 
-TachyFonEnv.js_list_ = [];
-TachyFonEnv.js_list_loaded_cnt = 0;
-TachyFonEnv.ready_list_ = [];
-TachyFonEnv.css_list_ = [];
-TachyFonEnv.css_list_loaded_cnt = 0;
+TachyFontEnv.js_list_ = [];
+TachyFontEnv.js_list_loaded_cnt = 0;
+TachyFontEnv.ready_list_ = [];
+TachyFontEnv.css_list_ = [];
+TachyFontEnv.css_list_loaded_cnt = 0;
 
 //Support running without demo features.
 function Timer() {}
@@ -1997,34 +1997,34 @@ ForDebug.addDropIdbButton = function(incrFontMgr, fontname) {}
 ForDebug.addBandwidthControl = function() {}
 ForDebug.addTimingTextSizeControl = function() {}
 
-TachyFonEnv.init_ = function() {
+TachyFontEnv.init_ = function() {
   // Browser fix-ups.
 //  if (typeof Promise == 'undefined') {
-//    TachyFonEnv.add_js('js/promise-1.0.0.js');
+//    TachyFontEnv.add_js('js/promise-1.0.0.js');
 //  }
 
   // Load the needed support files.
-//  TachyFonEnv.add_js('js/binary-font-editor.js');
-//  TachyFonEnv.add_js('js/incrfont-indexeddb.js');
-//  TachyFonEnv.add_js('js/incr-font-utils.js');
-//  TachyFonEnv.add_js('js/rle-decoder.js');
+//  TachyFontEnv.add_js('js/binary-font-editor.js');
+//  TachyFontEnv.add_js('js/incrfont-indexeddb.js');
+//  TachyFontEnv.add_js('js/incr-font-utils.js');
+//  TachyFontEnv.add_js('js/rle-decoder.js');
 };
 
 /**
  * Load a CSS file.
  * @param {string} url The URL of the CSS.
  */
-TachyFonEnv.add_css = function(url) {
+TachyFontEnv.add_css = function(url) {
   //console.log('add css \"' + url + '\'');
-  TachyFonEnv.css_list_.push(url);
+  TachyFontEnv.css_list_.push(url);
   var link = document.createElement('link');
   link.setAttribute('href', url);
   link.setAttribute('rel', 'stylesheet');
   link.setAttribute('type', 'text/css');
   link.onload = function() {
     //console.log('loaded ' + url);
-    TachyFonEnv.css_list_loaded_cnt += 1;
-    TachyFonEnv.handle_ready_();
+    TachyFontEnv.css_list_loaded_cnt += 1;
+    TachyFontEnv.handle_ready_();
   }
   document.head.appendChild(link);
 };
@@ -2034,15 +2034,15 @@ TachyFonEnv.add_css = function(url) {
  * Load a Javascript file.
  * @param {string} url The URL of the Javascript.
  */
-TachyFonEnv.add_js = function(url) {
+TachyFontEnv.add_js = function(url) {
   //console.log('add script \"' + url + '\'');
-  TachyFonEnv.js_list_.push(url);
+  TachyFontEnv.js_list_.push(url);
   var script = document.createElement('script');
   script.src = url;
   script.onload = function() {
     //console.log('loaded ' + url);
-    TachyFonEnv.js_list_loaded_cnt += 1;
-    TachyFonEnv.handle_ready_();
+    TachyFontEnv.js_list_loaded_cnt += 1;
+    TachyFontEnv.handle_ready_();
   };
   document.head.appendChild(script);
 };
@@ -2055,17 +2055,17 @@ TachyFonEnv.add_js = function(url) {
  * @param {Object} closure Data to pass to the callback.
  * @private
  */
-TachyFonEnv.handle_ready_ = function() {
+TachyFontEnv.handle_ready_ = function() {
   // Check if all the JS files are loaded.
-  if (TachyFonEnv.js_list_.length != TachyFonEnv.js_list_loaded_cnt) {
+  if (TachyFontEnv.js_list_.length != TachyFontEnv.js_list_loaded_cnt) {
     return;
   }
-  if (TachyFonEnv.css_list_.length != TachyFonEnv.css_list_loaded_cnt) {
+  if (TachyFontEnv.css_list_.length != TachyFontEnv.css_list_loaded_cnt) {
     return;
   }
   //console.log('ready');
-  for (var i = 0; i < TachyFonEnv.ready_list_.length; i++) {
-    var callback_obj = TachyFonEnv.ready_list_[i];
+  for (var i = 0; i < TachyFontEnv.ready_list_.length; i++) {
+    var callback_obj = TachyFontEnv.ready_list_[i];
     callback_obj.callback(callback_obj.closure);
   }
 };
@@ -2077,13 +2077,13 @@ TachyFonEnv.handle_ready_ = function() {
  * @param {Object} closure Data to pass to the callback.
  * @param {function} call Call this function when the env is ready.
  */
-TachyFonEnv.ready = function(closure, callback) {
+TachyFontEnv.ready = function(closure, callback) {
   //console.log('add callback');
   var callback_obj = {}; // Make this minifiable.
   callback_obj.callback = callback;
   callback_obj.closure = closure;
-  TachyFonEnv.ready_list_.push(callback_obj);
-  TachyFonEnv.handle_ready_();
+  TachyFontEnv.ready_list_.push(callback_obj);
+  TachyFontEnv.handle_ready_();
 };
 
-TachyFonEnv.init_();
+TachyFontEnv.init_();
