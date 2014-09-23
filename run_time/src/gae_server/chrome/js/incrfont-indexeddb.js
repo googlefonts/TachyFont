@@ -128,7 +128,7 @@ IncrementalFont.createManager = function(fontname, url) {
     var bandwidth = ForDebug.getCookie('bandwidth', '0');
     return IncrementalFontUtils.requestURL(incrFontMgr.url + 
       '/incremental_fonts/incrfonts/' + incrFontMgr.fontname + '/base', 'GET', 
-      null, { 'X-TachyFon-bandwidth': bandwidth }, 'arraybuffer').
+      null, { 'X-TachyFont-bandwidth': bandwidth }, 'arraybuffer').
     then(function(xfer_bytes) {
       timer1.start('uncompact base');
       var xfer_data = new DataView(xfer_bytes);

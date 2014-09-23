@@ -37,7 +37,7 @@ class GlyphRequest(webapp2.RequestHandler):
   """
 
   def post(self):
-    bandwidth = self.request.headers.get('X-TachyFon-bandwidth')
+    bandwidth = self.request.headers.get('X-TachyFont-bandwidth')
     self.response.headers.add_header('Access-Control-Allow-Origin', '*')
     #HACK 
     #Since GAE is brain dead, it decides using gzip compression only for text 
@@ -66,7 +66,7 @@ class IncrFont(webapp2.RequestHandler):
   # 3G (at least according to WebPageTest.org) is 1.6 Mbps / 768 Kbps
   # so download is 200 KBps; 5 mS / KB 
   def get(self, fontname):
-    bandwidth = self.request.headers.get('X-TachyFon-bandwidth')
+    bandwidth = self.request.headers.get('X-TachyFont-bandwidth')
     self.response.headers['Content-Type'] = 'text/plain'
     self.response.headers['Content-Type'] = 'text/richtext'
     filename = BASE_DIR + '/fonts/' + fontname

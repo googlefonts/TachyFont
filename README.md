@@ -24,16 +24,16 @@ Incremental Fonts is an open source project.
 
 Incremental fonts works for both OpenType/TrueType and OpenType/CFF fonts.
 
-TachyFon is not an official Google project, and Google provides no support for it.
+TachyFont is not an official Google project, and Google provides no support for it.
 
 Status
 ======
 
 Overall status 2014-08-27:
 
-- TachyFon is at the proof of concept stage and suitable for giving a demo.
+- TachyFont is at the proof of concept stage and suitable for giving a demo.
    * The "Noto Sans KR Thin" OTF is 4.2 MB
-   * TachyFon can display the characters for a typical Korean web page in
+   * TachyFont can display the characters for a typical Korean web page in
      about 90K.
 
 - There is a demo server at [http://green-pear.appspot.com/chrome/tachyfon_demos.html](http://green-pear.appspot.com/chrome/tachyfon_demos.html)
