@@ -31,10 +31,18 @@ Status
 
 Overall status 2014-08-27:
 
-- TachyFont is at the proof of concept stage and suitable for giving a demo.
-   * The "Noto Sans KR Thin" OTF is 4.2 MB
-   * TachyFont can display the characters for a typical Korean web page in
-     about 90K.
+- TachyFon is at the proof of concept stage and suitable for giving a demo.
+   * Korean fonts are typically 1-5 MB.
+   * TachyFon can display the characters in a typical Korean web page in using about 90 KB.  
+   * For example, "Noto Sans KR Thin" (OTF) has 22K+ glyphs and is 4.2 MB.
+   * The [Korean version](http://www.ohchr.org/EN/UDHR/Pages/Language.aspx?LangID=kkn) of the [Universal Declaration of Human Rights](http://www.un.org/en/documents/udhr/) (UDHR) has 396 unique characters.
+   * If the Korean UDHR used NotoSansKR-Thin:
+      * The WOFF version would be about 3,200 KB.
+      * The TachyFont version would be 74 KB:
+         * 33 KB for a one-time font framework.
+         * 41 KB of character data on this page.
+         * That is 2.3% of the WOFF size.
+         * Note: all sizes are the compressed sizes.
 
 - There is a demo server at [http://green-pear.appspot.com/chrome/tachyfon_demos.html](http://green-pear.appspot.com/chrome/tachyfon_demos.html)
    * It is not guaranteed to always be working.
