@@ -72,7 +72,7 @@ IncrementalFont.CHARLIST = 'charlist';
  * 7. When the base is available set the class visibility=visible
  *
  * @param {string} fontname The name of the font.
- * @param {?number} chunk_size Break char requests into multiple of this size.
+ * @param {?number} req_size Break char requests into multiple of this size.
  * @param {?string} url The URL of the Tachyfont server.
  * @return {array} An array with:
  *                 array[0] {Object} The IndexedDB object.
@@ -84,21 +84,21 @@ IncrementalFont.createManager = function(fontname, req_size, url) {
   timer1.start('load Tachyfont base+data');
   console.log('check to see if a webfont is in cache');
   if (!url) {
-    url = window.location.protocol + "//" + window.location.hostname + 
-        (window.location.port ? ':' + window.location.port: '');
+    url = window.location.protocol + '//' + window.location.hostname +
+        (window.location.port ? ':' + window.location.port : '');
   }
   var incrFontMgr = new IncrementalFont.obj_(fontname, req_size, url);
   //timer1.start('openIndexedDB.open ' + fontname);
-//  IncrementalFontUtils.logger(incrFontMgr.url, 
+//  IncrementalFontUtils.logger(incrFontMgr.url,
 //    'need to report info');
-  console.log('It would be good to report status of:\n\
-      * idb\n\
-      * chars needed\n\
-      * webfont in cache\n\
-      * timing\n\
-      * way to collect the info\n\
-      * way to clear old info\n\
-      * errors');
+  console.log('It would be good to report status of:\n' +
+      '* idb\n' +
+      '* chars needed\n' +
+      '* webfont in cache\n' +
+      '* timing\n' +
+      '* way to collect the info\n' +
+      '* way to clear old info\n' +
+      '* errors');
   incrFontMgr.getIDB_ = incrFontMgr.openIndexedDB(fontname);
   //timer1.end('openIndexedDB.open ' + fontname);
 
@@ -106,7 +106,7 @@ IncrementalFont.createManager = function(fontname, req_size, url) {
   incrFontMgr.style = IncrementalFontUtils.setVisibility(null, fontname, false);
   // When the page finishes loading: automatically load needed chars.
   if (document.readyState == 'loading') {
-    document.addEventListener("DOMContentLoaded", function(event) {
+    document.addEventListener('DOMContentLoaded', function(event) {
       incrFontMgr.loadNeededChars();
     });
   } else {
@@ -127,8 +127,8 @@ IncrementalFont.createManager = function(fontname, req_size, url) {
   }).
   catch (function(e) {
     var bandwidth = ForDebug.getCookie('bandwidth', '0');
-    return IncrementalFontUtils.requestURL(incrFontMgr.url + 
-      '/incremental_fonts/incrfonts/' + incrFontMgr.fontname + '/base', 'GET', 
+    return IncrementalFontUtils.requestURL(incrFontMgr.url +
+      '/incremental_fonts/incrfonts/' + incrFontMgr.fontname + '/base', 'GET',
       null, { 'X-TachyFont-bandwidth': bandwidth }, 'arraybuffer').
     then(function(xfer_bytes) {
       //timer1.start('uncompact base');
@@ -215,6 +215,7 @@ IncrementalFont.obj_ = function(fontname, req_size, url) {
 /**
  * Lazily load the data for these chars.
  * @param {string} element_name The name of the data item.
+ * @return {object}
  */
 IncrementalFont.obj_.prototype.loadNeededChars = function(element_name) {
   var that = this;
@@ -233,7 +234,7 @@ IncrementalFont.obj_.prototype.loadNeededChars = function(element_name) {
     return new Promise(function(resolve, reject) {
       pending_resolve = resolve;
       pending_reject = reject;
-  
+
         return that.getCharList.
         then(function(charlist_) {
           charlist = charlist_;
@@ -250,7 +251,7 @@ IncrementalFont.obj_.prototype.loadNeededChars = function(element_name) {
               tmp_charlist[c] = 1;
             }
           }
-  
+
           if (neededCodes.length) {
             console.log('load ' + neededCodes.length + ' codes:');
             console.log(neededCodes);
@@ -268,10 +269,10 @@ IncrementalFont.obj_.prototype.loadNeededChars = function(element_name) {
             //console.log('remaining.length = ' + remaining.length);
           }
           for (var i = 0; i < neededCodes.length; i++) {
-            var c = String.fromCharCode(neededCodes[i]);;
+            var c = String.fromCharCode(neededCodes[i]);
             charlist[c] = 1;
           }
-          return IncrementalFontUtils.requestCodepoints(that.url, that.fontname, 
+          return IncrementalFontUtils.requestCodepoints(that.url, that.fontname,
             neededCodes).
           then(function(chardata) {
             if (remaining.length) {
@@ -279,7 +280,7 @@ IncrementalFont.obj_.prototype.loadNeededChars = function(element_name) {
                 that.loadNeededChars(element_name);
               }, 1);
             }
-            //console.log('requested char data length = ' + chardata.byteLength);
+            //console.log('requested char data length = ' +chardata.byteLength);
             return chardata;
           });
         }).
@@ -290,18 +291,19 @@ IncrementalFont.obj_.prototype.loadNeededChars = function(element_name) {
             var fileinfo = arr[0];
             var fontdata = arr[1];
             if (chardata != null) {
-              fontdata = IncrementalFontUtils.injectCharacters(fileinfo, fontdata,
-                chardata);
+              fontdata = IncrementalFontUtils.injectCharacters(fileinfo,
+                fontdata, chardata);
               var msg;
               if (remaining.length) {
                 msg = 'display ' + Object.keys(charlist).length + ' chars';
               } else {
                 msg = '';
                 timer1.end('load Tachyfont base+data');
-                IncrementalFontUtils.setVisibility(that.style, that.fontname, true);
+                IncrementalFontUtils.setVisibility(that.style, that.fontname,
+                  true);
                 timer1.done();
               }
-              IncrementalFontUtils.setFont(that.fontname, fontdata, 
+              IncrementalFontUtils.setFont(that.fontname, fontdata,
                 fileinfo.isTTF, msg);
               // Update the data.
               that.getBase = Promise.all([fileinfo, fontdata]);
@@ -311,9 +313,10 @@ IncrementalFont.obj_.prototype.loadNeededChars = function(element_name) {
             } else {
               var msg = '';
               timer1.end('load Tachyfont base+data');
-              IncrementalFontUtils.setFont(that.fontname, fontdata, 
+              IncrementalFontUtils.setFont(that.fontname, fontdata,
                 fileinfo.isTTF, msg);
-              IncrementalFontUtils.setVisibility(that.style, that.fontname, true);
+              IncrementalFontUtils.setVisibility(that.style, that.fontname,
+                true);
               timer1.done();
             }
           });
@@ -527,7 +530,7 @@ IncrementalFont.obj_.prototype.getData_ = function(idb, name) {
 
 /**
  * Binary Font Editor - A namespace.
- * 
+ *
  * Binary operation over font file or glyph bundle
  * Always big endian byte order
  * @param {type} dataView DataView which includes data
@@ -1071,7 +1074,7 @@ BinaryFontEditor.readOps.CCMP = function(editor, font) {
         var fmt12SegNum = 0, fmt12SegNumBegin, fmt12SegNumEnd;
         var fmt4SegCount = gos_type_4_lens.len;
         var startCode, endCode, idDelta, idRangeOffset, startGid, codeRange;
-        for (var i = 0; i < fmt4SegCount ; i++) {
+        for (var i = 0; i < fmt4SegCount; i++) {
             fmt12SegNumBegin = fmt12SegNum;
             fmt12SegNumEnd = fmt12SegNum + gos_type_4_lens.segments[i] - 1;
             startGid = gos_type_12.segments[fmt12SegNumBegin][2];
@@ -1272,6 +1275,7 @@ value) {
  * TachyFont - A namespace.
  * @param {string} fontname The fontname.
  * @param {Object} params Optional parameters.
+ * @constructor
  */
 function TachyFont(fontname, params) {
   this.fontname = fontname;
@@ -1302,7 +1306,7 @@ TachyFont.prototype.loadNeededChars = function(element_name) {
   this.incrfont.
   then(function(incrfont) {
     incrfont.loadNeededChars(element_name);
-  })
+  });
 };
 
 /**
@@ -1508,7 +1512,7 @@ IncrementalFontUtils.writeCharsetFormat2 = function(baseFont, headerInfo) {
     var is_fmt_2 = (headerInfo.charset_fmt.gos.type == 6);
     for (var i = 0; i < nGroups; i++) {
         binEd.setUint16_(segments[i][0]);
-        if(is_fmt_2)
+        if (is_fmt_2)
             binEd.setUint16_(segments[i][1]);
         else
             binEd.setUint8_(segments[i][1]);
@@ -1560,7 +1564,7 @@ IncrementalFontUtils.logger = function(url, msg) {
  */
 IncrementalFontUtils.requestCodepoints = function(url, fontname, codes) {
 
-  var bandwidth = ForDebug.getCookie('bandwidth', '0')
+  var bandwidth = ForDebug.getCookie('bandwidth', '0');
   return IncrementalFontUtils.requestURL(
     url + '/incremental_fonts/request',
     'POST',
@@ -1583,7 +1587,7 @@ IncrementalFontUtils.requestCodepoints = function(url, fontname, codes) {
  * @param {string} responseType Response type
  * @return {Promise} Promise to return response
  */
-IncrementalFontUtils.requestURL = function(url, method, data, headerParams, 
+IncrementalFontUtils.requestURL = function(url, method, data, headerParams,
                                            responseType) {
   //var cnt = fetchCnt++;
   //timer1.start('fetch ' + cnt + ' ' + url);
@@ -1697,6 +1701,7 @@ IncrementalFontUtils.setVisibility = function(style, fontname, visible) {
  * @param {string} fontname The CSS fontname
  * @param {Array} data The font data.
  * @param {boolean} isTTF True is the font is of type TTF.
+ * @param {string} msg A message to display in a timer.
  */
 IncrementalFontUtils.setFont = function(fontname, data, isTTF, msg) {
   if (msg) {
@@ -1722,7 +1727,7 @@ IncrementalFontUtils.setFont = function(fontname, data, isTTF, msg) {
   var blobUrl = window.URL.createObjectURL(blob);
 
   if (typeof FontFace == 'undefined') {
-    IncrementalFontUtils.setFont_oldStyle(fontname, blobUrl, isTTF)
+    IncrementalFontUtils.setFont_oldStyle(fontname, blobUrl, isTTF);
     return;
   } else {
     var font = new FontFace(fontname, 'url(' + blobUrl + ')', {});
@@ -1775,8 +1780,8 @@ IncrementalFontUtils.setFont_oldStyle = function(fontname, blobUrl, isTTF) {
   }
   var rule_str = '@font-face {\n' +
     '    font-family: ' + fontname + ';\n' +
-    '    src: url("' + blobUrl + '")' + 
-    ' format("' + format + '")' + 
+    '    src: url("' + blobUrl + '")' +
+    ' format("' + format + '")' +
     ';' +
     '}';
 
@@ -1800,8 +1805,9 @@ IncrementalFontUtils.setFont_oldStyle = function(fontname, blobUrl, isTTF) {
  * This is currently only used for demos but in the future loading web fonts
  * could become an integral part of TachyFont.
  * @param {string} fontname The CSS fontname
- * @param {string} url The url of the webfont.
+ * @param {string} fonturl The url of the webfont.
  * @param {string} fonttype The type of the font; eg truetype or opentype.
+ * @return {object}
  */
 // THIS SHOULD NOT BE IN TACHYFONT.JS
 IncrementalFontUtils.loadWebFont = function(fontname, fonturl, fonttype) {
@@ -1818,15 +1824,15 @@ IncrementalFontUtils.loadWebFont = function(fontname, fonturl, fonttype) {
     var style = document.createElement('style');
     document.head.appendChild(style);
     var sheet = style.sheet;
-    var rule_str = 
+    var rule_str =
       '@font-face {\n' +
-      '    font-family: "' + fontname + '";\n' + 
-      '    src: url("' + fonturl + "?bandwidth=" + bandwidth + 
+      '    font-family: "' + fontname + '";\n' +
+      '    src: url("' + fonturl + '?bandwidth=' + bandwidth +
       '&ts=' + Date.now() + '") format("' + fonttype + '")\n' +
       '}';
     sheet.insertRule(rule_str, 0);
     // A lazy way to time the web font.
-    window.addEventListener("load", function(event) {
+    window.addEventListener('load', function(event) {
       clearTimeout(timeout_id);
       timer2.end('load web font');
       timer2.done();
@@ -1836,9 +1842,9 @@ IncrementalFontUtils.loadWebFont = function(fontname, fonturl, fonttype) {
     return;
   }
 
-  var face = new FontFace(fontname, "url(" + fonturl + 
-    "?bandwidth=" + bandwidth + '&ts=' + Date.now() + ")", {});
-  face.load().then(function (loadedFace) {
+  var face = new FontFace(fontname, 'url(' + fonturl +
+    '?bandwidth=' + bandwidth + '&ts=' + Date.now() + ')', {});
+  face.load().then(function(loadedFace) {
     document.fonts.add(loadedFace);
     document.body.style.fontFamily = fontname;
     timer2.end('load web font:<br>' + fontname);
@@ -1847,7 +1853,7 @@ IncrementalFontUtils.loadWebFont = function(fontname, fonturl, fonttype) {
   });
   return face; // NOTE: the face has to be stored in a global variable or
                // the font seems to disappear.
-}
+};
 
 /**
  * RLEDecoder class to decode RLE'd data
@@ -1977,26 +1983,61 @@ RLEDecoder.rleDecode = function(arr) {
 function TachyFontEnv() {
 }
 
+// Static variables.
+// TODO(bstell) Is this the proper way to initalize these?
+/** List of Javascript files to load.
+ * @private
+ */
 TachyFontEnv.js_list_ = [];
+/** Count of Javascript files loaded. */
 TachyFontEnv.js_list_loaded_cnt = 0;
+/** List of callbacks to call when all the files are loaded.
+ * @private
+ */
 TachyFontEnv.ready_list_ = [];
+/** List of CSS files to load.
+ * @private
+ */
 TachyFontEnv.css_list_ = [];
+/** Count of CSS files loaded. */
 TachyFontEnv.css_list_loaded_cnt = 0;
 
 //Support running without demo features.
+/** Stub out timer functions. */
 function Timer() {}
+/** Stub out timer functions. */
 Timer.prototype.start = function() {};
+/** Stub out timer functions. */
 Timer.prototype.end = function() {};
+/** Stub out timer functions. */
 Timer.prototype.done = function() {};
+/** Stub out timer functions. */
 var timer1 = new Timer();
+/** Stub out timer functions. */
 var timer2 = new Timer();
 
+/** Stub out the debug functions. */
 function ForDebug() {}
-ForDebug.getCookie = function(name, fallback) { return fallback; }
-ForDebug.addDropIdbButton = function(incrFontMgr, fontname) {}
-ForDebug.addBandwidthControl = function() {}
-ForDebug.addTimingTextSizeControl = function() {}
+/** Stub out the debug functions.
+ * @param {string} name The cookie name.
+ * @param {*} fallback A value to return if the cookie is not found.
+ * @return {*}
+ */
+ForDebug.getCookie = function(name, fallback) { return fallback; };
+/** Stub out the debug functions.
+ * @param {object} incrFontMgr The incremental font manager object.
+ * @param {string} fontname The font name.
+ */
+ForDebug.addDropIdbButton = function(incrFontMgr, fontname) {};
+/** Stub out the debug functions. */
+ForDebug.addBandwidthControl = function() {};
+/** Stub out the debug functions. */
+ForDebug.addTimingTextSizeControl = function() {};
 
+/**
+ * Pull in other needed Javascript files.
+ * @private
+ */
 TachyFontEnv.init_ = function() {
   // Browser fix-ups.
 //  if (typeof Promise == 'undefined') {
@@ -2025,7 +2066,7 @@ TachyFontEnv.add_css = function(url) {
     //console.log('loaded ' + url);
     TachyFontEnv.css_list_loaded_cnt += 1;
     TachyFontEnv.handle_ready_();
-  }
+  };
   document.head.appendChild(link);
 };
 
@@ -2050,9 +2091,6 @@ TachyFontEnv.add_js = function(url) {
 
 /**
  * Call the JS callbacks if all the Javascript has been loaded.
- * @param {function} call The function to call when all of the Javascript has
- * been loaded.
- * @param {Object} closure Data to pass to the callback.
  * @private
  */
 TachyFontEnv.handle_ready_ = function() {
@@ -2075,7 +2113,7 @@ TachyFontEnv.handle_ready_ = function() {
  * Register a Javascript is ready callback.
  * This is called when all the requested Javascript URLs are loaded.
  * @param {Object} closure Data to pass to the callback.
- * @param {function} call Call this function when the env is ready.
+ * @param {function} callback Call this function when the env is ready.
  */
 TachyFontEnv.ready = function(closure, callback) {
   //console.log('add callback');
