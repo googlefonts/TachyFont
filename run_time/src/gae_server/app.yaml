@@ -12,9 +12,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# The checked in "application" should alwasy be "sample-app".
-#application: sample-app
-application: green-pear
+# The checked in "application" should always be "sample-app".
+application: sample-app
+#application: green-pear
 #application: google.com:lazadont
 #application: ilffwc
 version: 1
