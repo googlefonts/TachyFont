@@ -75,6 +75,7 @@ class FontInfo(object):
   
   @staticmethod
   def getInformation(fontfile, tags):
+    # TODO(bstell) check if font already opened
     font = TTFont(fontfile)
     dict_of_data = {}
     for tag in tags:
