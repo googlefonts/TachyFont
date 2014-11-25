@@ -104,6 +104,10 @@ IncrementalFont.createManager = function(fontname, req_size, url) {
 
   // Create a class with visibility: hidden.
   incrFontMgr.style = IncrementalFontUtils.setVisibility(null, fontname, false);
+  // Limit the maximum visibility=hidden time.
+  setTimeout(function() {
+    IncrementalFontUtils.setVisibility(incrFontMgr.style, fontname, true);
+  }, 3000);
   // When the page finishes loading: automatically load needed chars.
   if (document.readyState == 'loading') {
     document.addEventListener('DOMContentLoaded', function(event) {
@@ -158,6 +162,10 @@ IncrementalFont.createManager = function(fontname, req_size, url) {
     //IncrementalFontUtils.setVisibility(incrFontMgr.style, fontname, true);
 
     return arr;
+  }).
+  catch (function(e) {
+    console.log('failed to get the font.');
+    IncrementalFontUtils.setVisibility(incrFontMgr.style, fontname, true);
   });
 
   // Start the operation to get the list of already fetched chars.
@@ -171,7 +179,7 @@ IncrementalFont.createManager = function(fontname, req_size, url) {
   }).
   then(function(charlist_data) {
     return charlist_data;
-  });
+  }).catch(function() { debugger; });
 
   // For Debug: add a button to clear the IndexedDB.
   ForDebug.addDropIdbButton(incrFontMgr, fontname);
@@ -263,8 +271,8 @@ IncrementalFont.obj_.prototype.loadNeededChars = function(element_name) {
           //console.log('neededCodes = ' + neededCodes);
           //console.log('neededCodes.length = ' + neededCodes.length);
           if (that.req_size) {
-            var remaining = neededCodes.slice(that.req_size);
-            var neededCodes = neededCodes.slice(0, that.req_size);
+            remaining = neededCodes.slice(that.req_size);
+            neededCodes = neededCodes.slice(0, that.req_size);
             //console.log('neededCodes.length = ' + neededCodes.length);
             //console.log('remaining.length = ' + remaining.length);
           }
@@ -299,12 +307,12 @@ IncrementalFont.obj_.prototype.loadNeededChars = function(element_name) {
               } else {
                 msg = '';
                 timer1.end('load Tachyfont base+data');
-                IncrementalFontUtils.setVisibility(that.style, that.fontname,
-                  true);
                 timer1.done();
               }
               IncrementalFontUtils.setFont(that.fontname, fontdata,
                 fileinfo.isTTF, msg);
+              IncrementalFontUtils.setVisibility(that.style, that.fontname,
+                true);
               // Update the data.
               that.getBase = Promise.all([fileinfo, fontdata]);
               that.getCharlist = Promise.resolve(charlist);
@@ -327,12 +335,13 @@ IncrementalFont.obj_.prototype.loadNeededChars = function(element_name) {
         debugger;
         pending_reject();
       });
-  });
+  }).catch(function() { debugger; });
   return this.finishPendingCharsRequest;
 };
 
 /**
  * Save data that needs to be persisted.
+ *
  * @param {string} name The name of the data item.
  * @private
  */
@@ -408,7 +417,7 @@ IncrementalFont.obj_.prototype.persist_ = function(name) {
     then(function() {
       //console.log('persisted ' + name);
     });
-  });
+  }).catch(function() { debugger; });
 };
 
 
@@ -443,7 +452,7 @@ IncrementalFont.obj_.prototype.saveData_ = function(idb, name, data) {
       console.log('saveData ' + name + ': ' + e.message);
       debugger;
     });
-  });
+  }).catch(function() { debugger; });
 };
 
 /**
@@ -494,6 +503,7 @@ IncrementalFont.obj_.prototype.openIndexedDB = function(fontname) {
 
 /**
  * Get a part of the font.
+ *
  * @param {Object} idb The IndexedDB object.
  * @param {string} name The name of the font data to get.
  * @return {Promise} Promise to return the data.
@@ -530,9 +540,8 @@ IncrementalFont.obj_.prototype.getData_ = function(idb, name) {
 
 /**
  * Binary Font Editor - A namespace.
- *
- * Binary operation over font file or glyph bundle
- * Always big endian byte order
+ * Binary operation over font file or glyph bundle.
+ * Always big endian byte order.
  * @param {type} dataView DataView which includes data
  * @param {type} baseOffset Set this offset as 0 offset for operations
  * @constructor
@@ -939,7 +948,7 @@ BinaryFontEditor.prototype.readNextGOS = function() {
 };
 
 /**
- * Magic used in header of the base font
+ * Magic used in header of the base font.
  * BS:Brian Stell AC:Ahmet Celik :)
  * @type string
  */
@@ -1194,7 +1203,7 @@ BinaryFontEditor.TAGS = {
 };
 
 /**
- * Parse the header of the base font
+ * Parse the header of the base font.
  * Set information as attributes in given loader object
  * @return {Object} Results of parsing the header.
  */
@@ -1264,6 +1273,7 @@ BinaryFontEditor.prototype.getGlyphDataOffset = function(start, offSize, gid) {
  * @param {number} gid Glyph id
  * @param {number} value New offset
  */
+// TODO(bstell) This function should be setLocaOffset
 BinaryFontEditor.prototype.setGlyphDataOffset = function(start, offSize, gid,
 value) {
     this.seek(start + gid * offSize);
@@ -1306,7 +1316,7 @@ TachyFont.prototype.loadNeededChars = function(element_name) {
   this.incrfont.
   then(function(incrfont) {
     incrfont.loadNeededChars(element_name);
-  });
+  }).catch(function() { debugger; });
 };
 
 /**
@@ -1357,6 +1367,7 @@ IncrementalFontUtils.injectCharacters = function(obj, baseFont,
   var isCFF = flags & IncrementalFontUtils.FLAGS.HAS_CFF;
   for (var i = 0; i < count; i += 1) {
     var id = bundleBinEd.getUint16_();
+    var nextId = id + 1;
     var hmtx, vmtx;
     if (flags & IncrementalFontUtils.FLAGS.HAS_HMTX) {
         hmtx = bundleBinEd.getUint16_();
@@ -1372,26 +1383,32 @@ IncrementalFontUtils.injectCharacters = function(obj, baseFont,
     var length = bundleBinEd.getUint16_();
 
     if (!isCFF) {
+      // Fix up sparse loca.
       baseBinEd.setGlyphDataOffset(obj.glyphDataOffset, obj.offsetSize,
         id, offset);
       var oldNextOne = baseBinEd.getGlyphDataOffset(obj.glyphDataOffset,
-      obj.offsetSize, id + 1);
+      obj.offsetSize, nextId);
       var newNextOne = offset + length;
       var isChanged = oldNextOne != newNextOne;
+      isChanged = isChanged && nextId < obj.numGlyphs;
+      // Set the length of the current glyph (at the loca of nextId).
       baseBinEd.setGlyphDataOffset(obj.glyphDataOffset, obj.offsetSize,
-        id + 1, newNextOne);
+        nextId, newNextOne);
       var prev_id = id - 1;
       while (prev_id >= 0 && baseBinEd.getGlyphDataOffset(obj.glyphDataOffset,
         obj.offsetSize, prev_id) > offset) {
+        // Fix the loca values before this new value
 
         baseBinEd.setGlyphDataOffset(obj.glyphDataOffset, obj.offsetSize,
             prev_id, offset);
         prev_id--;
       }
       /*
-       * if value is changed and length is nonzero we should write -1
+       * If value is changed and length is nonzero we should make the next glyph
+       * a dummy glyph(ie: write -1 to make it a composite glyph).
        */
       if (isChanged) {
+        // Fix the loca value after this one.
         baseBinEd.seek(obj.glyphOffset + newNextOne);
         if (length > 0) {
           baseBinEd.setInt16_(-1);
@@ -1409,8 +1426,8 @@ IncrementalFontUtils.injectCharacters = function(obj, baseFont,
       baseBinEd.setGlyphDataOffset(obj.glyphDataOffset, obj.offsetSize,
         id, offset);
       var oldNextOne = baseBinEd.getGlyphDataOffset(obj.glyphDataOffset,
-        obj.offsetSize, id + 1);
-      baseBinEd.setGlyphDataOffset(obj.glyphDataOffset, obj.offsetSize, id + 1,
+        obj.offsetSize, nextId);
+      baseBinEd.setGlyphDataOffset(obj.glyphDataOffset, obj.offsetSize, nextId,
         offset + length);
       var nextId = id + 2;
       var offsetCount = obj.numGlyphs + 1;
@@ -1850,7 +1867,7 @@ IncrementalFontUtils.loadWebFont = function(fontname, fonturl, fonttype) {
     timer2.end('load web font:<br>' + fontname);
     timer2.done();
     clearTimeout(timeout_id);
-  });
+  }).catch(function() { debugger; });
   return face; // NOTE: the face has to be stored in a global variable or
                // the font seems to disappear.
 };
