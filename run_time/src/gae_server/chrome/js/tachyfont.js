@@ -1365,6 +1365,12 @@ IncrementalFontUtils.injectCharacters = function(obj, baseFont,
   var flags = bundleBinEd.getUint8_();
 
   var isCFF = flags & IncrementalFontUtils.FLAGS.HAS_CFF;
+  var offsetDivisor = 1;
+  if (!isCFF && obj.offsetSize == 2) {
+    // For the loca "short version":
+    //   "The actual local offset divided by 2 is stored."
+    offsetDivisor = 2;
+  }
   for (var i = 0; i < count; i += 1) {
     var id = bundleBinEd.getUint16_();
     var nextId = id + 1;
@@ -1383,30 +1389,32 @@ IncrementalFontUtils.injectCharacters = function(obj, baseFont,
     var length = bundleBinEd.getUint16_();
 
     if (!isCFF) {
-      // Fix up sparse loca.
+      // Set the loca for this glyph.
       baseBinEd.setGlyphDataOffset(obj.glyphDataOffset, obj.offsetSize,
-        id, offset);
+        id, offset/offsetDivisor);
       var oldNextOne = baseBinEd.getGlyphDataOffset(obj.glyphDataOffset,
-      obj.offsetSize, nextId);
+        obj.offsetSize, nextId);
       var newNextOne = offset + length;
-      var isChanged = oldNextOne != newNextOne;
-      isChanged = isChanged && nextId < obj.numGlyphs;
       // Set the length of the current glyph (at the loca of nextId).
       baseBinEd.setGlyphDataOffset(obj.glyphDataOffset, obj.offsetSize,
-        nextId, newNextOne);
+        nextId, newNextOne/offsetDivisor);
+
+      // Fix the sparse loca values before this new value.
       var prev_id = id - 1;
       while (prev_id >= 0 && baseBinEd.getGlyphDataOffset(obj.glyphDataOffset,
         obj.offsetSize, prev_id) > offset) {
-        // Fix the loca values before this new value
-
         baseBinEd.setGlyphDataOffset(obj.glyphDataOffset, obj.offsetSize,
-            prev_id, offset);
+            prev_id, offset/offsetDivisor);
         prev_id--;
       }
       /*
+       * Fix up the sparse loca values after this glyph.
+       *
        * If value is changed and length is nonzero we should make the next glyph
        * a dummy glyph(ie: write -1 to make it a composite glyph).
        */
+      var isChanged = oldNextOne != newNextOne;
+      isChanged = isChanged && nextId < obj.numGlyphs;
       if (isChanged) {
         // Fix the loca value after this one.
         baseBinEd.seek(obj.glyphOffset + newNextOne);
