@@ -57,12 +57,12 @@ class Preprocess(object):
     header_dict = FontInfo.getInformation(self.fontfile, FontInfo.TAGS.keys())
     bin_header = BaseHeaderPrepare.prepare(BaseFonter.BASE_VERSION, header_dict)
     baseFonter.base(output, bin_header)
-    compressor = Compressor(Compressor.LZMA_CMD)
-    compressor.compress(output, output + '.xz')
-    compressor = Compressor(Compressor.GZIP_CMD)
-    compressor.compress(output, output + '.gz')
-    if self.debug:
-      print(os.path.getsize( output + '.gz'));
+    #compressor = Compressor(Compressor.LZMA_CMD)
+    #compressor.compress(output, output + '.xz')
+    #compressor = Compressor(Compressor.GZIP_CMD)
+    #compressor.compress(output, output + '.gz')
+    #if self.debug:
+    #  print(os.path.getsize( output + '.gz'));
 
   def cmap_dump(self):
     font = TTFont(self.fontfile)
