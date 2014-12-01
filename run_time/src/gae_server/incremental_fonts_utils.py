@@ -142,16 +142,17 @@ def prepare_bundle(request):
   elapsed_time('gather glyph info')
 
   table = open(base + '/glyph_table', 'rb')
-  table_bytes = bytearray(table.read())
-  elapsed_time('read glyph table ({0} bytes)'.format(len(table_bytes)))
+  glyph_info = bytearray(table.read()) # Glyph meta data.
+  elapsed_time('read glyph table ({0} bytes)'.format(len(glyph_info)))
   
   data = open(base + '/glyph_data', 'rb')
   data_bytes = bytearray(data.read())
   elapsed_time('read glyph data ({0} bytes)'.format(len(data_bytes)))
 
   (glyf_table, has_hmtx, has_vmtx, has_cff, header_size, entry_size ) = \
-  _parse_glyf_table(table_bytes)
+  _parse_glyf_table(glyph_info)
   mtx_count = has_hmtx + (has_vmtx >> 1)
+  # Assemble the flag bits.
   flag_mtx = has_hmtx | has_vmtx  | has_cff
   elapsed_time('open & parse glyph table')
 
@@ -159,9 +160,10 @@ def prepare_bundle(request):
   bundle_length = len(bundle_header)
   bundle_length += len(gids) * entry_size
   
+  # Pre-flight to get the length
   for id in gids:
     assert id < len(glyf_table)
-    bundle_length += glyf_table[id][mtx_count + 2]
+    bundle_length += glyf_table[id][mtx_count + 2] # + 2  to get past glyph id
   bundle_bytes = bytearray(bundle_length)
   bundle_pos = 0
   length = len(bundle_header)
@@ -169,14 +171,14 @@ def prepare_bundle(request):
   bundle_pos += length
   elapsed_time('calc bundle length')
   if has_cff:
-    delta = -1
+    delta = -1 # What does -1 mean?
   else:
     delta = 0
-  # Copy in the data from table_bytes and data_bytes
+  # Copy in the data from glyph_info and data_bytes
   for id in gids:
     entry_offset = header_size + id * entry_size
     bundle_bytes[bundle_pos:bundle_pos + entry_size] = \
-        table_bytes[entry_offset:entry_offset + entry_size]
+        glyph_info[entry_offset:entry_offset + entry_size]
     bundle_pos += entry_size
 
     data_offset = glyf_table[id][mtx_count + 1] + delta
