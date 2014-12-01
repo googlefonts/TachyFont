@@ -17,26 +17,29 @@
 import argparse
 import os
 import sys
-from fontTools.subset import Options, load_font, Subsetter, save_font
+from fontTools.subset import load_font
+from fontTools.subset import Options
+from fontTools.subset import save_font
+from fontTools.subset import Subsetter
+
 
 def main(args):
   """Subset a font (useful for making small test fonts).
 
-   Arguments:
-   font-file
-    --hinting=(False|True)  ,default is false
+  Args:
+    args: list, arguments the user typed.
   """
   parser = argparse.ArgumentParser()
   parser.add_argument('fontfile', help='Input font file')
-  parser.add_argument('--text', default='', 
+  parser.add_argument('--text', default='',
                       help='Text to include in the subset')
-  parser.add_argument('--unicodes', default='', 
+  parser.add_argument('--unicodes', default='',
                       help='Comma separated list of Unicode codepoints (hex) '
                       'to include in the subset; eg, "e7,0xe8,U+00e9"')
-  parser.add_argument('--glyphs', default='', 
+  parser.add_argument('--glyphs', default='',
                       help='Comma separated list of glyph IDs (decimal) to '
                       'include in the subset; eg, "1,27"')
-  parser.add_argument('--hinting',default=False, action='store_true', 
+  parser.add_argument('--hinting', default=False, action='store_true',
                       help='Enable hinting if specified, no hinting if not '
                       'present')
 
@@ -49,17 +52,17 @@ def main(args):
   # Get the item. to keep in the subset.
   text = cmd_args.text
   unicodes_str = cmd_args.unicodes.lower().replace('0x', '').replace('u+', '')
-  unicodes = [ int(c,16) for c in unicodes_str.split(',') if c ]
-  glyphs = [ int(c) for c in cmd_args.glyphs.split(',') if c ]
+  unicodes = [int(c, 16) for c in unicodes_str.split(',') if c]
+  glyphs = [int(c) for c in cmd_args.glyphs.split(',') if c]
   fontfile = cmd_args.fontfile
-  options.hinting = cmd_args.hinting # False => no hinting
+  options.hinting = cmd_args.hinting  # False => no hinting
 
-  dir = os.path.dirname(fontfile)
+  dirname = os.path.dirname(fontfile)
   basename = os.path.basename(fontfile)
   filename, extension = os.path.splitext(basename)
-  output_file = dir + '/' + filename + '_subset' + extension
+  output_file = dirname + '/' + filename + '_subset' + extension
   font = load_font(fontfile, options, lazy=False)
-  
+
   subsetter = Subsetter(options)
   subsetter.populate(text=text, unicodes=unicodes, glyphs=glyphs)
   subsetter.subset(font)
