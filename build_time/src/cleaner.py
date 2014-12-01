@@ -29,6 +29,9 @@ class Cleaner(object):
     self.fontfile = fontfile
     self.options = Options()
     self.options.hinting = hinting
+    # Want the .notdef glyph and outlines.
+    self.options.notdef_glyph = True
+    self.options.notdef_outline = True
     self.options.decompress = True
     self.font = load_font(fontfile, self.options, lazy=False)
     self.whitespace_and_ignorable_list = whitespace_and_ignorable_list
