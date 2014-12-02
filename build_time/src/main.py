@@ -29,6 +29,8 @@ def main(args):
 
   Args:
     args: list, arguments the user typed.
+  Returns:
+    Status of the operation.
   """
   parser = argparse.ArgumentParser(prog='pyprepfnt')
   parser.add_argument('fontfile', help='Input font file')
@@ -56,7 +58,7 @@ def main(args):
     if exception.errno != errno.EEXIST:
       raise
 
-  cleanfile = output_folder+'/'+filename + '_clean' + extension
+  cleanfile = output_folder + '/' + filename + '_clean' + extension
   # print('make cleaned up version: {0}'.format(cleanfile))
   cleanup.cleanup(fontfile, cmd_args.hinting, cleanfile)
   closure.dump_closure_map(cleanfile, output_folder)
@@ -70,7 +72,14 @@ def main(args):
   preprocess.cmap_dump()
   # print('build glyph data')
   preprocess.serial_glyphs()
-  # print('done')
+  print('create jar file')
+  # jar cf NotoSans-Regular_subset.TachyFont.jar b* c* g*
+  jar_cmd = ('cd %s; jar cf %s %s' %
+             (output_folder, filename + '.TachyFont.jar', 'base  closure_data '
+              'closure_idx codepoints gids  glyph_data  glyph_table'))
+  status = os.system(jar_cmd)
+  print('jar command status: ', status)
+  return status
 
 
 if __name__ == '__main__':
