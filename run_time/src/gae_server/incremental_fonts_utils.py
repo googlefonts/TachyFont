@@ -166,6 +166,7 @@ def prepare_bundle(request):
   gid_file = zf.open('gids', 'r')
 
   cmap = _build_cmap(cp_file, gid_file)
+  # Make these seekable.
   cidx_file = StringIO(zf.open('closure_idx', 'r').read())
   cdata_file = StringIO(zf.open('closure_data', 'r').read())
   closure_reader = ClosureReader(cidx_file, cdata_file)
