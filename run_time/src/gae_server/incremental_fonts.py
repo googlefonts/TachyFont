@@ -14,12 +14,13 @@
   limitations under the License.
 """
 
-import webapp2
-from os import path, stat
-from incremental_fonts_utils import prepare_bundle
 import logging
+from os import path
 import StringIO
-from time import time, sleep
+from time import sleep
+from time import time
+import webapp2
+from incremental_fonts_utils import prepare_bundle
 
 BASE_DIR = path.dirname(__file__)
 
@@ -28,21 +29,21 @@ class IncrementalFonts(webapp2.RequestHandler):
 
   def get(self):
     self.response.headers['Content-Type'] = 'text/plain'
-    self.response.out.write('incremental fonts server under development, try back later')
+    self.response.out.write('incremental fonts server under development, '
+                            'try back later')
 
 
 class GlyphRequest(webapp2.RequestHandler):
-  """Service for glyph requests from the server Takes closure of glyphs and returns them as a bundle
-
+  """Service for glyph requests including associated glyphs.
   """
 
   def post(self):
     bandwidth = self.request.headers.get('X-TachyFont-bandwidth')
     self.response.headers.add_header('Access-Control-Allow-Origin', '*')
-    #HACK 
-    #Since GAE is brain dead, it decides using gzip compression only for text 
-    #resources and does not allow the application to decide. 
-    #Therefore, we set mime_type for binary data as text.
+    # HACK
+    # GAE is brain dead and only uses gzip compression for richtext resources.
+    # Specifically, it does not allow the application to choose to use gzip.
+    # Therefore, we set mime_type for binary data as richtext.
     self.response.headers['Content-Type'] = 'text/richtext'
     f = StringIO.StringIO(prepare_bundle(self.request))
     bandwidth_limited_write(f, self.response.out, bandwidth, True)
@@ -64,7 +65,7 @@ class IncrFont(webapp2.RequestHandler):
   chunk_size = 512
 
   # 3G (at least according to WebPageTest.org) is 1.6 Mbps / 768 Kbps
-  # so download is 200 KBps; 5 mS / KB 
+  # so download is 200 KBps; 5 mS / KB
   def get(self, fontname):
     bandwidth = self.request.headers.get('X-TachyFont-bandwidth')
     self.response.headers['Content-Type'] = 'text/plain'
@@ -73,11 +74,12 @@ class IncrFont(webapp2.RequestHandler):
     f = open(filename, 'rb')
     bandwidth_limited_write(f, self.response.out, bandwidth, True)
 
+
 class WebFont(webapp2.RequestHandler):
   chunk_size = 512
 
   # 3G (at least according to WebPageTest.org) is 1.6 Mbps / 768 Kbps
-  # so download is 200 KBps; 5 mS / KB 
+  # so download is 200 KBps; 5 mS / KB
   def get(self, fontname):
     bandwidth = self.request.get('bandwidth')
     self.response.headers['Content-Type'] = 'application/binary'
@@ -85,20 +87,31 @@ class WebFont(webapp2.RequestHandler):
     f = open(filename, 'rb')
     bandwidth_limited_write(f, self.response.out, bandwidth, False)
 
-def bandwidth_limited_write(in_file, out_file, Kbps_str, post_delay_compression):
+
+def bandwidth_limited_write(in_file, out_file, kbits_per_sec_str,
+                            post_delay_compression):
+  """Bandwidth limited writing.
+
+  Args:
+    in_file: file, the file to read the data from.
+    out_file: file, the file to write the data to.
+    kbits_per_sec_str: string, the bandwidth speed.
+    post_delay_compression: bool, a hack to compensate for compressed data
+        vs uncompressed data.
+  """
   try:
-    Kbps = float(Kbps_str)
-  except:
-    Kbps = 0
-  if not Kbps:
+    kbits_per_sec = float(kbits_per_sec_str)
+  except ValueError:
+    kbits_per_sec = 0
+  if not kbits_per_sec:
     while True:
       data = in_file.read()
       if not data:
         return
       out_file.write(data)
 
-  KBps = Kbps / 8
-  ms_per_k = 1000 / KBps
+  kbytes_per_sec = kbits_per_sec / 8
+  ms_per_k = 1000 / kbytes_per_sec
   if post_delay_compression:
     ms_per_k /= 2
   chunk_size = 512
@@ -111,7 +124,7 @@ def bandwidth_limited_write(in_file, out_file, Kbps_str, post_delay_compression)
       break
     chunks_sent += 1
     needed_sleep_time = chunks_sent * delay_per_chunk - (time() - t0)
-    if (needed_sleep_time > 0):
+    if needed_sleep_time > 0:
       sleep(needed_sleep_time)
     out_file.write(chunk)
 
