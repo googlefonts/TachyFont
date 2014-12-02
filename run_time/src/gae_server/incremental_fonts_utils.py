@@ -19,8 +19,12 @@ from datetime import datetime
 import json as JSON
 import logging
 from os import path
+from StringIO import StringIO
 import struct
 import sys
+import zipfile
+
+BASE_DIR = path.dirname(__file__)
 
 
 last_time = None
@@ -70,24 +74,6 @@ def _parse_array_from_str(data, elem_type, byteorder):
   return arr
 
 
-def _parse_array_from_file(filename, elem_type, byteorder):
-  """Parse an array from a file.
-
-  Using _parse_array_from_str, open given filename and parses it.
-
-  Args:
-    filename: string, the name of the file
-    elem_type: string, the element type
-    byteorder: string, the byte order of the data (eg, big-endian)
-  Returns:
-    array of elem_type
-  """
-  file_obj = open(filename, 'rb')
-  arr = _parse_array_from_str(file_obj.read(), elem_type, byteorder)
-  file_obj.close()
-  return arr
-
-
 def _parse_array_fmt(fmt, count, data):
   """Using struct.unpack_from, parses given binary string as array if given fmt.
 
@@ -116,8 +102,8 @@ def _build_cmap(cp_file, gid_file):
   Returns:
     The mapping between codepoints and their primary glyph ID.
   """
-  keys = _parse_array_from_file(cp_file, 'I', 'big')
-  gids = _parse_array_from_file(gid_file, 'H', 'big')
+  keys = _parse_array_from_str(cp_file.read(), 'I', 'big')
+  gids = _parse_array_from_str(gid_file.read(), 'H', 'big')
   cmap = dict.fromkeys(keys)
 
   for i, key in enumerate(keys):
@@ -175,9 +161,14 @@ def prepare_bundle(request):
   codepoints = glyph_request['arr']
   elapsed_time('prepare_bundle for {0} characters'.format(len(codepoints)),
                True)
-  base = path.dirname(path.abspath(__file__)) + '/data/' + font + '/'
-  cmap = _build_cmap(base + 'codepoints', base + '/gids')
-  closure_reader = ClosureReader(base + '/closure_idx', base + '/closure_data')
+  zf = zipfile.ZipFile(BASE_DIR + '/fonts/' + font + '.TachyFont.jar', 'r')
+  cp_file = zf.open('codepoints', 'r')
+  gid_file = zf.open('gids', 'r')
+
+  cmap = _build_cmap(cp_file, gid_file)
+  cidx_file = StringIO(zf.open('closure_idx', 'r').read())
+  cdata_file = StringIO(zf.open('closure_data', 'r').read())
+  closure_reader = ClosureReader(cidx_file, cdata_file)
   gids = set()
   for code in codepoints:
     if code in cmap:
@@ -186,11 +177,11 @@ def prepare_bundle(request):
 
   elapsed_time('gather glyph info')
 
-  table = open(base + '/glyph_table', 'rb')
-  glyph_info = bytearray(table.read())  # Glyph meta data.
+  glyph_info_file = zf.open('glyph_table', 'r')
+  glyph_info = bytearray(glyph_info_file.read())  # Glyph meta data.
   elapsed_time('read glyph table ({0} bytes)'.format(len(glyph_info)))
 
-  data = open(base + '/glyph_data', 'rb')
+  data = zf.open('glyph_data', 'r')
   data_bytes = bytearray(data.read())
   elapsed_time('read glyph data ({0} bytes)'.format(len(data_bytes)))
 
@@ -233,8 +224,7 @@ def prepare_bundle(request):
     bundle_pos += data_size
   elapsed_time('build bundle')
 
-  table.close()
-  data.close()
+  zf.close()
   elapsed_time('close files')
   return str(bundle_bytes)
 
@@ -249,8 +239,8 @@ class ClosureReader(object):
   fmt_one_len = struct.calcsize(fmt_one)
 
   def __init__(self, index_file, data_file):
-    self.idx = open(index_file, 'rb')
-    self.data_file = open(data_file, 'rb')
+    self.idx = index_file
+    self.data_file = data_file
 
   def read(self, glyph_id):
     """Return closure list of glyph ids for given glyph_id.

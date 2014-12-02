@@ -19,6 +19,7 @@ from os import path
 import StringIO
 from time import sleep
 from time import time
+import zipfile
 import webapp2
 from incremental_fonts_utils import prepare_bundle
 
@@ -70,9 +71,11 @@ class IncrFont(webapp2.RequestHandler):
     bandwidth = self.request.headers.get('X-TachyFont-bandwidth')
     self.response.headers['Content-Type'] = 'text/plain'
     self.response.headers['Content-Type'] = 'text/richtext'
-    filename = BASE_DIR + '/fonts/' + fontname
-    f = open(filename, 'rb')
-    bandwidth_limited_write(f, self.response.out, bandwidth, True)
+    basename = fontname.split('/')[0]
+    zipfilename = BASE_DIR + '/fonts/' + basename + '.TachyFont.jar'
+    zf = zipfile.ZipFile(zipfilename, 'r')
+    base = zf.open('base', 'r')
+    bandwidth_limited_write(base, self.response.out, bandwidth, True)
 
 
 class WebFont(webapp2.RequestHandler):
