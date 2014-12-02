@@ -72,15 +72,17 @@ def main(args):
   preprocess.cmap_dump()
   # print('build glyph data')
   preprocess.serial_glyphs()
-  print('create jar file')
+  # print('create jar file')
   # jar cf NotoSans-Regular_subset.TachyFont.jar b* c* g*
   jar_cmd = ('cd %s; jar cf %s %s' %
              (output_folder, filename + '.TachyFont.jar', 'base  closure_data '
               'closure_idx codepoints gids  glyph_data  glyph_table'))
   status = os.system(jar_cmd)
-  print('jar command status: ', status)
+  # print('jar command status: ', status)
   return status
 
 
 if __name__ == '__main__':
-  main(sys.argv[1:])
+  cmd_status = main(sys.argv[1:])
+  print('cmd_status =', cmd_status)
+  sys.exit(cmd_status)
