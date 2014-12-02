@@ -32,10 +32,6 @@ def main(args):
   """
   parser = argparse.ArgumentParser(prog='pyprepfnt')
   parser.add_argument('fontfile', help='Input font file')
-  parser.add_argument('--changefont', default=False, action='store_true',
-                      help='Font structure has changed, default is True')
-  parser.add_argument('--changebase', default=False, action='store_true',
-                      help='Base structure has changed, default is True')
   parser.add_argument('--hinting', default=False, action='store_true',
                       help='Enable hinting if specified, no hinting if not '
                       'present')
@@ -61,26 +57,19 @@ def main(args):
       raise
 
   cleanfile = output_folder+'/'+filename + '_clean' + extension
-  font_processed_before = os.path.isfile(cleanfile)
-  base_exists = os.path.isfile(output_folder+'/base')
-  generate_again_font = not font_processed_before or cmd_args.changefont
-  generate_again_base = not base_exists or cmd_args.changebase
-  if generate_again_font:
-    # print('make cleaned up version: {0}'.format(cleanfile))
-    cleanup.cleanup(fontfile, cmd_args.hinting, cleanfile)
-    closure.dump_closure_map(cleanfile, output_folder)
+  # print('make cleaned up version: {0}'.format(cleanfile))
+  cleanup.cleanup(fontfile, cmd_args.hinting, cleanfile)
+  closure.dump_closure_map(cleanfile, output_folder)
   if verbose:
     print(filename + ',' + str(os.path.getsize(cleanfile)) + ',', end='')
   # print('start proprocess')
   preprocess = Preprocess(cleanfile, output_folder, verbose)
-  if generate_again_base or generate_again_font:
-    # print('build base')
-    preprocess.base_font()
-  if generate_again_font:
-    # print('dump cmap')
-    preprocess.cmap_dump()
-    # print('build glyph data')
-    preprocess.serial_glyphs()
+  # print('build base')
+  preprocess.base_font()
+  # print('dump cmap')
+  preprocess.cmap_dump()
+  # print('build glyph data')
+  preprocess.serial_glyphs()
   # print('done')
 
 
