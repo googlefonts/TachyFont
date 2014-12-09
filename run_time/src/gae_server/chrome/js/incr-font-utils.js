@@ -283,7 +283,7 @@ IncrementalFontUtils.requestCodepoints = function(url, fontname, codes) {
     // Google App Engine servers do not support CORS so we cannot say
     // the 'Content-Type' is 'application/json'.
     //{'Content-Type': 'application/json'},
-    {'Content-Type': 'text/plain', 'X-TachyFon-bandwidth': bandwidth},
+    {'Content-Type': 'text/plain', 'X-TachyFont-bandwidth': bandwidth},
     'arraybuffer');
 };
 

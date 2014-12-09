@@ -1,0 +1,55 @@
+.RadTreeView_OHCHRSkins {
+  color: #0066CC!Important;
+  font:Verdana, Arial, Helvetica, sans-serif!Important; }
+  .RadTreeView_OHCHRSkins .rtHover .rtIn {
+    color: #000;
+    border-color: #b5b5b5 #b5b5b5 #9e9e9e;
+    background-color: #C5C5C5;
+    background-image: url('TreeView/ItemHoveredBg.png'); }
+  .RadTreeView_OHCHRSkins .rtSelected .rtIn {
+    color:#0066CC!important;
+	border-color:transparent!important;
+	background-color:transparent!important;
+	background-image: none!important;
+	font: Verdana, Arial, Helvetica, sans-serif!Important; }
+  .RadTreeView_OHCHRSkins .rtEdit .rtIn {
+    border-color: #6c6c6c;
+    background: #ffffff; }
+    .RadTreeView_OHCHRSkins .rtEdit .rtIn input {
+      color: #333333;
+      font:Verdana, Arial, Helvetica, sans-serif;
+      color: black;
+      border-color: #535353 #2e2e2e #1a1a1a;
+      border: 0;
+      background-color: #313131;
+      background-image: url('TreeView/ItemSelectedBg.png'); }
+  .RadTreeView_OHCHRSkins .rtChecked,
+  .RadTreeView_OHCHRSkins .rtUnchecked,
+  .RadTreeView_OHCHRSkins .rtIndeterminate {
+    background-image: url('Common/radFormToggleSprite.png');
+    _background-image: url('Common/radFormToggleSpriteIE6.png'); }
+  .RadTreeView_OHCHRSkins .rtLoadingIcon {
+    background-image: url('Common/loading_small.gif'); }
+  .RadTreeView_OHCHRSkins .rtSelected .rtLoadingBefore,
+  .RadTreeView_OHCHRSkins .rtSelected .rtLoadingAfter,
+  .RadTreeView_OHCHRSkins .rtSelected .rtLoadingBelow {
+    color: #333333; }
+  .RadTreeView_OHCHRSkins .rtPlus,
+  .RadTreeView_OHCHRSkins .rtMinus {
+    background-image: url('TreeView/PlusMinus.png'); }
+
+.RadTreeView_OHCHRSkins_disabled .rtIn,
+.RadTreeView_OHCHRSkins .rtDisabled .rtIn {
+  color: #ccc; }
+
+.RadTreeView a.rtIn {
+	color:#0066CC!Important;
+	font: Verdana, Arial, Helvetica, sans-serif!Important;
+
+}
+
+.RadTreeView a.rtIn:hover {
+    text-decoration:underline;
+    color:#FF0000!Important;
+	font: Verdana, Arial, Helvetica, sans-serif!Important;
+}

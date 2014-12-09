@@ -15,72 +15,120 @@
 """
 
 from __future__ import print_function
-import sys
-import os
+import argparse
+import datetime
 import errno
-from fontTools.subset import Options
+import logging
+import os
+import sys
 import cleanup
 import closure
 from preprocess import Preprocess
-import argparse
 
 
 def main(args):
-  """Main program to run preprocessing of the font Arguments:
+  """Preprocess a font for use as a TachyFont.
 
-    font-file
-    --output= Output folder of the files, default is current folder
-    --hinting=(False|True)  ,default is false
+  Args:
+    args: list, command line arguments.
+  Raises:
+    ValueError: if build directory cannot be created
+  Returns:
+    Status of the operation.
   """
   parser = argparse.ArgumentParser(prog='pyprepfnt')
-  parser.add_argument('fontfile',help='Input font file')
-  parser.add_argument('--changefont', default=False , action='store_true', help='Font structure has changed, default is True')
-  parser.add_argument('--changebase', default=False , action='store_true', help='Base structure has changed, default is True')
-  parser.add_argument('--hinting',default=False, action='store_true', help='Enable hinting if specified, no hinting if not present')
-  parser.add_argument('--verbose',default=False, action='store_true', help='Extra messages are printed')
-  parser.add_argument('--output', default='.' , help='Output folder, default is current folder')
+  parser.add_argument('fontfile', help='Input font file')
+  parser.add_argument('output_dir', help='Output directory')
+  parser.add_argument('--hinting', default=False, action='store_true',
+                      help='Retain hinting if set, else strip hinting')
+  parser.add_argument('--log', default='WARNING',
+                      help='Set the logging level; eg, --log=INFO')
 
   cmd_args = parser.parse_args(args)
 
-  verbose = cmd_args.verbose
+  loglevel = getattr(logging, cmd_args.log.upper(), None)
+  if not isinstance(loglevel, int):
+    raise ValueError('Invalid log level: %s' % loglevel)
+
+  log = logging.getLogger()
+  logging_handler = logging.StreamHandler(sys.stdout)
+  logging_handler.setLevel(loglevel)
+  formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - '
+                                '%(message)s')
+  logging_handler.setFormatter(formatter)
+  log.addHandler(logging_handler)
+  log.setLevel(loglevel)
+
+  verbose = loglevel < logging.DEBUG
   fontfile = cmd_args.fontfile
   # TODO(bstell) use Logger
-  #print('preprocess {0}'.format(cmd_args.fontfile))
+  log.info('preprocess ' + cmd_args.fontfile)
   basename = os.path.basename(fontfile)
   filename, extension = os.path.splitext(basename)
-  output_folder = cmd_args.output+'/'+filename
-  #print('put results in {0}'.format(output_folder))
+  cur_time = datetime.datetime.now()
+  build_dir = ('tmp-%s-%04d-%02d-%02d-%02d-%02d-%02d.%d' %
+               (filename, cur_time.year, cur_time.month, cur_time.day,
+                cur_time.hour, cur_time.minute, cur_time.second, os.getpid()))
+  output_dir = cmd_args.output_dir
+  log.info('put results in ' + output_dir)
   try:
-      os.makedirs(output_folder)
+    os.makedirs(build_dir)
   except OSError as exception:
-      if exception.errno != errno.EEXIST:
-          raise
+    if exception.errno != errno.EEXIST:
+      log.error('failed to create build_dir (' + build_dir + ')')
+      raise
 
-  cleanfile = output_folder+'/'+filename + '_clean' + extension
-  font_processed_before = os.path.isfile(cleanfile)
-  base_exists = os.path.isfile(output_folder+'/base')
-  generate_again_font = not font_processed_before or cmd_args.changefont
-  generate_again_base = not base_exists or cmd_args.changebase
-  if generate_again_font:
-    #print('make cleaned up version: {0}'.format(cleanfile))
-    cleanup.cleanup(fontfile, cmd_args.hinting, cleanfile)
-    closure.dump_closure_map(cleanfile, output_folder)
-  if verbose:
-    print(filename+','+str(os.path.getsize(cleanfile))+',',end='')
-  #print('start proprocess')
-  preprocess = Preprocess(cleanfile, output_folder, verbose)
-  if generate_again_base or generate_again_font:
-    #print('build base')
-    preprocess.base_font()
-  if generate_again_font:
-    #print('dump cmap')
-    preprocess.cmap_dump()
-    #print('build glyph data')
-    preprocess.serial_glyphs()
-  #print('done')
+  cleanfile = filename + '_clean' + extension
+  cleanfilepath = build_dir + '/' + cleanfile
+  log.debug('make cleaned up version: ' + cleanfilepath)
+  cleanup.cleanup(fontfile, cmd_args.hinting, cleanfilepath)
+  log.info(basename + '=' + str(os.path.getsize(fontfile)) + ', ' +
+           cleanfilepath + '=' + str(os.path.getsize(cleanfilepath)))
+  closure.dump_closure_map(cleanfilepath, build_dir)
+  log.debug('start proprocess')
+  preprocess = Preprocess(cleanfilepath, build_dir, verbose)
+  log.debug('build base')
+  preprocess.base_font()
+  log.debug('dump cmap')
+  preprocess.cmap_dump()
+  log.debug('build glyph data')
+  preprocess.serial_glyphs()
 
-def console_msg(msg):
-  pass
+  log.debug('create jar file')
+  tachyfont_file = filename + '.TachyFont.jar'
+  sub_files = ('base closure_data closure_idx codepoints gids  glyph_data '
+               'glyph_table')
+  jar_cmd = 'cd %s; jar cf %s %s' % (build_dir, tachyfont_file, sub_files)
+  log.debug('jar_cmd: ' + jar_cmd)
+  status = os.system(jar_cmd)
+  log.debug('jar command status: ' + str(status))
+  if status:
+    log.error('jar command status: ' + str(status))
+    return status
+
+  log.debug('move the files to the output directory')
+  mv_cmd = ('cd %s; mv %s %s %s' %
+            (build_dir, tachyfont_file, cleanfile, output_dir))
+  log.debug('mv_cmd: ' + mv_cmd)
+  status = os.system(mv_cmd)
+  log.debug('mv status ' + str(status))
+  if status:
+    log.error('mv status = ' + str(status))
+    return status
+
+  log.debug('cleanup the build directory')
+  rm_cmd = ('rm -rf %s' % build_dir)
+  log.debug('rm_cmd: ' + rm_cmd)
+  status = os.system(rm_cmd)
+  log.debug('rm status ' + str(status))
+  if status:
+    log.error('rm status = ' + str(status))
+    return status
+
+  log.info('command status = ' + str(status))
+  return status
+
 
 if __name__ == '__main__':
-  main(sys.argv[1:])
+  cmd_status = main(sys.argv[1:])
+  sys.exit(cmd_status)

@@ -181,7 +181,7 @@ class _GOSGenerators(object):
     cmap12_lengths = cmap12['lengths']
     
     fmt12SegCount = len(cmap12_startCodes)
-    fmt4SegCount = len(cmap4_startCodes)
+    fmt4SegCount = len(cmap4_startCodes) - 1 # Don't compare 0xFFFF
     
 
 
@@ -229,7 +229,7 @@ class _GOSGenerators(object):
       assert cmap12SegStart == cmap4SegStart and cmap12SegEnd == cmap4SegEnd 
       
       if lenFmt12Segs == 1: 
-        assert idRangeOffsets[fmt4Seg] == 0 and idDelta[fmt4Seg] != 0
+        assert idRangeOffsets[fmt4Seg] == 0
       else: 
         assert idRangeOffsets[fmt4Seg] != 0 and idDelta[fmt4Seg] == 0
 

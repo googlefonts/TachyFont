@@ -40,13 +40,13 @@
   <script src="js/incr-font-utils.js"></script>
   <script src="js/time-utils.js"></script>
   <script src="js/for_debug.js"></script>
-  <script src="js/promise-1.0.0.js"></script>
+  <!-- enable this for IE <script src="js/promise-1.0.0.js"></script> -->
   <script>
     var TEMPORARY_FS_REQUEST_SIZE = 8 * 1024 * 1024;      
     var EMPTY_FS = true;
     var FONTNAME = 'v1NanumBrushScript-Regular';
     var TEXTS = [];
-    var timer1 = new Timer('lightGreen', '10px', '');
+    var timer1 = new Timer('10px', '');
     var fontLoader = new IncrementalFontLoader(FONTNAME);
     var filesystem = new FilesystemHelper(
             FilesystemHelper.requestTemporaryFileSystem(

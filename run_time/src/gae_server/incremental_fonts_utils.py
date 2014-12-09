@@ -16,27 +16,36 @@
 
 import array
 from datetime import datetime
-import logging
-import sys
-import struct
 import json as JSON
+import logging
 from os import path
+from StringIO import StringIO
+import struct
+import sys
+import zipfile
 
+BASE_DIR = path.dirname(__file__)
 
 
 last_time = None
 
 
 def elapsed_time(msg, new_start=False):
+  """Log the delta time for this operation.
+
+  Args:
+    msg: string, the string for this operation
+    new_start: bool, if this is a new start time for the operation.
+  """
   global last_time
   this_time = datetime.now()
-  if last_time == None:
+  if last_time is None:
     logging.getLogger().setLevel(logging.INFO)
     last_time = this_time
   if new_start:
     last_time = this_time
   if this_time > last_time:
-    logging.info('{0} took {1} seconds'.format(msg, this_time - last_time))
+    logging.info('%s took %s seconds', msg, str(this_time - last_time))
   else:
     logging.info(msg)
   last_time = this_time
@@ -46,29 +55,34 @@ def _parse_json(data):
   return JSON.loads(data)
 
 
-def _parse_array_from_str(data, type, byteorder):
-  """Using array.fromstring function , parses given binary string and type Returns array of type
+def _parse_array_from_str(data, elem_type, byteorder):
+  """Parse an array from a string.
+
+  Parses the given binary string.
+  Args:
+    data: the binary string.
+    elem_type: string, the element type
+    byteorder: string, the byte order of the data (eg, big-endian)
+  Returns:
+    An array of elem_type
 
   """
-  arr = array.array(type)
+  arr = array.array(elem_type)
   arr.fromstring(data)
   if sys.byteorder != byteorder:
     arr.byteswap()
   return arr
 
 
-def _parse_array_from_file(filename, type, byteorder):
-  """Using _parse_array_from_str, open given filename and parses it Returns array of type
-
-  """
-  file = open(filename, 'rb')
-  arr = _parse_array_from_str(file.read(), type, byteorder)
-  file.close()
-  return arr
-
-
 def _parse_array_fmt(fmt, count, data):
-  """Using struct.unpack_from, parses given binary string as array if given fmt
+  """Using struct.unpack_from, parses given binary string as array if given fmt.
+
+  Args:
+    fmt: string, the format of the array data.
+    count: the count of items in the data.
+    data: array, the data to parse.
+  Returns:
+    A list of the data structures.
   """
   pos = 0
   fmt_size = struct.calcsize(fmt)
@@ -80,10 +94,16 @@ def _parse_array_fmt(fmt, count, data):
 
 
 def _build_cmap(cp_file, gid_file):
-  """Build cmap dictionary from codepoints to glyph ids using given files
+  """Build cmap dictionary from codepoints to glyph ids using given files.
+
+  Args:
+    cp_file: file, the codepoint file.
+    gid_file: file, the glyph IDs file.
+  Returns:
+    The mapping between codepoints and their primary glyph ID.
   """
-  keys = _parse_array_from_file(cp_file, 'I', 'big')
-  gids = _parse_array_from_file(gid_file, 'H', 'big')
+  keys = _parse_array_from_str(cp_file.read(), 'I', 'big')
+  gids = _parse_array_from_str(gid_file.read(), 'H', 'big')
   cmap = dict.fromkeys(keys)
 
   for i, key in enumerate(keys):
@@ -91,48 +111,65 @@ def _build_cmap(cp_file, gid_file):
   return cmap
 
 
-
 def _parse_glyf_table(file_bytes):
-  """Parses given file as glyf table, where each entry is such tuples 
+  """Parses given file as glyf table.
+
+  Each entry is a tuples:
   (glyph id, [hmtx lsb], [vmtx tsb], offset, size)
+
+  Args:
+    file_bytes: string, the file data.
+  Returns:
+    The parsed glyph info and data.
   """
-  fmt_GlyphTable = '>HH'
-  HAS_HMTX = (1 << 0)
-  HAS_VMTX = (1 << 1)
-  HAS_CFF = (1 << 2)
-  header_size = struct.calcsize(fmt_GlyphTable)
+  fmt_glyph_table = '>HH'
+  has_hmtx = (1 << 0)
+  has_vmtx = (1 << 1)
+  has_cff = (1 << 2)
+  header_size = struct.calcsize(fmt_glyph_table)
 
   header = buffer(file_bytes[0:header_size])
-  (flags, numGlyphs) = struct.unpack(fmt_GlyphTable, header)
+  (flags, num_glyphs) = struct.unpack(fmt_glyph_table, header)
   fmt_mtx = ''
-  if flags & HAS_HMTX: fmt_mtx+='h'
-  if flags & HAS_VMTX: fmt_mtx+='h'
+  if flags & has_hmtx: fmt_mtx += 'h'
+  if flags & has_vmtx: fmt_mtx += 'h'
   fmt_entry = '>H' + fmt_mtx + 'LH'
   file_data = buffer(file_bytes[header_size:])
-  return \
-    _parse_array_fmt(fmt_entry, numGlyphs, file_data), flags & HAS_HMTX, \
-    flags & HAS_VMTX, flags & HAS_CFF, header_size, struct.calcsize(fmt_entry)
+  return (_parse_array_fmt(fmt_entry, num_glyphs, file_data), flags & has_hmtx,
+          flags & has_vmtx, flags & has_cff, header_size,
+          struct.calcsize(fmt_entry))
 
 
-
-def _read_region(file, offset, size):
-  prev = file.tell()
-  file.seek(offset)
-  data = file.read(size)
-  file.seek(prev)
+def _read_region(file_obj, offset, size):
+  prev = file_obj.tell()
+  file_obj.seek(offset)
+  data = file_obj.read(size)
+  file_obj.seek(prev)
   return data
 
 
 def prepare_bundle(request):
-  """Parse requests, then prepares response bundle for glyphs
+  """Parse requests, then prepares response bundle for glyphs.
+
+  Args:
+    request: object, the request object.
+  Returns:
+    string: the glyph and metadata
   """
   glyph_request = _parse_json(request.body)
   font = glyph_request['font']
   codepoints = glyph_request['arr']
-  elapsed_time('prepare_bundle for {0} characters'.format(len(codepoints)), True)
-  base = path.dirname(path.abspath(__file__)) + '/data/' + font + '/'
-  cmap = _build_cmap(base + 'codepoints', base + '/gids')
-  closure_reader = ClosureReader(base + '/closure_idx', base + '/closure_data')
+  elapsed_time('prepare_bundle for {0} characters'.format(len(codepoints)),
+               True)
+  zf = zipfile.ZipFile(BASE_DIR + '/fonts/' + font + '.TachyFont.jar', 'r')
+  cp_file = zf.open('codepoints', 'r')
+  gid_file = zf.open('gids', 'r')
+
+  cmap = _build_cmap(cp_file, gid_file)
+  # Make these seekable.
+  cidx_file = StringIO(zf.open('closure_idx', 'r').read())
+  cdata_file = StringIO(zf.open('closure_data', 'r').read())
+  closure_reader = ClosureReader(cidx_file, cdata_file)
   gids = set()
   for code in codepoints:
     if code in cmap:
@@ -141,27 +178,29 @@ def prepare_bundle(request):
 
   elapsed_time('gather glyph info')
 
-  table = open(base + '/glyph_table', 'rb')
-  table_bytes = bytearray(table.read())
-  elapsed_time('read glyph table ({0} bytes)'.format(len(table_bytes)))
-  
-  data = open(base + '/glyph_data', 'rb')
+  glyph_info_file = zf.open('glyph_table', 'r')
+  glyph_info = bytearray(glyph_info_file.read())  # Glyph meta data.
+  elapsed_time('read glyph table ({0} bytes)'.format(len(glyph_info)))
+
+  data = zf.open('glyph_data', 'r')
   data_bytes = bytearray(data.read())
   elapsed_time('read glyph data ({0} bytes)'.format(len(data_bytes)))
 
-  (glyf_table, has_hmtx, has_vmtx, has_cff, header_size, entry_size ) = \
-  _parse_glyf_table(table_bytes)
+  (glyf_table, has_hmtx, has_vmtx, has_cff, header_size, entry_size) = (
+      _parse_glyf_table(glyph_info))
   mtx_count = has_hmtx + (has_vmtx >> 1)
+  # Assemble the flag bits.
   flag_mtx = has_hmtx | has_vmtx  | has_cff
   elapsed_time('open & parse glyph table')
 
   bundle_header = struct.pack('>HB', len(gids), flag_mtx)
   bundle_length = len(bundle_header)
   bundle_length += len(gids) * entry_size
-  
-  for id in gids:
-    assert id < len(glyf_table)
-    bundle_length += glyf_table[id][mtx_count + 2]
+
+  # Pre-flight to get the length
+  for gid in gids:
+    assert gid < len(glyf_table)
+    bundle_length += glyf_table[gid][mtx_count + 2]  # + 2 to get past glyph gid
   bundle_bytes = bytearray(bundle_length)
   bundle_pos = 0
   length = len(bundle_header)
@@ -169,31 +208,30 @@ def prepare_bundle(request):
   bundle_pos += length
   elapsed_time('calc bundle length')
   if has_cff:
-    delta = -1
+    delta = -1  # What does -1 mean?
   else:
     delta = 0
-  # Copy in the data from table_bytes and data_bytes
-  for id in gids:
-    entry_offset = header_size + id * entry_size
-    bundle_bytes[bundle_pos:bundle_pos + entry_size] = \
-        table_bytes[entry_offset:entry_offset + entry_size]
+  # Copy in the data from glyph_info and data_bytes
+  for gid in gids:
+    entry_offset = header_size + gid * entry_size
+    bundle_bytes[bundle_pos:bundle_pos + entry_size] = (
+        glyph_info[entry_offset:entry_offset + entry_size])
     bundle_pos += entry_size
 
-    data_offset = glyf_table[id][mtx_count + 1] + delta
-    data_size = glyf_table[id][mtx_count + 2]
-    bundle_bytes[bundle_pos:bundle_pos + data_size] = \
-        data_bytes[data_offset:data_offset + data_size]
+    data_offset = glyf_table[gid][mtx_count + 1] + delta
+    data_size = glyf_table[gid][mtx_count + 2]
+    bundle_bytes[bundle_pos:bundle_pos + data_size] = (
+        data_bytes[data_offset:data_offset + data_size])
     bundle_pos += data_size
   elapsed_time('build bundle')
 
-  table.close()
-  data.close()
+  zf.close()
   elapsed_time('close files')
   return str(bundle_bytes)
 
 
 class ClosureReader(object):
-  """Class to read closure list of a given glyph id Init with serialized closure files
+  """Class to read list of associated glyphs.
 
   """
   fmt_idx = '>lH'
@@ -202,14 +240,21 @@ class ClosureReader(object):
   fmt_one_len = struct.calcsize(fmt_one)
 
   def __init__(self, index_file, data_file):
-    self.idx = open(index_file, 'rb')
-    self.data_file = open(data_file, 'rb')
+    self.idx = index_file
+    self.data_file = data_file
 
-  def read(self, glyphID):
-    """Return closure list of glyph ids for given glyphID
+  def read(self, glyph_id):
+    """Return closure list of glyph ids for given glyph_id.
+
+    Args:
+      self:
+      glyph_id: number, the glyph ID.
+
+    Returns:
+      list, the list of associated glyph IDs.
     """
-    closure_set = set([glyphID])
-    idx_offset = glyphID * ClosureReader.fmt_idx_len
+    closure_set = set([glyph_id])
+    idx_offset = glyph_id * ClosureReader.fmt_idx_len
     self.idx.seek(idx_offset)
     (offset, size) = struct.unpack(
         ClosureReader.fmt_idx,

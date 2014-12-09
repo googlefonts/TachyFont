@@ -1,0 +1,1149 @@
+﻿table.ms-toolbar, table.ms-viewtoolbar {
+   background-color: #cddcf2;
+}
+table.ms-toolbar {
+   border: 1px solid #afbbce;
+}
+.ms-toolbar a:hover {
+   color:#e00;
+}
+table.ms-viewtoolbar {
+   border-top: 1px solid #afbbce;
+   border-bottom: 1px solid #afbbce;
+}
+.ms-listheader {
+   color: #5b6f96;
+   background-color: #afcaff;
+}
+.ms-menutoolbar {
+   border: 1px solid #7796c7;
+   background-color:#c0d3f9;
+   background-image: url("listheadergrad_classic.gif");
+   margin-top:4px;
+}
+.ms-menutoolbar td {
+   border-top:solid 1px #fff;
+   border-bottom:solid 1px #e1ecfc;
+}
+.ms-listheaderlabel {
+   color:#000;
+}
+table.ms-splitbuttonhover a, div.ms-menubuttonactivehover a, table.ms-splitbuttonhover a:hover, div.ms-menubuttonactivehover a:hover {
+color:#c00;
+}
+.ms-menutoolbar td td.ms-viewselector,.ms-toolbar td td.ms-viewselector,.ms-authoringcontrols td td.ms-viewselector,td.ms-viewselector{
+background-image:none;
+}
+div.ms-viewselectorhover a {
+   color:#c00;
+}
+.ms-paging {
+    color: #5b6f96;
+}
+.ms-viewselect a:link, .ms-GRFontSize {
+    color: #003399;
+}
+.ms-formlabel  {
+    color: #000000;
+}
+.ms-formdescription A {
+    color: #003399;
+}
+.ms-informationbar {
+    background-color:#efebc2;
+    border: 1px solid ffd980;
+}
+.ms-formbody {
+    background:#e2eeff;
+    border-top: 1px solid #d8d8d8;
+}
+.ms-formline {
+	border-top: 1px solid #afcaff;
+}
+.ms-searchbox {
+    border:solid 1px #afbbce;
+}
+.ms-inputuserfield, .ms-rtelong, .ms-rtelonger {
+    border: 1px solid #aaaaaa;
+}
+.ms-bannerContainer {
+    background-image: url("siteTitleBKGD_classic.jpg");
+}
+.ms-globalbreadcrumb {
+    background-color:#002c84;
+    padding:1px 10px 1px 5px;
+    background-image: url("globalBreadcrumbBKGD_classic.gif");
+    background-position: top left;
+    background-repeat:repeat-x;
+    height: 20px;
+}
+.ms-globalbreadcrumb, .ms-globalbreadcrumb a {
+    color: #fff;
+}
+.ms-globallinks, .ms-globallinks a {
+    color: #fff;
+}
+.ms-pagebreadcrumb{
+    border-bottom:solid 1px #d5deef;
+}
+.ms-pagebreadcrumb,.ms-pagebreadcrumb a{
+    background-color:transparent;
+}
+.ms-pagebreadcrumb a:hover {
+    color:#f00;
+}
+.ms-sitetitle {
+    color: #000000;
+}
+.ms-actionbar {
+    border: 1px solid #afbbce;
+}
+.ms-actionsep {
+    border-right: 1px solid #afbbce; 
+}
+.ms-topNavFlyOuts{
+background-color:#F2F8FF !important;
+}
+.ms-topNavFlyOutsHover{
+background-color:#ffe6a0 !important;
+}
+.ms-topnavselected {
+background-image:url("topnavselected_classic.gif");
+background-color::#b7c9e8;
+background-repeat:repeat-x;
+}
+.ms-topNavHover{
+background-image:url("topnavhover_classic.gif");
+background-color:#ffe6a0;
+border:solid 1px #c2a770;
+border-left:solid 1px #ffffff;
+border-bottom-width:0px;
+}
+.ms-quicklaunchnavsep {
+    background-color:transparent;
+}
+.ms-quicklaunch table td {
+    border-top:none;
+ }
+.ms-quicklaunch table.ms-navheader { 
+    border-top:none;
+    border-bottom:none;
+    border-left:none;
+}
+.ms-quicklaunch table.ms-navheader td {
+    background-color:transparent;
+    border-left:none;
+    border-bottom:none;
+    border-top:none;
+    background-image:none;
+}
+table.ms-navitem td,span.ms-navitem {
+    background:url("navBullet_classic.gif") no-repeat;
+}
+.ms-navitem a:hover, a.ms-navheader:hover {
+    color:#ee0000;
+}
+.ms-treeviewouter td.ms-navitem {
+    border:none;
+    padding: 0px 4px;
+}
+div.ms-treeviewouter div {
+    border-top-color:#ffd275;
+}
+.ms-quicklaunchheader a:hover {
+    color:#ee0000;
+}
+.ms-topNavHover a{
+    color:#d00;
+}
+table.ms-recyclebin td a:hover {
+    color:#e00;
+}
+.ms-navsubmenu1 {
+    background-color:transparent;
+    border-bottom:none;
+} 
+.ms-navsubmenu2 {
+    background-color:transparent;
+}
+table.ms-navselected td {
+    border:1px solid #CCCCCC;
+}
+.ms-navheaderstatic, .ms-navitemstatic {
+    color: #545a63;
+}
+.ms-quicklaunchouter {
+    margin:0px 5px 2px 2px;
+    border-bottom:none;
+    border-right:none;
+}
+.ms-quickLaunch {
+    border:none;
+    background-color:transparent;
+    margin-top:5px;
+}
+.ms-quicklaunchheader {
+    padding:4px 5px 0px 5px;
+    height:23px;
+    margin-bottom:4px;
+    color: #003399;   
+    background-image: url("quickLaunchHeader_classic.gif");
+    background-position:bottom;
+    background-color:#fff;
+    border-bottom:solid 1px #a5a5a5;
+}
+table.ms-recyclebin {
+    margin-top:2px;
+}
+table.ms-recyclebin td {
+    background-color:transparent;
+    border-top:none; 
+    border-left:none;
+    border-top:solid 1px #a5a5a5;
+    padding-top:4px;
+}
+.ms-storMeUsed, .ms-storMeFilterBar {
+   background: #9fbefc;
+}
+.ms-navwatermark {
+    color: #c6e1ff;
+}
+.ms-selectednav, .ms-GRSortFilter {
+   border: 1px solid #2353b2;
+}
+.ms-unselectednav {
+   border: 1px solid #cddcf2;
+}
+.ms-verticaldots {
+    border-right: 1px solid #cddcf2; 
+}
+.ms-nav {
+    background-image:none;
+    background-color:#e1ecfc;
+    border-right:solid 1px #d4dce6;
+}
+.ms-relatedtable{
+    background: #fff3db;
+    border: 1px solid #919baa;
+}
+.ms-relatedtext {
+    color: #003399;
+}
+.ms-relatedtext a:visited, .ms-relatedtext a:link, .ms-relatedtext a:active    {
+    color: #003399;
+}
+.ms-relatedtext a:hover {
+    color: #003399;
+}
+td.ms-globalTitleArea {
+    background-image:url(siteTitleBKGD_classic.jpg);
+}
+
+.ms-globalTitleAreaSeparator {
+    background-color: #ffd175;
+    background-image:none;
+    height:2px;
+}
+.ms-titlearea { 
+    color: #000000;
+}
+.ms-titlearea a {
+    color: #003399;
+}
+.ms-titlearea a:hover {
+    color: #f00;
+}
+td.ms-mwstitlearealine {
+    background-color:#e1ecfc;
+}
+.ms-mwstitlearealine td.ms-bodyareacell {
+    border-top: 1px solid #6f9dd9;
+}
+TD.ms-titleareaframe, Div.ms-titleareaframe, .ms-pagetitleareaframe, .ms-mwspagetitleareaframe {
+    background: #ffffff url("pageTitleBKGD_classic.gif") repeat-x;
+}
+td.ms-titlearearight {
+    background: #ffffff url("pageTitleBKGD_classic.gif") repeat-x;
+}
+td.ms-titlearearight div.ms-areaseparatorright {
+    background-image:url(framecornergradright_classic.gif);
+    background-repeat:no-repeat;
+    background-color:transparent;
+    border-left:solid 1px #ffd275;
+}
+div.ms-titleareaframe {
+    border-bottom:solid 1px #ffd275;
+    height:100%;
+}
+td.ms-pagetitleareaframe {
+    border-bottom:solid 1px #ffd275;
+}
+.ms-pagetitleareaframe table {
+    background-image:none;
+}
+.ms-storMeEstimated{
+    background-color:#cddcf2;
+}
+.ms-titlearealine {
+    background-color:#fff;
+}
+.ms-titleareaseparator {
+    padding-bottom:0;
+    background-color:#ffd175;
+}
+.ms-titleareaseparator div {
+    background-color:transparent;
+    border-top:none;
+}
+.ms-areaseparatorcorner {
+    height: 54px;
+    background-image:url(framecornergrad_classic.gif);
+    background-repeat:none;
+    border-right: 1px solid #ffd175;
+    border-top:solid 1px #d5deef;
+    background-color:#fff;
+}
+div.ms-areaseparatorleft {
+    background:none;
+}
+td.ms-areaseparatorleft {
+    background-image:url(framecornergrad_classic.gif);
+    background-repeat:no-repeat;
+    background-position:top right;
+    border-right: 1px solid #ffd175; 
+    background-color:transparent;
+}
+div.ms-areaseparatorright {
+    background-image:url(framecornergrad_classic.gif);
+    border-left: 1px solid #ffd175; 
+    background-color: #ffffff;
+}
+td.ms-rightareacell div.ms-pagemargin{
+    background-color:#ffffff;
+    background-image:none;
+    border-left:0px;
+}
+.ms-areaseparator {
+    background-color: #E7EBFF;
+    background-image: url("formtitlegrad_classic.gif");
+    border-right:solid 1px #e7efff;
+    border-left:solid 1px #e7efff;   
+}
+.ms-pagemargin {
+    background-image:none;
+    background-color:transparent;
+}
+td.ms-rightareacell div.ms-pagemargin{
+    background-color:transparent;
+    background-image:none;
+}
+.ms-bodyareaframe, .ms-viewareaframe  {
+    border-top:none;
+    border-right:none;
+    border-left:none;
+}
+.ms-bodyareaframe {
+    padding:10px;
+} 
+.ms-selected {
+    background-color: #9fbefc;
+    border-top: 1px solid #9fbefc;
+    border-bottom: 1px solid #9fbefc;
+}
+.ms-descriptiontext {
+    color: #7f7f7f;
+}
+.ms-dspadapterlist {
+    color: #7f7f7f;
+}
+.ms-separator {
+    color: #545a63;
+}
+.ms-separator img {
+    background: #819cd3;
+    border-bottom: 1px solid #FFFFFF;
+    border-right: 1px solid #FFFFFF;
+}
+.ms-authoringcontrols {
+    background-color:#e2eeff;
+    color: #495877;
+}
+.ms-propertysheet th.ms-authoringcontrols {
+background-color:#e2eeff;
+}
+.ms-sectionheader {
+    color: #3966bf;
+}
+.ms-linksectionheader {
+    color: #545a63;
+}
+td.ms-linksectionheader {
+    background-color: #d5deef;
+    border: 1px solid #afcaff;
+}
+.ms-sectionheader a {
+    color: #003399;
+}
+.ms-sectionheader a:hover {
+    color: #003399;
+}
+.ms-sectionheader a:visited {
+    color: #003399;
+}
+.ms-sectionline {
+    background-color:#d8d8d8;
+}
+.ms-sectionhighlight-top {
+	border: 1px solid #ff9932;
+	background-color:#f7f3cd;
+}
+.ms-sectionhighlight {
+	background-color:#fffbd8;
+	color: #545a63;
+}
+.ms-partline {
+    background-color: #CEDFF7;
+}
+.ms-propertysheet a {
+    color: #003399;
+}
+.ms-pageinformation th, .ms-createpageinformation th {
+    color: #5b6f96;
+}
+.ms-itemheader a {
+    color: #003399;
+}
+.ms-listdescription {
+    background:transparent;
+    border-bottom:none;
+    color: #545a63;
+    padding-bottom:0px;
+}
+.ms-alternating .ms-unselectedtitle {
+background:transparent;
+}
+.ms-alternating .ms-vb-user table{
+background:transparent;
+}
+.ms-vb a, .ms-vb2 a, .ms-GRStatusText a,.ms-vb-user a, .ms-disc a {
+    color: #003399;
+}
+.ms-vb a:hover, .ms-vb2 a:hover, .ms-vb-user a:hover, .ms-disc a:hover {
+    color: #ff0000;
+}
+.ms-vb a:visited, .ms-vb2 a:visited, .ms-GRStatusText a:visited, .ms-vb-user a:visited, .ms-disc a:visited  {
+   color: #001747;
+}
+.ms-vb a:visited:hover, .ms-vb2 a:visited:hover, .ms-vb-user a:visited:hover, .ms-disc a:visited:hover {
+    color: #ff0000;
+}
+th .ms-vb a, th .ms-vb, .ms-vh2-nofilter a, .ms-vh2-nofilter-icon a, .ms-vh2-nofilter, .ms-vh2-nofilter-icon{
+    color: #919baa;
+}
+a.ms-addnew {
+    color: #003399;
+}
+a.ms-addnew:hover {
+    color: #f00;
+}
+.ms-error {
+    color: #ff0000
+}
+a.ms-acclink {
+    background-color: #FFFFFF;
+    border-color: #000000;
+    color: #000000;
+}
+.ms-homepagetitle:Hover {
+    color: #ff0000;
+}
+img.thumbnail { 
+    border: solid #a5c3ff 3px; 
+}
+tr.ms-imglibselectedrow , tr.ms-highlight {
+   background-color: #fff3db;
+}
+.ms-imglibthumbnail {
+    background-color: #ffe2a8; border: solid #a5c3ff 0px; 
+}
+
+tr.ms-disc-gray td {
+    background-color: #ffe2a8;
+}
+.UserCaption {
+    background-color: #dbe8fc;
+}
+.UserConfiguration {
+    background-color: #fff3db;
+}
+.UserToolbarTextArea A:link {
+    COLOR: #003399; 
+}
+.UserToolbarTextArea A:visited {
+    COLOR: #003399;
+}
+.UserToolbarTextArea A:hover {
+    COLOR: #ff0000; 
+}
+.UserToolbarImage {
+    background-color: #fff3db;
+}
+.UserToolbar {
+   border: 1px solid #afbbce;
+}
+.ms-ToolPaneBorder {
+    border-right: #cddcf2 1px solid; 
+    border-left: #cddcf2 1px solid; 
+}
+.ms-ToolPaneInfo {
+    background-color: #5b6f96;
+}
+.ms-ToolStrip {
+    border-left: #cddcf2 1px solid;
+    border-right: solid 1px #9fbefc;
+    border-top: solid 1px #9fbefc;
+    border-bottom: solid 1px #9fbefc;
+    background-color: #c6e1ff;
+}
+.ms-TPHeader {
+    background-color: #c6e1ff;
+}
+.ms-TPBody A:link, .ms-TPBody A:visited, .ms-TPBody A:hover {
+    color:#003399;
+}
+.ms-PropGridBuilderButton {
+    background-color: #cddcf2;
+}
+.ms-WPDesign {
+    background-color: #cddcf2;
+}
+.ms-WPMenu {
+    background-color: #cddcf2;
+}
+.ms-WPTitle {
+    color:#003399;
+}
+.ms-WPTitle A:link, .ms-WPTitle A:visited {
+    color:#003399;
+}
+.ms-WPTitle A:hover {
+    color:#ff0000;
+}
+.ms-WPBody A:link, .ms-WPBody A:visited {
+    color:#003399;
+}
+.ms-WPBody A:hover {
+    color:#ff0000;
+}
+.ms-WPBorder {
+    border-color: #aac6ff;
+}
+.ms-HoverCellActiveDark{
+    border: solid 1px #c6e1ff;
+    background-color: #00FF00;
+}
+.ms-SpLinkButtonActive a, .ms-SpLinkButtonActive a:hover, .ms-SpLinkButtonActive a:focus, .ms-SpLinkButtonActive a:link, .ms-SPLinkButtonActive a:visited{
+color:#003399;
+}
+.ms-SpLinkButtonInActive a, .ms-SpLinkButtonInActive a:hover, .ms-SpLinkButtonInActive a:focus, .ms-SpLinkButtonInActive a:link, .ms-SPLinkButtonInActive a:visited{
+color:#ffffff;
+}
+.ms-globallinks .ms-hovercellinactive a:visited, .ms-globallinks .ms-hovercellinactive a:link, .ms-globallinks .ms-hovercellinactive a{
+    color:#ffffff;
+}
+.ms-globallinks a:hover{
+color:#ffffff;
+}
+.ms-globallinks .ms-splinkbuttonactive a:hover, .ms-globallinks .ms-hovercellactive a:hover{
+color:#003399;
+}
+.ms-WPHeader TD {
+    border-bottom: 1px solid #aebcd1;
+}
+.ms-SPzone .ms-WPHeader TD, .ms-SPZoneSelected .ms-WPHeader TD {
+    border: 1px solid #ffd98e;
+    background-color: #FFF3D6;
+    background-image: url("partgrad_classic.gif");
+}
+.ms-rtApplyBackground {
+    background-color: #c6e1ff;
+    BORDER-BOTTOM: buttonshadow solid 1px;
+    BORDER-RIGHT: buttonshadow solid 1px; 
+}
+.ms-tbButtonMouseOverDown {
+    BACKGROUND-COLOR: #c6e1ff; 
+    BORDER-BOTTOM: buttonhighlight solid 1px; 
+    BORDER-LEFT: buttonshadow solid 1px; 
+    BORDER-RIGHT: buttonhighlight solid 1px; 
+    BORDER-TOP:  buttonshadow solid 1px; 
+}
+.ms-rtRemoveBackground {
+    background-color: transparent;
+    BORDER-BOTTOM: #c6e1ff solid 1px; 
+    BORDER-LEFT: #c6e1ff solid 1px; 
+    BORDER-RIGHT: #c6e1ff solid 1px; 
+    BORDER-TOP:  #c6e1ff solid 1px; 
+}
+.ms-subsmanageheader {
+    background-color: #fff3db;
+}
+.ms-underline {
+   border-bottom:1px solid #ffd175; 
+}
+.ms-underlineback {
+   border-bottom:1px solid #ffd175;
+   background-color: #fff3db;
+}
+.ms-back {
+   background-color: #fff3db;
+}
+.ms-smallsectionline {
+   border-bottom:1px solid #ffd175;
+}
+.ms-tabselected {
+   color: #003399; 
+}
+.ms-tabinactive {
+   color: #003399;
+   background-position:0px 5px;
+   background-color:#ffffff;
+}
+.ms-tabinactive a:link {
+   color: #003399;
+}
+.ms-tabinactive a:hover {
+   color: #000000; 
+}
+.ms-tabinactive a:visited {
+   color: #003399; 
+}
+.ms-surveyHBarB {
+    background-color: #CCCCCC;
+}
+.ms-surveyVBar {
+    background-color: #3966bf;
+}
+.ms-surveyVBarT {
+    color: #7f7f7f;
+}
+.ms-surveyVBarTC {
+    color: #7f7f7f;
+}
+.ms-uploadborder {
+    border: 1px solid #cddcf2;
+}
+.ms-uploadcontrol {
+    background-color: #fff3db;
+}
+.ms-styleheader{
+    background-color: #fff3db;
+}
+.ms-styleheader a:link, .ms-stylebody a:link {
+    color: #003399;
+}
+.ms-styleheader a:hover, .ms-stylebody a:hover {
+    color: #ff0000;
+}
+.ms-MWSInstantiated a:link, .ms-MWSInstantiated a:visited {
+    color:#003399;
+}
+.ms-MWSInstantiated a:hover {
+    color:#9fbefc;
+}
+.ms-MWSUninstantiated a:link, .ms-MWSUninstantiated a:visited {
+    color:#003399;
+}
+.ms-MWSUninstantiated a:hover {
+    color:#003399;
+}
+.ms-ganttTable td {
+	border-top: solid 1px #7f7f7f;
+}
+.ms-ganttDetailTimeUnitRow td {
+	border:solid 1px #7f7f7f;
+}
+.ms-ganttNonWorkingDay {
+	background:cornsilk;
+}
+.ms-ganttMajorTimeUnitHeaderRow td {
+	border-left: solid 1px #7f7f7f;
+	border-right: solid 1px #7f7f7f;
+}
+.ms-webpartpickerpageinnerbackground {
+    background-color: #fff3db;	
+}
+.ms-webpartpickerpagetext a {
+    color: #003399;	
+}
+.ms-webpartpickerpageHeaderBorder a {
+    color: #003399;	
+}
+.ms-pagebottommargin, .ms-pagebottommarginright, .ms-pagebottommarginleft, .ms-pagebottommarginright, .ms-bodyareapagemargin {
+    display:none;
+}
+.ms-wikieditbutton {
+    border-left:solid 1px #ffffff;
+}
+.ms-wikieditbutton a {
+    color:#7f7f7f;
+}
+.ms-wikieditbutton a:hover {
+    color:#ff0000;
+}
+.ms-wikicontent {
+    color:#000000;
+}
+.ms-diffdelete {
+    background-color:#ffd2a5;
+}
+.ms-diffinsert {
+    background-color:#ccffcc;
+}
+.ms-diffchange {
+    background-color:#ffffcc;
+}
+.ms-PostTitle a { 
+    color:#003399;
+}
+.ms-PostFooter a {
+    color: #003399;
+}
+.ms-PostBody {
+    color:#727a87;
+}
+.ms-PostFooter {
+    color:#6e85b5;
+}
+h1.ms-PostDate {
+    color:#727a87;
+}
+h2.ms-CommentTitle {
+    color:#000000;
+}
+.ms-CommentFooter a {
+    color:#6e85b5;
+}
+.ms-CommentBody  {
+    color:#727a87;
+}
+.ms-calheader {
+    background-color:transparent;
+}
+.ms-cal-navselected a {
+    color:#000000;
+}
+.ms-cal-navselected a:hover {
+    color:#000000;
+}
+.ms-cal-nav a {
+    color:#3966bf;
+}
+.ms-cal-nav a:hover {
+    color:#000000;
+}
+.ms-cal-weekempty, .ms-cal-weekemptyRLT {
+    background-color:#dbe8fc;
+}
+.ms-cal-weekname {
+	background-color:#dbe8fc;
+	border:solid 1px #cddcf2;
+}
+.ms-cal-weekday {
+	background-color:#dbe8fc;
+	color:#919baa;
+}
+.ms-cal-week, .ms-cal-weekB, .ms-cal-weekRTLB {
+	background-color:#cddcf2;
+	border:1px solid #afbbce;
+}
+.ms-cal-weekselected, .ms-cal-weekselectedRTL {
+	border:1px solid #afbbce;
+	background-color:#dbe8fc;	
+}
+.ms-cal-weekselected a, .ms-cal-weekselectedRTL a {
+	color:#000000;
+}
+.ms-cal-weekbox {
+	color:#ffd175;
+}
+.ms-cal-weekboxRTL {
+	color:#ffd175; 
+}
+.ms-cal-topdayover div, .ms-cal-topdayoverL div, .ms-cal-topdayoverRTLL div, .ms-cal-wtopdayover div, .ms-cal-wtopdayoverL div, .ms-cal-wtopdayoverRTLL div, .ms-cal-topdayfocusover div {
+	border:solid 1px #ffffff; 
+	padding:0px 0px 0px 4px;
+	font-weight:bold;
+	color:#000000;
+	text-decoration:underline;
+}
+.ms-cal-topdayfocus, .ms-cal-topdayfocusL, .ms-cal-topdayfocusRTLL, .ms-cal-wtopdayfocus, .ms-cal-wtopdayfocusL, .ms-cal-wtopdayfocusRTLL  {
+	background-repeat:repeat-x;
+	background-color:#a5c3ff;
+	border:solid 1px #afbbce;
+}
+.ms-cal-topdayfocus div, .ms-cal-topdayfocusL div, .ms-cal-topdayfocusRTLL div, .ms-cal-wtopdayfocus div, .ms-cal-wtopdayfocusL div, .ms-cal-wtopdayfocusRTLL div {
+	border:solid 1px #c6e1ff; 
+	padding:1px 1px 1px 5px;
+	font-weight:bold;
+	color:#ffffff;
+}
+.ms-cal-topday a, .ms-cal-topday a:active, .ms-cal-topday a:link, .ms-cal-topday a:visited, .ms-cal-topday a:hover, .ms-cal-topdayL a, .ms-cal-topdayL a:active, .ms-cal-topdayL a:link, .ms-cal-topdayL a:visited, .ms-cal-topdayL a:hover, .ms-cal-topdayRTL a, .ms-cal-topdayRTL a:active, .ms-cal-topdayRTL a:link, .ms-cal-topdayRTL a:visited, .ms-cal-topdayRTL a:hover, .ms-cal-topdayRTLL a, .ms-cal-topdayRTLL a:active, .ms-cal-topdayRTLL a:link, .ms-cal-topdayRTLL a:visited, .ms-cal-topdayRTLL a:hover, .ms-cal-topdayselectedRTLL a, .ms-cal-topdayselectedRTLL a:active, .ms-cal-topdayselectedRTLL a:link, .ms-cal-topdayselectedRTLL a:visited, .ms-cal-topdayselectedRTLL a:hover, .ms-cal-topdayselectedRTL a, .ms-cal-topdayselectedRTL a:active, .ms-cal-topdayselectedRTL a:link, .ms-cal-topdayselectedRTL a:visited, .ms-cal-topdayselectedRTL a:hover, .ms-cal-topdayselectedL a, ms-cal-topdayselectedl a:active, ms-cal-topdayselectedl a:link, ms-cal-topdayselectedl a:visited, ms-cal-topdayselectedl a:hover, .ms-cal-topdayselected a, .ms-cal-topdayselected a:active, .ms-cal-topdayselected a:link, .ms-cal-topdayselected a:visited, .ms-cal-topdayselected a:hover {
+	color:#000000;
+}
+.ms-cal-nodataLeft {
+	border-left:3px solid #afbbce ; 
+	border-right:1px solid #afbbce ;  
+	background-color: #E3E9F7;
+}
+.ms-cal-nodataLeftRTL {
+	padding:1px;
+	border-left:1px solid #afbbce ; 
+	border-right:3px solid #afbbce ;  
+	background-color: #dbe8fc;
+}
+.ms-cal-nodataMid, .ms-cal-nodataLeft, .ms-cal-nodataLeftBtm, .ms-cal-nodataLeftBtmRTL, .ms-cal-nodataLeftBtm2, .ms-cal-nodataLeftBtmRTL2, .ms-cal-nodataBtm, .ms-cal-nodataBtm2 {
+	padding:1px;
+	border-left:1px solid #afbbce;  
+	border-right:1px solid #afbbce;  
+	background-color: #E3E9F7;
+}
+.ms-cal-muworkitem, .ms-cal-muworkitemRTLL {   
+	border-left:1px solid #afbbce ; 
+	border-right:1px solid #cddcf2;
+} 
+.ms-cal-muworkitemR {
+	border-left:1px solid #afbbce ; 
+	border-right:1px solid #cddcf2;
+}
+.ms-cal-muworkitemL {
+	border-left:1px solid #afbbce ; 
+	border-right:1px solid #cddcf2;
+}
+.ms-cal-workitem, .ms-cal-todayitem {   
+	border-left:1px solid #afbbce; 
+	border-right:1px solid #afbbce;
+}
+.ms-cal-workitem2 {   
+	border-left:1px solid #afbbce; 
+	border-right:1px solid #afbbce; 
+}
+.ms-cal-workitem2B, .ms-cal-workitemRTL2B {   
+	border-left:1px solid #afbbce; 
+	border-right:1px solid #afbbce; 
+	border-bottom:1px solid #afbbce; 
+}
+.ms-cal-workitemL2 {   
+	border-left:3px solid #afbbce ; 
+	border-right:1px solid #afbbce; 
+}
+.ms-cal-workitemRTLL2 {   
+	border-left:1px solid #afbbce ; 
+	border-right:3px solid #afbbce; 
+}
+.ms-cal-workitemL2B {   
+	border-left:3px solid #afbbce ; 
+	border-right:1px solid #afbbce; 
+	border-bottom:3px solid #afbbce ; 
+}
+.ms-cal-workitemRTLL2B {   
+	border-left:1px solid #afbbce ; 
+	border-right:3px solid #afbbce; 
+	border-bottom:3px solid #afbbce ; 
+}
+.ms-cal-noworkitem, .ms-cal-noworkitemL, .ms-cal-noworkitemRTL   {
+	border-left:1px solid #afbbce; 
+	border-right:1px solid #afbbce; 
+}
+.ms-cal-noworkitemB, .ms-cal-noworkitemLB, .ms-cal-noworkitem2B, .ms-cal-noworkitemL2B, .ms-cal-noworkitemRTL2B {
+	border-right:1px solid #afbbce;
+	border-left:1px solid #afbbce;
+	border-bottom:1px solid #afbbce; 
+}
+.ms-cal-monthMultiDay, .ms-cal-monthMultiDay a, .ms-cal-monthMultiDay a:link, .ms-cal-monthMultiDay a:active, .ms-cal-monthMultiDay a:visited {  
+	background-color: #5b6f96;
+}
+.ms-cal-monthMultiDay a:hover {
+	background-color: #5b6f96;
+	color:#819cd3;
+}
+.ms-cal-defaultbgcolor {  
+	border:solid 1px #a5c3ff;
+}
+.ms-cal-defaultbgcolorsel {
+	border:solid 1px #a5c3ff;
+	background-color: #fff3db;
+	color: #ffd175; 
+}
+.ms-cal-monthAllDay {  
+	border:solid 1px #a5c3ff;
+}
+.ms-cal-monthAllDaysel {
+	border:solid 1px #afbbce;
+	background-color:#e9ecf3;
+}
+.ms-cal-time {
+    background-color:#dbe8fc;
+}
+.ms-cal-timeRTL {
+    border-left:1px solid #afbbce;
+    border-right:2px solid #afbbce;
+    background-color:#FFFFFF;
+}
+.ms-cal-emptytime {
+    border-top:3px solid #afbbce;
+    border-left:2px solid #afbbce;
+    background-color:#FFFFFF;
+}
+.ms-cal-emptytimeRTL {
+    border-top:3px solid #afbbce;
+    border-right:2px solid #afbbce;
+}
+.ms-cal-emptycell {
+    border-top:3px solid #afbbce;
+    border-left:3px solid #afbbce ;
+    border-right:1px solid #afbbce ; 
+    background-color:#ffe2a8;
+}
+.ms-cal-emptycellRTL{
+    border-top:3px solid #afbbce;
+    border-left:1x solid #afbbce ;
+    border-right:3 solid #afbbce ; 
+    background-color:#ffe2a8;
+}
+.ms-cal-emptycellB{
+    border-bottom:3px solid #afbbce;
+    border-left:3px solid #afbbce ;
+    border-right:1px solid #afbbce ; 
+    background-color:#ffe2a8;
+}
+.ms-cal-emptycellRTLB {
+    border-bottom:3px solid #afbbce;
+    border-left:1x solid #afbbce ;
+    border-right:3 solid #afbbce ; 
+    background-color:#ffe2a8;
+}
+.ms-cal-alldayevent {
+    border-left:1px solid #afbbce ;
+    border-right:1px solid #afbbce ;
+}
+.ms-cal-alldayeventRTL {
+    border-left:1px solid #afbbce ;
+    border-right:3px solid #afbbce ;
+}
+.ms-cal-noworkhour{
+    border-left:2px solid #afbbce;
+    background-color:#00FF00;
+}
+.ms-cal-workhour {
+    border-top:solid 1px #D0D6E5;
+    background-color:#dbe8fc;
+    color:#919baa;
+} 
+.ms-cal-noworkhourRTL{
+    border-right:2px solid #afbbce;
+    background-color:#00FF00;
+}
+.ms-cal-workhourRTL {
+    border-right:2px solid #afbbce;
+    background-color:#FFFFFF;
+} 
+.ms-cal-noworkhourF {
+    border-top:3px solid #afbbce;
+    border-left:2px solid #afbbce;
+    background-color:#00FF00;
+}
+.ms-cal-workhourF {
+    background-color:#dbe8fc;
+    color:#919baa;
+} 
+.ms-cal-noworkhourRTLF {
+    border-top:3px solid #afbbce;
+    border-right:2px solid #afbbce;
+    background-color:#00FF00;
+}
+.ms-cal-workhourRTLF {
+    border-top:3px solid #afbbce;
+    border-right:2px solid #afbbce;
+    background-color:#FFFFFF;
+} 
+.ms-cal-upper-border {
+    border-top:3px solid #afbbce;
+    border-right:1px solid #afbbce;
+}
+.ms-cal-upper-borderRTL {
+    border-top:3px solid #afbbce;
+    border-left:1px solid #afbbce;
+}
+.ms-cal-enoworkdayF,.ms-cal-enoworkdayRTLF {
+    border-top:solid 1px #afbbce;
+}
+.ms-cal-eworkdayF,.ms-cal-eworkdayRTLF {
+    border-top:solid 1px #afbbce;
+}
+.ms-cal-workhourF, .ms-cal-enoworkhourF {
+    border-top:1px solid #afbbce;
+}
+.ms-cal-eworkhourF .ms-cal-dayhour, .ms-cal-eworkhourF .ms-cal-dayhourF, .ms-cal-eworkhour .ms-cal-dayhourF, .ms-cal-eworkhour .ms-cal-dayhour, .ms-cal-eworkday .ms-cal-dayhour, .ms-cal-enoworkday .ms-cal-dayhour, .ms-cal-eworkday .ms-cal-dayhourF, .ms-cal-enoworkday .ms-cal-dayhourF {
+    border-top:solid 1px #D0D6E5;
+}
+.ms-cal-eworkhourF .ms-cal-dayhalfhourF, .ms-cal-eworkhour .ms-cal-dayhalfhourF, .ms-cal-eworkhour .ms-cal-dayhalfhour, .ms-cal-eworkday .ms-cal-dayhalfhour, .ms-cal-enoworkday .ms-cal-dayhalfhour, .ms-cal-eworkday .ms-cal-dayhalfhourF, .ms-cal-enoworkday .ms-cal-dayhalfhourF, .ms-cal-enoworkhour .ms-cal-dayhalfhourF, .ms-cal-enoworkhour .ms-cal-dayhalfhour, .ms-cal-enoworkhour .ms-cal-dayhourF, .ms-cal-enoworkhour .ms-cal-dayhour {
+    border-top:solid 1px #dbe8fc;
+}
+.ms-cal-eworkhourF .ms-cal-dayhourF, .ms-cal-eworkday .ms-cal-dayhourF, .ms-cal-enoworkday .ms-cal-dayhourF, .ms-cal-enoworkdayF .ms-cal-dayhourF, .ms-cal-enoworkdayRTLF .ms-cal-dayhourF, .ms-cal-eworkday .ms-cal-dayhalfhourF, .ms-cal-enoworkday .ms-cal-dayhalfhourF, .ms-cal-enoworkdayF .ms-cal-dayhalfhourF, .ms-cal-enoworkdayRTLF .ms-cal-dayhalfhourF, .ms-cal-eworkdayF .ms-cal-dayhourF, .ms-cal-enoworkhourF .ms-cal-dayhourF, .ms-cal-enoworkhour .ms-cal-dayhalfhourF, .ms-cal-enoworkhour .ms-cal-dayhourF, .ms-cal-eworkhour .ms-cal-dayhourF, .ms-cal-eworkhour .ms-cal-dayhalfhourF {
+    border-left:solid 1px #afbbce;
+}
+.ms-cal-eworkday,.ms-cal-eworkdayRTL {
+    background-color:#FFFFFF;
+}
+.ms-cal-weekedge {
+    background-color:#dbe8fc;
+}
+.ms-cal-wtopdayselected {
+	background-color:#FF9932;
+	border:solid 1px #afbbce; 
+	color:#FFFFFF;
+}
+.ms-cal-wtopdayselectedRTL {
+	background-color:#FF9932;
+	border:solid 1px #afbbce; 
+	border-bottom:solid 3px #afbbce; 
+	color:#FFFFFF;
+}
+.ms-cal-wtopdayselectedL {
+	background-color:#FF9932;
+	border:solid 1px #afbbce; 
+	border-left:solid 3px #afbbce; 
+	border-bottom:solid 3px #afbbce; 
+	color:#FFFFFF;
+}
+.ms-cal-wtopdayselectedRTLL {
+	background-color:#FF9932;
+	border:solid 1px #afbbce; 
+	border-right:solid 3px #afbbce; 
+	border-bottom:solid 3px #afbbce; 
+	color:#FFFFFF;
+}
+.ms-cal-tdayitem {
+    border:1px solid #a5c3ff; 
+}
+.ms-cal-dayitem2 {
+    border-right: 2px solid #CCCCCC;
+    text-align:left;
+    background-color:#c6e1ff;
+    vertical-align :top;
+    text-decoration: none; 
+    text-overflow:ellipsis;
+ }
+.ms-cal-dayitem2rtl {
+    border-right: 2px solid #CCCCCC;
+    text-align:right;
+    background-color:#c6e1ff;
+    vertical-align :top;
+    text-decoration: none; 
+    text-overflow:ellipsis;
+ }
+.ms-cal-gempty {
+    border:solid 1px #afbbce;
+}
+.ms-cal-nav-buttons {
+    color:#afbbce;
+}
+.ms-navframe .ms-datepickerouter {
+    border-bottom:0px;
+    border-right:0px;
+}
+.ms-picker-header {
+    background-color:transparent;
+    background-image:url("quickLaunchHeader_classic.gif");
+    background-color:#fff;
+}
+.ms-picker-table .ms-picker-dayheader { 
+    color:#919baa; 
+}
+table.ms-picker-table td.ms-picker-dayother,table.ms-picker-table td.ms-picker-daycenterOn,table.ms-picker-table td.ms-picker-daycenter{
+    border:solid 1px #e1ecfc;
+}
+.ms-picker-week {
+    border-left:solid 1px #E6EAF1;
+}
+.ms-picker-dayother a { 
+	color: #7f7f7f; 
+}
+.ms-picker-monthcenter {
+	background-color:transparent;
+	border:none;;
+}
+/* ul                   { list-style-image: url(bull1_classic.gif) } */
+/* ul ul                   { list-style-image: url(bull2_classic.gif) } */
+ul ul ul                   { list-style-image: url(bull3_classic.gif) }
+.ms-BlogNavigator div.ms-navheader{
+background-color:transparent;
+border-top:0;
+border-left:0;
+border-bottom:0;
+}
+.ms-BlogNavigator div.ms-WPBody{
+border-top:0;
+}
+.ms-quicklaunch table.ms-selectednav{
+border:solid 1px #ffd275;
+background-image:none;
+background-color:#ffe6a0;
+}
+.ms-quicklaunch table.ms-selectednav td {
+background:transparent url("selectednavbullet_classic.gif") no-repeat;
+}
+.ms-quicklaunch table.ms-selectednavheader td{
+width:100%;
+background-color:#ffe6a0;
+background-image:none;
+border:solid 1px #ffd275;
+padding:1px 6px 3px 6px;
+}
+.ms-quicklaunch table.ms-selectednavheader td a {
+color:#000;
+}
+.ms-blogrssnav{
+border-top-width:0px;
+}
+
+TD.ms-titleareaframe,Div.ms-titleareaframe,.ms-pagetitleareaframe,.ms-mwspagetitleareaframe,.ms-consoletitleareaframe{
+background:#ffffff url("pageTitleBKGD_classic.gif") repeat-x;
+}
+.ms-consoletitleareaframebottom{
+background:transparent;
+}
+table.ms-applyfiltersinactive {
+ background-image:url('ApplyFiltersInActive.gif');
+}
+table.ms-applyfiltersactive {
+ background-image:url('ApplyFiltersActive.gif');
+}
+table.ms-applyfiltershoverover {
+ background-image:url('ApplyFiltersHoverOver.gif');
+}
+.leftnavPic{
+ background-image: url("portraitbackground.gif");
+}
+.ms-ptabcn, .ms-sctabcn {
+    background-repeat:repeat-x;
+    background-color: #ffe69f;
+}
+.ms-ptabcnhover, .ms-sctabcnhover {
+    background-repeat:repeat-x;
+    background-color:#fecd71; 
+}
+.ms-ptabcfhover, .ms-sctabcfhover {
+    background-repeat:none;
+    background-repeat: repeat-x;
+    background-color:#fecd71;
+}
+.ms-main .ms-sctabcf {
+    border-top: solid 1px #fff;
+    border-left: solid 1px #fff;
+    border-bottom: solid 1px #97B4E9;
+    background-image:none;
+}
+.ms-sctabcnhover a:hover, .ms-sctabcfhover a:hover {
+color:#000;
+}

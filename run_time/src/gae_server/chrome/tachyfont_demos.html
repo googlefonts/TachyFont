@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<!--
+  Copyright 2014 Google Inc. All rights reserved.
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Tachyfont Demos</title>
+  <script>
+    //Support running without demo features.
+    function Timer() {}
+    Timer.prototype.start = function() {};
+    Timer.prototype.end = function() {};
+    Timer.prototype.numberOfTimingRecords = function() {};
+    Timer.prototype.display_timing = function() {};
+    var timer1 = new Timer();
+    var timer2 = new Timer();
+
+  </script>
+  <script src="js/for_debug.js"></script>
+  <script>
+    // For Debug: add a control to set the bandwidth.
+    ForDebug.addBandwidthControl();
+  
+    // For Debug: add a control to set the timing text size.
+    ForDebug.addTimingTextSizeControl();
+  </script>
+  
+</head>
+<body>
+<h1>TachyFont Demos</h1>
+<a href='UDHR-JP.html'
+  target='_blank'>Noto Sans JP Thin: Universal Declaration Of Human Rights</a>  
+(<a href='http://www.ohchr.org/EN/UDHR/Pages/Language.aspx?LangID=jpn'
+  target='_blank'>original</a>)<br>
+<br>
+
+<a href='UDHR-KR.html'
+  target='_blank'>Noto Sans KR Thin: Universal Declaration Of Human Rights</a>  
+(<a href='http://www.ohchr.org/EN/UDHR/Pages/Language.aspx?LangID=kkn'
+  target='_blank'>original</a>)<br>
+<a href='tachyfont_noto_sans_kr_thin.html'
+  target='_blank'>Noto Sans KR Thin</a>  
+(<a href='tachyfont_noto_sans_kr_thin_with_demo_features.html'
+  target='_blank'>with demo features</a>)
+(<a href='tachyfont_noto_sans_kr_thin_with_demo_features-Promise-polyfill.html'
+  target='_blank'>IE 10-11 / Safari 7</a>)<br>  
+<br>
+
+<a href='tachyfont_nanum_brush_script.html'
+  target='_blank'>Nanum Brush Script</a>  
+(<a href='tachyfont_nanum_brush_script_with_demo_features.html'
+  target='_blank'>with demo features</a>)<br>  
+<br>
+
+<a href='tachyfont_noto_sans_regular_subset.html'
+  target='_blank'>Noto Sans Regular Subset</a><br>  
+<br>
+
+<h2>TachyFont vs Web Font</h2>
+<a href='tachyfont_vs_webfont_noto_sans_kr_thin.html'
+  target='_blank'>TachyFont vs WOFF - Noto Sans KR Thin</a><br>  
+<a href='tachyfont_vs_webfont_nanum_brush_script.html'
+  target='_blank'>TachyFont vs WOFF - Nanum Brush Script</a>  
+(<a href='tachyfont_vs_webfont_nanum_brush_script.html'
+  target='_blank'>Safari 7</a>)<br>  
+
+<br>
+
+<h2>Standard Web Font</h2>
+Open Sans 
+<a href='webfont-opensans-@font-face.html' target='_blank'>@font-face</a>,
+<a href='webfont-opensans-link.html' target='_blank'>Google Web Font's &lt;link&gt;</a>
+<br>  
+<a href='webfont-opensans.html'
+  target='_blank'>Nanum Brush Script - early access</a><br>  
+</body>
+</html>

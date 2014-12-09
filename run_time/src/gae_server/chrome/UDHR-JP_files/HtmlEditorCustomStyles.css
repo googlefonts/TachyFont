@@ -1,0 +1,89 @@
+/* _lcid="1033" _version="12.0.4518"
+    _LocalBinding */
+IMG.ms-rteCustom-PictureFrame
+{
+	text-align: center;
+	color: #FF0000;
+	border: 5px double #0000FF;
+	margin-left: 14;
+	padding-left: 6px;
+	padding-right: 4px;
+	padding-top: 1px;
+	padding-bottom: 1px;
+	background-color: #9FC2F1;
+}
+A:link.ms-rteCustom-LinkStyle
+{
+    COLOR: #003399; 
+    font-style:normal; 
+    font-variant:normal; 
+    font-weight:normal; 
+    font-size:10pt;  
+    font-family:Verdana;  
+}
+A:visited.ms-rteCustom-LinkStyle
+{
+    COLOR: #008080; 
+    font-style:normal; 
+    font-variant:normal; 
+    font-weight:normal; 
+    font-size:10pt; 
+    font-family:Verdana;  
+}
+A:hover.ms-rteCustom-LinkStyle
+{
+    FONT: 10pt Verdana, Arial, Helvetica; 
+    COLOR: red;
+}
+OL.ms-rteCustom-RomanNumberList
+{
+	font-family: Tahoma; 
+	font-size: 10pt;  
+	color: #595959;
+	text-indent: 0;
+	text-align: left;
+	list-style-type: upper-roman;
+	margin-left: 30;
+	margin-right: 10;
+	padding-left: 10px;
+	margin-top: 1;
+	text-transform: capitalize;
+}
+UL.ms-rteCustom-SquareBulletList
+{
+	font-family: Tahoma; 
+	font-size: 10pt; 
+	color: #595959;
+	text-indent: 0;
+	line-height: 150%;
+	text-align: left;
+	list-style-type: square;
+	margin-left: 15;
+	margin-right: 10;
+	padding-left: 10px;
+	margin-top: 10;
+	word-spacing: 0;
+	margin-bottom: 10;
+}
+.ms-rteCustom-ArticleTitle
+{
+	font-weight: bold;
+	font-family: Arial; 
+	font-size: 14pt; 
+	color: #015263;
+	text-transform: capitalize;
+}
+.ms-rteCustom-ArticleByline
+{ 
+    font-family: Arial; 
+    font-style: italic;
+    font-size: 10pt; 
+    color: #7F7F7F; 
+}
+.ms-rteCustom-ArticleHeadLine
+{
+	font-size: 12pt; 
+	font-weight: bold;
+	font-family: Arial, Helvetica, sans-serif; 
+	color: #01778F;
+}

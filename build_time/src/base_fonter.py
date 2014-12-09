@@ -50,6 +50,7 @@ class BaseFonter(object):
     if mtx in self.font:
       double_zero = '\0\0'
       offset = self.font.reader.tables[mtx].offset
+      offset += 4 # Don't clear .notdef side bearing
       numGlyphs = self.font['maxp'].numGlyphs
       if mtx == 'hmtx':
         metricCount = self.font['hhea'].numberOfHMetrics
@@ -57,7 +58,7 @@ class BaseFonter(object):
         metricCount = self.font['vhea'].numberOfVMetrics
       fontfile_handler = open(output, 'r+b')
       fontfile_handler.seek(offset)
-      for i in xrange(numGlyphs):
+      for i in xrange(1, numGlyphs):
         if i < metricCount:
           fontfile_handler.seek(2, SEEK_CUR)
           fontfile_handler.write(double_zero)
@@ -68,8 +69,11 @@ class BaseFonter(object):
 
   def __zero_glyf(self, output):
     self.font = TTFont(output)
-    glyf_off = self.font.reader.tables['glyf'].offset
-    glyf_len = self.font.reader.tables['glyf'].length
+    # Do not clear the .notdef outlines
+    offset_table = self.font['loca'].locations
+    notdef_len = offset_table[1] - offset_table[0]
+    glyf_off = self.font.reader.tables['glyf'].offset + notdef_len
+    glyf_len = self.font.reader.tables['glyf'].length - notdef_len
     self.font.close()
     filler = Filler(output)
     filler.fill(glyf_off, glyf_len, '\x00')
@@ -229,8 +233,13 @@ class BaseFonter(object):
     font_file = open(output,'r+b')
     if long_format:
       off_format = "I"
+      notdef_len = 4
     else:
       off_format = "H"
+      notdef_len = 2
+    # Do not clear the .notdef glyph loca values
+    loca_off += notdef_len
+    loca_len -= notdef_len
     locations = array.array(off_format)
     font_file.seek(loca_off);
     locations.fromstring(font_file.read(loca_len))

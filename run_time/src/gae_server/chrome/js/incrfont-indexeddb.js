@@ -74,7 +74,7 @@ IncrementalFont.CHARLIST = 'charlist';
  * 7. When the base is available set the class visibility=visible
  *
  * @param {string} fontname The name of the font.
- * @param {?string} url The URL of the Tachyfon server.
+ * @param {?string} url The URL of the Tachyfont server.
  * @return {array} An array with:
  *                 array[0] {Object} The IndexedDB object.
  *                 array[1] {Object}  The fileinfo from the header.
@@ -128,7 +128,7 @@ IncrementalFont.createManager = function(fontname, url) {
     var bandwidth = ForDebug.getCookie('bandwidth', '0');
     return IncrementalFontUtils.requestURL(incrFontMgr.url + 
       '/incremental_fonts/incrfonts/' + incrFontMgr.fontname + '/base', 'GET', 
-      null, { 'X-TachyFon-bandwidth': bandwidth }, 'arraybuffer').
+      null, { 'X-TachyFont-bandwidth': bandwidth }, 'arraybuffer').
     then(function(xfer_bytes) {
       timer1.start('uncompact base');
       var xfer_data = new DataView(xfer_bytes);

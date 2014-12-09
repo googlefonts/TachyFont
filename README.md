@@ -1,5 +1,5 @@
-# Tachyfon
-### \[tac-ee-fon\]
+# TachyFont
+### \[tac-ee-font\]
 
 ## Fast fonts (but not as fast as a [Tachyon](http://en.wikipedia.org/wiki/Tachyon)).
 
@@ -24,19 +24,27 @@ Incremental Fonts is an open source project.
 
 Incremental fonts works for both OpenType/TrueType and OpenType/CFF fonts.
 
-TachyFon is not an official Google project, and Google provides no support for it.
+TachyFont is not an official Google project, and Google provides no support for it.
 
 Status
 ======
 
 Overall status 2014-08-27:
 
-- TachyFon is at the proof of concept stage and suitable for giving a demo.
-   * The "Noto Sans KR Thin" OTF is 4.2 MB
-   * TachyFon can display the characters for a typical Korean web page in
-     about 90K.
+- TachyFont is at the proof of concept stage and suitable for giving a demo.
+   * Korean fonts are typically 1-5 MB.
+   * TachyFont can display the characters in a typical Korean web page in using about 90 KB.  
+   * For example, "Noto Sans KR Thin" (OTF) has 22K+ glyphs and is 4.2 MB.
+   * The [Korean version](http://www.ohchr.org/EN/UDHR/Pages/Language.aspx?LangID=kkn) of the [Universal Declaration of Human Rights](http://www.un.org/en/documents/udhr/) (UDHR) has 396 unique characters.
+   * If the Korean UDHR used NotoSansKR-Thin:
+      * The WOFF version would be about 3,200 KB.
+      * The TachyFont version would be 74 KB:
+         * 33 KB for a one-time font framework.
+         * 41 KB of character data on this page.
+         * That is 2.3% of the WOFF size.
+         * Note: all sizes are the compressed sizes.
 
-- There is a demo server at [http://green-pear.appspot.com/chrome/tachyfon_demos.html](http://green-pear.appspot.com/chrome/tachyfon_demos.html)
+- There is a demo server at [http://green-pear.appspot.com/chrome/tachyfont_demos.html](http://green-pear.appspot.com/chrome/tachyfont_demos.html)
    * It is not guaranteed to always be working.
 
 - the API is still evolving.
@@ -61,13 +69,13 @@ The IndexedDB version has has a limited amount of testing on:
 
 * IE
     * tested
-       * IE complains about the font embedding bits on
+       * IE fails to display the font
+       * might be that TachyFont is failing their version of [OTS](https://code.google.com/p/ots/)
           * IE10 and IE11 on Windows 7
 
-* Safari - currently untested. 
-   * It is expected the IndexedDB version will work for Safari 8.
-   * It is possible that for Safari 7 the fast loading will work but the data
-     will not be persisted.
+* Safari 
+   * Safari 7 tested - fast load but does not persist data (IndexedDB not supported)
+   * Safari 8 It is expected the IndexedDB version will work allow persisting.
 
 Build and Deployment
 ====================
@@ -95,8 +103,10 @@ to be on the PYTHONPATH.
 
 - Put all of your fonts under 'src_font/v1' folder initially. If you use new 
 version of same font put it under new 'src_font/v2' folder.
+
 - Make sure you've added `fontTools` into `PYTHONPATH`; eg,
-   - cd ${TOPDIR}
+   - cd <topdir>
+   - TOPDIR=${PWD}
    - PYTHONPATH=${TOPDIR}/run_time/src/gae_server/third_party/fonttools-master/Lib/:${PYTHONPATH}
 
 - From an Ubuntu GUI, double click to `preprocess_all.py` Python 2.7 script and choose `Run in Terminal`.
