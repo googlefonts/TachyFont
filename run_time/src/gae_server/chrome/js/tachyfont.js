@@ -2033,38 +2033,45 @@ tachyfont.TachyFontEnv.css_list_ = [];
 tachyfont.TachyFontEnv.css_list_loaded_cnt = 0;
 
 //Support running without demo features.
-/** Stub out timer functions. */
-tachyfont.Timer = function() {}
-/** Stub out timer functions. */
-tachyfont.Timer.prototype.start = function() {};
-/** Stub out timer functions. */
-tachyfont.Timer.prototype.end = function() {};
-/** Stub out timer functions. */
-tachyfont.Timer.prototype.done = function() {};
-/** Stub out timer functions. */
-tachyfont.timer1 = new tachyfont.Timer();
-/** Stub out timer functions. */
-tachyfont.timer2 = new tachyfont.Timer();
+if (window.Timer) {
+  tachyfont.timer1 = timer1;
+  tachyfont.timer2 = timer2;
+  
+} else {
+  /** Stub out timer functions. */
+  tachyfont.Timer = function() {};
+  tachyfont.Timer.prototype.start = function() {};
+  tachyfont.Timer.prototype.end = function() {};
+  tachyfont.Timer.prototype.done = function() {};
+  tachyfont.timer1 = new tachyfont.Timer();
+  tachyfont.timer2 = new tachyfont.Timer();
+}
 
-/** Stub out the debug functions. */
-tachyfont.ForDebug = function() {
-};
+if (window.ForDebug) {
+  tachyfont.ForDebug = ForDebug;
+} else {
+  /** Stub out the debug functions. */
+  tachyfont.ForDebug = function() {};
 
-/** Stub out the debug functions.
- * @param {string} name The cookie name.
- * @param {*} fallback A value to return if the cookie is not found.
- * @return {*}
- */
-tachyfont.ForDebug.getCookie = function(name, fallback) { return fallback; };
-/** Stub out the debug functions.
- * @param {object} incrFontMgr The incremental font manager object.
- * @param {string} fontname The font name.
- */
-tachyfont.ForDebug.addDropIdbButton = function(incrFontMgr, fontname) {};
-/** Stub out the debug functions. */
-tachyfont.ForDebug.addBandwidthControl = function() {};
-/** Stub out the debug functions. */
-tachyfont.ForDebug.addTimingTextSizeControl = function() {};
+  /** Stub out the debug functions.
+   * @param {string} name The cookie name.
+   * @param {*} fallback A value to return if the cookie is not found.
+   * @return {*}
+   */
+  tachyfont.ForDebug.getCookie = function(name, fallback) {
+    return fallback;
+  };
+  
+  /** Stub out the debug functions.
+   * @param {object} incrFontMgr The incremental font manager object.
+   * @param {string} fontname The font name.
+   */
+  tachyfont.ForDebug.addDropIdbButton = function(incrFontMgr, fontname) {};
+  /** Stub out the debug functions. */
+  tachyfont.ForDebug.addBandwidthControl = function() {};
+  /** Stub out the debug functions. */
+  tachyfont.ForDebug.addTimingTextSizeControl = function() {};
+}
 
 /**
  * Pull in other needed Javascript files.
