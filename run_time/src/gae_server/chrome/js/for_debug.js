@@ -221,7 +221,7 @@ ForDebug.addDropIdbButton_ = function(incrFontMgr, fontname) {
  * @private
  */
 ForDebug.dropIdb_ = function(incrFontMgr, fontname, callback) {
-  var db_name = IncrementalFont.DB_NAME + '/' + fontname;
+  var db_name = tachyfont.IncrementalFont.DB_NAME + '/' + fontname;
   return incrFontMgr.getIDB_
   .then(function(db) {
     db.close();
