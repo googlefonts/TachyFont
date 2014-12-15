@@ -1,6 +1,7 @@
 'use strict';
 
 /*
+ * @license
  * Copyright 2014 Google Inc. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -32,6 +33,13 @@ tachyfont.IncrementalFont.version = 1;
 
 
 /**
+ * The IndexedDB version.
+ * Increment this number every time there is a change in the schema.
+ */
+tachyfont.IncrementalFont.MAX_HIDDEN_MILLISECONDS = 3000;
+
+
+/**
  * The database name.
  */
 tachyfont.IncrementalFont.DB_NAME = 'incrfonts';
@@ -40,7 +48,7 @@ tachyfont.IncrementalFont.DB_NAME = 'incrfonts';
 /**
  * The time in milliseconds to wait before persisting the data.
  */
-//tachyfont.IncrementalFont.timeoutTime = 1000;
+tachyfont.IncrementalFont.PERSIST_TIMEOUT = 1000;
 
 
 /**
@@ -110,7 +118,7 @@ tachyfont.IncrementalFont.createManager = function(fontname, req_size, url) {
   setTimeout(function() {
     tachyfont.IncrementalFontUtils.setVisibility(incrFontMgr.style, fontname,
       true);
-  }, 3000);
+  }, tachyfont.IncrementalFont.MAX_HIDDEN_MILLISECONDS);
   // When the page finishes loading: automatically load needed chars.
   if (document.readyState == 'loading') {
     document.addEventListener('DOMContentLoaded', function(event) {
@@ -371,7 +379,7 @@ tachyfont.IncrementalFont.obj_.prototype.persistDelayed_ = function(name) {
   // In a little bit do the persisting.
   setTimeout(function() {
     that.persist_(name);
-  }, 100);
+  }, PERSIST_TIMEOUT);
 };
 
 
