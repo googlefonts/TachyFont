@@ -36,14 +36,14 @@ def generateDeltaArray(input_arr):
     idx+=1
   return deltas
 
-def add_to_extra_if_necessary(gos_data, extra_data, delta_code_result):
+def extend_bits_or_escape(gos_data, escaped_data, delta_code_result):
   """Checks if number is too big to fit GOS, then add it to correct stream
   """
   if type(delta_code_result) is tuple:
     escape_str, number = delta_code_result
     gos_data.extend(escape_str)
     non_repr = NumberEncoders.NoNString(number)
-    extra_data.extend(non_repr)
+    escaped_data.extend(non_repr)
   else:
     gos_data.extend(delta_code_result)
       
@@ -84,7 +84,7 @@ class NumberEncoders(object):
     return nibble_count_bin_str + number_bin_str
       
   @staticmethod
-  def AOE(number, bit_count):
+  def BitEncodeAllOnesEscape(number, bit_count):
     """Binary string of given number using given bit count 
       or escape it using all ones
     (12,5) -> 01100
@@ -128,7 +128,7 @@ class _GOSGenerators(object):
     rangeCount = len(firstArr)
     #print 'charset size',rangeCount*4+1,'bytes'
     gos_data = bitarray.bitarray(endian='big')
-    extra_data = bitarray.bitarray(endian='big')
+    escaped_data = bitarray.bitarray(endian='big')
     gos_data.frombytes(struct.pack('>L',cffTableOffset+charsetOffset))
     if format == 2:
       gos_data.frombytes(struct.pack('>B',6)) #format 2
@@ -138,12 +138,12 @@ class _GOSGenerators(object):
     deltaFirst = generateDeltaArray(firstArr)
     deltaNLeft = generateDeltaArray(nLeftArr)
     for idx in xrange(rangeCount):
-      first_enc = NumberEncoders.AOE(deltaFirst[idx],5)
-      add_to_extra_if_necessary(gos_data, extra_data, first_enc)
-      nLeft_enc = NumberEncoders.AOE(deltaNLeft[idx],3)
-      add_to_extra_if_necessary(gos_data, extra_data, nLeft_enc)
+      first_enc = NumberEncoders.BitEncodeAllOnesEscape(deltaFirst[idx],5)
+      extend_bits_or_escape(gos_data, escaped_data, first_enc)
+      nLeft_enc = NumberEncoders.BitEncodeAllOnesEscape(deltaNLeft[idx],3)
+      extend_bits_or_escape(gos_data, escaped_data, nLeft_enc)
     
-    whole_data = gos_data.tobytes() + extra_data.tobytes()
+    whole_data = gos_data.tobytes() + escaped_data.tobytes()
     #print 'type6 size',len(whole_data)
     return whole_data       
     
@@ -182,10 +182,7 @@ class _GOSGenerators(object):
     
     fmt12SegCount = len(cmap12_startCodes)
     fmt4SegCount = len(cmap4_startCodes) - 1 # Don't compare 0xFFFF
-    
 
-
-    
     #finds segment mappings
     fmt4Seg = 0
     fmt12Seg = 0
@@ -208,7 +205,7 @@ class _GOSGenerators(object):
         raise('unexpected tables')
     assert fmt4Seg >= fmt4SegCount - 2, 'all format 4 segments consumed,possibly except last one(startCode0xFFFF)'
     gos_data = bitarray.bitarray(endian='big')
-    extra_data = bitarray.bitarray(endian='big')
+    escaped_data = bitarray.bitarray(endian='big')
     gos_data.frombytes(struct.pack('>B',4)) #GOS type
     gos_data.frombytes(struct.pack('>H',min(fmt4SegCount-1,fmt4Seg+1)))    
     #now checks if segments in good condition
@@ -234,13 +231,13 @@ class _GOSGenerators(object):
         assert idRangeOffsets[fmt4Seg] != 0 and idDelta[fmt4Seg] == 0
 
     for segLen in segLens:
-      enc_len = NumberEncoders.AOE(segLen,2)
-      add_to_extra_if_necessary(gos_data, extra_data, enc_len)
+      encoded_value = NumberEncoders.BitEncodeAllOnesEscape(segLen,2)
+      extend_bits_or_escape(gos_data, escaped_data, encoded_value)
 
     change_method(_c_m_a_p.cmap_format_12_or_13,old_12_method,'decompile')
     change_method(_c_m_a_p.cmap_format_4,old_4_method,'decompile')
     
-    whole_data = gos_data.tobytes() + extra_data.tobytes()
+    whole_data = gos_data.tobytes() + escaped_data.tobytes()
     #print 'type4 size',len(whole_data)
     return whole_data
   
@@ -257,20 +254,20 @@ class _GOSGenerators(object):
     gids = ourData['gids']
     nGroups = len(gids)
     gos_data = bitarray.bitarray(endian='big')
-    extra_data = bitarray.bitarray(endian='big')
+    escaped_data = bitarray.bitarray(endian='big')
     gos_data.frombytes(struct.pack('>B',3)) #GOS type
     gos_data.frombytes(struct.pack('>H',nGroups))
     for idx in xrange(nGroups):
-      delta_code_result = NumberEncoders.AOE(deltaCodePoints[idx],5)
-      add_to_extra_if_necessary(gos_data, extra_data, delta_code_result)
-      len_result = NumberEncoders.AOE(lengths[idx],3)
-      add_to_extra_if_necessary(gos_data, extra_data, len_result)     
-      gid_result = NumberEncoders.AOE(gids[idx],16)
-      add_to_extra_if_necessary(gos_data, extra_data, gid_result)
+      delta_code_result = NumberEncoders.BitEncodeAllOnesEscape(deltaCodePoints[idx],5)
+      extend_bits_or_escape(gos_data, escaped_data, delta_code_result)
+      len_result = NumberEncoders.BitEncodeAllOnesEscape(lengths[idx],3)
+      extend_bits_or_escape(gos_data, escaped_data, len_result)     
+      gid_result = NumberEncoders.BitEncodeAllOnesEscape(gids[idx],16)
+      extend_bits_or_escape(gos_data, escaped_data, gid_result)
       
     change_method(_c_m_a_p.cmap_format_12_or_13,old_12_method,'decompile')
     
-    whole_data = gos_data.tobytes() + extra_data.tobytes()
+    whole_data = gos_data.tobytes() + escaped_data.tobytes()
     #print 'type3 size',len(whole_data)
     return whole_data
 
@@ -286,48 +283,48 @@ class _GOSGenerators(object):
     deltaGids = generateDeltaArray(ourData['gids'])
     nGroups = len(deltaGids)
     gos_data = bitarray.bitarray(endian='big')
-    extra_data = bitarray.bitarray(endian='big')
+    escaped_data = bitarray.bitarray(endian='big')
     gos_data.frombytes(struct.pack('>B',2)) #GOS type
     gos_data.frombytes(struct.pack('>H',nGroups))
     for idx in xrange(nGroups):
-      delta_code_result = NumberEncoders.AOE(deltaCodePoints[idx],3)
-      add_to_extra_if_necessary(gos_data, extra_data, delta_code_result)
-      len_result = NumberEncoders.AOE(lengths[idx],2)
-      add_to_extra_if_necessary(gos_data, extra_data, len_result)     
-      gid_result = NumberEncoders.AOE(deltaGids[idx],3)
-      add_to_extra_if_necessary(gos_data, extra_data, gid_result)
+      delta_code_result = NumberEncoders.BitEncodeAllOnesEscape(deltaCodePoints[idx],3)
+      extend_bits_or_escape(gos_data, escaped_data, delta_code_result)
+      len_result = NumberEncoders.BitEncodeAllOnesEscape(lengths[idx],2)
+      extend_bits_or_escape(gos_data, escaped_data, len_result)     
+      gid_result = NumberEncoders.BitEncodeAllOnesEscape(deltaGids[idx],3)
+      extend_bits_or_escape(gos_data, escaped_data, gid_result)
       
     change_method(_c_m_a_p.cmap_format_12_or_13,old_12_method,'decompile')
     
-    whole_data = gos_data.tobytes() + extra_data.tobytes()
-    #print 'type2 size',len(whole_data)
+    whole_data = gos_data.tobytes() + escaped_data.tobytes()
+    print 'type2 size',len(whole_data)
     return whole_data
 
 """Type of the Group of Segments
 Type 7: For CFF CharSet format 1 Table
-  first : 5 bit AOE encoding
-  nLeft : 3 bit AOE encoding
+  first : 5 bit BitEncodeAllOnesEscape encoding
+  nLeft : 3 bit BitEncodeAllOnesEscape encoding
 Type 6: For CFF CharSet format 2 Table
-  first : 5 bit AOE encoding
-  nLeft : 3 bit AOE encoding
+  first : 5 bit BitEncodeAllOnesEscape encoding
+  nLeft : 3 bit BitEncodeAllOnesEscape encoding
 Type 5: For cmap format 12 subtable
   startCode : 32 bit no encoding
   length    : 32 bit no encoding
   gid       : 32 bit no encoding
 Type 4: For cmap format 4 subtable
-  segListLen: 2 bit AOE encoding, it's mapped format 12 segments count
+  segListLen: 2 bit BitEncodeAllOnesEscape encoding, it's mapped format 12 segments count
   Following GOS table, we have extra escaped number table
   using for each number Number of Nibbles(NoN) encoding
 Type 3: For cmap format 12 subtable
-  startCode(delta) : 5 bit AOE encoding
-  length           : 3 bit AOE encoding
+  startCode(delta) : 5 bit BitEncodeAllOnesEscape encoding
+  length           : 3 bit BitEncodeAllOnesEscape encoding
   gid              : 16 bit no encoding
   Following GOS table, we have extra escaped number table
   using for each number Number of Nibbles(NoN) encoding
 Type 2: For cmap format 12 subtable
-  startCode(delta) : 3 bit AOE encoding
-  length           : 2 bit AOE encoding
-  gid(delta)       : 3 bit AOE encoding
+  startCode(delta) : 3 bit BitEncodeAllOnesEscape encoding
+  length           : 2 bit BitEncodeAllOnesEscape encoding
+  gid(delta)       : 3 bit BitEncodeAllOnesEscape encoding
   Following GOS table, we have extra escaped number table
   using for each number Number of Nibbles(NoN) encoding
 """
@@ -349,7 +346,8 @@ class CmapCompacter(object):
     gos_whole_data = bytearray()
     gos_whole_data.extend(struct.pack('>B',gos_count));
     for type in types:
-      gos_whole_data.extend(self.generateGOSType(type))
+      gos_type_data = self.generateGOSType(type)
+      gos_whole_data.extend(gos_type_data)
     return gos_whole_data
   
     
