@@ -70,6 +70,48 @@ tachyfont.IncrementalFont.CHARLIST = 'charlist';
 
 
 /**
+ * Convert a string to an array of characters.
+ * This function handles surrogate pairs.
+ * 
+ * @param {string} str The input string.
+ * @returns {array} The array of characters.
+ */
+tachyfont.stringToChars = function(str) {
+  var char_array = [];
+  for (var i = 0; i < str.length; i++) {
+    var c = str.charAt(i);
+    var cc = c.charCodeAt(0);
+    if (cc >= 0xD800 && cc <= 0xDBFF) {
+      i += 1;
+      c += str.charAt(i);
+    }
+    char_array.push(c);
+  }
+  return char_array;
+};
+
+
+/**
+ * Convert a char to its codepoint.
+ * This function handles surrogate pairs.
+ * 
+ * @param {string} char The input char (string).
+ * @returns {number} The numeric value.
+ */
+tachyfont.charToCode = function(char) {
+  var cc = char.charCodeAt(0);
+  if (cc >= 0xD800 && cc <= 0xDBFF) {
+    var high = (cc - 0xD800) << 10;
+    var low = char.charCodeAt(1) - 0xDC00;
+    var codepoint = high + low + 0x10000;
+    return codepoint;
+  } else {
+    return cc;
+  }
+};
+
+
+/**
  * Get the incremental font object.
  * This class does the following:
  * 1. Create a class using the "@font-face" rule and with visibility=hidden
@@ -195,7 +237,9 @@ tachyfont.IncrementalFont.createManager = function(fontname, req_size, url) {
   }).
   then(function(charlist_data) {
     return charlist_data;
-  }).catch(function() { debugger; });
+  }).catch(function() {
+    debugger;
+  });
 
   // For Debug: add a button to clear the IndexedDB.
   tachyfont.ForDebug.addDropIdbButton(incrFontMgr, fontname);
@@ -269,10 +313,11 @@ tachyfont.IncrementalFont.obj_.prototype.loadNeededChars =
             tmp_charlist[key] = charlist[key];
           }
           var neededCodes = [];
-          for (var i = 0; i < chars.length; i++) {
-            var c = chars.charAt(i);
+          var char_array = tachyfont.stringToChars(chars);
+          for (var i = 0; i < char_array.length; i++) {
+            var c = char_array[i];
             if (!tmp_charlist[c]) {
-              neededCodes.push(c.charCodeAt(0));
+              neededCodes.push(tachyfont.charToCode(c));
               tmp_charlist[c] = 1;
             }
           }
@@ -347,6 +392,10 @@ tachyfont.IncrementalFont.obj_.prototype.loadNeededChars =
                 true);
               tachyfont.timer1.done();
             }
+          }).
+          catch(function(e) {
+            console.log('failed to getBase: ' + e.message);
+            pending_reject();
           });
         });
       }).
@@ -355,7 +404,9 @@ tachyfont.IncrementalFont.obj_.prototype.loadNeededChars =
         debugger;
         pending_reject();
       });
-  }).catch(function() { debugger; });
+  }).catch(function() {
+    debugger;
+  });
   return this.finishPendingCharsRequest;
 };
 
@@ -379,7 +430,7 @@ tachyfont.IncrementalFont.obj_.prototype.persistDelayed_ = function(name) {
   // In a little bit do the persisting.
   setTimeout(function() {
     that.persist_(name);
-  }, PERSIST_TIMEOUT);
+  }, tachyfont.IncrementalFont.PERSIST_TIMEOUT);
 };
 
 
@@ -440,7 +491,9 @@ tachyfont.IncrementalFont.obj_.prototype.persist_ = function(name) {
     then(function() {
       //console.log('persisted ' + name);
     });
-  }).catch(function() { debugger; });
+  }).catch(function() {
+    debugger;
+  });
 };
 
 
@@ -475,7 +528,9 @@ tachyfont.IncrementalFont.obj_.prototype.saveData_ = function(idb, name, data) {
       console.log('saveData ' + name + ': ' + e.message);
       debugger;
     });
-  }).catch(function() { debugger; });
+  }).catch(function() {
+    debugger;
+  });
 };
 
 /**
@@ -1106,7 +1161,15 @@ tachyfont.BinaryFontEditor.readOps.CCMP = function(editor, font) {
         var fmt12SegNum = 0, fmt12SegNumBegin, fmt12SegNumEnd;
         var fmt4SegCount = gos_type_4_lens.len;
         var startCode, endCode, idDelta, idRangeOffset, startGid, codeRange;
-        for (var i = 0; i < fmt4SegCount; i++) {
+        for (var i = 0; i < fmt4SegCount; i++) { // fix this
+            if (gos_type_4_lens.segments[i] == 0) {
+              // The only time there is a format 4 segment with no format 12
+              // segment is the format 4 end segment 0xFFFF.
+              if (i != fmt4SegCount - 1)
+                throw 'invalid segment';
+              format_4_arrays.push([0xFFFF, 0xFFFF, 1, 0]); // last segment special
+              continue;
+            }
             fmt12SegNumBegin = fmt12SegNum;
             fmt12SegNumEnd = fmt12SegNum + gos_type_4_lens.segments[i] - 1;
             startGid = gos_type_12.segments[fmt12SegNumBegin][2];
@@ -1146,7 +1209,6 @@ tachyfont.BinaryFontEditor.readOps.CCMP = function(editor, font) {
             }
             format_4_arrays.push([startCode, endCode, idDelta, idRangeOffset]);
         }
-        format_4_arrays.push([0xFFFF, 0xFFFF, 1, 0]); // last segment special
         compact_gos.cmap4 = {};
         compact_gos.cmap4.segments = format_4_arrays;
         compact_gos.cmap4.glyphIdArray = glyphIdArray;
@@ -1342,7 +1404,9 @@ tachyfont.TachyFont.prototype.loadNeededChars = function(element_name) {
   this.incrfont.
   then(function(incrfont) {
     incrfont.loadNeededChars(element_name);
-  }).catch(function() { debugger; });
+  }).catch(function() {
+    debugger;
+  });
 };
 
 /**
@@ -1538,19 +1602,24 @@ tachyfont.IncrementalFontUtils.writeCmap4 = function(baseFont, headerInfo) {
     headerInfo.cmap4.segCount = segCount;
     headerInfo.cmap4.glyphIdArrayLen = glyphIdArrayLen;
     binEd.skip(6); //skip searchRange,entrySelector,rangeShift
+    // Write endCount values.
     for (var i = 0; i < segCount; i++) {
         binEd.setUint16_(segments[i][1]);
     }
     binEd.skip(2);//skip reservePad
+    // Write startCount values.
     for (var i = 0; i < segCount; i++) {
         binEd.setUint16_(segments[i][0]);
     }
+    // Write idDelta values.
     for (var i = 0; i < segCount; i++) {
         binEd.setUint16_(segments[i][2]);
     }
+    // Write idRangeOffset vValues.
     for (var i = 0; i < segCount; i++) {
         binEd.setUint16_(segments[i][3]);
     }
+    // Write glyphIdArray values.
     if (glyphIdArrayLen > 0)
         binEd.setArrayOf_(binEd.setUint16_, glyphIdArray);
 };
@@ -1915,7 +1984,9 @@ tachyfont.IncrementalFontUtils.loadWebFont = function(fontname, fonturl,
     tachyfont.timer2.end('load web font:<br>' + fontname);
     tachyfont.timer2.done();
     clearTimeout(timeout_id);
-  }).catch(function() { debugger; });
+  }).catch(function() {
+    debugger;
+  });
   return face; // NOTE: the face has to be stored in a global variable or
                // the font seems to disappear.
 };
