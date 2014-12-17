@@ -149,8 +149,9 @@ class BaseFonter(object):
     inner_file.seek(cffTableOffset + charStringOffset)
     rawIndexFile = Index(inner_file)
     baseOffset = rawIndexFile.offsetBase
-    size = rawIndexFile.offsets[-1] - 1
-    offset = baseOffset + rawIndexFile.offsets[0]
+    notdef_glyph_size = rawIndexFile.offsets[1] - rawIndexFile.offsets[0]
+    size = rawIndexFile.offsets[-1] - 1 - notdef_glyph_size
+    offset = baseOffset + rawIndexFile.offsets[0] + notdef_glyph_size
     self.font.close()
     filler = Filler(output)
     filler.fill(offset, size, '\x00')
@@ -196,6 +197,7 @@ class BaseFonter(object):
     inner_file.seek(cffTableOffset + charStringOffset )
     raw_index_file = Index(inner_file)
     
+    # TODO(bstell) this need to correctly handle the offset to .notdef
     locations = raw_index_file.offsets
     assert (count+1) == len(locations)
     
@@ -221,7 +223,7 @@ class BaseFonter(object):
     
     font_file = open(output,'r+b')
     font_file.seek(cffTableOffset + charStringOffset + 3)
-
+    # TODO(bstell) need to deal with the notdef glyph here
     font_file.write(new_offsets)
     font_file.close()
 
