@@ -25,12 +25,14 @@ var ForDebug = {};
 
 ForDebug.updateDisplay_ = function() {
   setTimeout(function() {
-    if (timer1.numberOfTimingRecords()) {
-      timer1.display_timing();
-    }
-    if (timer2.numberOfTimingRecords()) {
-      timer2.display_timing();
-    }
+    if (tachyfont.timer1.numberOfTimingRecords)
+      if (tachyfont.timer1.numberOfTimingRecords()) {
+        tachyfont.timer1.display_timing();
+      }
+    if (tachyfont.timer2.numberOfTimingRecords)
+      if (tachyfont.timer2.numberOfTimingRecords()) {
+        tachyfont.timer2.display_timing();
+      }
   }, 1);
 };
 
