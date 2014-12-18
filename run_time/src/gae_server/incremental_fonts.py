@@ -49,6 +49,10 @@ class GlyphRequest(webapp2.RequestHandler):
     f = StringIO.StringIO(prepare_bundle(self.request))
     bandwidth_limited_write(f, self.response.out, bandwidth, True)
 
+  def options(self):
+    self.response.headers['Access-Control-Allow-Origin'] = '*'
+    self.response.headers['Access-Control-Allow-Headers'] = '*, X-TachyFont-bandwidth'
+    self.response.headers['Access-Control-Allow-Methods'] = 'POST, OPTIONS'
 
 class DoLogging(webapp2.RequestHandler):
   """Dump logging messages into the server logs.
@@ -68,6 +72,7 @@ class IncrFont(webapp2.RequestHandler):
   # 3G (at least according to WebPageTest.org) is 1.6 Mbps / 768 Kbps
   # so download is 200 KBps; 5 mS / KB
   def get(self, fontname):
+    self.response.headers['Access-Control-Allow-Origin'] = '*'
     bandwidth = self.request.headers.get('X-TachyFont-bandwidth')
     self.response.headers['Content-Type'] = 'text/plain'
     self.response.headers['Content-Type'] = 'text/richtext'
@@ -76,6 +81,11 @@ class IncrFont(webapp2.RequestHandler):
     zf = zipfile.ZipFile(zipfilename, 'r')
     base = zf.open('base', 'r')
     bandwidth_limited_write(base, self.response.out, bandwidth, True)
+
+  def options(self, other):
+    self.response.headers['Access-Control-Allow-Origin'] = '*'
+    self.response.headers['Access-Control-Allow-Headers'] = '*, X-TachyFont-bandwidth'
+    self.response.headers['Access-Control-Allow-Methods'] = 'GET, OPTIONS'
 
 
 class WebFont(webapp2.RequestHandler):
