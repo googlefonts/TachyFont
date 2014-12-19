@@ -59,14 +59,22 @@ class Cleaner(object):
 
     return invalid_glyphs
 
-  def clean(self):
+  def clean(self, verbose):
     """Remove glyphs that should have outlines but do not.
     """
+    if verbose:
+      print('reverse_cmap')
     rcmap = reverse_cmap(self.font)
     names = set(rcmap.keys())
+    if verbose:
+      print('names.difference_update')
     names.difference_update(self._invalid_glyphs(names, rcmap))
     subsetter = Subsetter(options=self.options)
+    if verbose:
+      print('populate')
     subsetter.populate(glyphs=names)
+    if verbose:
+      print('subset')
     subsetter.subset(self.font)
 
   def save(self, outputfile):
