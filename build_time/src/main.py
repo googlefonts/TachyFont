@@ -39,6 +39,9 @@ def main(args):
   parser = argparse.ArgumentParser(prog='pyprepfnt')
   parser.add_argument('fontfile', help='Input font file')
   parser.add_argument('output_dir', help='Output directory')
+  parser.add_argument('--force', default=False, action='store_true',
+                      help='Force preprocessing even if the timestamps indicate'
+                      ' it is not necessary')
   parser.add_argument('--hinting', default=False, action='store_true',
                       help='Retain hinting if set, else strip hinting')
   parser.add_argument('--reuse_clean', default=False, action='store_true',
@@ -59,9 +62,13 @@ def main(args):
   logging_handler.setFormatter(formatter)
   log.addHandler(logging_handler)
   log.setLevel(loglevel)
-
   verbose = loglevel <= logging.DEBUG
+
+  force_preprocessing = cmd_args.force
+  log.info('force_preprocessing = ' + str(force_preprocessing))
+
   fontfile = cmd_args.fontfile
+  fonttime = os.path.getmtime(fontfile)
   # TODO(bstell) use Logger
   log.info('preprocess ' + cmd_args.fontfile)
   basename = os.path.basename(fontfile)
@@ -83,48 +90,93 @@ def main(args):
 
   cleanfile = filename + '_clean' + extension
   cleanfilepath = build_dir + '/' + cleanfile
+  # Decide if we are building the cleaned up version of the font.
+  rebuild_clean = not cmd_args.reuse_clean
   cleanfile_exists = os.path.isfile(cleanfilepath)
-  if cmd_args.reuse_clean and cleanfile_exists:
-    log.debug('reuse cleaned up version: ' + cleanfilepath)
+  if force_preprocessing or not cleanfile_exists:
+    rebuild_clean = True
   else:
+     cleantime = os.path.getmtime(cleanfilepath)
+     if cleantime <= fonttime:
+       rebuild_clean = True
+  log.info('rebuild_clean = ' + str(rebuild_clean))
+  if rebuild_clean:
     log.debug('make cleaned up version: ' + cleanfilepath)
     cleanup.cleanup(fontfile, cmd_args.hinting, cleanfilepath, verbose)
     log.info(basename + '=' + str(os.path.getsize(fontfile)) + ', ' +
              cleanfilepath + '=' + str(os.path.getsize(cleanfilepath)))
     closure.dump_closure_map(cleanfilepath, build_dir)
-  log.debug('start proprocess')
-  preprocess = Preprocess(cleanfilepath, build_dir, verbose)
-  log.debug('build base')
-  preprocess.base_font()
-  log.debug('dump cmap')
-  preprocess.cmap_dump()
-  log.debug('build glyph data')
-  preprocess.serial_glyphs()
+  else:
+    log.debug('reuse cleaned up version: ' + cleanfilepath)
+  # Get the latest cleaned up font timestamp.
+  cleantime = os.path.getmtime(cleanfilepath)
 
-  log.debug('create jar file')
+  # Decide if we are rebuilding the jar file.
   tachyfont_file = filename + '.TachyFont.jar'
-  sub_files = ('base closure_data closure_idx codepoints gids  glyph_data '
-               'glyph_table')
-  jar_cmd = 'cd %s; jar cf %s %s' % (build_dir, tachyfont_file, sub_files)
-  log.debug('jar_cmd: ' + jar_cmd)
-  status = os.system(jar_cmd)
-  log.debug('jar command status: ' + str(status))
-  if status:
-    log.error('jar command status: ' + str(status))
-    return status
+  jarfilepath = build_dir + '/' + tachyfont_file
+  rebuild_jar = False
+  jarfile_exists = os.path.isfile(jarfilepath)
+  if force_preprocessing or not jarfile_exists:
+    rebuild_jar = True
+  else:
+    jartime = os.path.getmtime(jarfilepath)
+    if jartime <= cleantime:
+      rebuild_jar = True
+  log.info('rebuild_jar = ' + str(rebuild_jar))
+  if rebuild_jar:
+    log.debug('start proprocess')
+    preprocess = Preprocess(cleanfilepath, build_dir, verbose)
+    log.debug('build base')
+    preprocess.base_font()
+    log.debug('dump cmap')
+    preprocess.cmap_dump()
+    log.debug('build glyph data')
+    preprocess.serial_glyphs()
+  
+    log.debug('create jar file')
+    sub_files = ('base closure_data closure_idx codepoints gids  glyph_data '
+                 'glyph_table')
+    jar_cmd = 'cd %s; jar cf %s %s' % (build_dir, tachyfont_file, sub_files)
+    log.debug('jar_cmd: ' + jar_cmd)
+    status = os.system(jar_cmd)
+    log.debug('jar command status: ' + str(status))
+    if status:
+      log.error('jar command status: ' + str(status))
+      return status
+  else:
+    log.debug('no need to rebuild intermediate jar file: ' + jarfilepath)
+  # Get the latest cleaned up jar timestamp.
+  jartime = os.path.getmtime(jarfilepath)
 
-  log.debug('cp the files to the output directory')
-  cp_cmd = ('cd %s; cp %s %s %s' %
-            (build_dir, tachyfont_file, cleanfile, output_dir))
-  log.debug('cp_cmd: ' + cp_cmd)
-  status = os.system(cp_cmd)
-  log.debug('cp status ' + str(status))
-  if status:
-    log.error('cp status = ' + str(status))
-    return status
+
+  # Decide if we are copying over the jar file.
+  copy_jar = False
+  jarcopy_filepath = output_dir + '/' + tachyfont_file
+  jarcopy_exists = os.path.isfile(jarcopy_filepath)
+  if force_preprocessing or not jarcopy_exists:
+    copy_jar = True
+  else:
+    jarcopytime = os.path.getmtime(jarcopy_filepath)
+    if jarcopytime <= jartime:
+      copy_jar = True
+  log.info('copy_jar = ' + str(copy_jar))
+  if copy_jar:
+    log.debug('cp the files to the output directory')
+    cp_cmd = ('cd %s; cp %s %s %s' %
+              (build_dir, tachyfont_file, cleanfile, output_dir))
+    log.debug('cp_cmd: ' + cp_cmd)
+    status = os.system(cp_cmd)
+    log.debug('cp status ' + str(status))
+    if status:
+      log.error('cp status = ' + str(status))
+      return status
+  else:
+    log.debug('the existing jar file is up to date: ' + jarfilepath)
+
 
   if cmd_args.reuse_clean:
     log.debug('leaving the build directory: ' + build_dir)
+    status = 0
   else:
     log.debug('cleanup the build directory')
     rm_cmd = ('rm -rf %s' % build_dir)
