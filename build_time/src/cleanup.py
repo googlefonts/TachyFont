@@ -20,10 +20,10 @@ from fontTools_wrapper_funcs import change_method, _cmap_format_4_compile
 from glyph_sets import get_whitespace_and_ignorable_list
 
 
-def clean_invalid_glyphs_and_remove_hinting(fontfile, hinting, output):
+def clean_invalid_glyphs_and_remove_hinting(fontfile, hinting, output, verbose):
   whitespace_and_ignorable_list = get_whitespace_and_ignorable_list()
   cleaner = Cleaner(fontfile, hinting, whitespace_and_ignorable_list)
-  cleaner.clean()
+  cleaner.clean(verbose)
   # Flatten cmap format 4 (no idRangeOffset/glyphIdArray) so it is a simple 
   # subset of format 12.
   change_method(_c_m_a_p.cmap_format_4,_cmap_format_4_compile, 'compile')
@@ -31,8 +31,8 @@ def clean_invalid_glyphs_and_remove_hinting(fontfile, hinting, output):
   cleaner.close()
 
 
-def cleanup(fontfile, hinting, output):
+def cleanup(fontfile, hinting, output, verbose):
   """Calls cleanup pipeline Each routine must have three arguments fontfile,hinting and output
 
   """
-  clean_invalid_glyphs_and_remove_hinting(fontfile, hinting, output)
+  clean_invalid_glyphs_and_remove_hinting(fontfile, hinting, output, verbose)
