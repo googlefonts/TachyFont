@@ -18,6 +18,7 @@
  */
 
 goog.provide('tachyfont');
+goog.require('goog.Promise');
 
 /**
  * tachyfont.IncrementalFont - A sub-namespace.
@@ -173,16 +174,16 @@ tachyfont.IncrementalFont.createManager = function(fontname, req_size, url) {
   incrFontMgr.getBase = incrFontMgr.getIDB_.
   then(function(idb) {
     var filedata = incrFontMgr.getData_(idb, tachyfont.IncrementalFont.BASE);
-    return Promise.all([idb, filedata]);
+    return goog.Promise.all([goog.Promise.resolve(idb), filedata]);
   }).
   then(function(arr) {
     var idb = arr[0];
     var filedata = new DataView(arr[1]);
     var fileinfo = tachyfont.IncrementalFontUtils.parseBaseHeader(filedata);
     var fontdata = new DataView(arr[1], fileinfo.headSize);
-    return Promise.all([fileinfo, fontdata]);
+    return goog.Promise.all([goog.Promise.resolve(fileinfo), goog.Promise.resolve(fontdata)]);
   }).
-  catch(function(e) {
+  thenCatch(function(e) {
     var bandwidth = tachyfont.ForDebug.getCookie('bandwidth', '0');
     return tachyfont.IncrementalFontUtils.requestURL(incrFontMgr.url +
       '/incremental_fonts/incrfonts/' + incrFontMgr.fontname + '/base', 'GET',
@@ -220,7 +221,7 @@ tachyfont.IncrementalFont.createManager = function(fontname, req_size, url) {
 
     return arr;
   }).
-  catch(function(e) {
+  thenCatch(function(e) {
     console.log('failed to get the font.');
     tachyfont.IncrementalFontUtils.setVisibility(incrFontMgr.style, fontname,
       true);
@@ -232,12 +233,12 @@ tachyfont.IncrementalFont.createManager = function(fontname, req_size, url) {
   then(function(idb) {
     return incrFontMgr.getData_(idb, tachyfont.IncrementalFont.CHARLIST);
   }).
-  catch(function(e) {
+  thenCatch(function(e) {
     return {};
   }).
   then(function(charlist_data) {
     return charlist_data;
-  }).catch(function() {
+  }).thenCatch(function() {
     debugger;
   });
 
@@ -276,8 +277,8 @@ tachyfont.IncrementalFont.obj_ = function(fontname, req_size, url) {
   this.getIDB_ = null;
   this.getBase = null;
   this.getCharList = null;
-  this.finishPersistingData = Promise.resolve();
-  this.finishPendingCharsRequest = Promise.resolve();
+  this.finishPersistingData = goog.Promise.resolve();
+  this.finishPendingCharsRequest = goog.Promise.resolve();
 };
 
 /**
@@ -300,7 +301,7 @@ tachyfont.IncrementalFont.obj_.prototype.loadNeededChars =
   this.finishPendingCharsRequest = this.finishPendingCharsRequest.
   then(function() {
     var pending_resolve, pending_reject;
-    return new Promise(function(resolve, reject) {
+    return new goog.Promise(function(resolve, reject) {
       pending_resolve = resolve;
       pending_reject = reject;
 
@@ -378,8 +379,8 @@ tachyfont.IncrementalFont.obj_.prototype.loadNeededChars =
                 that.fontname,
                 true);
               // Update the data.
-              that.getBase = Promise.all([fileinfo, fontdata]);
-              that.getCharlist = Promise.resolve(charlist);
+              that.getBase = goog.Promise.all([goog.Promise.resolve(fileinfo), goog.Promise.resolve(fontdata)]);
+              that.getCharlist = goog.Promise.resolve(charlist);
               that.persistDelayed_(tachyfont.IncrementalFont.BASE);
               that.persistDelayed_(tachyfont.IncrementalFont.CHARLIST);
             } else {
@@ -393,18 +394,18 @@ tachyfont.IncrementalFont.obj_.prototype.loadNeededChars =
               tachyfont.timer1.done();
             }
           }).
-          catch(function(e) {
+          thenCatch(function(e) {
             console.log('failed to getBase: ' + e.message);
             pending_reject();
           });
         });
       }).
-      catch(function(e) {
+      thenCatch(function(e) {
         console.log('loadNeededChars: ' + e.message);
         debugger;
         pending_reject();
       });
-  }).catch(function() {
+  }).thenCatch(function() {
     debugger;
   });
   return this.finishPendingCharsRequest;
@@ -457,12 +458,12 @@ tachyfont.IncrementalFont.obj_.prototype.persist_ = function(name) {
     that.persistInfo[tachyfont.IncrementalFont.CHARLIST_DIRTY] = false;
 
     // Note that there is now a persist operation running.
-    that.finishPersistingData = Promise.resolve().
+    that.finishPersistingData = goog.Promise.resolve().
     then(function() {
       if (base_dirty) {
         return that.getBase.
         then(function(arr) {
-          return Promise.all([that.getIDB_, arr[0], arr[1]]);
+          return goog.Promise.all([that.getIDB_, goog.Promise.resolve(arr[0]), goog.Promise.resolve(arr[1])]);
         }).
         then(function(arr) {
           console.log('save base');
@@ -475,7 +476,7 @@ tachyfont.IncrementalFont.obj_.prototype.persist_ = function(name) {
       if (charlist_dirty) {
         return that.getCharList.
         then(function(charlist) {
-          return Promise.all([that.getIDB_, charlist]);
+          return goog.Promise.all([that.getIDB_, goog.Promise.resolve(charlist)]);
         }).
         then(function(arr) {
           console.log('save charlist');
@@ -484,14 +485,14 @@ tachyfont.IncrementalFont.obj_.prototype.persist_ = function(name) {
         });
       }
     }).
-    catch(function(e) {
+    thenCatch(function(e) {
       console.log('persistDelayed_: ' + e.message);
       debugger;
     }).
     then(function() {
       //console.log('persisted ' + name);
     });
-  }).catch(function() {
+  }).thenCatch(function() {
     debugger;
   });
 };
@@ -502,7 +503,7 @@ tachyfont.IncrementalFont.obj_.prototype.persist_ = function(name) {
  * @param {Object} idb The IndexedDB object.
  * @param {string} name The name of the item.
  * @param {Array} data The data.
- * @return {Promise} Operation completion.
+ * @return {goog.Promise} Operation completion.
  * @private
  */
 tachyfont.IncrementalFont.obj_.prototype.saveData_ = function(idb, name, data) {
@@ -512,7 +513,7 @@ tachyfont.IncrementalFont.obj_.prototype.saveData_ = function(idb, name, data) {
     // the initialization form x = { varname: value } handles the key is a
     // literal string. If a variable varname is used for the key then the
     // string varname will be used ... NOT the value of the varname.
-    return new Promise(function(resolve, reject) {
+    return new goog.Promise(function(resolve, reject) {
       var trans = db.transaction([name], 'readwrite');
       var store = trans.objectStore(name);
       var request = store.put(data, 0);
@@ -524,11 +525,11 @@ tachyfont.IncrementalFont.obj_.prototype.saveData_ = function(idb, name, data) {
         reject();
       };
     }).
-    catch(function(e) {
+    thenCatch(function(e) {
       console.log('saveData ' + name + ': ' + e.message);
       debugger;
     });
-  }).catch(function() {
+  }).thenCatch(function() {
     debugger;
   });
 };
@@ -536,12 +537,12 @@ tachyfont.IncrementalFont.obj_.prototype.saveData_ = function(idb, name, data) {
 /**
  * Get the fontDB.
  * @param {string} fontname The name of the font.
- * @return {Promise} The font DB.
+ * @return {goog.Promise} The font DB.
  */
 tachyfont.IncrementalFont.obj_.prototype.openIndexedDB = function(fontname) {
   var that = this;
 
-  var openIDB = new Promise(function(resolve, reject) {
+  var openIDB = new goog.Promise(function(resolve, reject) {
     var db_name = tachyfont.IncrementalFont.DB_NAME + '/' + fontname;
     //tachyfont.timer1.start('indexedDB.open ' + db_name);
     var dbOpen = indexedDB.open(db_name, tachyfont.IncrementalFont.version);
@@ -584,12 +585,12 @@ tachyfont.IncrementalFont.obj_.prototype.openIndexedDB = function(fontname) {
  *
  * @param {Object} idb The IndexedDB object.
  * @param {string} name The name of the font data to get.
- * @return {Promise} Promise to return the data.
+ * @return {goog.Promise} Promise to return the data.
  * @private
  */
 tachyfont.IncrementalFont.obj_.prototype.getData_ = function(idb, name) {
   var that = this;
-  var getData = new Promise(function(resolve, reject) {
+  var getData = new goog.Promise(function(resolve, reject) {
     var trans = idb.transaction([name], 'readwrite');
     var store = trans.objectStore(name);
     var request = store.get(0);
@@ -608,8 +609,8 @@ tachyfont.IncrementalFont.obj_.prototype.getData_ = function(idb, name) {
       reject(e);
     };
   }).
-  catch(function(e) {
-    return Promise.reject(e);
+  thenCatch(function(e) {
+    return goog.Promise.reject(e);
   });
   return getData;
 };
@@ -1377,7 +1378,7 @@ tachyfont.BinaryFontEditor.prototype.setGlyphDataOffset =
  */
 tachyfont.TachyFont = function(fontname, params) {
   this.fontname = fontname;
-  this.incrfont = new Promise(function(resolve) {
+  this.incrfont = new goog.Promise(function(resolve) {
     this.incrfont_resolve = resolve;
   }.bind(this));
   this.params = params || {};
@@ -1404,7 +1405,7 @@ tachyfont.TachyFont.prototype.loadNeededChars = function(element_name) {
   this.incrfont.
   then(function(incrfont) {
     incrfont.loadNeededChars(element_name);
-  }).catch(function() {
+  }).thenCatch(function() {
     debugger;
   });
 };
@@ -1667,7 +1668,7 @@ tachyfont.IncrementalFontUtils.parseBaseHeader = function(baseFont) {
  * Send a log message to the server
  * @param {String} url The url of the Incremental Font server.
  * @param {String} msg The message to log.
- * @return {Promise} Promise to return ArrayBuffer for the response bundle
+ * @return {goog.Promise} Promise to return ArrayBuffer for the response bundle
  */
 tachyfont.IncrementalFontUtils.logger = function(url, msg) {
 
@@ -1688,7 +1689,7 @@ tachyfont.IncrementalFontUtils.logger = function(url, msg) {
  * @param {String} url The url of the Incremental Font server.
  * @param {String} fontname The fontname.
  * @param {Array.<number>} codes Codepoints to be requested
- * @return {Promise} Promise to return ArrayBuffer for the response bundle
+ * @return {goog.Promise} Promise to return ArrayBuffer for the response bundle
  */
 tachyfont.IncrementalFontUtils.requestCodepoints =
   function(url, fontname, codes) {
@@ -1714,13 +1715,13 @@ tachyfont.IncrementalFontUtils.requestCodepoints =
  * @param {type} data Request data
  * @param {Object} headerParams Request headers
  * @param {string} responseType Response type
- * @return {Promise} Promise to return response
+ * @return {goog.Promise} Promise to return response
  */
 tachyfont.IncrementalFontUtils.requestURL =
   function(url, method, data, headerParams, responseType) {
   //var cnt = fetchCnt++;
   //tachyfont.timer1.start('fetch ' + cnt + ' ' + url);
-  return new Promise(function(resolve, reject) {
+  return new goog.Promise(function(resolve, reject) {
     var xhr = new XMLHttpRequest();
     xhr.open(method, url, true);
     for (var param in headerParams)
@@ -1984,7 +1985,7 @@ tachyfont.IncrementalFontUtils.loadWebFont = function(fontname, fonturl,
     tachyfont.timer2.end('load web font:<br>' + fontname);
     tachyfont.timer2.done();
     clearTimeout(timeout_id);
-  }).catch(function() {
+  }).thenCatch(function() {
     debugger;
   });
   return face; // NOTE: the face has to be stored in a global variable or
@@ -2225,7 +2226,7 @@ if (window.ForDebug) {
  */
 tachyfont.TachyFontEnv.init_ = function() {
   // Browser fix-ups.
-//  if (typeof Promise == 'undefined') {
+//  if (typeof goog.Promise == 'undefined') {
 //    tachyfont.TachyFontEnv.add_js('js/promise-1.0.0.js');
 //  }
 
