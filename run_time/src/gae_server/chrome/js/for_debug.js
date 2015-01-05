@@ -25,12 +25,14 @@ var ForDebug = {};
 
 ForDebug.updateDisplay_ = function() {
   setTimeout(function() {
-    if (timer1.numberOfTimingRecords()) {
-      timer1.display_timing();
-    }
-    if (timer2.numberOfTimingRecords()) {
-      timer2.display_timing();
-    }
+    if (tachyfont.timer1.numberOfTimingRecords)
+      if (tachyfont.timer1.numberOfTimingRecords()) {
+        tachyfont.timer1.display_timing();
+      }
+    if (tachyfont.timer2.numberOfTimingRecords)
+      if (tachyfont.timer2.numberOfTimingRecords()) {
+        tachyfont.timer2.display_timing();
+      }
   }, 1);
 };
 
@@ -221,7 +223,7 @@ ForDebug.addDropIdbButton_ = function(incrFontMgr, fontname) {
  * @private
  */
 ForDebug.dropIdb_ = function(incrFontMgr, fontname, callback) {
-  var db_name = IncrementalFont.DB_NAME + '/' + fontname;
+  var db_name = tachyfont.IncrementalFont.DB_NAME + '/' + fontname;
   return incrFontMgr.getIDB_
   .then(function(db) {
     db.close();

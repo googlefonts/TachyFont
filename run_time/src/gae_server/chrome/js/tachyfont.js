@@ -1,6 +1,7 @@
 'use strict';
 
-/*
+/**
+ * @license
  * Copyright 2014 Google Inc. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -16,48 +17,115 @@
  * the License.
  */
 
+goog.provide('tachyfont');
+goog.require('goog.Promise');
 
 /**
- * IncrementalFont - A namespace.
+ * @typedef {number}
  */
-function IncrementalFont() {
-}
+tachyfont.uint8;
+
+/**
+ * @typedef {Object}
+ */
+tachyfont.IncrementalFontLoader;
+
+/**
+ * tachyfont.IncrementalFont - A sub-namespace.
+ */
+tachyfont.IncrementalFont = function() {
+};
 
 /**
  * The IndexedDB version.
  * Increment this number every time there is a change in the schema.
  */
-IncrementalFont.version = 1;
+tachyfont.IncrementalFont.version = 1;
+
+
+/**
+ * The IndexedDB version.
+ * Increment this number every time there is a change in the schema.
+ */
+tachyfont.IncrementalFont.MAX_HIDDEN_MILLISECONDS = 3000;
 
 
 /**
  * The database name.
  */
-IncrementalFont.DB_NAME = 'incrfonts';
+tachyfont.IncrementalFont.DB_NAME = 'incrfonts';
 
 
 /**
  * The time in milliseconds to wait before persisting the data.
  */
-//IncrementalFont.timeoutTime = 1000;
+tachyfont.IncrementalFont.PERSIST_TIMEOUT = 1000;
 
 
 /**
  * The base name.
  */
-IncrementalFont.BASE = 'base';
+tachyfont.IncrementalFont.BASE = 'base';
 
 
 /**
  * The base is dirty (needs to be persisted) key.
  */
-IncrementalFont.BASE_DIRTY = 'base_dirty';
+tachyfont.IncrementalFont.BASE_DIRTY = 'base_dirty';
 
 
 /**
  * The char list name.
  */
-IncrementalFont.CHARLIST = 'charlist';
+tachyfont.IncrementalFont.CHARLIST = 'charlist';
+
+
+/**
+ * The charlist is dirty (needs to be persisted) key.
+ */
+tachyfont.IncrementalFont.CHARLIST_DIRTY = 'charlist_dirty';
+
+
+/**
+ * Convert a string to an array of characters.
+ * This function handles surrogate pairs.
+ * 
+ * @param {string} str The input string.
+ * @returns {Array.<string>} The array of characters.
+ */
+tachyfont.stringToChars = function(str) {
+  var char_array = [];
+  for (var i = 0; i < str.length; i++) {
+    var c = str.charAt(i);
+    var cc = c.charCodeAt(0);
+    if (cc >= 0xD800 && cc <= 0xDBFF) {
+      i += 1;
+      c += str.charAt(i);
+    }
+    char_array.push(c);
+  }
+  return char_array;
+};
+
+
+/**
+ * Convert a char to its codepoint.
+ * This function handles surrogate pairs.
+ * 
+ * @param {string} in_char The input char (string).
+ * @returns {number} The numeric value.
+ */
+tachyfont.charToCode = function(in_char) {
+  var cc = in_char.charCodeAt(0);
+  if (cc >= 0xD800 && cc <= 0xDBFF) {
+    var high = (cc - 0xD800) << 10;
+    var low = in_char.charCodeAt(1) - 0xDC00;
+    var codepoint = high + low + 0x10000;
+    return codepoint;
+  } else {
+    return cc;
+  }
+};
 
 
 /**
@@ -74,22 +142,19 @@ IncrementalFont.CHARLIST = 'charlist';
  * @param {string} fontname The name of the font.
  * @param {?number} req_size Break char requests into multiple of this size.
  * @param {?string} url The URL of the Tachyfont server.
- * @return {array} An array with:
- *                 array[0] {Object} The IndexedDB object.
- *                 array[1] {Object}  The fileinfo from the header.
- *                 array[2] {DataView} The font data.
+ * @return {tachyfont.IncrementalFont.obj_} The incremental font manager object.
  */
-IncrementalFont.createManager = function(fontname, req_size, url) {
-  //timer1.start('load base');
-  timer1.start('load Tachyfont base+data');
+tachyfont.IncrementalFont.createManager = function(fontname, req_size, url) {
+  //tachyfont.timer1.start('load base');
+  tachyfont.timer1.start('load Tachyfont base+data');
   console.log('check to see if a webfont is in cache');
   if (!url) {
     url = window.location.protocol + '//' + window.location.hostname +
         (window.location.port ? ':' + window.location.port : '');
   }
-  var incrFontMgr = new IncrementalFont.obj_(fontname, req_size, url);
-  //timer1.start('openIndexedDB.open ' + fontname);
-//  IncrementalFontUtils.logger(incrFontMgr.url,
+  var incrFontMgr = new tachyfont.IncrementalFont.obj_(fontname, req_size, url);
+  //tachyfont.timer1.start('openIndexedDB.open ' + fontname);
+//  tachyfont.IncrementalFontUtils.logger(incrFontMgr.url,
 //    'need to report info');
   console.log('It would be good to report status of:\n' +
       '* idb\n' +
@@ -100,95 +165,104 @@ IncrementalFont.createManager = function(fontname, req_size, url) {
       '* way to clear old info\n' +
       '* errors');
   incrFontMgr.getIDB_ = incrFontMgr.openIndexedDB(fontname);
-  //timer1.end('openIndexedDB.open ' + fontname);
+  //tachyfont.timer1.end('openIndexedDB.open ' + fontname);
 
   // Create a class with visibility: hidden.
-  incrFontMgr.style = IncrementalFontUtils.setVisibility(null, fontname, false);
+  incrFontMgr.style = tachyfont.IncrementalFontUtils.setVisibility(null,
+    fontname, false);
   // Limit the maximum visibility=hidden time.
   setTimeout(function() {
-    IncrementalFontUtils.setVisibility(incrFontMgr.style, fontname, true);
-  }, 3000);
+    tachyfont.IncrementalFontUtils.setVisibility(incrFontMgr.style, fontname,
+      true);
+  }, tachyfont.IncrementalFont.MAX_HIDDEN_MILLISECONDS);
   // When the page finishes loading: automatically load needed chars.
   if (document.readyState == 'loading') {
     document.addEventListener('DOMContentLoaded', function(event) {
-      incrFontMgr.loadNeededChars();
+      incrFontMgr.loadNeededChars('body');
     });
   } else {
-    incrFontMgr.loadNeededChars();
+    incrFontMgr.loadNeededChars('body');
   }
 
   incrFontMgr.getBase = incrFontMgr.getIDB_.
   then(function(idb) {
-    var filedata = incrFontMgr.getData_(idb, IncrementalFont.BASE);
-    return Promise.all([idb, filedata]);
+    var filedata = incrFontMgr.getData_(idb, tachyfont.IncrementalFont.BASE);
+    return goog.Promise.all([goog.Promise.resolve(idb), filedata]);
   }).
   then(function(arr) {
     var idb = arr[0];
     var filedata = new DataView(arr[1]);
-    var fileinfo = IncrementalFontUtils.parseBaseHeader(filedata);
+    var fileinfo = tachyfont.IncrementalFontUtils.parseBaseHeader(filedata);
     var fontdata = new DataView(arr[1], fileinfo.headSize);
-    return Promise.all([fileinfo, fontdata]);
+    return goog.Promise.all([goog.Promise.resolve(fileinfo), goog.Promise.resolve(fontdata)]);
   }).
-  catch (function(e) {
-    var bandwidth = ForDebug.getCookie('bandwidth', '0');
-    return IncrementalFontUtils.requestURL(incrFontMgr.url +
+  thenCatch(function(e) {
+    var bandwidth = tachyfont.ForDebug.getCookie('bandwidth', '0');
+    return tachyfont.IncrementalFontUtils.requestURL(incrFontMgr.url +
       '/incremental_fonts/incrfonts/' + incrFontMgr.fontname + '/base', 'GET',
       null, { 'X-TachyFont-bandwidth': bandwidth }, 'arraybuffer').
     then(function(xfer_bytes) {
-      //timer1.start('uncompact base');
+      //tachyfont.timer1.start('uncompact base');
       var xfer_data = new DataView(xfer_bytes);
-      var fileinfo = IncrementalFontUtils.parseBaseHeader(xfer_data);
+      var fileinfo = tachyfont.IncrementalFontUtils.parseBaseHeader(xfer_data);
       var header_data = new DataView(xfer_bytes, 0, fileinfo.headSize);
       var rle_fontdata = new DataView(xfer_bytes, fileinfo.headSize);
-      var raw_base = RLEDecoder.rleDecode([header_data, rle_fontdata]);
+      var raw_base = tachyfont.RLEDecoder.rleDecode([header_data,
+                                                     rle_fontdata]);
       var raw_basefont = new DataView(raw_base.buffer, header_data.byteLength);
-      IncrementalFontUtils.writeCmap12(raw_basefont, fileinfo);
-      IncrementalFontUtils.writeCmap4(raw_basefont, fileinfo);
-      IncrementalFontUtils.writeCharsetFormat2(raw_basefont, fileinfo);
+      tachyfont.IncrementalFontUtils.writeCmap12(raw_basefont, fileinfo);
+      tachyfont.IncrementalFontUtils.writeCmap4(raw_basefont, fileinfo);
+      tachyfont.IncrementalFontUtils.writeCharsetFormat2(raw_basefont,
+        fileinfo);
       var basefont =
-        IncrementalFontUtils.sanitizeBaseFont(fileinfo, raw_basefont);
-      incrFontMgr.persistDelayed_(IncrementalFont.BASE);
-      //timer1.end('uncompact base');
+        tachyfont.IncrementalFontUtils.sanitizeBaseFont(fileinfo, raw_basefont);
+      incrFontMgr.persistDelayed_(tachyfont.IncrementalFont.BASE);
+      //tachyfont.timer1.end('uncompact base');
       return [fileinfo, basefont];
     });
   }).
   then(function(arr) {
-    //timer1.end('load base');
+    //tachyfont.timer1.end('load base');
     var fileinfo = arr[0];
     // Create the @font-face rule.
-    //IncrementalFontUtils.setFont(fontname, arr[2], fileinfo.isTTF, '');
-    //timer1.done();
+    //tachyfont.IncrementalFontUtils.setFont(fontname, arr[2], fileinfo.isTTF,
+    //  '');
+    //tachyfont.timer1.done();
     // Make the class visible.
-    //IncrementalFontUtils.setVisibility(incrFontMgr.style, fontname, true);
+    //tachyfont.IncrementalFontUtils.setVisibility(incrFontMgr.style, fontname,
+    //  true);
 
     return arr;
   }).
-  catch (function(e) {
+  thenCatch(function(e) {
     console.log('failed to get the font.');
-    IncrementalFontUtils.setVisibility(incrFontMgr.style, fontname, true);
+    tachyfont.IncrementalFontUtils.setVisibility(incrFontMgr.style, fontname,
+      true);
   });
 
   // Start the operation to get the list of already fetched chars.
   //console.log('Get the list of already fetched chars.');
   incrFontMgr.getCharList = incrFontMgr.getIDB_.
   then(function(idb) {
-    return incrFontMgr.getData_(idb, IncrementalFont.CHARLIST);
+    return incrFontMgr.getData_(idb, tachyfont.IncrementalFont.CHARLIST);
   }).
-  catch (function(e) {
+  thenCatch(function(e) {
     return {};
   }).
   then(function(charlist_data) {
     return charlist_data;
-  }).catch(function() { debugger; });
+  }).thenCatch(function() {
+    debugger;
+  });
 
   // For Debug: add a button to clear the IndexedDB.
-  ForDebug.addDropIdbButton(incrFontMgr, fontname);
+  tachyfont.ForDebug.addDropIdbButton(incrFontMgr, fontname);
 
   // For Debug: add a control to set the bandwidth.
-  ForDebug.addBandwidthControl();
+  tachyfont.ForDebug.addBandwidthControl();
 
   // For Debug: add a control to set the timing text size.
-  ForDebug.addTimingTextSizeControl();
+  tachyfont.ForDebug.addTimingTextSizeControl();
 
   return incrFontMgr;
 };
@@ -202,30 +276,31 @@ IncrementalFont.createManager = function(fontname, req_size, url) {
  * @constructor
  * @private
  */
-IncrementalFont.obj_ = function(fontname, req_size, url) {
+tachyfont.IncrementalFont.obj_ = function(fontname, req_size, url) {
   this.fontname = fontname;
   this.req_size = req_size;
   this.url = url;
   this.charsURL = '/incremental_fonts/request';
   this.persistInfo = {};
-  this.persistInfo[IncrementalFont.BASE_DIRTY] = false;
-  this.persistInfo[IncrementalFont.CHARLIST_DIRTY] = false;
+  this.persistInfo[tachyfont.IncrementalFont.BASE_DIRTY] = false;
+  this.persistInfo[tachyfont.IncrementalFont.CHARLIST_DIRTY] = false;
   this.style = null;
 
   // Promises
   this.getIDB_ = null;
   this.getBase = null;
   this.getCharList = null;
-  this.finishPersistingData = Promise.resolve();
-  this.finishPendingCharsRequest = Promise.resolve();
+  this.finishPersistingData = goog.Promise.resolve();
+  this.finishPendingCharsRequest = goog.Promise.resolve();
 };
 
 /**
  * Lazily load the data for these chars.
  * @param {string} element_name The name of the data item.
- * @return {object}
+ * @return {Object}
  */
-IncrementalFont.obj_.prototype.loadNeededChars = function(element_name) {
+tachyfont.IncrementalFont.obj_.prototype.loadNeededChars =
+  function(element_name) {
   var that = this;
   var chars = '';
   var charlist;
@@ -239,7 +314,7 @@ IncrementalFont.obj_.prototype.loadNeededChars = function(element_name) {
   this.finishPendingCharsRequest = this.finishPendingCharsRequest.
   then(function() {
     var pending_resolve, pending_reject;
-    return new Promise(function(resolve, reject) {
+    return new goog.Promise(function(resolve, reject) {
       pending_resolve = resolve;
       pending_reject = reject;
 
@@ -252,10 +327,11 @@ IncrementalFont.obj_.prototype.loadNeededChars = function(element_name) {
             tmp_charlist[key] = charlist[key];
           }
           var neededCodes = [];
-          for (var i = 0; i < chars.length; i++) {
-            var c = chars.charAt(i);
+          var char_array = tachyfont.stringToChars(chars);
+          for (var i = 0; i < char_array.length; i++) {
+            var c = char_array[i];
             if (!tmp_charlist[c]) {
-              neededCodes.push(c.charCodeAt(0));
+              neededCodes.push(tachyfont.charToCode(c));
               tmp_charlist[c] = 1;
             }
           }
@@ -280,8 +356,8 @@ IncrementalFont.obj_.prototype.loadNeededChars = function(element_name) {
             var c = String.fromCharCode(neededCodes[i]);
             charlist[c] = 1;
           }
-          return IncrementalFontUtils.requestCodepoints(that.url, that.fontname,
-            neededCodes).
+          return tachyfont.IncrementalFontUtils.requestCodepoints(that.url,
+            that.fontname, neededCodes).
           then(function(chardata) {
             if (remaining.length) {
               setTimeout(function() {
@@ -299,43 +375,52 @@ IncrementalFont.obj_.prototype.loadNeededChars = function(element_name) {
             var fileinfo = arr[0];
             var fontdata = arr[1];
             if (chardata != null) {
-              fontdata = IncrementalFontUtils.injectCharacters(fileinfo,
-                fontdata, chardata);
+              fontdata =
+                tachyfont.IncrementalFontUtils.injectCharacters(fileinfo,
+                  fontdata, chardata);
               var msg;
               if (remaining.length) {
                 msg = 'display ' + Object.keys(charlist).length + ' chars';
               } else {
                 msg = '';
-                timer1.end('load Tachyfont base+data');
-                timer1.done();
+                tachyfont.timer1.end('load Tachyfont base+data');
+                tachyfont.timer1.done();
               }
-              IncrementalFontUtils.setFont(that.fontname, fontdata,
+              tachyfont.IncrementalFontUtils.setFont(that.fontname, fontdata,
                 fileinfo.isTTF, msg);
-              IncrementalFontUtils.setVisibility(that.style, that.fontname,
+              tachyfont.IncrementalFontUtils.setVisibility(that.style,
+                that.fontname,
                 true);
               // Update the data.
-              that.getBase = Promise.all([fileinfo, fontdata]);
-              that.getCharlist = Promise.resolve(charlist);
-              that.persistDelayed_(IncrementalFont.BASE);
-              that.persistDelayed_(IncrementalFont.CHARLIST);
+              that.getBase = goog.Promise.all([goog.Promise.resolve(fileinfo), goog.Promise.resolve(fontdata)]);
+              that.getCharlist = goog.Promise.resolve(charlist);
+              that.persistDelayed_(tachyfont.IncrementalFont.BASE);
+              that.persistDelayed_(tachyfont.IncrementalFont.CHARLIST);
             } else {
               var msg = '';
-              timer1.end('load Tachyfont base+data');
-              IncrementalFontUtils.setFont(that.fontname, fontdata,
+              tachyfont.timer1.end('load Tachyfont base+data');
+              tachyfont.IncrementalFontUtils.setFont(that.fontname, fontdata,
                 fileinfo.isTTF, msg);
-              IncrementalFontUtils.setVisibility(that.style, that.fontname,
+              tachyfont.IncrementalFontUtils.setVisibility(that.style,
+                that.fontname,
                 true);
-              timer1.done();
+              tachyfont.timer1.done();
             }
+          }).
+          thenCatch(function(e) {
+            console.log('failed to getBase: ' + e.message);
+            pending_reject(null);
           });
         });
       }).
-      catch (function(e) {
+      thenCatch(function(e) {
         console.log('loadNeededChars: ' + e.message);
         debugger;
-        pending_reject();
+        pending_reject(null);
       });
-  }).catch(function() { debugger; });
+  }).thenCatch(function() {
+    debugger;
+  });
   return this.finishPendingCharsRequest;
 };
 
@@ -345,21 +430,21 @@ IncrementalFont.obj_.prototype.loadNeededChars = function(element_name) {
  * @param {string} name The name of the data item.
  * @private
  */
-IncrementalFont.obj_.prototype.persistDelayed_ = function(name) {
+tachyfont.IncrementalFont.obj_.prototype.persistDelayed_ = function(name) {
   var that = this;
   //console.log('persistDelayed ' + name);
 
   // Note what needs to be persisted.
-  if (name == IncrementalFont.BASE) {
-    this.persistInfo[IncrementalFont.BASE_DIRTY] = true;
-  } else if (name == IncrementalFont.CHARLIST) {
-    this.persistInfo[IncrementalFont.CHARLIST_DIRTY] = true;
+  if (name == tachyfont.IncrementalFont.BASE) {
+    this.persistInfo[tachyfont.IncrementalFont.BASE_DIRTY] = true;
+  } else if (name == tachyfont.IncrementalFont.CHARLIST) {
+    this.persistInfo[tachyfont.IncrementalFont.CHARLIST_DIRTY] = true;
   }
 
   // In a little bit do the persisting.
   setTimeout(function() {
     that.persist_(name);
-  }, 100);
+  }, tachyfont.IncrementalFont.PERSIST_TIMEOUT);
 };
 
 
@@ -368,33 +453,35 @@ IncrementalFont.obj_.prototype.persistDelayed_ = function(name) {
  * @param {string} name The name of the data item.
  * @private
  */
-IncrementalFont.obj_.prototype.persist_ = function(name) {
+tachyfont.IncrementalFont.obj_.prototype.persist_ = function(name) {
   var that = this;
   // Wait for any pending persist operation to finish.
   this.finishPersistingData.then(function() {
     // Previous persists may have already saved the data so see if there is
     // anything still to persist.
-    var base_dirty = that.persistInfo[IncrementalFont.BASE_DIRTY];
-    var charlist_dirty = that.persistInfo[IncrementalFont.CHARLIST_DIRTY];
+    var base_dirty = that.persistInfo[tachyfont.IncrementalFont.BASE_DIRTY];
+    var charlist_dirty =
+      that.persistInfo[tachyfont.IncrementalFont.CHARLIST_DIRTY];
     if (!base_dirty && !charlist_dirty) {
       return;
     }
 
     // What ever got in upto this point will get saved.
-    that.persistInfo[IncrementalFont.BASE_DIRTY] = false;
-    that.persistInfo[IncrementalFont.CHARLIST_DIRTY] = false;
+    that.persistInfo[tachyfont.IncrementalFont.BASE_DIRTY] = false;
+    that.persistInfo[tachyfont.IncrementalFont.CHARLIST_DIRTY] = false;
 
     // Note that there is now a persist operation running.
-    that.finishPersistingData = Promise.resolve().
+    that.finishPersistingData = goog.Promise.resolve().
     then(function() {
       if (base_dirty) {
         return that.getBase.
         then(function(arr) {
-          return Promise.all([that.getIDB_, arr[0], arr[1]]);
+          return goog.Promise.all([that.getIDB_, goog.Promise.resolve(arr[0]), goog.Promise.resolve(arr[1])]);
         }).
         then(function(arr) {
           console.log('save base');
-          return that.saveData_(arr[0], IncrementalFont.BASE, arr[2].buffer);
+          return that.saveData_(arr[0],
+            tachyfont.IncrementalFont.BASE, arr[2].buffer);
         });
       }
     }).
@@ -402,22 +489,25 @@ IncrementalFont.obj_.prototype.persist_ = function(name) {
       if (charlist_dirty) {
         return that.getCharList.
         then(function(charlist) {
-          return Promise.all([that.getIDB_, charlist]);
+          return goog.Promise.all([that.getIDB_, goog.Promise.resolve(charlist)]);
         }).
         then(function(arr) {
           console.log('save charlist');
-          return that.saveData_(arr[0], IncrementalFont.CHARLIST, arr[1]);
+          return that.saveData_(arr[0], tachyfont.IncrementalFont.CHARLIST,
+            arr[1]);
         });
       }
     }).
-    catch (function(e) {
+    thenCatch(function(e) {
       console.log('persistDelayed_: ' + e.message);
       debugger;
     }).
     then(function() {
       //console.log('persisted ' + name);
     });
-  }).catch(function() { debugger; });
+  }).thenCatch(function() {
+    debugger;
+  });
 };
 
 
@@ -426,17 +516,17 @@ IncrementalFont.obj_.prototype.persist_ = function(name) {
  * @param {Object} idb The IndexedDB object.
  * @param {string} name The name of the item.
  * @param {Array} data The data.
- * @return {Promise} Operation completion.
+ * @return {goog.Promise} Operation completion.
  * @private
  */
-IncrementalFont.obj_.prototype.saveData_ = function(idb, name, data) {
+tachyfont.IncrementalFont.obj_.prototype.saveData_ = function(idb, name, data) {
   var that = this;
   return that.getIDB_.
   then(function(db) {
     // the initialization form x = { varname: value } handles the key is a
     // literal string. If a variable varname is used for the key then the
     // string varname will be used ... NOT the value of the varname.
-    return new Promise(function(resolve, reject) {
+    return new goog.Promise(function(resolve, reject) {
       var trans = db.transaction([name], 'readwrite');
       var store = trans.objectStore(name);
       var request = store.put(data, 0);
@@ -445,29 +535,31 @@ IncrementalFont.obj_.prototype.saveData_ = function(idb, name, data) {
       };
       request.onerror = function(e) {
         debugger;
-        reject();
+        reject(null);
       };
     }).
-    catch (function(e) {
+    thenCatch(function(e) {
       console.log('saveData ' + name + ': ' + e.message);
       debugger;
     });
-  }).catch(function() { debugger; });
+  }).thenCatch(function() {
+    debugger;
+  });
 };
 
 /**
  * Get the fontDB.
  * @param {string} fontname The name of the font.
- * @return {Promise} The font DB.
+ * @return {goog.Promise} The font DB.
  */
-IncrementalFont.obj_.prototype.openIndexedDB = function(fontname) {
+tachyfont.IncrementalFont.obj_.prototype.openIndexedDB = function(fontname) {
   var that = this;
 
-  var openIDB = new Promise(function(resolve, reject) {
-    var db_name = IncrementalFont.DB_NAME + '/' + fontname;
-    //timer1.start('indexedDB.open ' + db_name);
-    var dbOpen = indexedDB.open(db_name, IncrementalFont.version);
-    //timer1.end('indexedDB.open ' + db_name);
+  var openIDB = new goog.Promise(function(resolve, reject) {
+    var db_name = tachyfont.IncrementalFont.DB_NAME + '/' + fontname;
+    //tachyfont.timer1.start('indexedDB.open ' + db_name);
+    var dbOpen = window.indexedDB.open(db_name, tachyfont.IncrementalFont.version);
+    //tachyfont.timer1.end('indexedDB.open ' + db_name);
 
     dbOpen.onsuccess = function(e) {
       var db = e.target.result;
@@ -487,14 +579,14 @@ IncrementalFont.obj_.prototype.openIndexedDB = function(fontname) {
         debugger;
         reject(e);
       };
-      if (db.objectStoreNames.contains(IncrementalFont.BASE)) {
-        db.deleteObjectStore(IncrementalFont.BASE);
+      if (db.objectStoreNames.contains(tachyfont.IncrementalFont.BASE)) {
+        db.deleteObjectStore(tachyfont.IncrementalFont.BASE);
       }
-      if (db.objectStoreNames.contains(IncrementalFont.CHARLIST)) {
-        db.deleteObjectStore(IncrementalFont.CHARLIST);
+      if (db.objectStoreNames.contains(tachyfont.IncrementalFont.CHARLIST)) {
+        db.deleteObjectStore(tachyfont.IncrementalFont.CHARLIST);
       }
-      var store = db.createObjectStore(IncrementalFont.BASE);
-      var store = db.createObjectStore(IncrementalFont.CHARLIST);
+      db.createObjectStore(tachyfont.IncrementalFont.BASE);
+      db.createObjectStore(tachyfont.IncrementalFont.CHARLIST);
     };
   });
   return openIDB;
@@ -506,12 +598,12 @@ IncrementalFont.obj_.prototype.openIndexedDB = function(fontname) {
  *
  * @param {Object} idb The IndexedDB object.
  * @param {string} name The name of the font data to get.
- * @return {Promise} Promise to return the data.
+ * @return {goog.Promise} Promise to return the data.
  * @private
  */
-IncrementalFont.obj_.prototype.getData_ = function(idb, name) {
+tachyfont.IncrementalFont.obj_.prototype.getData_ = function(idb, name) {
   var that = this;
-  var getData = new Promise(function(resolve, reject) {
+  var getData = new goog.Promise(function(resolve, reject) {
     var trans = idb.transaction([name], 'readwrite');
     var store = trans.objectStore(name);
     var request = store.get(0);
@@ -530,8 +622,8 @@ IncrementalFont.obj_.prototype.getData_ = function(idb, name) {
       reject(e);
     };
   }).
-  catch (function(e) {
-    return Promise.reject(e);
+  thenCatch(function(e) {
+    return goog.Promise.reject(e);
   });
   return getData;
 };
@@ -542,21 +634,21 @@ IncrementalFont.obj_.prototype.getData_ = function(idb, name) {
  * Binary Font Editor - A namespace.
  * Binary operation over font file or glyph bundle.
  * Always big endian byte order.
- * @param {type} dataView DataView which includes data
- * @param {type} baseOffset Set this offset as 0 offset for operations
+ * @param {DataView} dataView DataView which includes data
+ * @param {number} baseOffset Set this offset as 0 offset for operations
  * @constructor
  */
-function BinaryFontEditor(dataView, baseOffset) {
+tachyfont.BinaryFontEditor = function(dataView, baseOffset) {
     this.dataView = dataView;
     this.baseOffset = baseOffset;
     this.offset = 0;
-}
+};
 
 /**
- * @return {number} Unsigned byte
+ * @return {tachyfont.uint8} Unsigned byte
  * @private
  */
-BinaryFontEditor.prototype.getUint8_ = function() {
+tachyfont.BinaryFontEditor.prototype.getUint8_ = function() {
     var data = this.dataView.getUint8(this.baseOffset + this.offset);
     this.offset++;
     return data;
@@ -566,7 +658,7 @@ BinaryFontEditor.prototype.getUint8_ = function() {
  * @param {number} data Unsigned byte
  * @private
  */
-BinaryFontEditor.prototype.setUint8_ = function(data) {
+tachyfont.BinaryFontEditor.prototype.setUint8_ = function(data) {
     this.dataView.setUint8(this.baseOffset + this.offset, data);
     this.offset++;
 };
@@ -575,7 +667,7 @@ BinaryFontEditor.prototype.setUint8_ = function(data) {
  * @return {number} Signed byte
  * @private
  */
-//BinaryFontEditor.prototype.getInt8_ = function() {
+//tachyfont.BinaryFontEditor.prototype.getInt8_ = function() {
 //    var data = this.dataView.getInt8(this.baseOffset + this.offset);
 //    this.offset++;
 //    return data;
@@ -585,7 +677,7 @@ BinaryFontEditor.prototype.setUint8_ = function(data) {
  * @param {number} data Unsigned byte
  * @private
  */
-//BinaryFontEditor.prototype.setInt8_ = function(data) {
+//tachyfont.BinaryFontEditor.prototype.setInt8_ = function(data) {
 //    this.dataView.setInt8(this.baseOffset + this.offset, data);
 //    this.offset++;
 //};
@@ -594,7 +686,7 @@ BinaryFontEditor.prototype.setUint8_ = function(data) {
  * @return {number} Unsigned short
  * @private
  */
-BinaryFontEditor.prototype.getUint16_ = function() {
+tachyfont.BinaryFontEditor.prototype.getUint16_ = function() {
     var data = this.dataView.getUint16(this.baseOffset + this.offset);
     this.offset += 2;
     return data;
@@ -604,7 +696,7 @@ BinaryFontEditor.prototype.getUint16_ = function() {
  * @param {number} data Unsigned short
  * @private
  */
-BinaryFontEditor.prototype.setUint16_ = function(data) {
+tachyfont.BinaryFontEditor.prototype.setUint16_ = function(data) {
     this.dataView.setUint16(this.baseOffset + this.offset, data);
     this.offset += 2;
 };
@@ -613,7 +705,7 @@ BinaryFontEditor.prototype.setUint16_ = function(data) {
  * @return {number} Signed short
  * @private
  */
-//BinaryFontEditor.prototype.getInt16_ = function() {
+//tachyfont.BinaryFontEditor.prototype.getInt16_ = function() {
 //    var data = this.dataView.getInt16(this.baseOffset + this.offset);
 //    this.offset += 2;
 //    return data;
@@ -623,7 +715,7 @@ BinaryFontEditor.prototype.setUint16_ = function(data) {
  * @param {number} data Signed short
  * @private
  */
-BinaryFontEditor.prototype.setInt16_ = function(data) {
+tachyfont.BinaryFontEditor.prototype.setInt16_ = function(data) {
     this.dataView.setInt16(this.baseOffset + this.offset, data);
     this.offset += 2;
 };
@@ -632,7 +724,7 @@ BinaryFontEditor.prototype.setInt16_ = function(data) {
  * @return {number} Unsigned integer
  * @private
  */
-BinaryFontEditor.prototype.getUint32_ = function() {
+tachyfont.BinaryFontEditor.prototype.getUint32_ = function() {
     var data = this.dataView.getUint32(this.baseOffset + this.offset);
     this.offset += 4;
     return data;
@@ -642,7 +734,7 @@ BinaryFontEditor.prototype.getUint32_ = function() {
  * @param {number} data Unsigned integer
  * @private
  */
-BinaryFontEditor.prototype.setUint32_ = function(data) {
+tachyfont.BinaryFontEditor.prototype.setUint32_ = function(data) {
     this.dataView.setUint32(this.baseOffset + this.offset, data);
     this.offset += 4;
 };
@@ -651,7 +743,7 @@ BinaryFontEditor.prototype.setUint32_ = function(data) {
  * @return {number} Signed integer
  * @private
  */
-BinaryFontEditor.prototype.getInt32_ = function() {
+tachyfont.BinaryFontEditor.prototype.getInt32_ = function() {
     var data = this.dataView.getInt32(this.baseOffset + this.offset);
     this.offset += 4;
     return data;
@@ -661,7 +753,7 @@ BinaryFontEditor.prototype.getInt32_ = function() {
  * @param {number} data Signed integer
  * @private
  */
-//BinaryFontEditor.prototype.setInt32_ = function(data) {
+//tachyfont.BinaryFontEditor.prototype.setInt32_ = function(data) {
 //    this.dataView.setInt32(this.baseOffset + this.offset, data);
 //    this.offset += 4;
 //};
@@ -672,7 +764,7 @@ BinaryFontEditor.prototype.getInt32_ = function() {
  * @return {Array.<number>}
  * @private
  */
-BinaryFontEditor.prototype.getArrayOf_ = function(getter, count) {
+tachyfont.BinaryFontEditor.prototype.getArrayOf_ = function(getter, count) {
     var arr = [];
     for (var i = 0; i < count; i++) {
         arr.push(getter.call(this));
@@ -685,7 +777,7 @@ BinaryFontEditor.prototype.getArrayOf_ = function(getter, count) {
  * @param {Array.<number>} arr
  * @private
  */
-BinaryFontEditor.prototype.setArrayOf_ = function(setter, arr) {
+tachyfont.BinaryFontEditor.prototype.setArrayOf_ = function(setter, arr) {
     var count = arr.length;
     for (var i = 0; i < count; i++) {
         setter.call(this, arr[i]);
@@ -697,7 +789,7 @@ BinaryFontEditor.prototype.setArrayOf_ = function(setter, arr) {
  * @return {number} Offset
  * @private
  */
-BinaryFontEditor.prototype.getOffset_ = function(offSize) {
+tachyfont.BinaryFontEditor.prototype.getOffset_ = function(offSize) {
   var offset;
   switch (offSize) {
       case 1:
@@ -713,6 +805,8 @@ BinaryFontEditor.prototype.getOffset_ = function(offSize) {
       case 4:
           offset = this.getUint32_();
           break;
+      default:
+          throw "invalid offset size: " + offSize;
   }
   return offset;
 };
@@ -722,7 +816,7 @@ BinaryFontEditor.prototype.getOffset_ = function(offSize) {
  * @param {number} value Offset value
  * @private
  */
-BinaryFontEditor.prototype.setOffset_ = function(offSize, value) {
+tachyfont.BinaryFontEditor.prototype.setOffset_ = function(offSize, value) {
   switch (offSize) {
       case 1:
           this.setUint8_(value);
@@ -745,7 +839,7 @@ BinaryFontEditor.prototype.setOffset_ = function(offSize, value) {
  * @return {string}
  * @private
  */
-BinaryFontEditor.prototype.readString_ = function(length) {
+tachyfont.BinaryFontEditor.prototype.readString_ = function(length) {
     var str = '';
     for (var i = 0; i < length; i++) {
         str += String.fromCharCode(this.getUint8_());
@@ -756,14 +850,14 @@ BinaryFontEditor.prototype.readString_ = function(length) {
 /**
  * @param {number} newOffset
  */
-BinaryFontEditor.prototype.seek = function(newOffset) {
+tachyfont.BinaryFontEditor.prototype.seek = function(newOffset) {
     this.offset = newOffset;
 };
 
 /**
  * @param {number} len
  */
-BinaryFontEditor.prototype.skip = function(len) {
+tachyfont.BinaryFontEditor.prototype.skip = function(len) {
     if (len < 0)
         throw 'Only nonnegative numbers are accepted';
     this.offset += len;
@@ -772,15 +866,15 @@ BinaryFontEditor.prototype.skip = function(len) {
 /**
  * @return {number} current offset
  */
-BinaryFontEditor.prototype.tell = function() {
+tachyfont.BinaryFontEditor.prototype.tell = function() {
     return this.offset;
 };
 
 /**
  * Creates nibble stream reader starting from current position
- * @return {function} NibbleOfNumber decoder function
+ * @return {function()} NibbleOfNumber decoder function
  */
-BinaryFontEditor.prototype.nibbleReader = function() {
+tachyfont.BinaryFontEditor.prototype.nibbleReader = function() {
     var that = this, value, nibbleByte, aligned = true;
     return function() {
         if (aligned) {
@@ -796,10 +890,10 @@ BinaryFontEditor.prototype.nibbleReader = function() {
 
 /**
  * Starting from current positions read whole extra array table
- * @param {type} extraLen
+ * @param {number} extraLen
  * @return {Array.<number>} array of extra numbers
  */
-BinaryFontEditor.prototype.readExtraArray = function(extraLen) {
+tachyfont.BinaryFontEditor.prototype.readExtraArray = function(extraLen) {
     var readNextNibble = this.nibbleReader(), extraArray = [],
         extraData, sign, numNibbles;
     for (var i = 0; i < extraLen; i++) {
@@ -826,7 +920,7 @@ BinaryFontEditor.prototype.readExtraArray = function(extraLen) {
  * Read following group of segments
  * @return {Object} Group of Segments returned
  */
-BinaryFontEditor.prototype.readNextGOS = function() {
+tachyfont.BinaryFontEditor.prototype.readNextGOS = function() {
     var gos = {};
     var type = this.getUint8_();
     var nGroups = this.getUint16_();
@@ -952,97 +1046,97 @@ BinaryFontEditor.prototype.readNextGOS = function() {
  * BS:Brian Stell AC:Ahmet Celik :)
  * @type string
  */
-BinaryFontEditor.magicHead = 'BSAC';
+tachyfont.BinaryFontEditor.magicHead = 'BSAC';
 
 /**
  * Version of the supported base font
  * @type number
  */
-BinaryFontEditor.BASE_VERSION = 1;
+tachyfont.BinaryFontEditor.BASE_VERSION = 1;
 
 /**
  * Reading operations for the header
  * @type {Object}
  */
-BinaryFontEditor.readOps = {};
+tachyfont.BinaryFontEditor.readOps = {};
 
 /**
- * @param {BinaryFontEditor} editor Editor used to parse header
- * @param {IncrementalFontLoader} font Font loader object
+ * @param {tachyfont.BinaryFontEditor} editor Editor used to parse header
+ * @param {tachyfont.IncrementalFontLoader} font Font loader object
  */
-BinaryFontEditor.readOps.GLOF = function(editor, font) {
+tachyfont.BinaryFontEditor.readOps.GLOF = function(editor, font) {
     font.glyphOffset = editor.getUint32_();
 };
 
 /**
- * @param {BinaryFontEditor} editor Editor used to parse header
- * @param {IncrementalFontLoader} font Font loader object
+ * @param {tachyfont.BinaryFontEditor} editor Editor used to parse header
+ * @param {tachyfont.IncrementalFontLoader} font Font loader object
  */
-BinaryFontEditor.readOps.GLCN = function(editor, font) {
+tachyfont.BinaryFontEditor.readOps.GLCN = function(editor, font) {
     font.numGlyphs = editor.getUint16_();
 };
 
 /**
- * @param {BinaryFontEditor} editor Editor used to parse header
- * @param {IncrementalFontLoader} font Font loader object
+ * @param {tachyfont.BinaryFontEditor} editor Editor used to parse header
+ * @param {tachyfont.IncrementalFontLoader} font Font loader object
  */
-BinaryFontEditor.readOps.LCOF = function(editor, font) {
+tachyfont.BinaryFontEditor.readOps.LCOF = function(editor, font) {
     font.glyphDataOffset = editor.getUint32_();
 };
 
 /**
- * @param {BinaryFontEditor} editor Editor used to parse header
- * @param {IncrementalFontLoader} font Font loader object
+ * @param {tachyfont.BinaryFontEditor} editor Editor used to parse header
+ * @param {tachyfont.IncrementalFontLoader} font Font loader object
  */
-BinaryFontEditor.readOps.LCFM = function(editor, font) {
+tachyfont.BinaryFontEditor.readOps.LCFM = function(editor, font) {
     font.offsetSize = editor.getUint8_();
 };
 
 /**
- * @param {BinaryFontEditor} editor Editor used to parse header
- * @param {IncrementalFontLoader} font Font loader object
+ * @param {tachyfont.BinaryFontEditor} editor Editor used to parse header
+ * @param {tachyfont.IncrementalFontLoader} font Font loader object
  */
-BinaryFontEditor.readOps.HMOF = function(editor, font) {
+tachyfont.BinaryFontEditor.readOps.HMOF = function(editor, font) {
     font.hmtxOffset = editor.getUint32_();
 };
 
 /**
- * @param {BinaryFontEditor} editor Editor used to parse header
- * @param {IncrementalFontLoader} font Font loader object
+ * @param {tachyfont.BinaryFontEditor} editor Editor used to parse header
+ * @param {tachyfont.IncrementalFontLoader} font Font loader object
  */
-BinaryFontEditor.readOps.VMOF = function(editor, font) {
+tachyfont.BinaryFontEditor.readOps.VMOF = function(editor, font) {
     font.vmtxOffset = editor.getUint32_();
 };
 
 /**
- * @param {BinaryFontEditor} editor Editor used to parse header
- * @param {IncrementalFontLoader} font Font loader object
+ * @param {tachyfont.BinaryFontEditor} editor Editor used to parse header
+ * @param {tachyfont.IncrementalFontLoader} font Font loader object
  */
-BinaryFontEditor.readOps.HMMC = function(editor, font) {
+tachyfont.BinaryFontEditor.readOps.HMMC = function(editor, font) {
     font.hmetricCount = editor.getUint16_();
 };
 
 /**
- * @param {BinaryFontEditor} editor Editor used to parse header
- * @param {IncrementalFontLoader} font Font loader object
+ * @param {tachyfont.BinaryFontEditor} editor Editor used to parse header
+ * @param {tachyfont.IncrementalFontLoader} font Font loader object
  */
-BinaryFontEditor.readOps.VMMC = function(editor, font) {
+tachyfont.BinaryFontEditor.readOps.VMMC = function(editor, font) {
     font.vmetricCount = editor.getUint16_();
 };
 
 /**
- * @param {BinaryFontEditor} editor Editor used to parse header
- * @param {IncrementalFontLoader} font Font loader object
+ * @param {tachyfont.BinaryFontEditor} editor Editor used to parse header
+ * @param {tachyfont.IncrementalFontLoader} font Font loader object
  */
-BinaryFontEditor.readOps.TYPE = function(editor, font) {
+tachyfont.BinaryFontEditor.readOps.TYPE = function(editor, font) {
     font.isTTF = editor.getUint8_();
 };
 
 /**
- * @param {BinaryFontEditor} editor Editor used to parse header
- * @param {IncrementalFontLoader} font Font loader object
+ * @param {tachyfont.BinaryFontEditor} editor Editor used to parse header
+ * @param {tachyfont.IncrementalFontLoader} font Font loader object
  */
-BinaryFontEditor.readOps.CM12 = function(editor, font) {
+tachyfont.BinaryFontEditor.readOps.CM12 = function(editor, font) {
     var cmap12 = {};
     cmap12.offset = editor.getUint32_();
     cmap12.nGroups = editor.getUint32_();
@@ -1050,10 +1144,10 @@ BinaryFontEditor.readOps.CM12 = function(editor, font) {
 };
 
 /**
- * @param {BinaryFontEditor} editor Editor used to parse header
- * @param {IncrementalFontLoader} font Font loader object
+ * @param {tachyfont.BinaryFontEditor} editor Editor used to parse header
+ * @param {tachyfont.IncrementalFontLoader} font Font loader object
  */
-BinaryFontEditor.readOps.CM04 = function(editor, font) {
+tachyfont.BinaryFontEditor.readOps.CM04 = function(editor, font) {
     var cmap4 = {};
     cmap4.offset = editor.getUint32_();
     cmap4.length = editor.getUint32_();
@@ -1061,10 +1155,10 @@ BinaryFontEditor.readOps.CM04 = function(editor, font) {
 };
 
 /**
- * @param {BinaryFontEditor} editor Editor used to parse header
- * @param {IncrementalFontLoader} font Font loader object
+ * @param {tachyfont.BinaryFontEditor} editor Editor used to parse header
+ * @param {tachyfont.IncrementalFontLoader} font Font loader object
  */
-BinaryFontEditor.readOps.CCMP = function(editor, font) {
+tachyfont.BinaryFontEditor.readOps.CCMP = function(editor, font) {
     var compact_gos = {};
     var GOSCount = editor.getUint8_();
     var GOSArray = [];
@@ -1083,7 +1177,15 @@ BinaryFontEditor.readOps.CCMP = function(editor, font) {
         var fmt12SegNum = 0, fmt12SegNumBegin, fmt12SegNumEnd;
         var fmt4SegCount = gos_type_4_lens.len;
         var startCode, endCode, idDelta, idRangeOffset, startGid, codeRange;
-        for (var i = 0; i < fmt4SegCount; i++) {
+        for (var i = 0; i < fmt4SegCount; i++) { // fix this
+            if (gos_type_4_lens.segments[i] == 0) {
+              // The only time there is a format 4 segment with no format 12
+              // segment is the format 4 end segment 0xFFFF.
+              if (i != fmt4SegCount - 1)
+                throw 'invalid segment';
+              format_4_arrays.push([0xFFFF, 0xFFFF, 1, 0]); // last segment special
+              continue;
+            }
             fmt12SegNumBegin = fmt12SegNum;
             fmt12SegNumEnd = fmt12SegNum + gos_type_4_lens.segments[i] - 1;
             startGid = gos_type_12.segments[fmt12SegNumBegin][2];
@@ -1123,7 +1225,6 @@ BinaryFontEditor.readOps.CCMP = function(editor, font) {
             }
             format_4_arrays.push([startCode, endCode, idDelta, idRangeOffset]);
         }
-        format_4_arrays.push([0xFFFF, 0xFFFF, 1, 0]); // last segment special
         compact_gos.cmap4 = {};
         compact_gos.cmap4.segments = format_4_arrays;
         compact_gos.cmap4.glyphIdArray = glyphIdArray;
@@ -1133,10 +1234,10 @@ BinaryFontEditor.readOps.CCMP = function(editor, font) {
 };
 
 /**
- * @param {BinaryFontEditor} editor Editor used to parse header
- * @param {IncrementalFontLoader} font Font loader object
+ * @param {tachyfont.BinaryFontEditor} editor Editor used to parse header
+ * @param {tachyfont.IncrementalFontLoader} font Font loader object
  */
-BinaryFontEditor.readOps.CS02 = function(editor, font) {
+tachyfont.BinaryFontEditor.readOps.CS02 = function(editor, font) {
     var charset = {};
     charset.offset = editor.getUint32_();
     charset.gos = editor.readNextGOS();
@@ -1147,58 +1248,58 @@ BinaryFontEditor.readOps.CS02 = function(editor, font) {
  * Tags defined in the header of the basefont
  * @enum {Object}
  */
-BinaryFontEditor.TAGS = {
+tachyfont.BinaryFontEditor.TAGS = {
     'GLOF':
             {'desc': 'Start of the glyphs data relative to font file start',
-                'fn': BinaryFontEditor.readOps.GLOF
+                'fn': tachyfont.BinaryFontEditor.readOps.GLOF
             },
     'GLCN':
             {'desc': 'Number of glyphs in the font',
-                'fn': BinaryFontEditor.readOps.GLCN
+                'fn': tachyfont.BinaryFontEditor.readOps.GLCN
             },
     'LCOF':
             {'desc': 'Start of glyph data location offsets',
-                'fn': BinaryFontEditor.readOps.LCOF
+                'fn': tachyfont.BinaryFontEditor.readOps.LCOF
             },
     'LCFM':
             {'desc': 'Offset size of the offsets in loca table',
-                'fn': BinaryFontEditor.readOps.LCFM
+                'fn': tachyfont.BinaryFontEditor.readOps.LCFM
             },
     'HMOF':
             {'desc': 'Start of the HMTX table relative to font file start',
-                'fn': BinaryFontEditor.readOps.HMOF
+                'fn': tachyfont.BinaryFontEditor.readOps.HMOF
             },
     'VMOF':
             {'desc': 'Start of the VMTX table relative to font file start',
-                'fn': BinaryFontEditor.readOps.VMOF
+                'fn': tachyfont.BinaryFontEditor.readOps.VMOF
             },
     'HMMC':
             {'desc': 'Number of hmetrics in hmtx table',
-                'fn': BinaryFontEditor.readOps.HMMC
+                'fn': tachyfont.BinaryFontEditor.readOps.HMMC
             },
     'VMMC':
             {'desc': 'Number of vmetrics in vmtx table',
-                'fn': BinaryFontEditor.readOps.VMMC
+                'fn': tachyfont.BinaryFontEditor.readOps.VMMC
             },
     'TYPE':
             {'desc': 'Type of the font. 1 for TTF and 0 for CFF',
-                'fn': BinaryFontEditor.readOps.TYPE
+                'fn': tachyfont.BinaryFontEditor.readOps.TYPE
             },
     'CM12':
             {'desc': 'Start offset and number of groups in cmap fmt 12 table',
-                'fn': BinaryFontEditor.readOps.CM12
+                'fn': tachyfont.BinaryFontEditor.readOps.CM12
             },
     'CM04':
             {'desc': 'Start offset of cmap fmt 4 table',
-                'fn': BinaryFontEditor.readOps.CM04
+                'fn': tachyfont.BinaryFontEditor.readOps.CM04
             },
     'CCMP':
             {'desc': 'Compact cmap, groups of segments',
-                'fn': BinaryFontEditor.readOps.CCMP
+                'fn': tachyfont.BinaryFontEditor.readOps.CCMP
             },
     'CS02':
             {'desc': 'CFF Charset format 2 in compacted format',
-                'fn': BinaryFontEditor.readOps.CS02
+                'fn': tachyfont.BinaryFontEditor.readOps.CS02
             }
 };
 
@@ -1207,17 +1308,17 @@ BinaryFontEditor.TAGS = {
  * Set information as attributes in given loader object
  * @return {Object} Results of parsing the header.
  */
-BinaryFontEditor.prototype.parseBaseHeader = function() {
+tachyfont.BinaryFontEditor.prototype.parseBaseHeader = function() {
     var magic = this.readString_(4);
-    if (magic != BinaryFontEditor.magicHead) {
-      throw 'magic number mismatch: expected ' + BinaryFontEditor.magicHead +
-        ' but got ' + magic;
+    if (magic != tachyfont.BinaryFontEditor.magicHead) {
+      throw 'magic number mismatch: expected ' +
+        tachyfont.BinaryFontEditor.magicHead + ' but got ' + magic;
     }
     var results = {};
     results.headSize = this.getInt32_();
     results.version = this.getInt32_();
-    if (results.version != BinaryFontEditor.BASE_VERSION) {
-        //throw 'Incompatible Base Font Version detected!';
+    if (results.version != tachyfont.BinaryFontEditor.BASE_VERSION) {
+        throw 'Incompatible Base Font Version detected!';
     }
     var count = this.getUint16_();
     var tags = [], tag, tagOffset, saveOffset,
@@ -1225,12 +1326,12 @@ BinaryFontEditor.prototype.parseBaseHeader = function() {
     for (var i = 0; i < count; i++) {
         tag = this.readString_(4);
         tagOffset = this.getUint32_();
-        if (!BinaryFontEditor.TAGS.hasOwnProperty(tag)) {//unknown tag
+        if (!tachyfont.BinaryFontEditor.TAGS.hasOwnProperty(tag)) {//unknown tag
             throw 'Unknown Base Font Header TAG';
         }
         saveOffset = this.tell();
         this.seek(dataStart + tagOffset);
-        BinaryFontEditor.TAGS[tag]['fn'](this, results);
+        tachyfont.BinaryFontEditor.TAGS[tag]['fn'](this, results);
         this.seek(saveOffset);
     }
     return results;
@@ -1243,8 +1344,9 @@ BinaryFontEditor.prototype.parseBaseHeader = function() {
  * @param {number} gid Glyph id
  * @param {number} value Side bearing value
  */
-BinaryFontEditor.prototype.setMtxSideBearing = function(start, metricCount,
-gid, value) {
+tachyfont.BinaryFontEditor.prototype.setMtxSideBearing =
+  function(start, metricCount,
+ gid, value) {
     if (gid < metricCount) {
         this.seek(start + gid * 4 + 2);
         this.setInt16_(value);
@@ -1261,7 +1363,8 @@ gid, value) {
  * @param {number} gid Glyph id
  * @return {number} Offset
  */
-BinaryFontEditor.prototype.getGlyphDataOffset = function(start, offSize, gid) {
+tachyfont.BinaryFontEditor.prototype.getGlyphDataOffset =
+  function(start, offSize, gid) {
     this.seek(start + gid * offSize);
     return this.getOffset_(offSize);
 };
@@ -1274,8 +1377,9 @@ BinaryFontEditor.prototype.getGlyphDataOffset = function(start, offSize, gid) {
  * @param {number} value New offset
  */
 // TODO(bstell) This function should be setLocaOffset
-BinaryFontEditor.prototype.setGlyphDataOffset = function(start, offSize, gid,
-value) {
+tachyfont.BinaryFontEditor.prototype.setGlyphDataOffset =
+  function(start, offSize, gid,
+ value) {
     this.seek(start + gid * offSize);
     this.setOffset_(offSize, value);
 };
@@ -1287,9 +1391,9 @@ value) {
  * @param {Object} params Optional parameters.
  * @constructor
  */
-function TachyFont(fontname, params) {
+tachyfont.TachyFont = function(fontname, params) {
   this.fontname = fontname;
-  this.incrfont = new Promise(function(resolve) {
+  this.incrfont = new goog.Promise(function(resolve) {
     this.incrfont_resolve = resolve;
   }.bind(this));
   this.params = params || {};
@@ -1300,36 +1404,41 @@ function TachyFont(fontname, params) {
     'visibility: hidden; }';
   style.sheet.insertRule(rule, 0);
 
-  TachyFontEnv.ready(this, function(tachyfont) {
-    //console.log('TachyFont: ready');
-    var incrfont = IncrementalFont.createManager(tachyfont.fontname,
-      tachyfont.params['req_size'], tachyfont.params['url']);
-    tachyfont.incrfont_resolve(incrfont);
+  tachyfont.TachyFontEnv.ready(this, function(
+      /** tachyfont.TachyFont */ a_tachyfont) {
+      //console.log('TachyFont: ready');
+      var incrfont = tachyfont.IncrementalFont.createManager(
+          a_tachyfont.fontname,
+          a_tachyfont.params['req_size'],
+          a_tachyfont.params['url']);
+      a_tachyfont.incrfont_resolve(incrfont);
   });
-}
+};
 
 /**
- * Lazily load the data for these chars.
- * @param {string} element_name The name of the data item.
+ * Lazily load the data for these chars.;
+ * @param {string|null} element_name The name of the data item.
  */
-TachyFont.prototype.loadNeededChars = function(element_name) {
+tachyfont.TachyFont.prototype.loadNeededChars = function(element_name) {
   this.incrfont.
   then(function(incrfont) {
     incrfont.loadNeededChars(element_name);
-  }).catch(function() { debugger; });
+  }).thenCatch(function() {
+    debugger;
+  });
 };
 
 /**
  * Incremental font loader utilities. A separate namespace is not longer needed.
  */
-var IncrementalFontUtils = {};
+tachyfont.IncrementalFontUtils = {};
 
 
 /**
  * Enum for flags in the coming glyph bundle
  * @enum {number}
  */
-IncrementalFontUtils.FLAGS = {
+tachyfont.IncrementalFontUtils.FLAGS = {
     HAS_HMTX: 1,
     HAS_VMTX: 2,
     HAS_CFF: 4
@@ -1339,32 +1448,33 @@ IncrementalFontUtils.FLAGS = {
  * Segment size in the loca table
  * @const {number}
  */
-IncrementalFontUtils.LOCA_BLOCK_SIZE = 64;
+tachyfont.IncrementalFontUtils.LOCA_BLOCK_SIZE = 64;
 
 /**
  * The Style Sheet ID
- * @const {number}
+ * @const {string}
  */
-IncrementalFontUtils.STYLESHEET_ID = 'Incremental\u00A0Font\u00A0Utils';
+tachyfont.IncrementalFontUtils.STYLESHEET_ID =
+  'Incremental\u00A0Font\u00A0Utils';
 
 /**
  * Inject glyphs in the glyphData to the baseFont
  * @param {Object} obj The object with the font header information.
  * @param {DataView} baseFont Current base font
  * @param {ArrayBuffer} glyphData New glyph data
- * @return {ArrayBuffer} Updated base font
+ * @return {DataView} Updated base font
  */
-IncrementalFontUtils.injectCharacters = function(obj, baseFont,
+tachyfont.IncrementalFontUtils.injectCharacters = function(obj, baseFont,
   glyphData) {
   // time_start('inject')
   obj.dirty = true;
-  var bundleBinEd = new BinaryFontEditor(new DataView(glyphData), 0);
-  var baseBinEd = new BinaryFontEditor(baseFont, 0);
+  var bundleBinEd = new tachyfont.BinaryFontEditor(new DataView(glyphData), 0);
+  var baseBinEd = new tachyfont.BinaryFontEditor(baseFont, 0);
 
   var count = bundleBinEd.getUint16_();
   var flags = bundleBinEd.getUint8_();
 
-  var isCFF = flags & IncrementalFontUtils.FLAGS.HAS_CFF;
+  var isCFF = flags & tachyfont.IncrementalFontUtils.FLAGS.HAS_CFF;
   var offsetDivisor = 1;
   if (!isCFF && obj.offsetSize == 2) {
     // For the loca "short version":
@@ -1375,12 +1485,12 @@ IncrementalFontUtils.injectCharacters = function(obj, baseFont,
     var id = bundleBinEd.getUint16_();
     var nextId = id + 1;
     var hmtx, vmtx;
-    if (flags & IncrementalFontUtils.FLAGS.HAS_HMTX) {
+    if (flags & tachyfont.IncrementalFontUtils.FLAGS.HAS_HMTX) {
         hmtx = bundleBinEd.getUint16_();
         baseBinEd.setMtxSideBearing(obj.hmtxOffset, obj.hmetricCount,
             id, hmtx);
     }
-    if (flags & IncrementalFontUtils.FLAGS.HAS_VMTX) {
+    if (flags & tachyfont.IncrementalFontUtils.FLAGS.HAS_VMTX) {
         vmtx = bundleBinEd.getUint16_();
         baseBinEd.setMtxSideBearing(obj.vmtxOffset, obj.vmetricCount,
             id, vmtx);
@@ -1391,20 +1501,20 @@ IncrementalFontUtils.injectCharacters = function(obj, baseFont,
     if (!isCFF) {
       // Set the loca for this glyph.
       baseBinEd.setGlyphDataOffset(obj.glyphDataOffset, obj.offsetSize,
-        id, offset/offsetDivisor);
+        id, offset / offsetDivisor);
       var oldNextOne = baseBinEd.getGlyphDataOffset(obj.glyphDataOffset,
         obj.offsetSize, nextId);
       var newNextOne = offset + length;
       // Set the length of the current glyph (at the loca of nextId).
       baseBinEd.setGlyphDataOffset(obj.glyphDataOffset, obj.offsetSize,
-        nextId, newNextOne/offsetDivisor);
+        nextId, newNextOne / offsetDivisor);
 
       // Fix the sparse loca values before this new value.
       var prev_id = id - 1;
       while (prev_id >= 0 && baseBinEd.getGlyphDataOffset(obj.glyphDataOffset,
         obj.offsetSize, prev_id) > offset) {
         baseBinEd.setGlyphDataOffset(obj.glyphDataOffset, obj.offsetSize,
-            prev_id, offset/offsetDivisor);
+            prev_id, offset / offsetDivisor);
         prev_id--;
       }
       /*
@@ -1437,7 +1547,7 @@ IncrementalFontUtils.injectCharacters = function(obj, baseFont,
         obj.offsetSize, nextId);
       baseBinEd.setGlyphDataOffset(obj.glyphDataOffset, obj.offsetSize, nextId,
         offset + length);
-      var nextId = id + 2;
+      nextId = id + 2;
       var offsetCount = obj.numGlyphs + 1;
       var currentIdOffset = offset + length, nextIdOffset;
       if (oldNextOne < currentIdOffset && nextId - 1 < offsetCount - 1) {
@@ -1476,10 +1586,11 @@ IncrementalFontUtils.injectCharacters = function(obj, baseFont,
  * @param {DataView} baseFont Base font with header.
  * @param {Object} headerInfo Header information
  */
-IncrementalFontUtils.writeCmap12 = function(baseFont, headerInfo) {
+tachyfont.IncrementalFontUtils.writeCmap12 = function(baseFont, headerInfo) {
     if (!headerInfo.cmap12)
         return;
-    var binEd = new BinaryFontEditor(baseFont, headerInfo.cmap12.offset + 16);
+    var binEd = new tachyfont.BinaryFontEditor(baseFont,
+      headerInfo.cmap12.offset + 16);
     var nGroups = headerInfo.cmap12.nGroups;
     var segments = headerInfo.compact_gos.cmap12.segments;
     for (var i = 0; i < nGroups; i++) {
@@ -1494,30 +1605,40 @@ IncrementalFontUtils.writeCmap12 = function(baseFont, headerInfo) {
  * @param {DataView} baseFont Base font with header.
  * @param {Object} headerInfo Header information
  */
-IncrementalFontUtils.writeCmap4 = function(baseFont, headerInfo) {
+tachyfont.IncrementalFontUtils.writeCmap4 = function(baseFont, headerInfo) {
     if (!headerInfo.cmap4)
         return;
     var segments = headerInfo.compact_gos.cmap4.segments;
     var glyphIdArray = headerInfo.compact_gos.cmap4.glyphIdArray;
-    var binEd = new BinaryFontEditor(baseFont, headerInfo.cmap4.offset + 6);
+    var binEd = new tachyfont.BinaryFontEditor(baseFont,
+      headerInfo.cmap4.offset + 6);
     var segCount = binEd.getUint16_() / 2;
+    if (segCount != segments.length) {
+      alert('segCount=' + segCount + ', segments.length=' + segments.length);
+      debugger;
+    }
     var glyphIdArrayLen = (headerInfo.cmap4.length - 16 - segCount * 8) / 2;
     headerInfo.cmap4.segCount = segCount;
     headerInfo.cmap4.glyphIdArrayLen = glyphIdArrayLen;
     binEd.skip(6); //skip searchRange,entrySelector,rangeShift
+    // Write endCount values.
     for (var i = 0; i < segCount; i++) {
         binEd.setUint16_(segments[i][1]);
     }
     binEd.skip(2);//skip reservePad
+    // Write startCount values.
     for (var i = 0; i < segCount; i++) {
         binEd.setUint16_(segments[i][0]);
     }
+    // Write idDelta values.
     for (var i = 0; i < segCount; i++) {
         binEd.setUint16_(segments[i][2]);
     }
+    // Write idRangeOffset vValues.
     for (var i = 0; i < segCount; i++) {
         binEd.setUint16_(segments[i][3]);
     }
+    // Write glyphIdArray values.
     if (glyphIdArrayLen > 0)
         binEd.setArrayOf_(binEd.setUint16_, glyphIdArray);
 };
@@ -1527,10 +1648,11 @@ IncrementalFontUtils.writeCmap4 = function(baseFont, headerInfo) {
  * @param {DataView} baseFont Base font with header.
  * @param {Object} headerInfo Header information
  */
-IncrementalFontUtils.writeCharsetFormat2 = function(baseFont, headerInfo) {
+tachyfont.IncrementalFontUtils.writeCharsetFormat2 =
+  function(baseFont, headerInfo) {
     if (!headerInfo.charset_fmt)
         return;
-    var binEd = new BinaryFontEditor(baseFont,
+    var binEd = new tachyfont.BinaryFontEditor(baseFont,
                                         headerInfo.charset_fmt.offset + 1);
     var nGroups = headerInfo.charset_fmt.gos.len;
     var segments = headerInfo.charset_fmt.gos.segments;
@@ -1549,9 +1671,9 @@ IncrementalFontUtils.writeCharsetFormat2 = function(baseFont, headerInfo) {
  * @param {DataView} baseFont Base font with header.
  * @return {Object} The header information.
  */
-IncrementalFontUtils.parseBaseHeader = function(baseFont) {
+tachyfont.IncrementalFontUtils.parseBaseHeader = function(baseFont) {
 
-    var binEd = new BinaryFontEditor(baseFont, 0);
+    var binEd = new tachyfont.BinaryFontEditor(baseFont, 0);
     var results = binEd.parseBaseHeader();
     if (!results.headSize) {
       throw 'missing header info';
@@ -1563,12 +1685,12 @@ IncrementalFontUtils.parseBaseHeader = function(baseFont) {
 /**
  * Send a log message to the server
  * @param {String} url The url of the Incremental Font server.
- * @param {String} msg The message to log.
- * @return {Promise} Promise to return ArrayBuffer for the response bundle
+ * @param {string} msg The message to log.
+ * @return {goog.Promise} Promise to return ArrayBuffer for the response bundle
  */
-IncrementalFontUtils.logger = function(url, msg) {
+tachyfont.IncrementalFontUtils.logger = function(url, msg) {
 
-  return IncrementalFontUtils.requestURL(
+  return tachyfont.IncrementalFontUtils.requestURL(
     url + '/incremental_fonts/logger',
     'POST',
     msg,
@@ -1582,15 +1704,16 @@ IncrementalFontUtils.logger = function(url, msg) {
 
 /**
  * Request codepoints from server
- * @param {String} url The url of the Incremental Font server.
- * @param {String} fontname The fontname.
+ * @param {string} url The url of the Incremental Font server.
+ * @param {string} fontname The fontname.
  * @param {Array.<number>} codes Codepoints to be requested
- * @return {Promise} Promise to return ArrayBuffer for the response bundle
+ * @return {goog.Promise} Promise to return ArrayBuffer for the response bundle
  */
-IncrementalFontUtils.requestCodepoints = function(url, fontname, codes) {
+tachyfont.IncrementalFontUtils.requestCodepoints =
+  function(url, fontname, codes) {
 
-  var bandwidth = ForDebug.getCookie('bandwidth', '0');
-  return IncrementalFontUtils.requestURL(
+  var bandwidth = tachyfont.ForDebug.getCookie('bandwidth', '0');
+  return tachyfont.IncrementalFontUtils.requestURL(
     url + '/incremental_fonts/request',
     'POST',
     JSON.stringify({'font': fontname, 'arr': codes}),
@@ -1607,16 +1730,16 @@ IncrementalFontUtils.requestCodepoints = function(url, fontname, codes) {
  * Async XMLHttpRequest to given url using given method, data and header
  * @param {string} url Destination url
  * @param {string} method Request method
- * @param {type} data Request data
+ * @param {(string|null)} data Request data
  * @param {Object} headerParams Request headers
  * @param {string} responseType Response type
- * @return {Promise} Promise to return response
+ * @return {goog.Promise} Promise to return response
  */
-IncrementalFontUtils.requestURL = function(url, method, data, headerParams,
-                                           responseType) {
+tachyfont.IncrementalFontUtils.requestURL =
+  function(url, method, data, headerParams, responseType) {
   //var cnt = fetchCnt++;
-  //timer1.start('fetch ' + cnt + ' ' + url);
-  return new Promise(function(resolve, reject) {
+  //tachyfont.timer1.start('fetch ' + cnt + ' ' + url);
+  return new goog.Promise(function(resolve, reject) {
     var xhr = new XMLHttpRequest();
     xhr.open(method, url, true);
     for (var param in headerParams)
@@ -1624,7 +1747,7 @@ IncrementalFontUtils.requestURL = function(url, method, data, headerParams,
     xhr.responseType = responseType;
     xhr.onload = function(oEvent) {
       if (xhr.status == 200) {
-        //timer1.end('fetch ' + cnt + ' ' + url);
+        //tachyfont.timer1.end('fetch ' + cnt + ' ' + url);
         resolve(xhr.response);
       } else
         reject(xhr.status + ' ' + xhr.statusText);
@@ -1641,18 +1764,19 @@ IncrementalFontUtils.requestURL = function(url, method, data, headerParams,
  * Sanitize base font to pass OTS
  * @param {Object} obj The object with the font header information.
  * @param {DataView} baseFont Base font as DataView
- * @return {ArrayBuffer} Sanitized base font
+ * @return {DataView} Sanitized base font
  */
-IncrementalFontUtils.sanitizeBaseFont = function(obj, baseFont) {
+tachyfont.IncrementalFontUtils.sanitizeBaseFont = function(obj, baseFont) {
 
   if (obj.isTTF) {
     obj.dirty = true;
-    var binEd = new BinaryFontEditor(baseFont, 0);
+    var binEd = new tachyfont.BinaryFontEditor(baseFont, 0);
     var glyphOffset = obj.glyphOffset;
     var glyphCount = obj.numGlyphs;
     var glyphSize, thisOne, nextOne;
-    for (var i = (IncrementalFontUtils.LOCA_BLOCK_SIZE - 1); i < glyphCount;
-    i += IncrementalFontUtils.LOCA_BLOCK_SIZE) {
+    for (var i = (tachyfont.IncrementalFontUtils.LOCA_BLOCK_SIZE - 1);
+      i < glyphCount;
+      i += tachyfont.IncrementalFontUtils.LOCA_BLOCK_SIZE) {
         thisOne = binEd.getGlyphDataOffset(obj.glyphDataOffset,
         obj.offsetSize, i);
         nextOne = binEd.getGlyphDataOffset(obj.glyphDataOffset,
@@ -1665,7 +1789,7 @@ IncrementalFontUtils.sanitizeBaseFont = function(obj, baseFont) {
     }
   } else {
     obj.dirty = true;
-    var binEd = new BinaryFontEditor(baseFont, 0);
+    var binEd = new tachyfont.BinaryFontEditor(baseFont, 0);
     var glyphOffset = obj.glyphOffset;
     var glyphCount = obj.numGlyphs;
     var lastRealOffset = binEd.getGlyphDataOffset(obj.glyphDataOffset,
@@ -1697,9 +1821,10 @@ IncrementalFontUtils.sanitizeBaseFont = function(obj, baseFont) {
  * @param {Object} style The style object
  * @param {string} fontname name of the font
  * @param {boolean} visible True is setting visibility to visible.
- * @return {style} New style object for given font and visibility
+ * @return {Object} New style object for given font and visibility
  */
-IncrementalFontUtils.setVisibility = function(style, fontname, visible) {
+tachyfont.IncrementalFontUtils.setVisibility = function(style, fontname,
+  visible) {
   if (!style) {
     style = document.createElement('style');
     document.head.appendChild(style);
@@ -1724,13 +1849,13 @@ IncrementalFontUtils.setVisibility = function(style, fontname, visible) {
 /**
  * Add the '@font-face' rule
  * @param {string} fontname The CSS fontname
- * @param {Array} data The font data.
+ * @param {DataView} data The font data.
  * @param {boolean} isTTF True is the font is of type TTF.
  * @param {string} msg A message to display in a timer.
  */
-IncrementalFontUtils.setFont = function(fontname, data, isTTF, msg) {
+tachyfont.IncrementalFontUtils.setFont = function(fontname, data, isTTF, msg) {
   if (msg) {
-    timer1.start(msg);
+    tachyfont.timer1.start(msg);
   }
   var mime_type = '';
   if (isTTF) {
@@ -1752,7 +1877,7 @@ IncrementalFontUtils.setFont = function(fontname, data, isTTF, msg) {
   var blobUrl = window.URL.createObjectURL(blob);
 
   if (typeof FontFace == 'undefined') {
-    IncrementalFontUtils.setFont_oldStyle(fontname, blobUrl, isTTF);
+    tachyfont.IncrementalFontUtils.setFont_oldStyle(fontname, blobUrl, isTTF);
     return;
   } else {
     var font = new FontFace(fontname, 'url(' + blobUrl + ')', {});
@@ -1768,12 +1893,14 @@ IncrementalFontUtils.setFont = function(fontname, data, isTTF, msg) {
  * @param {string} blobUrl The blob URL of the font data.
  * @param {boolean} isTTF True is the font is of type TTF.
  */
-IncrementalFontUtils.setFont_oldStyle = function(fontname, blobUrl, isTTF) {
+tachyfont.IncrementalFontUtils.setFont_oldStyle = function(fontname, blobUrl,
+  isTTF) {
   // Get the style sheet.
-  var style = document.getElementById(IncrementalFontUtils.STYLESHEET_ID);
+  var style = document.getElementById(
+    tachyfont.IncrementalFontUtils.STYLESHEET_ID);
   if (!style) {
     style = document.createElement('style');
-    style.id = IncrementalFontUtils.STYLESHEET_ID;
+    style.id = tachyfont.IncrementalFontUtils.STYLESHEET_ID;
     document.head.appendChild(style);
   }
   var sheet = style.sheet;
@@ -1786,8 +1913,8 @@ IncrementalFontUtils.setFont_oldStyle = function(fontname, blobUrl, isTTF) {
       var this_rule = rules[i];
       if (this_rule.type == CSSRule.FONT_FACE_RULE) {
         //console.log('found an @font-face rule');
-        var style = this_rule.style;
-        var font_family = style.getPropertyValue('font-family');
+        var this_style = this_rule.style;
+        var font_family = this_style.getPropertyValue('font-family');
         // TODO(bstell) consider using weight/slant.
         if (font_family == fontname) {
           rule_to_delete = i;
@@ -1832,20 +1959,21 @@ IncrementalFontUtils.setFont_oldStyle = function(fontname, blobUrl, isTTF) {
  * @param {string} fontname The CSS fontname
  * @param {string} fonturl The url of the webfont.
  * @param {string} fonttype The type of the font; eg truetype or opentype.
- * @return {object}
+ * @return {(Object|null)}
  */
 // THIS SHOULD NOT BE IN TACHYFONT.JS
-IncrementalFontUtils.loadWebFont = function(fontname, fonturl, fonttype) {
-  timer2.start('load web font');
+tachyfont.IncrementalFontUtils.loadWebFont = function(fontname, fonturl,
+  fonttype) {
+  tachyfont.timer2.start('load web font');
   var timeout_id;
   function font_loading_timeout() {
-    timer2.end('load web font');
+    tachyfont.timer2.end('load web font');
     timeout_id = setTimeout(font_loading_timeout, 100);
   }
   font_loading_timeout();
 
-  var bandwidth = ForDebug.getCookie('bandwidth', '0');
-  if (true || typeof window.FontFace == 'undefined') {
+  var bandwidth = tachyfont.ForDebug.getCookie('bandwidth', '0');
+  if (typeof window.FontFace == 'undefined') {
     var style = document.createElement('style');
     document.head.appendChild(style);
     var sheet = style.sheet;
@@ -1859,12 +1987,10 @@ IncrementalFontUtils.loadWebFont = function(fontname, fonturl, fonttype) {
     // A lazy way to time the web font.
     window.addEventListener('load', function(event) {
       clearTimeout(timeout_id);
-      timer2.end('load web font');
-      timer2.done();
+      tachyfont.timer2.end('load web font');
+      tachyfont.timer2.done();
     });
-
-
-    return;
+    return null;
   }
 
   var face = new FontFace(fontname, 'url(' + fonturl +
@@ -1872,25 +1998,27 @@ IncrementalFontUtils.loadWebFont = function(fontname, fonturl, fonttype) {
   face.load().then(function(loadedFace) {
     document.fonts.add(loadedFace);
     document.body.style.fontFamily = fontname;
-    timer2.end('load web font:<br>' + fontname);
-    timer2.done();
+    tachyfont.timer2.end('load web font:<br>' + fontname);
+    tachyfont.timer2.done();
     clearTimeout(timeout_id);
-  }).catch(function() { debugger; });
+  //}).catch(function() {
+  //  debugger;
+  });
   return face; // NOTE: the face has to be stored in a global variable or
                // the font seems to disappear.
 };
 
 /**
- * RLEDecoder class to decode RLE'd data
+ * tachyfont.RLEDecoder class to decode RLE'd data
  * @constructor
  */
-function RLEDecoder() {}
+tachyfont.RLEDecoder = function() {};
 
 /**
  * Defined RLE operations
  * @type {Object}
  */
-RLEDecoder.RLE_OPS = {
+tachyfont.RLEDecoder.RLE_OPS = {
     0xC0: 'copy',
     0xC8: 'fill'
 };
@@ -1899,28 +2027,29 @@ RLEDecoder.RLE_OPS = {
  * Masks to interpret byte code
  * @type {Object}
  */
-RLEDecoder.MASKS = {
+tachyfont.RLEDecoder.MASKS = {
     SIZE: 0x03,
     OP: 0xFC
 };
 
 /**
  * Interpret the byte code
- * @param {byte} op Byte code
- * @return {Array} Array of byte cound and operation
+ * @param {number} op Byte code
+ * @return {Array.<number>} Array of byte cound and operation
  */
-RLEDecoder.byteOp = function(op) {
-  var byteCount = op & RLEDecoder.MASKS.SIZE;
-  var byteOperation = RLEDecoder.RLE_OPS[op & RLEDecoder.MASKS.OP];
+tachyfont.RLEDecoder.byteOp = function(op) {
+  var byteCount = op & tachyfont.RLEDecoder.MASKS.SIZE;
+  var byteOperation =
+    tachyfont.RLEDecoder.RLE_OPS[op & tachyfont.RLEDecoder.MASKS.OP];
   return [byteCount, byteOperation];
 };
 
 /**
  * Decode given rle encoded data and return decoded data
- * @param {array} arr Holds the Rle encoded header data and font data.
- * @return {ArrayBuffer} Decoded data
+ * @param {Array.<DataView>} arr Holds the Rle encoded header data and font data.
+ * @return {DataView} Decoded data
  */
-RLEDecoder.rleDecode = function(arr) {
+tachyfont.RLEDecoder.rleDecode = function(arr) {
   // time_start('rle');
   var header_data = arr[0];
   var fontdata = arr[1];
@@ -1948,7 +2077,7 @@ RLEDecoder.rleDecode = function(arr) {
   while (writeOffset < totalSize) {
     byteOperation = fontdata.getUint8(readOffset);
     readOffset++;
-    operationInfo = RLEDecoder.byteOp(byteOperation);
+    operationInfo = tachyfont.RLEDecoder.byteOp(byteOperation);
 
     if (operationInfo[0] == 0) {
       operationSize = fontdata.getUint8(readOffset);
@@ -2001,96 +2130,162 @@ RLEDecoder.rleDecode = function(arr) {
 
 
 
+/**
+ * Timing object for performance analysis.
+ * @type {Object}
+ */
+window.timer1;
+
+/**
+ * Timing object for performance analysis.
+ * @type {Object}
+ */
+window.timer2;
+
 
 /**
  * TachyFontEnv - A namespace.
  */
-function TachyFontEnv() {
-}
+tachyfont.TachyFontEnv = function() {
+};
 
 // Static variables.
 // TODO(bstell) Is this the proper way to initalize these?
 /** List of Javascript files to load.
  * @private
  */
-TachyFontEnv.js_list_ = [];
+tachyfont.TachyFontEnv.js_list_ = [];
 /** Count of Javascript files loaded. */
-TachyFontEnv.js_list_loaded_cnt = 0;
+tachyfont.TachyFontEnv.js_list_loaded_cnt = 0;
 /** List of callbacks to call when all the files are loaded.
  * @private
  */
-TachyFontEnv.ready_list_ = [];
+tachyfont.TachyFontEnv.ready_list_ = [];
 /** List of CSS files to load.
  * @private
  */
-TachyFontEnv.css_list_ = [];
+tachyfont.TachyFontEnv.css_list_ = [];
 /** Count of CSS files loaded. */
-TachyFontEnv.css_list_loaded_cnt = 0;
+tachyfont.TachyFontEnv.css_list_loaded_cnt = 0;
+
+/**
+ * Timing class for performance analysis.
+ * @constructor
+ */
+tachyfont.Timer = function() {
+};
+
+/**
+ * Placeholder for recording a timer start time.
+ */
+tachyfont.Timer.prototype.start = function() {
+};
+
+/**
+ * Placeholder for recording a timer end time.
+ */
+tachyfont.Timer.prototype.end = function() {
+};
+
+/**
+ * Placeholder for recording a timer done time (which changes the color).
+ */
+tachyfont.Timer.prototype.done = function() {
+};
+
+/**
+ * Timing object for performance analysis.
+ * @type {Object}
+ */
+tachyfont.timer2;
+
+/**
+ * Timing object for performance analysis.
+ * @type {Object}
+ */
+tachyfont.timer1;
 
 //Support running without demo features.
-/** Stub out timer functions. */
-function Timer() {}
-/** Stub out timer functions. */
-Timer.prototype.start = function() {};
-/** Stub out timer functions. */
-Timer.prototype.end = function() {};
-/** Stub out timer functions. */
-Timer.prototype.done = function() {};
-/** Stub out timer functions. */
-var timer1 = new Timer();
-/** Stub out timer functions. */
-var timer2 = new Timer();
+if (window.Timer) {
+  tachyfont.timer1 = window.timer1;
+  tachyfont.timer2 = window.timer2;
 
-/** Stub out the debug functions. */
-function ForDebug() {}
-/** Stub out the debug functions.
- * @param {string} name The cookie name.
- * @param {*} fallback A value to return if the cookie is not found.
- * @return {*}
+} else {
+  /** Stub out timer functions. */
+  tachyfont.timer1 = new tachyfont.Timer();
+  tachyfont.timer2 = new tachyfont.Timer();
+}
+
+/**
+ * Debugging help
+ * Stub out the debug functions.
+ * @type {Object}
  */
-ForDebug.getCookie = function(name, fallback) { return fallback; };
-/** Stub out the debug functions.
- * @param {object} incrFontMgr The incremental font manager object.
- * @param {string} fontname The font name.
+tachyfont.ForDebug = function() {
+};
+
+/**
+ * Useful for debugging.
+ * @type {Object}
  */
-ForDebug.addDropIdbButton = function(incrFontMgr, fontname) {};
-/** Stub out the debug functions. */
-ForDebug.addBandwidthControl = function() {};
-/** Stub out the debug functions. */
-ForDebug.addTimingTextSizeControl = function() {};
+window.ForDebug;
+
+if (window.ForDebug) {
+  tachyfont.ForDebug = window.ForDebug;
+} else {
+
+  /** Stub out the debug functions.
+   * @param {string} name The cookie name.
+   * @param {*} fallback A value to return if the cookie is not found.
+   * @return {*}
+   */
+  tachyfont.ForDebug.getCookie = function(name, fallback) {
+    return fallback;
+  };
+
+  /** Stub out the debug functions.
+   * @param {Object} incrFontMgr The incremental font manager object.
+   * @param {string} fontname The font name.
+   */
+  tachyfont.ForDebug.addDropIdbButton = function(incrFontMgr, fontname) {};
+  /** Stub out the debug functions. */
+  tachyfont.ForDebug.addBandwidthControl = function() {};
+  /** Stub out the debug functions. */
+  tachyfont.ForDebug.addTimingTextSizeControl = function() {};
+}
 
 /**
  * Pull in other needed Javascript files.
  * @private
  */
-TachyFontEnv.init_ = function() {
+tachyfont.TachyFontEnv.init_ = function() {
   // Browser fix-ups.
-//  if (typeof Promise == 'undefined') {
-//    TachyFontEnv.add_js('js/promise-1.0.0.js');
+//  if (typeof goog.Promise == 'undefined') {
+//    tachyfont.TachyFontEnv.add_js('js/promise-1.0.0.js');
 //  }
 
   // Load the needed support files.
-//  TachyFontEnv.add_js('js/binary-font-editor.js');
-//  TachyFontEnv.add_js('js/incrfont-indexeddb.js');
-//  TachyFontEnv.add_js('js/incr-font-utils.js');
-//  TachyFontEnv.add_js('js/rle-decoder.js');
+//  tachyfont.TachyFontEnv.add_js('js/binary-font-editor.js');
+//  tachyfont.TachyFontEnv.add_js('js/incrfont-indexeddb.js');
+//  tachyfont.TachyFontEnv.add_js('js/incr-font-utils.js');
+//  tachyfont.TachyFontEnv.add_js('js/rle-decoder.js');
 };
 
 /**
  * Load a CSS file.
  * @param {string} url The URL of the CSS.
  */
-TachyFontEnv.add_css = function(url) {
+tachyfont.TachyFontEnv.add_css = function(url) {
   //console.log('add css \"' + url + '\'');
-  TachyFontEnv.css_list_.push(url);
+  tachyfont.TachyFontEnv.css_list_.push(url);
   var link = document.createElement('link');
   link.setAttribute('href', url);
   link.setAttribute('rel', 'stylesheet');
   link.setAttribute('type', 'text/css');
   link.onload = function() {
     //console.log('loaded ' + url);
-    TachyFontEnv.css_list_loaded_cnt += 1;
-    TachyFontEnv.handle_ready_();
+    tachyfont.TachyFontEnv.css_list_loaded_cnt += 1;
+    tachyfont.TachyFontEnv.handle_ready_();
   };
   document.head.appendChild(link);
 };
@@ -2100,15 +2295,15 @@ TachyFontEnv.add_css = function(url) {
  * Load a Javascript file.
  * @param {string} url The URL of the Javascript.
  */
-TachyFontEnv.add_js = function(url) {
+tachyfont.TachyFontEnv.add_js = function(url) {
   //console.log('add script \"' + url + '\'');
-  TachyFontEnv.js_list_.push(url);
+  tachyfont.TachyFontEnv.js_list_.push(url);
   var script = document.createElement('script');
   script.src = url;
   script.onload = function() {
     //console.log('loaded ' + url);
-    TachyFontEnv.js_list_loaded_cnt += 1;
-    TachyFontEnv.handle_ready_();
+    tachyfont.TachyFontEnv.js_list_loaded_cnt += 1;
+    tachyfont.TachyFontEnv.handle_ready_();
   };
   document.head.appendChild(script);
 };
@@ -2118,17 +2313,19 @@ TachyFontEnv.add_js = function(url) {
  * Call the JS callbacks if all the Javascript has been loaded.
  * @private
  */
-TachyFontEnv.handle_ready_ = function() {
+tachyfont.TachyFontEnv.handle_ready_ = function() {
   // Check if all the JS files are loaded.
-  if (TachyFontEnv.js_list_.length != TachyFontEnv.js_list_loaded_cnt) {
+  if (tachyfont.TachyFontEnv.js_list_.length !=
+    tachyfont.TachyFontEnv.js_list_loaded_cnt) {
     return;
   }
-  if (TachyFontEnv.css_list_.length != TachyFontEnv.css_list_loaded_cnt) {
+  if (tachyfont.TachyFontEnv.css_list_.length !=
+    tachyfont.TachyFontEnv.css_list_loaded_cnt) {
     return;
   }
   //console.log('ready');
-  for (var i = 0; i < TachyFontEnv.ready_list_.length; i++) {
-    var callback_obj = TachyFontEnv.ready_list_[i];
+  for (var i = 0; i < tachyfont.TachyFontEnv.ready_list_.length; i++) {
+    var callback_obj = tachyfont.TachyFontEnv.ready_list_[i];
     callback_obj.callback(callback_obj.closure);
   }
 };
@@ -2138,15 +2335,16 @@ TachyFontEnv.handle_ready_ = function() {
  * Register a Javascript is ready callback.
  * This is called when all the requested Javascript URLs are loaded.
  * @param {Object} closure Data to pass to the callback.
- * @param {function} callback Call this function when the env is ready.
+ * @param {function(tachyfont.TachyFont)} callback Call this function
+ *     when the env is ready.
  */
-TachyFontEnv.ready = function(closure, callback) {
+tachyfont.TachyFontEnv.ready = function(closure, callback) {
   //console.log('add callback');
   var callback_obj = {}; // Make this minifiable.
   callback_obj.callback = callback;
   callback_obj.closure = closure;
-  TachyFontEnv.ready_list_.push(callback_obj);
-  TachyFontEnv.handle_ready_();
+  tachyfont.TachyFontEnv.ready_list_.push(callback_obj);
+  tachyfont.TachyFontEnv.handle_ready_();
 };
 
-TachyFontEnv.init_();
+tachyfont.TachyFontEnv.init_();

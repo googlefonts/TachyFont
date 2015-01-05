@@ -29,6 +29,13 @@ TachyFont is not an official Google project, and Google provides no support for 
 Status
 ======
 
+Overall status 2014-12-10:
+
+Converting to Closure. 
+
+* Only tachyfont_noto_sans_regular_subset.html currently works. Everything else
+is broken.
+
 Overall status 2014-08-27:
 
 - TachyFont is at the proof of concept stage and suitable for giving a demo.

@@ -138,7 +138,7 @@ class BaseFonter(object):
       filler.fill(block[0], block[1], '\x00')
       filler.close()
 
-  def __end_char_strings(self, output):
+  def __zero_char_strings(self, output):
     self.font = TTFont(output)
     assert 'CFF ' in self.font
     cffTableOffset = self.font.reader.tables['CFF '].offset
@@ -149,8 +149,9 @@ class BaseFonter(object):
     inner_file.seek(cffTableOffset + charStringOffset)
     rawIndexFile = Index(inner_file)
     baseOffset = rawIndexFile.offsetBase
-    size = rawIndexFile.offsets[-1] - 1
-    offset = baseOffset + rawIndexFile.offsets[0]
+    notdef_glyph_size = rawIndexFile.offsets[1] - rawIndexFile.offsets[0]
+    size = rawIndexFile.offsets[-1] - 1 - notdef_glyph_size
+    offset = baseOffset + rawIndexFile.offsets[0] + notdef_glyph_size
     self.font.close()
     filler = Filler(output)
     filler.fill(offset, size, '\x00')
@@ -178,7 +179,7 @@ class BaseFonter(object):
         filler_value = locations[lower]
       locations[lower:upper] = array.array(off_format, [filler_value] * (upper - lower))
 
-  def __fill_char_strings(self,output):
+  def __sparse_charstring_offsets(self,output):
     self.font = TTFont(output)
     assert 'CFF ' in self.font
     cffTableOffset = self.font.reader.tables['CFF '].offset
@@ -196,6 +197,7 @@ class BaseFonter(object):
     inner_file.seek(cffTableOffset + charStringOffset )
     raw_index_file = Index(inner_file)
     
+    # TODO(bstell) this need to correctly handle the offset to .notdef
     locations = raw_index_file.offsets
     assert (count+1) == len(locations)
     
@@ -210,7 +212,7 @@ class BaseFonter(object):
       diff = locations[i] - locations[i-1]
       max_diff = max(max_diff,diff)
       i+=BaseFonter.LOCA_BLOCK_SIZE
-    assert max_diff < 65536 , 'Consider making LOCA_BLOCK_SIZE smaller'
+    assert max_diff < 65536 , 'LOCA_BLOCK_SIZE too big'
     
     new_offsets = bytearray()
     offSize = -offSize
@@ -221,6 +223,7 @@ class BaseFonter(object):
     
     font_file = open(output,'r+b')
     font_file.seek(cffTableOffset + charStringOffset + 3)
+    # TODO(bstell) need to deal with the notdef glyph here
     font_file.write(new_offsets)
     font_file.close()
 
@@ -278,8 +281,8 @@ class BaseFonter(object):
     self.font.close()
     
     if self.isCff:
-      self.__end_char_strings(output)
-      self.__fill_char_strings(output)
+      self.__zero_char_strings(output)
+      self.__sparse_charstring_offsets(output)
       self.__zero_charset_fmt(output)
     else:
       self.__zero_glyf(output)
@@ -303,8 +306,8 @@ class BaseFonter(object):
     self.font.close()
     
     if self.isCff:
-      self.__end_char_strings(output)
-      self.__fill_char_strings(output)
+      self.__zero_char_strings(output)
+      self.__sparse_charstring_offsets(output)
       self.__zero_charset_fmt(output)
     else:
       self.__zero_glyf(output)
