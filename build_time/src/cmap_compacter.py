@@ -302,7 +302,7 @@ class _GOSGenerators(object):
     change_method(_c_m_a_p.cmap_format_12_or_13,old_12_method,'decompile')
     
     whole_data = gos_data.tobytes() + escaped_data.tobytes()
-    print 'type2 size',len(whole_data)
+    #print 'type2 size',len(whole_data)
     return whole_data
 
 """Type of the Group of Segments
