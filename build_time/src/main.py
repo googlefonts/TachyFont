@@ -48,6 +48,8 @@ def main(args):
                       help='Reuse the "clean" file if possible')
   parser.add_argument('--log', default='WARNING',
                       help='Set the logging level; eg, --log=INFO')
+  parser.add_argument('--verbose', default=False, action='store_true',
+                      help='Report internal operations')
 
   cmd_args = parser.parse_args(args)
 
@@ -62,16 +64,17 @@ def main(args):
   logging_handler.setFormatter(formatter)
   log.addHandler(logging_handler)
   log.setLevel(loglevel)
-  verbose = loglevel <= logging.DEBUG
+  verbose = cmd_args.verbose
 
   force_preprocessing = cmd_args.force
-  log.info('force_preprocessing = ' + str(force_preprocessing))
+  log.debug('force_preprocessing = ' + str(force_preprocessing))
 
   fontfile = cmd_args.fontfile
   fonttime = os.path.getmtime(fontfile)
   # TODO(bstell) use Logger
-  log.info('preprocess ' + cmd_args.fontfile)
   basename = os.path.basename(fontfile)
+  log.info('preprocess %s = %d bytes' % (cmd_args.fontfile, 
+                                         os.path.getsize(cmd_args.fontfile)))
   filename, extension = os.path.splitext(basename)
   cur_time = datetime.datetime.now()
   build_dir = 'tmp-%s' % filename
@@ -80,7 +83,7 @@ def main(args):
                  (build_dir, cur_time.year, cur_time.month, cur_time.day,
                   cur_time.hour, cur_time.minute, cur_time.second, os.getpid()))
   output_dir = cmd_args.output_dir
-  log.info('put results in ' + output_dir)
+  log.debug('JAR file: ' + output_dir)
   try:
     os.makedirs(build_dir)
   except OSError as exception:
@@ -88,6 +91,7 @@ def main(args):
       log.error('failed to create build_dir (' + build_dir + ')')
       raise
 
+  log.debug('if reuse_clean then we should compare the source font and final jar')
   cleanfile = filename + '_clean' + extension
   cleanfilepath = build_dir + '/' + cleanfile
   # Decide if we are building the cleaned up version of the font.
@@ -99,12 +103,10 @@ def main(args):
      cleantime = os.path.getmtime(cleanfilepath)
      if cleantime <= fonttime:
        rebuild_clean = True
-  log.info('rebuild_clean = ' + str(rebuild_clean))
+  log.debug('rebuild_clean = ' + str(rebuild_clean))
   if rebuild_clean:
-    log.debug('make cleaned up version: ' + cleanfilepath)
+    log.debug('cleaned version: ' + cleanfilepath)
     cleanup.cleanup(fontfile, cmd_args.hinting, cleanfilepath, verbose)
-    log.info(basename + '=' + str(os.path.getsize(fontfile)) + ', ' +
-             cleanfilepath + '=' + str(os.path.getsize(cleanfilepath)))
     closure.dump_closure_map(cleanfilepath, build_dir)
   else:
     log.debug('reuse cleaned up version: ' + cleanfilepath)
@@ -122,7 +124,7 @@ def main(args):
     jartime = os.path.getmtime(jarfilepath)
     if jartime <= cleantime:
       rebuild_jar = True
-  log.info('rebuild_jar = ' + str(rebuild_jar))
+  log.debug('rebuild_jar = ' + str(rebuild_jar))
   if rebuild_jar:
     log.debug('start proprocess')
     preprocess = Preprocess(cleanfilepath, build_dir, verbose)
@@ -159,11 +161,13 @@ def main(args):
     jarcopytime = os.path.getmtime(jarcopy_filepath)
     if jarcopytime <= jartime:
       copy_jar = True
-  log.info('copy_jar = ' + str(copy_jar))
+  log.debug('copy_jar = ' + str(copy_jar))
   if copy_jar:
     log.debug('cp the files to the output directory')
-    cp_cmd = ('cd %s; cp %s %s %s' %
-              (build_dir, tachyfont_file, cleanfile, output_dir))
+    log.info('cleaned: %s = %d' % (cleanfile, os.path.getsize(cleanfilepath)))
+    log.info('Jar: %s/%s' % (output_dir, tachyfont_file))
+    cp_cmd = ('cp %s/%s %s/%s %s' %
+              (build_dir, tachyfont_file, build_dir, cleanfile, output_dir))
     log.debug('cp_cmd: ' + cp_cmd)
     status = os.system(cp_cmd)
     log.debug('cp status ' + str(status))
@@ -187,7 +191,9 @@ def main(args):
       log.error('rm status = ' + str(status))
       return status
 
-  log.info('command status = ' + str(status))
+  log.debug('command status = ' + str(status))
+  if status != 0:
+    log.info('preprocessing FAILED')
   return status
 
 
