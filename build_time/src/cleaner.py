@@ -32,7 +32,7 @@ class Cleaner(object):
     # Want the .notdef glyph and outlines.
     self.options.notdef_glyph = True
     self.options.notdef_outline = True
-    self.options.decompress = True
+    self.options.desubroutinize = True
     self.font = load_font(fontfile, self.options, lazy=False)
     self.whitespace_and_ignorable_list = whitespace_and_ignorable_list
 
