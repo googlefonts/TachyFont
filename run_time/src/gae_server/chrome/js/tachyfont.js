@@ -42,6 +42,7 @@ tachyfont.IncrementalFont = function() {
  */
 tachyfont.IncrementalFont.version = 1;
 
+console.log('add a parameter to:  enable "drop IDB" button');
 
 /**
  * The IndexedDB version.
@@ -140,19 +141,36 @@ tachyfont.charToCode = function(in_char) {
  * 7. When the base is available set the class visibility=visible
  *
  * @param {string} fontname The name of the font.
- * @param {?number} req_size Break char requests into multiple of this size.
- * @param {?string} url The URL of the Tachyfont server.
+ * @param {Object} params Optional parameters.
  * @return {tachyfont.IncrementalFont.obj_} The incremental font manager object.
  */
-tachyfont.IncrementalFont.createManager = function(fontname, req_size, url) {
+tachyfont.IncrementalFont.createManager = function(fontname, params) {
+
+  var initialVisibility = false;
+  var initialVisibilityStr = 'hidden';
+  if (params['visibility'] == 'visible') {
+    initialVisibility = true;
+    initialVisibilityStr = 'visible';
+  }
+  var maxVisibilityTimeout = tachyfont.IncrementalFont.MAX_HIDDEN_MILLISECONDS;
+  if (params['maxVisibilityTimeout']) {
+    try {
+      maxVisibilityTimeout = parseInt(params['maxVisibilityTimeout'])
+    } catch(err) {
+    }
+  }
+
+  // Create a style for this font.
+  var style = document.createElement('style');
+  document.head.appendChild(style);
+  var rule = '.' + fontname + ' { font-family: ' + fontname + '; ' +
+    'visibility: ' + initialVisibilityStr + '; }';
+  style.sheet.insertRule(rule, 0);
+
   //tachyfont.timer1.start('load base');
   tachyfont.timer1.start('load Tachyfont base+data for ' + fontname);
   //console.log('check to see if a webfont is in cache');
-  if (!url) {
-    url = window.location.protocol + '//' + window.location.hostname +
-        (window.location.port ? ':' + window.location.port : '');
-  }
-  var incrFontMgr = new tachyfont.IncrementalFont.obj_(fontname, req_size, url);
+  var incrFontMgr = new tachyfont.IncrementalFont.obj_(fontname, params);
   //tachyfont.timer1.start('openIndexedDB.open ' + fontname);
 //  tachyfont.IncrementalFontUtils.logger(incrFontMgr.url,
 //    'need to report info');
@@ -169,14 +187,14 @@ tachyfont.IncrementalFont.createManager = function(fontname, req_size, url) {
   incrFontMgr.getIDB_ = incrFontMgr.openIndexedDB(fontname);
   //tachyfont.timer1.end('openIndexedDB.open ' + fontname);
 
-  // Create a class with visibility: hidden.
+  // Create a class with initial visibility.
   incrFontMgr.style = tachyfont.IncrementalFontUtils.setVisibility(null,
-    fontname, false);
+    fontname, initialVisibility);
   // Limit the maximum visibility=hidden time.
   setTimeout(function() {
     tachyfont.IncrementalFontUtils.setVisibility(incrFontMgr.style, fontname,
       true);
-  }, tachyfont.IncrementalFont.MAX_HIDDEN_MILLISECONDS);
+  }, maxVisibilityTimeout);
   // When the page finishes loading: automatically load needed chars.
   if (document.readyState == 'loading') {
     document.addEventListener('DOMContentLoaded', function(event) {
@@ -273,20 +291,29 @@ tachyfont.IncrementalFont.createManager = function(fontname, req_size, url) {
 /**
  * IncrFontIDB.obj_ - A class to handle interacting the IndexedDB.
  * @param {string} fontname The name of the font.
- * @param {?number} req_size Break char requests into multiple of this size.
- * @param {string} url The URL of the Incremental Font server.
+ * @param {Object} params Optional parameters.
  * @constructor
  * @private
  */
-tachyfont.IncrementalFont.obj_ = function(fontname, req_size, url) {
+tachyfont.IncrementalFont.obj_ = function(fontname, params) {
   this.fontname = fontname;
-  this.req_size = req_size;
-  this.url = url;
+  this.req_size = params['req_size'];
+  this.url = params['url'];
   this.charsURL = '/incremental_fonts/request';
+  this.persistData = true;
   this.persistInfo = {};
   this.persistInfo[tachyfont.IncrementalFont.BASE_DIRTY] = false;
   this.persistInfo[tachyfont.IncrementalFont.CHARLIST_DIRTY] = false;
   this.style = null;
+
+  if (params['persistData'] == false) {
+    this.persistData = false;
+  }
+
+  if (!this.url) {
+    this.url = window.location.protocol + '//' + window.location.hostname +
+        (window.location.port ? ':' + window.location.port : '');
+  }
 
   // Promises
   this.getIDB_ = null;
@@ -433,6 +460,9 @@ tachyfont.IncrementalFont.obj_.prototype.loadNeededChars =
  * @private
  */
 tachyfont.IncrementalFont.obj_.prototype.persistDelayed_ = function(name) {
+  if (!this.persistData) {
+    return;
+  }
   var that = this;
   //console.log('persistDelayed ' + name);
 
@@ -1356,20 +1386,10 @@ tachyfont.BinaryFontEditor.prototype.setGlyphDataOffset =
  * @constructor
  */
 tachyfont.TachyFont = function(fontname, params) {
-  this.fontname = fontname;
-  this.params = params || {};
-
-  var style = document.createElement('style');
-  document.head.appendChild(style);
-  var rule = '.' + fontname + ' { font-family: ' + fontname + '; ' +
-    'visibility: hidden; }';
-  style.sheet.insertRule(rule, 0);
+  params = params || {};
 
   // TODO(bstell) integrate the manager into this object.
-  this.incrfont = tachyfont.IncrementalFont.createManager(
-      this.fontname,
-      this.params['req_size'],
-      this.params['url']);
+  this.incrfont = tachyfont.IncrementalFont.createManager(fontname, params);
 };
 
 /**
