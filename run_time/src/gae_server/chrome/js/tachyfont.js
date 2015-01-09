@@ -91,12 +91,16 @@ tachyfont.IncrementalFont.CHARLIST_DIRTY = 'charlist_dirty';
  * 
  * @param {Array.<string>} fontList The list of fonts.
  * @param {Object} params Optional parameters.
+ * return {Array.<Object>} The list of font objects.
  */
 tachyfont.loadFonts = function(fontList, params) {
   params = params || {};
+  var fonts = [];
   for (var i = 0; i < fontList.length; i++) {
-    new tachyfont.TachyFont(fontList[i], params);
+    var font = new tachyfont.TachyFont(fontList[i], params);
+    fonts.push(font);
   }
+  return fonts;
 };
 
 
