@@ -146,8 +146,8 @@ tachyfont.charToCode = function(in_char) {
  */
 tachyfont.IncrementalFont.createManager = function(fontname, req_size, url) {
   //tachyfont.timer1.start('load base');
-  tachyfont.timer1.start('load Tachyfont base+data');
-  console.log('check to see if a webfont is in cache');
+  tachyfont.timer1.start('load Tachyfont base+data for ' + fontname);
+  //console.log('check to see if a webfont is in cache');
   if (!url) {
     url = window.location.protocol + '//' + window.location.hostname +
         (window.location.port ? ':' + window.location.port : '');
@@ -156,6 +156,7 @@ tachyfont.IncrementalFont.createManager = function(fontname, req_size, url) {
   //tachyfont.timer1.start('openIndexedDB.open ' + fontname);
 //  tachyfont.IncrementalFontUtils.logger(incrFontMgr.url,
 //    'need to report info');
+  /*
   console.log('It would be good to report status of:\n' +
       '* idb\n' +
       '* chars needed\n' +
@@ -164,6 +165,7 @@ tachyfont.IncrementalFont.createManager = function(fontname, req_size, url) {
       '* way to collect the info\n' +
       '* way to clear old info\n' +
       '* errors');
+  */
   incrFontMgr.getIDB_ = incrFontMgr.openIndexedDB(fontname);
   //tachyfont.timer1.end('openIndexedDB.open ' + fontname);
 
@@ -383,7 +385,7 @@ tachyfont.IncrementalFont.obj_.prototype.loadNeededChars =
                 msg = 'display ' + Object.keys(charlist).length + ' chars';
               } else {
                 msg = '';
-                tachyfont.timer1.end('load Tachyfont base+data');
+                tachyfont.timer1.end('load Tachyfont base+data for ' + that.fontname);
                 tachyfont.timer1.done();
               }
               tachyfont.IncrementalFontUtils.setFont(that.fontname, fontdata,
@@ -398,7 +400,7 @@ tachyfont.IncrementalFont.obj_.prototype.loadNeededChars =
               that.persistDelayed_(tachyfont.IncrementalFont.CHARLIST);
             } else {
               var msg = '';
-              tachyfont.timer1.end('load Tachyfont base+data');
+              tachyfont.timer1.end('load Tachyfont base+data for ' + that.fontname);
               tachyfont.IncrementalFontUtils.setFont(that.fontname, fontdata,
                 fileinfo.isTTF, msg);
               tachyfont.IncrementalFontUtils.setVisibility(that.style,
@@ -1404,15 +1406,13 @@ tachyfont.TachyFont = function(fontname, params) {
     'visibility: hidden; }';
   style.sheet.insertRule(rule, 0);
 
-  tachyfont.TachyFontEnv.ready(this, function(
-      /** tachyfont.TachyFont */ a_tachyfont) {
-      //console.log('TachyFont: ready');
-      var incrfont = tachyfont.IncrementalFont.createManager(
-          a_tachyfont.fontname,
-          a_tachyfont.params['req_size'],
-          a_tachyfont.params['url']);
-      a_tachyfont.incrfont_resolve(incrfont);
-  });
+  // TODO(bstell) no need to use a promise here
+  console.log('remove this promise');
+  var incrfont = tachyfont.IncrementalFont.createManager(
+      this.fontname,
+      this.params['req_size'],
+      this.params['url']);
+  this.incrfont_resolve(incrfont);
 };
 
 /**
@@ -2149,24 +2149,6 @@ window.timer2;
 tachyfont.TachyFontEnv = function() {
 };
 
-// Static variables.
-// TODO(bstell) Is this the proper way to initalize these?
-/** List of Javascript files to load.
- * @private
- */
-tachyfont.TachyFontEnv.js_list_ = [];
-/** Count of Javascript files loaded. */
-tachyfont.TachyFontEnv.js_list_loaded_cnt = 0;
-/** List of callbacks to call when all the files are loaded.
- * @private
- */
-tachyfont.TachyFontEnv.ready_list_ = [];
-/** List of CSS files to load.
- * @private
- */
-tachyfont.TachyFontEnv.css_list_ = [];
-/** Count of CSS files loaded. */
-tachyfont.TachyFontEnv.css_list_loaded_cnt = 0;
 
 /**
  * Timing class for performance analysis.
@@ -2254,97 +2236,3 @@ if (window.ForDebug) {
   tachyfont.ForDebug.addTimingTextSizeControl = function() {};
 }
 
-/**
- * Pull in other needed Javascript files.
- * @private
- */
-tachyfont.TachyFontEnv.init_ = function() {
-  // Browser fix-ups.
-//  if (typeof goog.Promise == 'undefined') {
-//    tachyfont.TachyFontEnv.add_js('js/promise-1.0.0.js');
-//  }
-
-  // Load the needed support files.
-//  tachyfont.TachyFontEnv.add_js('js/binary-font-editor.js');
-//  tachyfont.TachyFontEnv.add_js('js/incrfont-indexeddb.js');
-//  tachyfont.TachyFontEnv.add_js('js/incr-font-utils.js');
-//  tachyfont.TachyFontEnv.add_js('js/rle-decoder.js');
-};
-
-/**
- * Load a CSS file.
- * @param {string} url The URL of the CSS.
- */
-tachyfont.TachyFontEnv.add_css = function(url) {
-  //console.log('add css \"' + url + '\'');
-  tachyfont.TachyFontEnv.css_list_.push(url);
-  var link = document.createElement('link');
-  link.setAttribute('href', url);
-  link.setAttribute('rel', 'stylesheet');
-  link.setAttribute('type', 'text/css');
-  link.onload = function() {
-    //console.log('loaded ' + url);
-    tachyfont.TachyFontEnv.css_list_loaded_cnt += 1;
-    tachyfont.TachyFontEnv.handle_ready_();
-  };
-  document.head.appendChild(link);
-};
-
-
-/**
- * Load a Javascript file.
- * @param {string} url The URL of the Javascript.
- */
-tachyfont.TachyFontEnv.add_js = function(url) {
-  //console.log('add script \"' + url + '\'');
-  tachyfont.TachyFontEnv.js_list_.push(url);
-  var script = document.createElement('script');
-  script.src = url;
-  script.onload = function() {
-    //console.log('loaded ' + url);
-    tachyfont.TachyFontEnv.js_list_loaded_cnt += 1;
-    tachyfont.TachyFontEnv.handle_ready_();
-  };
-  document.head.appendChild(script);
-};
-
-
-/**
- * Call the JS callbacks if all the Javascript has been loaded.
- * @private
- */
-tachyfont.TachyFontEnv.handle_ready_ = function() {
-  // Check if all the JS files are loaded.
-  if (tachyfont.TachyFontEnv.js_list_.length !=
-    tachyfont.TachyFontEnv.js_list_loaded_cnt) {
-    return;
-  }
-  if (tachyfont.TachyFontEnv.css_list_.length !=
-    tachyfont.TachyFontEnv.css_list_loaded_cnt) {
-    return;
-  }
-  //console.log('ready');
-  for (var i = 0; i < tachyfont.TachyFontEnv.ready_list_.length; i++) {
-    var callback_obj = tachyfont.TachyFontEnv.ready_list_[i];
-    callback_obj.callback(callback_obj.closure);
-  }
-};
-
-
-/**
- * Register a Javascript is ready callback.
- * This is called when all the requested Javascript URLs are loaded.
- * @param {Object} closure Data to pass to the callback.
- * @param {function(tachyfont.TachyFont)} callback Call this function
- *     when the env is ready.
- */
-tachyfont.TachyFontEnv.ready = function(closure, callback) {
-  //console.log('add callback');
-  var callback_obj = {}; // Make this minifiable.
-  callback_obj.callback = callback;
-  callback_obj.closure = closure;
-  tachyfont.TachyFontEnv.ready_list_.push(callback_obj);
-  tachyfont.TachyFontEnv.handle_ready_();
-};
-
-tachyfont.TachyFontEnv.init_();
