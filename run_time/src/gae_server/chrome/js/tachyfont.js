@@ -172,7 +172,7 @@ tachyfont.IncrementalFont.createManager = function(fontname, params) {
   var maxVisibilityTimeout = tachyfont.IncrementalFont.MAX_HIDDEN_MILLISECONDS;
   if (params['maxVisibilityTimeout']) {
     try {
-      maxVisibilityTimeout = parseInt(params['maxVisibilityTimeout'])
+      maxVisibilityTimeout = parseInt(params['maxVisibilityTimeout'], 10)
     } catch(err) {
     }
   }
@@ -1411,7 +1411,7 @@ tachyfont.TachyFont = function(fontname, params) {
 
 /**
  * Lazily load the data for these chars.;
- * @param {string|null} element_name The name of the data item.
+ * @param {string} element_name The name of the data item.
  */
 tachyfont.TachyFont.prototype.loadNeededChars = function(element_name) {
   this.incrfont.loadNeededChars(element_name);
