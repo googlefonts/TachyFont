@@ -1395,9 +1395,6 @@ tachyfont.BinaryFontEditor.prototype.setGlyphDataOffset =
  */
 tachyfont.TachyFont = function(fontname, params) {
   this.fontname = fontname;
-  this.incrfont = new goog.Promise(function(resolve) {
-    this.incrfont_resolve = resolve;
-  }.bind(this));
   this.params = params || {};
 
   var style = document.createElement('style');
@@ -1406,13 +1403,11 @@ tachyfont.TachyFont = function(fontname, params) {
     'visibility: hidden; }';
   style.sheet.insertRule(rule, 0);
 
-  // TODO(bstell) no need to use a promise here
-  console.log('remove this promise');
-  var incrfont = tachyfont.IncrementalFont.createManager(
+  // TODO(bstell) integrate the manager into this object.
+  this.incrfont = tachyfont.IncrementalFont.createManager(
       this.fontname,
       this.params['req_size'],
       this.params['url']);
-  this.incrfont_resolve(incrfont);
 };
 
 /**
@@ -1420,12 +1415,7 @@ tachyfont.TachyFont = function(fontname, params) {
  * @param {string|null} element_name The name of the data item.
  */
 tachyfont.TachyFont.prototype.loadNeededChars = function(element_name) {
-  this.incrfont.
-  then(function(incrfont) {
-    incrfont.loadNeededChars(element_name);
-  }).thenCatch(function() {
-    debugger;
-  });
+  this.incrfont.loadNeededChars(element_name);
 };
 
 /**
