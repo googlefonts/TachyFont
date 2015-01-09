@@ -86,6 +86,19 @@ tachyfont.IncrementalFont.CHARLIST = 'charlist';
  */
 tachyfont.IncrementalFont.CHARLIST_DIRTY = 'charlist_dirty';
 
+/**
+ * Create a list of TachyFonts
+ * 
+ * @param {Array.<string>} fontList The list of fonts.
+ * @param {Object} params Optional parameters.
+ */
+tachyfont.loadFonts = function(fontList, params) {
+  params = params || {};
+  for (var i = 0; i < fontList.length; i++) {
+    new tachyfont.TachyFont(fontList[i], params);
+  }
+};
+
 
 /**
  * Convert a string to an array of characters.

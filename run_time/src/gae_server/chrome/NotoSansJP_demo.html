@@ -10,14 +10,16 @@
   <script src="js/closure-library/closure/goog/base.js"></script>
   <script src="js/tachyfont.js"></script>
   <script>
-    var notosansjp = [];
-    new tachyfont.TachyFont('NotoSansJP-Thin');
-    new tachyfont.TachyFont('NotoSansJP-Light');
-    new tachyfont.TachyFont('NotoSansJP-DemiLight');
-    new tachyfont.TachyFont('NotoSansJP-Regular');
-    new tachyfont.TachyFont('NotoSansJP-Medium');
-    new tachyfont.TachyFont('NotoSansJP-Bold');
-    new tachyfont.TachyFont('NotoSansJP-Black');
+    var fontList = [
+      'NotoSansJP-Thin',
+      'NotoSansJP-Light',
+      'NotoSansJP-DemiLight',
+      'NotoSansJP-Regular',
+      'NotoSansJP-Medium',
+      'NotoSansJP-Bold',
+      'NotoSansJP-Black',
+    ];
+    tachyfont.loadFonts(fontList);
   </script>
 </head>
 
@@ -46,9 +48,10 @@
 人類社会のすべての構成員の固有の尊厳と平等で譲ることのできない権利とを承認することは、世界における
 </span><br><br>
 
+
 <span class='NotoSansJP-Black'>
 人類社会のすべての構成員の固有の尊厳と平等で譲ることのできない権利とを承認することは、世界における
 </span><br><br>
-
+ 
 </body>
 </html>
