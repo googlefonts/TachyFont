@@ -666,25 +666,6 @@ tachyfont.BinaryFontEditor.prototype.setUint8_ = function(data) {
 };
 
 /**
- * @return {number} Signed byte
- * @private
- */
-//tachyfont.BinaryFontEditor.prototype.getInt8_ = function() {
-//    var data = this.dataView.getInt8(this.baseOffset + this.offset);
-//    this.offset++;
-//    return data;
-//};
-
-/**
- * @param {number} data Unsigned byte
- * @private
- */
-//tachyfont.BinaryFontEditor.prototype.setInt8_ = function(data) {
-//    this.dataView.setInt8(this.baseOffset + this.offset, data);
-//    this.offset++;
-//};
-
-/**
  * @return {number} Unsigned short
  * @private
  */
@@ -702,16 +683,6 @@ tachyfont.BinaryFontEditor.prototype.setUint16_ = function(data) {
     this.dataView.setUint16(this.baseOffset + this.offset, data);
     this.offset += 2;
 };
-
-/**
- * @return {number} Signed short
- * @private
- */
-//tachyfont.BinaryFontEditor.prototype.getInt16_ = function() {
-//    var data = this.dataView.getInt16(this.baseOffset + this.offset);
-//    this.offset += 2;
-//    return data;
-//};
 
 /**
  * @param {number} data Signed short
@@ -750,15 +721,6 @@ tachyfont.BinaryFontEditor.prototype.getInt32_ = function() {
     this.offset += 4;
     return data;
 };
-
-/**
- * @param {number} data Signed integer
- * @private
- */
-//tachyfont.BinaryFontEditor.prototype.setInt32_ = function(data) {
-//    this.dataView.setInt32(this.baseOffset + this.offset, data);
-//    this.offset += 4;
-//};
 
 /**
  * @param {function()} getter One of getUint or getInt functions
@@ -1715,7 +1677,6 @@ tachyfont.IncrementalFontUtils.requestCodepoints =
 };
 
 
-//var fetchCnt = 0;
 /**
  * Async XMLHttpRequest to given url using given method, data and header
  * @param {string} url Destination url
@@ -1727,7 +1688,6 @@ tachyfont.IncrementalFontUtils.requestCodepoints =
  */
 tachyfont.IncrementalFontUtils.requestURL =
   function(url, method, data, headerParams, responseType) {
-  //var cnt = fetchCnt++;
   //tachyfont.timer1.start('fetch ' + cnt + ' ' + url);
   return new goog.Promise(function(resolve, reject) {
     var xhr = new XMLHttpRequest();
@@ -1991,8 +1951,6 @@ tachyfont.IncrementalFontUtils.loadWebFont = function(fontname, fonturl,
     tachyfont.timer2.end('load web font:<br>' + fontname);
     tachyfont.timer2.done();
     clearTimeout(timeout_id);
-  //}).catch(function() {
-  //  debugger;
   });
   return face; // NOTE: the face has to be stored in a global variable or
                // the font seems to disappear.
