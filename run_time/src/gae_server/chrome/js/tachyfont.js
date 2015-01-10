@@ -213,11 +213,11 @@ tachyfont.IncrementalFont.createManager = function(fontInfo, params) {
 
   // Create a class with initial visibility.
   incrFontMgr.style = tachyfont.IncrementalFontUtils.setVisibility(null,
-    fontname, fontInfo, initialVisibility);
+    fontInfo, initialVisibility);
   // Limit the maximum visibility=hidden time.
   setTimeout(function() {
-    tachyfont.IncrementalFontUtils.setVisibility(incrFontMgr.style, fontname,
-      fontInfo, true);
+    tachyfont.IncrementalFontUtils.setVisibility(incrFontMgr.style, fontInfo,
+      true);
   }, maxVisibilityTimeout);
   // When the page finishes loading: automatically load needed chars.
   if (document.readyState == 'loading') {
@@ -273,15 +273,15 @@ tachyfont.IncrementalFont.createManager = function(fontInfo, params) {
     //  '');
     //tachyfont.timer1.done();
     // Make the class visible.
-    //tachyfont.IncrementalFontUtils.setVisibility(incrFontMgr.style, fontname,
-    //  fontInfo, true);
+    //tachyfont.IncrementalFontUtils.setVisibility(incrFontMgr.style, fontInfo,
+    //  true);
 
     return arr;
   }).
   thenCatch(function(e) {
     console.log('failed to get the font.');
-    tachyfont.IncrementalFontUtils.setVisibility(incrFontMgr.style, fontname,
-      fontInfo, true);
+    tachyfont.IncrementalFontUtils.setVisibility(incrFontMgr.style, fontInfo,
+      true);
   });
 
   // Start the operation to get the list of already fetched chars.
@@ -443,8 +443,7 @@ tachyfont.IncrementalFont.obj_.prototype.loadNeededChars =
               tachyfont.IncrementalFontUtils.setFont(that.fontInfo, fontdata,
                 fileinfo.isTTF, msg);
               tachyfont.IncrementalFontUtils.setVisibility(that.style,
-                that.fontname, that.fontInfo,
-                true);
+                that.fontInfo, true);
               // Update the data.
               that.getBase = goog.Promise.all([goog.Promise.resolve(fileinfo), goog.Promise.resolve(fontdata)]);
               that.getCharlist = goog.Promise.resolve(charlist);
@@ -456,8 +455,7 @@ tachyfont.IncrementalFont.obj_.prototype.loadNeededChars =
               tachyfont.IncrementalFontUtils.setFont(that.fontInfo, fontdata,
                 fileinfo.isTTF, msg);
               tachyfont.IncrementalFontUtils.setVisibility(that.style,
-                that.fontname, that.fontInfo,
-                true);
+                that.fontInfo, true);
               tachyfont.timer1.done();
             }
           }).
@@ -1814,11 +1812,10 @@ tachyfont.IncrementalFontUtils.sanitizeBaseFont = function(obj, baseFont) {
 /**
  * Set a style's visibility.
  * @param {Object} style The style object
- * @param {string} fontname name of the font
  * @param {boolean} visible True is setting visibility to visible.
  * @return {Object} New style object for given font and visibility
  */
-tachyfont.IncrementalFontUtils.setVisibility = function(style, fontname, fontInfo,
+tachyfont.IncrementalFontUtils.setVisibility = function(style, fontInfo,
   visible) {
   if (!style) {
     style = document.createElement('style');
@@ -1833,7 +1830,7 @@ tachyfont.IncrementalFontUtils.setVisibility = function(style, fontname, fontInf
   } else {
     visibility = 'hidden';
   }
-  var rule = '.' + fontname + ' { ' +
+  var rule = '.' + fontInfo['name'] + ' { ' +
       'font-family: ' + fontInfo['familyName'] + '; ' +
       'font-weight: ' + fontInfo['weight'] + '; ' +
       'visibility: ' + visibility + '; }';
