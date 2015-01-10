@@ -89,18 +89,24 @@ tachyfont.IncrementalFont.CHARLIST_DIRTY = 'charlist_dirty';
 /**
  * Create a list of TachyFonts
  * 
- * @param {Array.<string>} fontList The list of fonts.
+ * @param {Array.<string>} fontFamilyInfo The list of fonts.
  * @param {Object} params Optional parameters.
  * return {Array.<Object>} The list of font objects.
  */
-tachyfont.loadFonts = function(fontList, params) {
+tachyfont.loadFonts = function(fontFamilyInfo, params) {
   params = params || {};
-  var fonts = [];
-  for (var i = 0; i < fontList.length; i++) {
-    var font = new tachyfont.TachyFont(fontList[i], params);
-    fonts.push(font);
+  var familyName = fontFamilyInfo['familyName'];
+  var url = fontFamilyInfo['url'];
+  var fontInfos = fontFamilyInfo['fonts'];
+  var tachyFonts = [];
+  for (var i = 0; i < fontInfos.length; i++) {
+    var fontInfo = fontInfos[i];
+    fontInfo['familyName'] = familyName;
+    fontInfo['url'] = url;
+    var tachyFont = new tachyfont.TachyFont(fontInfo, params);
+    tachyFonts.push(tachyFont);
   }
-  return fonts;
+  return tachyFonts;
 };
 
 
@@ -157,12 +163,13 @@ tachyfont.charToCode = function(in_char) {
  * 6. Create a "@font-face" rule (need the data to make the blob URL).
  * 7. When the base is available set the class visibility=visible
  *
- * @param {string} fontname The name of the font.
+ * @param {Object} fontInfo Info about this font.
  * @param {Object} params Optional parameters.
  * @return {tachyfont.IncrementalFont.obj_} The incremental font manager object.
  */
-tachyfont.IncrementalFont.createManager = function(fontname, params) {
-
+tachyfont.IncrementalFont.createManager = function(fontInfo, params) {
+  var fontname = fontInfo['name'];
+  
   var initialVisibility = false;
   var initialVisibilityStr = 'hidden';
   if (params['visibility'] == 'visible') {
@@ -187,7 +194,7 @@ tachyfont.IncrementalFont.createManager = function(fontname, params) {
   //tachyfont.timer1.start('load base');
   tachyfont.timer1.start('load Tachyfont base+data for ' + fontname);
   //console.log('check to see if a webfont is in cache');
-  var incrFontMgr = new tachyfont.IncrementalFont.obj_(fontname, params);
+  var incrFontMgr = new tachyfont.IncrementalFont.obj_(fontInfo, params);
   //tachyfont.timer1.start('openIndexedDB.open ' + fontname);
 //  tachyfont.IncrementalFontUtils.logger(incrFontMgr.url,
 //    'need to report info');
@@ -262,7 +269,7 @@ tachyfont.IncrementalFont.createManager = function(fontname, params) {
     //tachyfont.timer1.end('load base');
     var fileinfo = arr[0];
     // Create the @font-face rule.
-    //tachyfont.IncrementalFontUtils.setFont(fontname, arr[2], fileinfo.isTTF,
+    //tachyfont.IncrementalFontUtils.setFont(fontInfo, arr[2], fileinfo.isTTF,
     //  '');
     //tachyfont.timer1.done();
     // Make the class visible.
@@ -307,15 +314,16 @@ tachyfont.IncrementalFont.createManager = function(fontname, params) {
 
 /**
  * IncrFontIDB.obj_ - A class to handle interacting the IndexedDB.
- * @param {string} fontname The name of the font.
+ * @param {Object} fontInfo Info about this font.
  * @param {Object} params Optional parameters.
  * @constructor
  * @private
  */
-tachyfont.IncrementalFont.obj_ = function(fontname, params) {
-  this.fontname = fontname;
+tachyfont.IncrementalFont.obj_ = function(fontInfo, params) {
+  this.fontInfo = fontInfo;
+  this.fontname = fontInfo['name'];
   this.req_size = params['req_size'];
-  this.url = params['url'];
+  this.url = fontInfo['url'];
   this.charsURL = '/incremental_fonts/request';
   this.persistData = true;
   this.persistInfo = {};
@@ -432,7 +440,7 @@ tachyfont.IncrementalFont.obj_.prototype.loadNeededChars =
                 tachyfont.timer1.end('load Tachyfont base+data for ' + that.fontname);
                 tachyfont.timer1.done();
               }
-              tachyfont.IncrementalFontUtils.setFont(that.fontname, fontdata,
+              tachyfont.IncrementalFontUtils.setFont(that.fontInfo, fontdata,
                 fileinfo.isTTF, msg);
               tachyfont.IncrementalFontUtils.setVisibility(that.style,
                 that.fontname,
@@ -445,7 +453,7 @@ tachyfont.IncrementalFont.obj_.prototype.loadNeededChars =
             } else {
               var msg = '';
               tachyfont.timer1.end('load Tachyfont base+data for ' + that.fontname);
-              tachyfont.IncrementalFontUtils.setFont(that.fontname, fontdata,
+              tachyfont.IncrementalFontUtils.setFont(that.fontInfo, fontdata,
                 fileinfo.isTTF, msg);
               tachyfont.IncrementalFontUtils.setVisibility(that.style,
                 that.fontname,
@@ -1398,15 +1406,15 @@ tachyfont.BinaryFontEditor.prototype.setGlyphDataOffset =
 
 /**
  * TachyFont - A namespace.
- * @param {string} fontname The fontname.
+ * @param {Object} fontInfo The font info.
  * @param {Object} params Optional parameters.
  * @constructor
  */
-tachyfont.TachyFont = function(fontname, params) {
+tachyfont.TachyFont = function(fontInfo, params) {
   params = params || {};
 
   // TODO(bstell) integrate the manager into this object.
-  this.incrfont = tachyfont.IncrementalFont.createManager(fontname, params);
+  this.incrfont = tachyfont.IncrementalFont.createManager(fontInfo, params);
 };
 
 /**
@@ -1835,12 +1843,13 @@ tachyfont.IncrementalFontUtils.setVisibility = function(style, fontname,
 
 /**
  * Add the '@font-face' rule
- * @param {string} fontname The CSS fontname
+ * @param {Object} fontInfo Info about this font.
  * @param {DataView} data The font data.
  * @param {boolean} isTTF True is the font is of type TTF.
  * @param {string} msg A message to display in a timer.
  */
-tachyfont.IncrementalFontUtils.setFont = function(fontname, data, isTTF, msg) {
+tachyfont.IncrementalFontUtils.setFont = function(fontInfo, data, isTTF, msg) {
+  var fontname = fontInfo['name'];
   if (msg) {
     tachyfont.timer1.start(msg);
   }
@@ -1863,8 +1872,15 @@ tachyfont.IncrementalFontUtils.setFont = function(fontname, data, isTTF, msg) {
   }
   var blobUrl = window.URL.createObjectURL(blob);
 
-  if (typeof FontFace == 'undefined') {
-    tachyfont.IncrementalFontUtils.setFont_oldStyle(fontname, blobUrl, isTTF);
+  var weight = parseInt(fontInfo['weight'], 10);
+  //console.log(fontInfo['name'] + ' weight: ' + weight);
+  var nonSupportedWeight = weight % 100;
+  if (nonSupportedWeight) {
+    console.log(fontInfo['name'] + ' weight ' + weight + ' unsupported');
+  }
+  // FontFace does not allow non-hundred weights
+  if (nonSupportedWeight || typeof FontFace == 'undefined') {
+    tachyfont.IncrementalFontUtils.setFont_oldStyle(fontInfo, blobUrl, isTTF);
     return;
   } else {
     var font = new FontFace(fontname, 'url(' + blobUrl + ')', {});
@@ -1876,12 +1892,13 @@ tachyfont.IncrementalFontUtils.setFont = function(fontname, data, isTTF, msg) {
 
 /**
  * Add the '@font-face' rule without using CSS Fonts Module Level 3.
- * @param {string} fontname The CSS fontname
+ * @param {Object} fontInfo Info about this font.
  * @param {string} blobUrl The blob URL of the font data.
  * @param {boolean} isTTF True is the font is of type TTF.
  */
-tachyfont.IncrementalFontUtils.setFont_oldStyle = function(fontname, blobUrl,
+tachyfont.IncrementalFontUtils.setFont_oldStyle = function(fontInfo, blobUrl,
   isTTF) {
+  var fontname = fontInfo['name'];
   // Get the style sheet.
   var style = document.getElementById(
     tachyfont.IncrementalFontUtils.STYLESHEET_ID);

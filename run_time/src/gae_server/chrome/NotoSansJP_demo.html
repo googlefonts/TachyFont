@@ -10,16 +10,20 @@
   <script src="js/closure-library/closure/goog/base.js"></script>
   <script src="js/tachyfont.js"></script>
   <script>
-    var fontList = [
-      'NotoSansJP-Thin',
-      'NotoSansJP-Light',
-      'NotoSansJP-DemiLight',
-      'NotoSansJP-Regular',
-      'NotoSansJP-Medium',
-      'NotoSansJP-Bold',
-      'NotoSansJP-Black',
-    ];
-    tachyfont.loadFonts(fontList);
+    var fontInfo = {
+      'familyName': 'NotoSansJP',
+      'fonts': [
+        { 'name': 'NotoSansJP-Thin', 'weight': 100 }, // weight is really 250 
+        { 'name': 'NotoSansJP-Light', 'weight': 200 }, // weight is really 300
+        { 'name': 'NotoSansJP-DemiLight', 'weight': 300 }, // weight is really 350
+        { 'name': 'NotoSansJP-Regular', 'weight': 400 },
+        { 'name': 'NotoSansJP-Medium', 'weight': 500 },
+        { 'name': 'NotoSansJP-Bold', 'weight': 700 },
+        { 'name': 'NotoSansJP-Black', 'weight': 900 },
+      ],
+      'url': '',
+    };
+    tachyfont.loadFonts(fontInfo);
   </script>
 </head>
 
