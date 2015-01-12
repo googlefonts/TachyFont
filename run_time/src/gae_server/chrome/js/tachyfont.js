@@ -18,6 +18,8 @@
  */
 
 goog.provide('tachyfont');
+goog.provide('webfonttailor');
+
 goog.require('goog.Promise');
 
 /**
@@ -93,14 +95,13 @@ tachyfont.IncrementalFont.CHARLIST_DIRTY = 'charlist_dirty';
  * @param {Object} params Optional parameters.
  * return {Array.<Object>} The list of font objects.
  */
-tachyfont.loadFonts = function(fontFamilyInfo, params) {
+tachyfont.loadFonts = function(familyName, fontInfo, params) {
   params = params || {};
-  var familyName = fontFamilyInfo['familyName'];
-  var url = fontFamilyInfo['url'];
-  var fontInfos = fontFamilyInfo['fonts'];
+  var url = fontInfo['url'];
+  var fonts = fontInfo['fonts'];
   var tachyFonts = [];
-  for (var i = 0; i < fontInfos.length; i++) {
-    var fontInfo = fontInfos[i];
+  for (var i = 0; i < fonts.length; i++) {
+    var fontInfo = fonts[i];
     fontInfo['familyName'] = familyName;
     fontInfo['url'] = url;
     var tachyFont = new tachyfont.TachyFont(fontInfo, params);
@@ -2242,3 +2243,35 @@ if (window.ForDebug) {
   tachyfont.ForDebug.addTimingTextSizeControl = function() {};
 }
 
+
+/* WebFontTailor performs a logically different function from TachyFont and
+ * thus belongs in a separate file.
+ */
+
+/**
+ * getTachyFontInfo: get the font information.
+ * 
+ * @param {Array.<string>} fonts The suggested list of font (families).
+ * @param {Array.<string>} languages The language codes list.
+ * @param {Array.<string>} styles The slants (eg, italic) list.
+ * @param {Array.<string>} weights The weights list.
+ * @param {Object} options The additional font options; eg, stretch
+ * @returns {Object} The information for the fonts.
+ */
+webfonttailor.getTachyFontsInfo = function(fonts, languages, styles, weights,
+  options) {
+  console.log('need to make webfonttailor real');
+  var fontsInfo = {
+          'fonts': [
+            { 'name': 'NotoSansJP-Thin', 'weight': 100 }, // weight is really 250 
+            { 'name': 'NotoSansJP-Light', 'weight': 200 }, // weight is really 300
+            { 'name': 'NotoSansJP-DemiLight', 'weight': 300 }, // weight is really 350
+            { 'name': 'NotoSansJP-Regular', 'weight': 400 },
+            { 'name': 'NotoSansJP-Medium', 'weight': 500 },
+            { 'name': 'NotoSansJP-Bold', 'weight': 700 },
+            { 'name': 'NotoSansJP-Black', 'weight': 900 },
+          ],
+          'url': '',
+  };
+  return fontsInfo;
+};
