@@ -2263,13 +2263,34 @@ webfonttailor.getTachyFontsInfo = function(fonts, languages, styles, weights,
   console.log('need to make webfonttailor real');
   var fontsInfo = {
           'fonts': [
-            { 'name': 'NotoSansJP-Thin', 'weight': 100 }, // weight is really 250 
-            { 'name': 'NotoSansJP-Light', 'weight': 200 }, // weight is really 300
-            { 'name': 'NotoSansJP-DemiLight', 'weight': 300 }, // weight is really 350
-            { 'name': 'NotoSansJP-Regular', 'weight': 400 },
-            { 'name': 'NotoSansJP-Medium', 'weight': 500 },
-            { 'name': 'NotoSansJP-Bold', 'weight': 700 },
-            { 'name': 'NotoSansJP-Black', 'weight': 900 },
+            { 'name': 'NotoSansJP-Thin',
+              'weight': 100,  // weight is really 250 
+              'class': 'NotoSansJP-Thin'
+            },
+            { 'name': 'NotoSansJP-Light',
+              'weight': 200, // weight is really 300
+              'class': 'NotoSansJP-Light'
+            },
+            { 'name': 'NotoSansJP-DemiLight',
+              'weight': 300, // weight is really 350
+              'class': 'NotoSansJP-DemiLisht'
+            },
+            { 'name': 'NotoSansJP-Regular',
+              'weight': 400,
+              'class': 'NotoSansJP-Regular'
+            },
+            { 'name': 'NotoSansJP-Medium',
+              'weight': 500,
+              'class': 'NotoSansJP-Thin'
+            },
+            { 'name': 'NotoSansJP-Bold',
+              'weight': 700,
+              'class': 'NotoSansJP-Bold'
+            },
+            { 'name': 'NotoSansJP-Black',
+              'weight': 900,
+              'class': 'NotoSansJP-Thin'
+            },
           ],
           'url': '',
   };
