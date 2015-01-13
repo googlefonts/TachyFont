@@ -2280,7 +2280,7 @@ webfonttailor.fontFamliesInfo = {
 /**
  * getTachyFontInfo: get the font information.
  * 
- * @param {Array.<string>} fontFamlies The suggested list of font (families).
+ * @param {Array.<string>} fontFamlies The suggested list of font families.
  * @param {Array.<string>} languages The language codes list.
  * @param {Array.<Object>} faces The faces (eg, slant, weight) list.
  * @param {Object} options The additional font options; eg, stretch
