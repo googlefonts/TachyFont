@@ -2248,6 +2248,35 @@ if (window.ForDebug) {
  * thus belongs in a separate file.
  */
 
+webfonttailor.jaNormalInfo = {
+  '100': { 'name': 'NotoSansJP-Thin', 'weight': 100, 
+           'class': 'NotoSansJP-Thin' },
+  '200': { 'name': 'NotoSansJP-Light', 'weight': 200,
+           'class': 'NotoSansJP-light' },
+  '300': { 'name': 'NotoSansJP-DemiLight', 'weight': 300,
+           'class': 'NotoSansJP-DemiLight' },
+  '400': { 'name': 'NotoSansJP-Regular', 'weight': 400,
+           'class': 'NotoSansJP-Regular' },
+  '500': { 'name': 'NotoSansJP-Medium', 'weight': 500,
+           'class': 'NotoSansJP-Medium' },
+  '700': { 'name': 'NotoSansJP-Bold', 'weight': 700,
+           'class': 'NotoSansJP-Bold' },
+  '900': { 'name': 'NotoSansJP-Black', 'weight': 900,
+           'class': 'NotoSansJP-Black' },
+};
+
+webfonttailor.jaStyleInfo = {
+  'normal': webfonttailor.jaNormalInfo
+};
+
+webfonttailor.notoSansLanguageInfo = {
+  'ja': webfonttailor.jaStyleInfo
+};
+
+webfonttailor.fontFamliesInfo = {
+  'Noto Sans': webfonttailor.notoSansLanguageInfo
+};
+
 /**
  * getTachyFontInfo: get the font information.
  * 
@@ -2276,11 +2305,15 @@ webfonttailor.getTachyFontsInfo = function(fontFamlies, languages, faces,
       for (var k = 0; k < faces.length; k++) {
         var face = faces[k];
         var style = face['style'];
-        var weights = styleInfo[style]
-        var weight = face['weight'];
-        var font = weights[weight];
-        if (font) {
-          fonts.push(font);
+        var weights = face['weights'];
+        var weightsInfo = styleInfo[style];
+        for (var l = 0; l < weights.length; l++ ) {
+          var weight = weights[l];
+          var font = weightsInfo[weight];
+          if (font) {
+            fonts.push(font);
+          }
+          
         }
       }
     }
