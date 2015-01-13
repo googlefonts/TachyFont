@@ -91,14 +91,14 @@ tachyfont.IncrementalFont.CHARLIST_DIRTY = 'charlist_dirty';
 /**
  * Create a list of TachyFonts
  * 
- * @param {Array.<string>} fontFamilyInfo The list of fonts.
- * @param {Object} params Optional parameters.
+ * @param {string} familyName The font-family name.
  * return {Array.<Object>} The list of font objects.
+ * @param {Object} params Optional parameters.
  */
-tachyfont.loadFonts = function(familyName, fontInfo, params) {
+tachyfont.loadFonts = function(familyName, fontsInfo, params) {
   params = params || {};
-  var url = fontInfo['url'];
-  var fonts = fontInfo['fonts'];
+  var url = fontsInfo['url'];
+  var fonts = fontsInfo['fonts'];
   var tachyFonts = [];
   for (var i = 0; i < fonts.length; i++) {
     var fontInfo = fonts[i];
@@ -114,7 +114,7 @@ tachyfont.loadFonts = function(familyName, fontInfo, params) {
 /**
  * Convert a string to an array of characters.
  * This function handles surrogate pairs.
- * 
+ *
  * @param {string} str The input string.
  * @returns {Array.<string>} The array of characters.
  */
@@ -1884,7 +1884,7 @@ tachyfont.IncrementalFontUtils.setFont = function(fontInfo, data, isTTF, msg) {
     return;
   } else {
     var font = new FontFace(fontname, 'url(' + blobUrl + ')', {
-      'weight': fontInfo['weight'],
+      'weight': fontInfo['weight']
     });
     document.fonts.add(font);
     font.load();
@@ -2264,7 +2264,7 @@ webfonttailor.getTachyFontsInfo = function(fonts, languages, styles, weights,
   var fontsInfo = {
           'fonts': [
             { 'name': 'NotoSansJP-Thin',
-              'weight': 100,  // weight is really 250 
+              'weight': 100,  // weight is really 250
               'class': 'NotoSansJP-Thin'
             },
             { 'name': 'NotoSansJP-Light',
@@ -2273,7 +2273,7 @@ webfonttailor.getTachyFontsInfo = function(fonts, languages, styles, weights,
             },
             { 'name': 'NotoSansJP-DemiLight',
               'weight': 300, // weight is really 350
-              'class': 'NotoSansJP-DemiLisht'
+              'class': 'NotoSansJP-DemiLight'
             },
             { 'name': 'NotoSansJP-Regular',
               'weight': 400,
@@ -2281,7 +2281,7 @@ webfonttailor.getTachyFontsInfo = function(fonts, languages, styles, weights,
             },
             { 'name': 'NotoSansJP-Medium',
               'weight': 500,
-              'class': 'NotoSansJP-Thin'
+              'class': 'NotoSansJP-Medium'
             },
             { 'name': 'NotoSansJP-Bold',
               'weight': 700,
@@ -2289,10 +2289,10 @@ webfonttailor.getTachyFontsInfo = function(fonts, languages, styles, weights,
             },
             { 'name': 'NotoSansJP-Black',
               'weight': 900,
-              'class': 'NotoSansJP-Thin'
-            },
+              'class': 'NotoSansJP-Black'
+            }
           ],
-          'url': '',
+          'url': ''
   };
   return fontsInfo;
 };
