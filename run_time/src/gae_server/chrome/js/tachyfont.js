@@ -2262,7 +2262,7 @@ webfonttailor.jaNormalInfo = {
   '700': { 'name': 'NotoSansJP-Bold', 'weight': 700,
            'class': 'NotoSansJP-Bold' },
   '900': { 'name': 'NotoSansJP-Black', 'weight': 900,
-           'class': 'NotoSansJP-Black' },
+           'class': 'NotoSansJP-Black' }
 };
 
 webfonttailor.jaStyleInfo = {
@@ -2313,7 +2313,6 @@ webfonttailor.getTachyFontsInfo = function(fontFamlies, languages, faces,
           if (font) {
             fonts.push(font);
           }
-          
         }
       }
     }
