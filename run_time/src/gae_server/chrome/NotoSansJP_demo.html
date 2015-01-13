@@ -11,7 +11,15 @@
   <script src="js/tachyfont.js"></script>
   <script>
     var fontsInfo = webfonttailor.getTachyFontsInfo( ['Noto Sans'], ['ja'],
-        ['normal'], ['100', '200', '300', '400', '500', '700', '900'], {});
+        [ { 'style': 'normal', 'weight': '100' }, 
+          { 'style': 'normal', 'weight': '200' },
+          { 'style': 'normal', 'weight': '300' },
+          { 'style': 'normal', 'weight': '400' },
+          { 'style': 'normal', 'weight': '500' },
+          { 'style': 'normal', 'weight': '700' },
+          { 'style': 'normal', 'weight': '900' }
+        ],
+        {});
     tachyfont.loadFonts('NotoSansJP', fontsInfo);
   </script>
 </head>

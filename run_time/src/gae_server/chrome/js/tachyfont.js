@@ -2251,48 +2251,41 @@ if (window.ForDebug) {
 /**
  * getTachyFontInfo: get the font information.
  * 
- * @param {Array.<string>} fonts The suggested list of font (families).
+ * @param {Array.<string>} fontFamlies The suggested list of font families.
  * @param {Array.<string>} languages The language codes list.
- * @param {Array.<string>} styles The slants (eg, italic) list.
- * @param {Array.<string>} weights The weights list.
+ * @param {Array.<Object>} faces The faces (eg, slant, weight) list.
  * @param {Object} options The additional font options; eg, stretch
  * @returns {Object} The information for the fonts.
  */
-webfonttailor.getTachyFontsInfo = function(fonts, languages, styles, weights,
+webfonttailor.getTachyFontsInfo = function(fontFamlies, languages, faces,
   options) {
-  console.log('need to make webfonttailor real');
-  var fontsInfo = {
-          'fonts': [
-            { 'name': 'NotoSansJP-Thin',
-              'weight': 100,  // weight is really 250
-              'class': 'NotoSansJP-Thin'
-            },
-            { 'name': 'NotoSansJP-Light',
-              'weight': 200, // weight is really 300
-              'class': 'NotoSansJP-Light'
-            },
-            { 'name': 'NotoSansJP-DemiLight',
-              'weight': 300, // weight is really 350
-              'class': 'NotoSansJP-DemiLight'
-            },
-            { 'name': 'NotoSansJP-Regular',
-              'weight': 400,
-              'class': 'NotoSansJP-Regular'
-            },
-            { 'name': 'NotoSansJP-Medium',
-              'weight': 500,
-              'class': 'NotoSansJP-Medium'
-            },
-            { 'name': 'NotoSansJP-Bold',
-              'weight': 700,
-              'class': 'NotoSansJP-Bold'
-            },
-            { 'name': 'NotoSansJP-Black',
-              'weight': 900,
-              'class': 'NotoSansJP-Black'
-            }
-          ],
-          'url': ''
-  };
+  var fontsInfo = {};
+  var fonts = [];
+  for (var i = 0; i < fontFamlies.length; i++) {
+    var fontFamily = fontFamlies[i];
+    var languagesInfo = webfonttailor.fontFamliesInfo[fontFamily];
+    if (languagesInfo == undefined) {
+      continue;
+    }
+    for (var j = 0; j < languages.length; j++) {
+      var language = languages[j];
+      var styleInfo = languagesInfo[language];
+      if (styleInfo == undefined) {
+        continue;
+      }
+      for (var k = 0; k < faces.length; k++) {
+        var face = faces[k];
+        var style = face['style'];
+        var weights = styleInfo[style]
+        var weight = face['weight'];
+        var font = weights[weight];
+        if (font) {
+          fonts.push(font);
+        }
+      }
+    }
+  }
+  fontsInfo['fonts'] = fonts;
+  fontsInfo['url'] = '';
   return fontsInfo;
 };
