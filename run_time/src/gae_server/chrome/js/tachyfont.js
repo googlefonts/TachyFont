@@ -49,7 +49,6 @@ tachyfont.IncrementalFont = function() {
  */
 tachyfont.IncrementalFont.version = 1;
 
-console.log('add a parameter to:  enable "drop IDB" button');
 
 /**
  * The IndexedDB version.
@@ -350,6 +349,7 @@ tachyfont.IncrementalFont.obj_ = function(fontInfo, params) {
   this.fontInfo = fontInfo;
   this.fontname = fontInfo['name'];
   this.req_size = params['req_size'];
+  this.needToSetFont = true;
   this.url = fontInfo['url'];
   this.charsURL = '/incremental_fonts/request';
   this.persistData = true;
@@ -373,6 +373,22 @@ tachyfont.IncrementalFont.obj_ = function(fontInfo, params) {
   this.getCharList = null;
   this.finishPersistingData = goog.Promise.resolve();
   this.finishPendingCharsRequest = goog.Promise.resolve();
+};
+
+/**
+ * IncrFontIDB.obj_ - A class to handle interacting the IndexedDB.
+ * @param {DataView} fontdata The font dataview.
+ * @param {Object} fileinfo The font file information.
+ * @param {string} msg A message for the timer.
+ * @private
+ */
+tachyfont.IncrementalFont.obj_.prototype._setFont = function(fontdata,
+  fileinfo, msg) {
+  if (this.needToSetFont) {
+    this.needToSetFont = false;
+    tachyfont.IncrementalFontUtils.setFont(this.fontInfo, fontdata,
+      fileinfo.isTTF, msg);
+  }
 };
 
 /**
@@ -456,6 +472,7 @@ tachyfont.IncrementalFont.obj_.prototype.loadNeededChars =
             var fileinfo = arr[0];
             var fontdata = arr[1];
             if (chardata != null) {
+              that.needToSetFont = true;
               fontdata =
                 tachyfont.IncrementalFontUtils.injectCharacters(fileinfo,
                   fontdata, chardata);
@@ -468,8 +485,7 @@ tachyfont.IncrementalFont.obj_.prototype.loadNeededChars =
                     that.fontname);
                 tachyfont.timer1.done();
               }
-              tachyfont.IncrementalFontUtils.setFont(that.fontInfo, fontdata,
-                fileinfo.isTTF, msg);
+              that._setFont(fontdata, fileinfo, msg);
               tachyfont.IncrementalFontUtils.setVisibility(that.style,
                 that.fontInfo, true);
               // Update the data.
@@ -482,8 +498,7 @@ tachyfont.IncrementalFont.obj_.prototype.loadNeededChars =
               var msg = '';
               tachyfont.timer1.end('load Tachyfont base+data for ' +
                   that.fontname);
-              tachyfont.IncrementalFontUtils.setFont(that.fontInfo, fontdata,
-                fileinfo.isTTF, msg);
+              that._setFont(fontdata, fileinfo, msg);
               tachyfont.IncrementalFontUtils.setVisibility(that.style,
                 that.fontInfo, true);
               tachyfont.timer1.done();
@@ -1879,6 +1894,7 @@ tachyfont.IncrementalFontUtils.setVisibility = function(style, fontInfo,
  * @param {string} msg A message to display in a timer.
  */
 tachyfont.IncrementalFontUtils.setFont = function(fontInfo, data, isTTF, msg) {
+  console.log('setFont');
   var fontname = fontInfo['name'];
   if (msg) {
     tachyfont.timer1.start(msg);
