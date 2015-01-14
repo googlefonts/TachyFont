@@ -382,7 +382,7 @@ tachyfont.IncrementalFont.obj_ = function(fontInfo, params) {
  * @param {string} msg A message for the timer.
  * @private
  */
-tachyfont.IncrementalFont.obj_.prototype._setFont = function(fontdata,
+tachyfont.IncrementalFont.obj_.prototype.setFont_ = function(fontdata,
   fileinfo, msg) {
   if (this.needToSetFont) {
     this.needToSetFont = false;
@@ -485,7 +485,7 @@ tachyfont.IncrementalFont.obj_.prototype.loadNeededChars =
                     that.fontname);
                 tachyfont.timer1.done();
               }
-              that._setFont(fontdata, fileinfo, msg);
+              that.setFont_(fontdata, fileinfo, msg);
               tachyfont.IncrementalFontUtils.setVisibility(that.style,
                 that.fontInfo, true);
               // Update the data.
@@ -498,7 +498,7 @@ tachyfont.IncrementalFont.obj_.prototype.loadNeededChars =
               var msg = '';
               tachyfont.timer1.end('load Tachyfont base+data for ' +
                   that.fontname);
-              that._setFont(fontdata, fileinfo, msg);
+              that.setFont_(fontdata, fileinfo, msg);
               tachyfont.IncrementalFontUtils.setVisibility(that.style,
                 that.fontInfo, true);
               tachyfont.timer1.done();
