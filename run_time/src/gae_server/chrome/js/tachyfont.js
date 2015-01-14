@@ -22,6 +22,8 @@ goog.provide('webfonttailor');
 
 goog.require('goog.Promise');
 
+tachyfont.persistData = true;
+
 /**
  * @typedef {number}
  */
@@ -108,6 +110,18 @@ tachyfont.loadFonts = function(familyName, fontsInfo, params) {
     tachyFonts.push(tachyFont);
   }
   return tachyFonts;
+};
+
+/**
+ * Update a list of TachyFonts
+ * 
+ * return {Array.<Object>} The list of font objects.
+ */
+tachyfont.updateFonts = function(tachyFonts) {
+  for (var i = 0; i < tachyFonts.length; i++) {
+    var tachyFont = tachyFonts[i];
+    tachyFont.incrfont.loadNeededChars('body');
+  }
 };
 
 
@@ -231,7 +245,13 @@ tachyfont.IncrementalFont.createManager = function(fontInfo, params) {
 
   incrFontMgr.getBase = incrFontMgr.getIDB_.
   then(function(idb) {
-    var filedata = incrFontMgr.getData_(idb, tachyfont.IncrementalFont.BASE);
+    var filedata;
+    if (tachyfont.persistData) {
+      filedata = incrFontMgr.getData_(idb, tachyfont.IncrementalFont.BASE);
+    } else {
+      var e = new Event('not using persisting data');
+      filedata = goog.Promise.all([goog.Promise.resolve(idb), goog.Promise.reject(e)]);
+    }
     return goog.Promise.all([goog.Promise.resolve(idb), filedata]);
   }).
   then(function(arr) {
@@ -332,7 +352,7 @@ tachyfont.IncrementalFont.obj_ = function(fontInfo, params) {
   this.persistInfo[tachyfont.IncrementalFont.CHARLIST_DIRTY] = false;
   this.style = null;
 
-  if (params['persistData'] == false) {
+  if (params['persistData'] == false || !tachyfont.persistData) {
     this.persistData = false;
   }
 
@@ -2249,7 +2269,7 @@ if (window.ForDebug) {
  */
 
 webfonttailor.jaNormalInfo = {
-  '100': { 'name': 'NotoSansJP-Thin', 'weight': 100, 
+  '100': { 'name': 'NotoSansJP-Thin', 'weight': 100,
            'class': 'NotoSansJP-Thin' },
   '200': { 'name': 'NotoSansJP-Light', 'weight': 200,
            'class': 'NotoSansJP-light' },
