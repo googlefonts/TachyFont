@@ -22,6 +22,9 @@ goog.provide('webfonttailor');
 
 goog.require('goog.Promise');
 
+/**
+ * Enable/disable using/saving persisted data.
+ */
 tachyfont.persistData = true;
 
 /**
@@ -92,10 +95,11 @@ tachyfont.IncrementalFont.CHARLIST_DIRTY = 'charlist_dirty';
 
 /**
  * Create a list of TachyFonts
- * 
+ *
  * @param {string} familyName The font-family name.
- * return {Array.<Object>} The list of font objects.
+ * @param {Array.<Object>} fontsInfo The list of font information objects.
  * @param {Object} params Optional parameters.
+ * @return {Array.<Object>} The list of TachyFont objects.
  */
 tachyfont.loadFonts = function(familyName, fontsInfo, params) {
   params = params || {};
@@ -114,8 +118,8 @@ tachyfont.loadFonts = function(familyName, fontsInfo, params) {
 
 /**
  * Update a list of TachyFonts
- * 
- * return {Array.<Object>} The list of font objects.
+ *
+ * @param {Array.<Object>} tachyFonts The list of font objects.
  */
 tachyfont.updateFonts = function(tachyFonts) {
   for (var i = 0; i < tachyFonts.length; i++) {
@@ -150,7 +154,7 @@ tachyfont.stringToChars = function(str) {
 /**
  * Convert a char to its codepoint.
  * This function handles surrogate pairs.
- * 
+ *
  * @param {string} in_char The input char (string).
  * @returns {number} The numeric value.
  */
@@ -184,7 +188,7 @@ tachyfont.charToCode = function(in_char) {
  */
 tachyfont.IncrementalFont.createManager = function(fontInfo, params) {
   var fontname = fontInfo['name'];
-  
+
   var initialVisibility = false;
   var initialVisibilityStr = 'hidden';
   if (params['visibility'] == 'visible') {
@@ -194,8 +198,8 @@ tachyfont.IncrementalFont.createManager = function(fontInfo, params) {
   var maxVisibilityTimeout = tachyfont.IncrementalFont.MAX_HIDDEN_MILLISECONDS;
   if (params['maxVisibilityTimeout']) {
     try {
-      maxVisibilityTimeout = parseInt(params['maxVisibilityTimeout'], 10)
-    } catch(err) {
+      maxVisibilityTimeout = parseInt(params['maxVisibilityTimeout'], 10);
+    } catch (err) {
     }
   }
 
@@ -250,7 +254,8 @@ tachyfont.IncrementalFont.createManager = function(fontInfo, params) {
       filedata = incrFontMgr.getData_(idb, tachyfont.IncrementalFont.BASE);
     } else {
       var e = new Event('not using persisting data');
-      filedata = goog.Promise.all([goog.Promise.resolve(idb), goog.Promise.reject(e)]);
+      filedata = goog.Promise.all([goog.Promise.resolve(idb),
+          goog.Promise.reject(e)]);
     }
     return goog.Promise.all([goog.Promise.resolve(idb), filedata]);
   }).
@@ -259,7 +264,8 @@ tachyfont.IncrementalFont.createManager = function(fontInfo, params) {
     var filedata = new DataView(arr[1]);
     var fileinfo = tachyfont.IncrementalFontUtils.parseBaseHeader(filedata);
     var fontdata = new DataView(arr[1], fileinfo.headSize);
-    return goog.Promise.all([goog.Promise.resolve(fileinfo), goog.Promise.resolve(fontdata)]);
+    return goog.Promise.all([goog.Promise.resolve(fileinfo),
+        goog.Promise.resolve(fontdata)]);
   }).
   thenCatch(function(e) {
     var bandwidth = tachyfont.ForDebug.getCookie('bandwidth', '0');
@@ -458,7 +464,8 @@ tachyfont.IncrementalFont.obj_.prototype.loadNeededChars =
                 msg = 'display ' + Object.keys(charlist).length + ' chars';
               } else {
                 msg = '';
-                tachyfont.timer1.end('load Tachyfont base+data for ' + that.fontname);
+                tachyfont.timer1.end('load Tachyfont base+data for ' +
+                    that.fontname);
                 tachyfont.timer1.done();
               }
               tachyfont.IncrementalFontUtils.setFont(that.fontInfo, fontdata,
@@ -466,13 +473,15 @@ tachyfont.IncrementalFont.obj_.prototype.loadNeededChars =
               tachyfont.IncrementalFontUtils.setVisibility(that.style,
                 that.fontInfo, true);
               // Update the data.
-              that.getBase = goog.Promise.all([goog.Promise.resolve(fileinfo), goog.Promise.resolve(fontdata)]);
+              that.getBase = goog.Promise.all([goog.Promise.resolve(fileinfo),
+                  goog.Promise.resolve(fontdata)]);
               that.getCharlist = goog.Promise.resolve(charlist);
               that.persistDelayed_(tachyfont.IncrementalFont.BASE);
               that.persistDelayed_(tachyfont.IncrementalFont.CHARLIST);
             } else {
               var msg = '';
-              tachyfont.timer1.end('load Tachyfont base+data for ' + that.fontname);
+              tachyfont.timer1.end('load Tachyfont base+data for ' +
+                  that.fontname);
               tachyfont.IncrementalFontUtils.setFont(that.fontInfo, fontdata,
                 fileinfo.isTTF, msg);
               tachyfont.IncrementalFontUtils.setVisibility(that.style,
@@ -1833,6 +1842,7 @@ tachyfont.IncrementalFontUtils.sanitizeBaseFont = function(obj, baseFont) {
 /**
  * Set a style's visibility.
  * @param {Object} style The style object
+ * @param {Object} fontInfo The font information object
  * @param {boolean} visible True is setting visibility to visible.
  * @return {Object} New style object for given font and visibility
  */
@@ -2268,6 +2278,11 @@ if (window.ForDebug) {
  * thus belongs in a separate file.
  */
 
+/**
+ * webfonttailor.jaNormalInfo
+ *
+ * This list of supported weights for Noto Sans JP normal (upright).
+ */
 webfonttailor.jaNormalInfo = {
   '100': { 'name': 'NotoSansJP-Thin', 'weight': 100,
            'class': 'NotoSansJP-Thin' },
@@ -2285,21 +2300,36 @@ webfonttailor.jaNormalInfo = {
            'class': 'NotoSansJP-Black' }
 };
 
+/**
+ * webfonttailor.jaStyleInfo
+ *
+ * This list of supported styles (slants) for Noto Sans JP.
+ */
 webfonttailor.jaStyleInfo = {
   'normal': webfonttailor.jaNormalInfo
 };
 
+/**
+ * webfonttailor.notoSansLanguageInfo
+ *
+ * This list of supported languages for the Noto Sans font family.
+ */
 webfonttailor.notoSansLanguageInfo = {
   'ja': webfonttailor.jaStyleInfo
 };
 
+/**
+ * webfonttailor.fontFamliesInfo
+ *
+ * This list of supported font families.
+ */
 webfonttailor.fontFamliesInfo = {
   'Noto Sans': webfonttailor.notoSansLanguageInfo
 };
 
 /**
  * getTachyFontInfo: get the font information.
- * 
+ *
  * @param {Array.<string>} fontFamlies The suggested list of font families.
  * @param {Array.<string>} languages The language codes list.
  * @param {Array.<Object>} faces The faces (eg, slant, weight) list.
@@ -2327,7 +2357,7 @@ webfonttailor.getTachyFontsInfo = function(fontFamlies, languages, faces,
         var style = face['style'];
         var weights = face['weights'];
         var weightsInfo = styleInfo[style];
-        for (var l = 0; l < weights.length; l++ ) {
+        for (var l = 0; l < weights.length; l++) {
           var weight = weights[l];
           var font = weightsInfo[weight];
           if (font) {
