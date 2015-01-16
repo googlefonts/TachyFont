@@ -96,12 +96,12 @@ tachyfont.IncrementalFont.CHARLIST_DIRTY = 'charlist_dirty';
  * Create a list of TachyFonts
  *
  * @param {string} familyName The font-family name.
- * @param {Array.<Object>} fontsInfo The list of font information objects.
- * @param {Object} params Optional parameters.
+ * @param {Object} fontsInfo The font information object.
+ * @param {Object} opt_params Optional parameters.
  * @return {Array.<Object>} The list of TachyFont objects.
  */
-tachyfont.loadFonts = function(familyName, fontsInfo, params) {
-  params = params || {};
+tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
+  opt_params = opt_params || {};
   var url = fontsInfo['url'];
   var fonts = fontsInfo['fonts'];
   var tachyFonts = [];
@@ -109,7 +109,7 @@ tachyfont.loadFonts = function(familyName, fontsInfo, params) {
     var fontInfo = fonts[i];
     fontInfo['familyName'] = familyName;
     fontInfo['url'] = url;
-    var tachyFont = new tachyfont.TachyFont(fontInfo, params);
+    var tachyFont = new tachyfont.TachyFont(fontInfo, opt_params);
     tachyFonts.push(tachyFont);
   }
   return tachyFonts;
@@ -1894,8 +1894,8 @@ tachyfont.IncrementalFontUtils.setVisibility = function(style, fontInfo,
  * @param {string} msg A message to display in a timer.
  */
 tachyfont.IncrementalFontUtils.setFont = function(fontInfo, data, isTTF, msg) {
-  console.log('setFont');
-  var fontname = fontInfo['name'];
+  //console.log('setFont');
+  var fontFamily = fontInfo['familyName'];
   if (msg) {
     tachyfont.timer1.start(msg);
   }
@@ -1923,13 +1923,14 @@ tachyfont.IncrementalFontUtils.setFont = function(fontInfo, data, isTTF, msg) {
   if (nonSupportedWeight) {
     console.log(fontInfo['name'] + ' weight ' + weight + ' unsupported');
   }
-  nonSupportedWeight = true;
+  //nonSupportedWeight = true;
+  //console.log('nonSupportedWeight = ' + nonSupportedWeight);
   // FontFace does not allow non-hundred weights
   if (nonSupportedWeight || typeof FontFace == 'undefined') {
     tachyfont.IncrementalFontUtils.setFont_oldStyle(fontInfo, blobUrl, isTTF);
     return;
   } else {
-    var font = new FontFace(fontname, 'url(' + blobUrl + ')', {
+    var font = new FontFace(fontFamily, 'url(' + blobUrl + ')', {
       'weight': fontInfo['weight']
     });
     document.fonts.add(font);
@@ -2003,7 +2004,6 @@ tachyfont.IncrementalFontUtils.setFont_oldStyle = function(fontInfo, blobUrl,
       console.log('no delete/drop rule');
     }
   }
-
 };
 
 
