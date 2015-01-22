@@ -51,8 +51,7 @@ tachyfont.IncrementalFont.version = 1;
 
 
 /**
- * The IndexedDB version.
- * Increment this number every time there is a change in the schema.
+ * The maximum time in milliseconds to hide the text to prevent FOUT.
  */
 tachyfont.IncrementalFont.MAX_HIDDEN_MILLISECONDS = 3000;
 
@@ -1923,7 +1922,7 @@ tachyfont.IncrementalFontUtils.setFont = function(fontInfo, data, isTTF, msg) {
   if (nonSupportedWeight) {
     console.log(fontInfo['name'] + ' weight ' + weight + ' unsupported');
   }
-  //nonSupportedWeight = true;
+  nonSupportedWeight = true;
   //console.log('nonSupportedWeight = ' + nonSupportedWeight);
   // FontFace does not allow non-hundred weights
   if (nonSupportedWeight || typeof FontFace == 'undefined') {
@@ -1934,7 +1933,14 @@ tachyfont.IncrementalFontUtils.setFont = function(fontInfo, data, isTTF, msg) {
       'weight': fontInfo['weight']
     });
     document.fonts.add(font);
-    font.load();
+    goog.Promise.all([font.load()])
+    .then(function() {
+      //console.log(fontInfo['name'] + ' load succeeded');
+    })
+    .thenCatch(function() {
+      console.log(fontInfo['name'] + ' load failed');
+    })
+    ;
   }
 };
 
