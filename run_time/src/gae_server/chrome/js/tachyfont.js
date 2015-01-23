@@ -121,15 +121,23 @@ tachyfont.TachyFontSet.prototype.addFont = function(font) {
 tachyfont.TachyFontSet.prototype.updateFonts = function() {
   var updatingFonts = [];
   for (var i = 0; i < this.fonts.length; i++) {
-    var tachyFont = this.fonts[i];
-    var load = tachyFont.incrfont.loadNeededChars('body');
+    var fontObj = this.fonts[i].incrfont;
+    var load = fontObj.loadNeededChars('body');
     updatingFonts.push(load);
   }
   var allLoaded = goog.Promise.all(updatingFonts).
-  then(function(results) {
-    //debugger;
-    console.log('all fonts loaded');
-  }).
+  then(function(load_results) {
+    for (var i = 0; i < load_results.length; i++) {
+      var load_result = load_results[i];
+      var fontObj = this.fonts[i].incrfont;
+      if (load_result['data_length'] != 0) {
+        fontObj.needToSetFont = true;
+      }
+      fontObj.setFont_(load_result['fontdata'], load_result['fileinfo'], '');
+      tachyfont.IncrementalFontUtils.setVisibility(fontObj.style,
+        fontObj.fontInfo, true);
+    }
+  }.bind(this)).
   thenCatch(function() {
     console.log('failed to load all fonts');
   });
@@ -447,31 +455,6 @@ tachyfont.IncrementalFont.obj_.prototype.setFont_ = function(fontdata,
  * @return {Object}
  */
 tachyfont.IncrementalFont.obj_.prototype.loadNeededChars =
-  function(element_name) {
-  // TODO(bstell) check if the element_name exists.
-  var result = this.loadNeededChars_(element_name).
-  then(function(load_result) {
-    if (load_result['data_length'] != 0) {
-      this.needToSetFont = true;
-    }
-    this.setFont_(load_result['fontdata'], load_result['fileinfo'], '');
-    tachyfont.IncrementalFontUtils.setVisibility(this.style, this.fontInfo,
-      true);
-  }.bind(this)).
-  thenCatch(function(e) {
-    console.log('loadNeededChars: failed');
-    debugger;
-  });
-  return result;
-};
-
-/**
- * Lazily load the data for these chars.
- * @param {string} element_name The name of the data item.
- * @private
- * @return {Object}
- */
-tachyfont.IncrementalFont.obj_.prototype.loadNeededChars_ =
   function(element_name) {
   var that = this;
   var chars = '';
