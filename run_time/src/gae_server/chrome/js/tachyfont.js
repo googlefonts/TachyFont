@@ -127,7 +127,8 @@ tachyfont.TachyFontSet.prototype.updateFonts = function() {
   }
   var allLoaded = goog.Promise.all(updatingFonts).
   then(function(results) {
-    //console.log('all fonts loaded');
+    //debugger;
+    console.log('all fonts loaded');
   }).
   thenCatch(function() {
     console.log('failed to load all fonts');
@@ -164,7 +165,15 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
  * @param {Array.<Object>} tachyFonts The list of font objects.
  */
 tachyfont.updateFonts = function(tachyFonts) {
-  console.log('tachyfont.updateFonts no longer supported');
+  console.log('tachyfont.updateFonts is deprecated');
+  if (tachyFonts.constructor == Array) {
+    for (var i = 0; i < tachyFonts.length; i++) {
+      var tachyFont = tachyFonts[i];
+      tachyFont.incrfont.loadNeededChars('body');
+    }
+  } else if (tachyFonts.constructor == tachyfont.TachyFontSet) {
+    tachyFonts.updateFonts();
+  }
 };
 
 
