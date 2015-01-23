@@ -105,7 +105,7 @@ tachyfont.TachyFontSet = function() {
 
 };
 
-/*
+/**
  * Add a TachyFont.
  * 
  * @param {Object} font The TachyFont to add to the set.
@@ -170,7 +170,7 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
 /**
  * Update a list of TachyFonts
  *
- * @param {Array.<Object>} tachyFonts The list of font objects.
+ * @param {Array.<Object>|Object} tachyFonts The list of font objects.
  */
 tachyfont.updateFonts = function(tachyFonts) {
   console.log('tachyfont.updateFonts is deprecated');
@@ -563,7 +563,7 @@ tachyfont.IncrementalFont.obj_.prototype.loadNeededChars =
                     'num_chars': neededCodes.length,
                     'data_length': data_length,
                     'fileinfo': fileinfo,
-                    'fontdata': fontdata,
+                    'fontdata': fontdata
                     };
             pending_resolve(result);
           }).
