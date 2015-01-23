@@ -92,26 +92,70 @@ tachyfont.IncrementalFont.CHARLIST = 'charlist';
 tachyfont.IncrementalFont.CHARLIST_DIRTY = 'charlist_dirty';
 
 /**
+ * Manage a group of TachyFonts.
+ * 
+ * @constructor
+ */
+tachyfont.TachyFontSet = function() {
+  this.fonts = [];
+	// Add a onLoad call to update the fonts.
+  document.addEventListener('DOMContentLoaded', function(event) {
+    this.updateFonts();
+  }.bind(this));
+
+};
+
+/*
+ * Add a TachyFont.
+ * 
+ * @param {Object} font The TachyFont to add to the set.
+ */
+tachyfont.TachyFontSet.prototype.addFont = function(font) {
+  this.fonts.push(font);
+};
+
+/*
+ * Update a group TachyFonts
+ * 
+ */
+tachyfont.TachyFontSet.prototype.updateFonts = function() {
+  var updatingFonts = [];
+  for (var i = 0; i < this.fonts.length; i++) {
+    var tachyFont = this.fonts[i];
+    var load = tachyFont.incrfont.loadNeededChars('body');
+    updatingFonts.push(load);
+  }
+  var allLoaded = goog.Promise.all(updatingFonts).
+  then(function(results) {
+    //console.log('all fonts loaded');
+  }).
+  thenCatch(function() {
+    console.log('failed to load all fonts');
+  });
+  return allLoaded;
+};
+
+/**
  * Create a list of TachyFonts
  *
  * @param {string} familyName The font-family name.
  * @param {Object} fontsInfo The font information object.
  * @param {Object} opt_params Optional parameters.
- * @return {Array.<Object>} The list of TachyFont objects.
+ * @return {Object} The TachyFontSet object.
  */
 tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
+  var tachyFontSet = new tachyfont.TachyFontSet();
   opt_params = opt_params || {};
   var url = fontsInfo['url'];
   var fonts = fontsInfo['fonts'];
-  var tachyFonts = [];
   for (var i = 0; i < fonts.length; i++) {
     var fontInfo = fonts[i];
     fontInfo['familyName'] = familyName;
     fontInfo['url'] = url;
     var tachyFont = new tachyfont.TachyFont(fontInfo, opt_params);
-    tachyFonts.push(tachyFont);
+    tachyFontSet.addFont(tachyFont);
   }
-  return tachyFonts;
+  return tachyFontSet;
 };
 
 /**
@@ -120,10 +164,7 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
  * @param {Array.<Object>} tachyFonts The list of font objects.
  */
 tachyfont.updateFonts = function(tachyFonts) {
-  for (var i = 0; i < tachyFonts.length; i++) {
-    var tachyFont = tachyFonts[i];
-    tachyFont.incrfont.loadNeededChars('body');
-  }
+  console.log('tachyfont.updateFonts no longer supported');
 };
 
 
@@ -239,7 +280,8 @@ tachyfont.IncrementalFont.createManager = function(fontInfo, params) {
   // When the page finishes loading: automatically load needed chars.
   if (document.readyState == 'loading') {
     document.addEventListener('DOMContentLoaded', function(event) {
-      incrFontMgr.loadNeededChars('body');
+      // TODO(bstell) need to fix this
+      // incrFontMgr.loadNeededChars('body');
     });
   } else {
     incrFontMgr.loadNeededChars('body');
@@ -397,6 +439,30 @@ tachyfont.IncrementalFont.obj_.prototype.setFont_ = function(fontdata,
  */
 tachyfont.IncrementalFont.obj_.prototype.loadNeededChars =
   function(element_name) {
+  // TODO(bstell) check if the element_name exists.
+  var result = this.loadNeededChars_(element_name).
+  then(function(value) {
+    console.log('loadNeededChars: success');
+    console.log('typeof value = ' + typeof value);
+    //debugger;
+    console.log('value = ' + value);
+    //debugger;
+  }).
+  thenCatch(function(e) {
+    console.log('loadNeededChars: failed');
+    debugger;
+  });
+  return result;
+};
+
+/**
+ * Lazily load the data for these chars.
+ * @param {string} element_name The name of the data item.
+ * @private
+ * @return {Object}
+ */
+tachyfont.IncrementalFont.obj_.prototype.loadNeededChars_ =
+  function(element_name) {
   var that = this;
   var chars = '';
   var charlist;
@@ -467,7 +533,7 @@ tachyfont.IncrementalFont.obj_.prototype.loadNeededChars =
         then(function(chardata) {
           return that.getBase.
           then(function(arr) {
-            pending_resolve();
+            pending_resolve(132);
             var fileinfo = arr[0];
             var fontdata = arr[1];
             if (chardata != null) {
@@ -505,7 +571,7 @@ tachyfont.IncrementalFont.obj_.prototype.loadNeededChars =
           }).
           thenCatch(function(e) {
             console.log('failed to getBase: ' + e.message);
-            pending_reject(null);
+            pending_reject(111);
           });
         });
       }).
