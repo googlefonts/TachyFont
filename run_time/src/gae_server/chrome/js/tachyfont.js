@@ -450,13 +450,14 @@ tachyfont.IncrementalFont.obj_.prototype.loadNeededChars =
   function(element_name) {
   // TODO(bstell) check if the element_name exists.
   var result = this.loadNeededChars_(element_name).
-  then(function(value) {
-    console.log('loadNeededChars: success');
-    console.log('typeof value = ' + typeof value);
-    //debugger;
-    console.log('value = ' + value);
-    //debugger;
-  }).
+  then(function(load_result) {
+    if (load_result['data_length'] != 0) {
+      this.needToSetFont = true;
+    }
+    this.setFont_(load_result['fontdata'], load_result['fileinfo'], '');
+    tachyfont.IncrementalFontUtils.setVisibility(this.style, this.fontInfo,
+      true);
+  }.bind(this)).
   thenCatch(function(e) {
     console.log('loadNeededChars: failed');
     debugger;
@@ -475,6 +476,7 @@ tachyfont.IncrementalFont.obj_.prototype.loadNeededChars_ =
   var that = this;
   var chars = '';
   var charlist;
+  var neededCodes = [];
   var remaining = [];
   var element;
   element = document.getElementById(element_name);
@@ -497,7 +499,6 @@ tachyfont.IncrementalFont.obj_.prototype.loadNeededChars_ =
           for (var key in charlist) {
             tmp_charlist[key] = charlist[key];
           }
-          var neededCodes = [];
           var char_array = tachyfont.stringToChars(chars);
           for (var i = 0; i < char_array.length; i++) {
             var c = char_array[i];
@@ -542,10 +543,12 @@ tachyfont.IncrementalFont.obj_.prototype.loadNeededChars_ =
         then(function(chardata) {
           return that.getBase.
           then(function(arr) {
-            pending_resolve(132);
+            //debugger;
             var fileinfo = arr[0];
             var fontdata = arr[1];
+            var data_length = 0;
             if (chardata != null) {
+              data_length = chardata.byteLength;
               that.needToSetFont = true;
               fontdata =
                 tachyfont.IncrementalFontUtils.injectCharacters(fileinfo,
@@ -559,24 +562,27 @@ tachyfont.IncrementalFont.obj_.prototype.loadNeededChars_ =
                     that.fontname);
                 tachyfont.timer1.done();
               }
-              that.setFont_(fontdata, fileinfo, msg);
-              tachyfont.IncrementalFontUtils.setVisibility(that.style,
-                that.fontInfo, true);
-              // Update the data.
+              // Update the data promises.
               that.getBase = goog.Promise.all([goog.Promise.resolve(fileinfo),
                   goog.Promise.resolve(fontdata)]);
               that.getCharlist = goog.Promise.resolve(charlist);
+
+              // Persist the data.
               that.persistDelayed_(tachyfont.IncrementalFont.BASE);
               that.persistDelayed_(tachyfont.IncrementalFont.CHARLIST);
             } else {
               var msg = '';
               tachyfont.timer1.end('load Tachyfont base+data for ' +
                   that.fontname);
-              that.setFont_(fontdata, fileinfo, msg);
-              tachyfont.IncrementalFontUtils.setVisibility(that.style,
-                that.fontInfo, true);
               tachyfont.timer1.done();
             }
+            var result = {
+                    'num_chars': neededCodes.length,
+                    'data_length': data_length,
+                    'fileinfo': fileinfo,
+                    'fontdata': fontdata,
+                    };
+            pending_resolve(result);
           }).
           thenCatch(function(e) {
             console.log('failed to getBase: ' + e.message);
