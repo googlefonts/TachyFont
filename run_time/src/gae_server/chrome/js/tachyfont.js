@@ -456,26 +456,6 @@ tachyfont.IncrementalFont.obj_.prototype.setFont_ = function(fontdata,
  */
 tachyfont.IncrementalFont.obj_.prototype.loadNeededChars =
   function(element_name) {
-  // TODO(bstell) check if the element_name exists.
-  var result = this.loadNeededChars_(element_name).
-  then(function(load_result) {
-    return(load_result);
-  }.bind(this)).
-  thenCatch(function(e) {
-    console.log('loadNeededChars: failed');
-    debugger;
-  });
-  return result;
-};
-
-/**
- * Lazily load the data for these chars.
- * @param {string} element_name The name of the data item.
- * @private
- * @return {Object}
- */
-tachyfont.IncrementalFont.obj_.prototype.loadNeededChars_ =
-  function(element_name) {
   var that = this;
   var chars = '';
   var charlist;
