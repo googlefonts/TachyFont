@@ -137,11 +137,6 @@ goog.testing.TestCase = function(opt_name) {
    * @suppress {underscore|visibility}
    */
   this.result_ = new goog.testing.TestCase.Result(this);
-
-  // This silences a compiler warning from the legacy property check, which
-  // is deprecated. It idly writes to testRunner properties that are used
-  // in this file.
-  var testRunnerMethods = {isFinished: true, hasErrors: true};
 };
 
 
@@ -202,7 +197,7 @@ goog.testing.TestCase.prototype.order = goog.testing.TestCase.Order.SORTED;
 /**
  * Save a reference to {@code window.setTimeout}, so any code that overrides the
  * default behavior (the MockClock, for example) doesn't affect our runner.
- * @type {function((Function|string), number, *=): number}
+ * @type {function((Function|string), number=, *=): number}
  * @private
  */
 goog.testing.TestCase.protectedSetTimeout_ = goog.global.setTimeout;
@@ -773,14 +768,30 @@ goog.testing.TestCase.prototype.invokeTestFunction_ = function(
         goog.isFunction(retval && retval['then'])) {
       var self = this;
       retval.then(
-          function() { onSuccess.call(self); },
-          function(e) { onFailure.call(self, e); });
+          function() {
+            self.resetBatchTimeAfterPromise_();
+            onSuccess.call(self);
+          },
+          function(e) {
+            self.resetBatchTimeAfterPromise_();
+            onFailure.call(self, e);
+          });
     } else {
       onSuccess.call(this);
     }
   } catch (e) {
     onFailure.call(this, e);
   }
+};
+
+
+/**
+ * Resets the batch run timer. This should only be called after resolving a
+ * promise since Promise.then() has an implicit yield.
+ * @private
+ */
+goog.testing.TestCase.prototype.resetBatchTimeAfterPromise_ = function() {
+  this.batchTime_ = this.now();
 };
 
 
