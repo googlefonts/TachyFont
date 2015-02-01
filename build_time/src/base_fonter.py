@@ -197,7 +197,7 @@ class BaseFonter(object):
     inner_file.seek(cffTableOffset + charStringOffset )
     raw_index_file = Index(inner_file)
     
-    # TODO(bstell) this need to correctly handle the offset to .notdef
+    # TODO(bstell) this needs to correctly handle the offset to .notdef
     locations = raw_index_file.offsets
     assert (count+1) == len(locations)
     

@@ -109,6 +109,7 @@ class GlyfSerializer(object):
   def serialize_TOC(self, output_idx, output_data):
     """Dump the TOC data to the file
     """
+    # TODO(bstell) remove this is not used anywhere
     if self.tocReady:
       dumper = Dumper(output_idx)
       dumper.dump(self.TOC)
