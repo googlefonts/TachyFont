@@ -219,6 +219,6 @@ Timer.prototype._appendTimingCell = function(row, pos, value, align) {
 
 //This is here only for measuring the timings during development.
 //This is not needed for regular use.
-var timer1 = new Timer('200px', '10px', '');
+var timer1 = new Timer('200px', '100px', '');
 var timer2 = new Timer('200px', '', '10px');
 
