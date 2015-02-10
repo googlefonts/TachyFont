@@ -8,6 +8,9 @@
 
   <!-- TachyFont -->
   <script src="js/closure-library/closure/goog/base.js"></script>
+  <!-- For debugging output (stripped out when compiled). -->
+  <script src="js/closure-library/closure/goog/debug/console.js"></script>
+  <script src="js/closure-library/closure/goog/log/log.js"></script>
   <script src="js/tachyfont.js"></script>
   <script>
     var fontsInfo = webfonttailor.getTachyFontsInfo( ['Noto Sans'], ['ja'],
@@ -16,7 +19,7 @@
           },
         ],
         {});
-    tachyfont.loadFonts('NotoSansJP', fontsInfo);
+    var tachyFontSet = tachyfont.loadFonts('NotoSansJP', fontsInfo);
   </script>
 </head>
 
