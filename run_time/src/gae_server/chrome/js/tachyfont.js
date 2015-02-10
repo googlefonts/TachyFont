@@ -142,7 +142,7 @@ tachyfont.TachyFontSet.prototype.updateFonts = function() {
   var updatingFonts = [];
   for (var i = 0; i < this.fonts.length; i++) {
     var fontObj = this.fonts[i].incrfont;
-    var load = fontObj.loadNeededChars('body');
+    var load = fontObj.loadChars('body');
     updatingFonts.push(load);
   }
   var allLoaded = goog.Promise.all(updatingFonts).
@@ -201,7 +201,7 @@ tachyfont.updateFonts = function(tachyFonts) {
   if (tachyFonts.constructor == Array) {
     for (var i = 0; i < tachyFonts.length; i++) {
       var tachyFont = tachyFonts[i];
-      tachyFont.incrfont.loadNeededChars('body');
+      tachyFont.incrfont.loadChars('body');
     }
   } else if (tachyFonts.constructor == tachyfont.TachyFontSet) {
     tachyFonts.updateFonts();
@@ -327,10 +327,10 @@ tachyfont.IncrementalFont.createManager = function(fontInfo, params) {
   if (document.readyState == 'loading') {
     document.addEventListener('DOMContentLoaded', function(event) {
       // TODO(bstell) need to fix this
-      // incrFontMgr.loadNeededChars('body');
+      // incrFontMgr.loadChars('body');
     });
   } else {
-    incrFontMgr.loadNeededChars('body');
+    incrFontMgr.loadChars('body');
   }
 
   incrFontMgr.getBase = incrFontMgr.getIDB_.
@@ -490,7 +490,7 @@ tachyfont.IncrementalFont.obj_.prototype.setFont_ = function(fontdata,
  * @param {string} element_name The name of the data item.
  * @return {Object}
  */
-tachyfont.IncrementalFont.obj_.prototype.loadNeededChars =
+tachyfont.IncrementalFont.obj_.prototype.loadChars =
   function(element_name) {
   var that = this;
   var chars = '';
@@ -568,7 +568,7 @@ tachyfont.IncrementalFont.obj_.prototype.loadNeededChars =
           then(function(chardata) {
             if (remaining.length) {
               setTimeout(function() {
-                that.loadNeededChars(element_name);
+                that.loadChars(element_name);
               }, 1);
             }
             // if (goog.DEBUG) {
@@ -635,7 +635,7 @@ tachyfont.IncrementalFont.obj_.prototype.loadNeededChars =
       }).
       thenCatch(function(e) {
         if (goog.DEBUG) {
-          goog.log.error(tachyfont.logger_, 'loadNeededChars: ' + e.message);
+          goog.log.error(tachyfont.logger_, 'loadChars: ' + e.message);
           debugger;
         }
         pending_reject(null);
@@ -1623,7 +1623,7 @@ tachyfont.TachyFont = function(fontInfo, params) {
  * @param {string} element_name The name of the data item.
  */
 tachyfont.TachyFont.prototype.loadNeededChars = function(element_name) {
-  this.incrfont.loadNeededChars(element_name);
+  this.incrfont.loadChars(element_name);
 };
 
 /**
