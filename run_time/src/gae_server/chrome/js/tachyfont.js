@@ -38,10 +38,16 @@ if (goog.DEBUG) {
    * @private
    */
   tachyfont.logger_ = goog.log.getLogger('debug');
+  /**
+   * @type {boolean}
+   * @private
+   */
+  tachyfont.buildDemo_ = false;
 }
 
 /**
  * Enable/disable using/saving persisted data.
+ * @typedef {boolean}
  */
 tachyfont.persistData = true;
 
@@ -116,11 +122,6 @@ tachyfont.IncrementalFont.CHARLIST_DIRTY = 'charlist_dirty';
  */
 tachyfont.TachyFontSet = function() {
   this.fonts = [];
-  // Add a onLoad call to update the fonts.
-  document.addEventListener('DOMContentLoaded', function(event) {
-    this.updateFonts();
-  }.bind(this));
-
 };
 
 /**
@@ -186,6 +187,70 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
     var tachyFont = new tachyfont.TachyFont(fontInfo, opt_params);
     tachyFontSet.addFont(tachyFont);
   }
+
+  // Add DOM mutation observer.
+  var target = document.documentElement;
+  //create an observer instance
+  var observer = new MutationObserver(function(mutations) {
+    if (goog.DEBUG) {
+      goog.log.info(tachyfont.logger_, 'MutationObserver');
+    }
+    var needUpdate = false;
+    mutations.forEach(function(mutation) {
+      var textNode;
+      if (goog.DEBUG) {
+        var changeType;
+      }
+      if (mutation.type == 'childList') {
+        for (var i = 0; i < mutation.addedNodes.length; i++) {
+          var node = mutation.addedNodes[i];
+          if (node.nodeName == '#text') {
+            var parentName = node.parentNode.nodeName;
+            if (parentName != 'SCRIPT' && parentName != 'STYLE') {
+              textNode = node;
+              if (goog.DEBUG) {
+                changeType = 'a: ';
+              }
+            }
+          }
+        }
+      } else if (mutation.type == 'characterData') {
+        if (mutation.target.nodeName == '#text') {
+          textNode = mutation.target;
+          if (goog.DEBUG) {
+            changeType = 'c: ';
+          }
+        }
+      }
+      // Load the text if necessary.
+      if (textNode) {
+        var text = textNode.nodeValue.trim();
+        if (text) {
+          needUpdate = true;
+          var parent = textNode.parentNode;
+          var style = getComputedStyle(parent, null);
+          if (goog.DEBUG) {
+            goog.log.fine(tachyfont.logger_, changeType + style.fontFamily + '/' + style.fontWeight +
+            ': "' + text + '"');
+          }
+        }
+      }
+    });
+    if (needUpdate) {
+      if (goog.DEBUG) {
+        goog.log.info(tachyfont.logger_, 'MutationObserver: updateFonts');
+      }
+      // TODO(bstell) should pass in what is needed for each font.
+      tachyFontSet.updateFonts();
+    }
+  });
+   
+  // configuration of the observer:
+  var config = { 'childList': true, 'subtree': true, 'characterData': true };
+   
+  // pass in the target node, as well as the observer options
+  observer.observe(target, config);
+
   return tachyFontSet;
 };
 
@@ -323,15 +388,6 @@ tachyfont.IncrementalFont.createManager = function(fontInfo, params) {
     tachyfont.IncrementalFontUtils.setVisibility(incrFontMgr.style, fontInfo,
       true);
   }, maxVisibilityTimeout);
-  // When the page finishes loading: automatically load needed chars.
-  if (document.readyState == 'loading') {
-    document.addEventListener('DOMContentLoaded', function(event) {
-      // TODO(bstell) need to fix this
-      // incrFontMgr.loadChars('body');
-    });
-  } else {
-    incrFontMgr.loadChars('body');
-  }
 
   incrFontMgr.getBase = incrFontMgr.getIDB_.
   then(function(idb) {
@@ -419,14 +475,18 @@ tachyfont.IncrementalFont.createManager = function(fontInfo, params) {
     }
   });
 
-  // For Debug: add a button to clear the IndexedDB.
-  tachyfont.ForDebug.addDropIdbButton(incrFontMgr, fontname);
-
-  // For Debug: add a control to set the bandwidth.
-  tachyfont.ForDebug.addBandwidthControl();
-
-  // For Debug: add a control to set the timing text size.
-  tachyfont.ForDebug.addTimingTextSizeControl();
+  // TODO(bstell) wrap this in "if (tachyfont.DEMO)"
+  if (tachyfont.buildDemo_) {
+    tachyfont.buildDemo_ = false;
+    // For Debug: add a button to clear the IndexedDB.
+    tachyfont.ForDebug.addDropIdbButton(incrFontMgr, fontname);
+  
+    // For Debug: add a control to set the bandwidth.
+    tachyfont.ForDebug.addBandwidthControl();
+  
+    // For Debug: add a control to set the timing text size.
+    tachyfont.ForDebug.addTimingTextSizeControl();
+  }
 
   return incrFontMgr;
 };
@@ -492,6 +552,9 @@ tachyfont.IncrementalFont.obj_.prototype.setFont_ = function(fontdata,
  */
 tachyfont.IncrementalFont.obj_.prototype.loadChars =
   function(element_name) {
+  if (goog.DEBUG) {
+    goog.log.info(tachyfont.logger_, 'loadChars');
+  }
   var that = this;
   var chars = '';
   var charlist;
@@ -783,7 +846,7 @@ tachyfont.IncrementalFont.obj_.prototype.saveData_ = function(idb, name, data) {
     }).
     thenCatch(function(e) {
       if (goog.DEBUG) {
-        goog.log.error(tachyfont.logger_, 'saveData ' + name + ': ' +
+        goog.log.error(tachyfont.logger_, 'saveData ' + db.name + ' ' + name + ': ' +
           e.message);
         debugger;
       }
