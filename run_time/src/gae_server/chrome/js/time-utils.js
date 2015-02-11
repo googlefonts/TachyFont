@@ -45,6 +45,8 @@ Timer.columns = [
 ];
 Timer.showDetails = false;
 
+Timer.table = undefined;
+
 /**
  * Save start of the an event and display msg on the console
  * @param {string} msg
@@ -98,8 +100,8 @@ Timer.prototype.numberOfTimingRecords = function() {
  * @param {Object} table DOM table element.
  */
 Timer.prototype.getTable = function() {
-  if (this.table) {
-    return this.table;
+  if (Timer.table) {
+    return Timer.table;
   }
   if (!document.body) {
     return null;
@@ -131,9 +133,9 @@ Timer.prototype.getTable = function() {
 
   div.appendChild(table);
   document.body.appendChild(div);
-  this.table = table;
+  Timer.table = table;
 
-  return this.table;
+  return Timer.table;
 };
 
 
