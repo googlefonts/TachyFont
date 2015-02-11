@@ -333,6 +333,10 @@ tachyfont.charToCode = function(in_char) {
  */
 tachyfont.IncrementalFont.createManager = function(fontInfo, params) {
   var fontname = fontInfo['name'];
+  var backendService =
+      fontInfo['fontkit'] ?
+      new tachyfont.GoogleBackendService(fontInfo['url']) :
+      new tachyfont.BackendService(fontInfo['url']);
 
   var initialVisibility = false;
   var initialVisibilityStr = 'hidden';
@@ -361,7 +365,8 @@ tachyfont.IncrementalFont.createManager = function(fontInfo, params) {
   //   goog.log.info(tachyfont.logger_,
   //     'check to see if a webfont is in cache');
   // }
-  var incrFontMgr = new tachyfont.IncrementalFont.obj_(fontInfo, params);
+  var incrFontMgr =
+      new tachyfont.IncrementalFont.obj_(fontInfo, params, backendService);
   //tachyfont.timer1.start('openIndexedDB.open ' + fontname);
 //  tachyfont.IncrementalFontUtils.logger(incrFontMgr.url,
 //    'need to report info');
@@ -410,10 +415,7 @@ tachyfont.IncrementalFont.createManager = function(fontInfo, params) {
         goog.Promise.resolve(fontdata)]);
   }).
   thenCatch(function(e) {
-    var bandwidth = tachyfont.ForDebug.getCookie('bandwidth', '0');
-    return tachyfont.IncrementalFontUtils.requestURL(incrFontMgr.url +
-      '/incremental_fonts/incrfonts/' + incrFontMgr.fontname + '/base', 'GET',
-      null, { 'X-TachyFont-bandwidth': bandwidth }, 'arraybuffer').
+    return backendService.requestFontBase(fontInfo).
     then(function(xfer_bytes) {
       //tachyfont.timer1.start('uncompact base');
       var xfer_data = new DataView(xfer_bytes);
@@ -496,10 +498,11 @@ tachyfont.IncrementalFont.createManager = function(fontInfo, params) {
  * IncrFontIDB.obj_ - A class to handle interacting the IndexedDB.
  * @param {Object} fontInfo Info about this font.
  * @param {Object} params Optional parameters.
+ * @param {Object} backendService object used to generate backend requests.
  * @constructor
  * @private
  */
-tachyfont.IncrementalFont.obj_ = function(fontInfo, params) {
+tachyfont.IncrementalFont.obj_ = function(fontInfo, params, backendService) {
   this.fontInfo = fontInfo;
   this.fontname = fontInfo['name'];
   this.req_size = params['req_size'];
@@ -511,6 +514,7 @@ tachyfont.IncrementalFont.obj_ = function(fontInfo, params) {
   this.persistInfo[tachyfont.IncrementalFont.BASE_DIRTY] = false;
   this.persistInfo[tachyfont.IncrementalFont.CHARLIST_DIRTY] = false;
   this.style = null;
+  this.backendService = backendService;
 
   if (params['persistData'] == false || !tachyfont.persistData) {
     this.persistData = false;
@@ -626,9 +630,9 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars =
             var c = String.fromCharCode(neededCodes[i]);
             charlist[c] = 1;
           }
-          return tachyfont.IncrementalFontUtils.requestCodepoints(that.url,
-            that.fontname, neededCodes).
-          then(function(chardata) {
+          return that.backendService.requestCodepoints(that.fontInfo,
+                                                       neededCodes).
+          then(function(bundleResponse) {
             if (remaining.length) {
               setTimeout(function() {
                 that.loadChars(element_name);
@@ -638,10 +642,10 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars =
             //   goog.log.info(tachyfont.logger_,
             //     'requested char data length = ' +chardata.byteLength);
             // }
-            return chardata;
+            return bundleResponse;
           });
         }).
-        then(function(chardata) {
+        then(function(bundleResponse) {
           return that.getBase.
           then(function(arr) {
             // if (goog.DEBUG) {
@@ -650,12 +654,12 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars =
             var fileinfo = arr[0];
             var fontdata = arr[1];
             var data_length = 0;
-            if (chardata != null) {
-              data_length = chardata.byteLength;
+            if (bundleResponse != null) {
+              data_length = bundleResponse.getDataLength();
               that.needToSetFont = true;
               fontdata =
                 tachyfont.IncrementalFontUtils.injectCharacters(fileinfo,
-                  fontdata, chardata);
+                  fontdata, bundleResponse);
               var msg;
               if (remaining.length) {
                 msg = 'display ' + Object.keys(charlist).length + ' chars';
@@ -1722,18 +1726,18 @@ tachyfont.IncrementalFontUtils.STYLESHEET_ID =
  * Inject glyphs in the glyphData to the baseFont
  * @param {Object} obj The object with the font header information.
  * @param {DataView} baseFont Current base font
- * @param {ArrayBuffer} glyphData New glyph data
+ * @param {tachyfont.GlyphBundleResponse} bundleResponse New glyph data
  * @return {DataView} Updated base font
  */
 tachyfont.IncrementalFontUtils.injectCharacters = function(obj, baseFont,
-  glyphData) {
+    bundleResponse) {
   // time_start('inject')
   obj.dirty = true;
-  var bundleBinEd = new tachyfont.BinaryFontEditor(new DataView(glyphData), 0);
+  var bundleBinEd = bundleResponse.getFontEditor();
   var baseBinEd = new tachyfont.BinaryFontEditor(baseFont, 0);
 
-  var count = bundleBinEd.getUint16_();
-  var flags = bundleBinEd.getUint8_();
+  var count = bundleResponse.getGlyphCount();
+  var flags = bundleResponse.getFlags();
 
   var isCFF = flags & tachyfont.IncrementalFontUtils.FLAGS.HAS_CFF;
   var offsetDivisor = 1;
@@ -1943,83 +1947,6 @@ tachyfont.IncrementalFontUtils.parseBaseHeader = function(baseFont) {
     }
     return results;
 };
-
-
-/**
- * Send a log message to the server
- * @param {String} url The url of the Incremental Font server.
- * @param {string} msg The message to log.
- * @return {goog.Promise} Promise to return ArrayBuffer for the response bundle
- */
-tachyfont.IncrementalFontUtils.logger = function(url, msg) {
-
-  return tachyfont.IncrementalFontUtils.requestURL(
-    url + '/incremental_fonts/logger',
-    'POST',
-    msg,
-    // Google App Engine servers do not support CORS so we cannot say
-    // the 'Content-Type' is 'application/json'.
-    //{'Content-Type': 'application/json'},
-    {'Content-Type': 'text/plain'},
-    'text');
-};
-
-
-/**
- * Request codepoints from server
- * @param {string} url The url of the Incremental Font server.
- * @param {string} fontname The fontname.
- * @param {Array.<number>} codes Codepoints to be requested
- * @return {goog.Promise} Promise to return ArrayBuffer for the response bundle
- */
-tachyfont.IncrementalFontUtils.requestCodepoints =
-  function(url, fontname, codes) {
-
-  var bandwidth = tachyfont.ForDebug.getCookie('bandwidth', '0');
-  return tachyfont.IncrementalFontUtils.requestURL(
-    url + '/incremental_fonts/request',
-    'POST',
-    JSON.stringify({'font': fontname, 'arr': codes}),
-    // Google App Engine servers do not support CORS so we cannot say
-    // the 'Content-Type' is 'application/json'.
-    //{'Content-Type': 'application/json'},
-    {'Content-Type': 'text/plain', 'X-TachyFont-bandwidth': bandwidth},
-    'arraybuffer');
-};
-
-
-/**
- * Async XMLHttpRequest to given url using given method, data and header
- * @param {string} url Destination url
- * @param {string} method Request method
- * @param {?string} data Request data
- * @param {Object} headerParams Request headers
- * @param {string} responseType Response type
- * @return {goog.Promise} Promise to return response
- */
-tachyfont.IncrementalFontUtils.requestURL =
-  function(url, method, data, headerParams, responseType) {
-  //tachyfont.timer1.start('fetch ' + cnt + ' ' + url);
-  return new goog.Promise(function(resolve, reject) {
-    var xhr = new XMLHttpRequest();
-    xhr.open(method, url, true);
-    for (var param in headerParams)
-      xhr.setRequestHeader(param, headerParams[param]);
-    xhr.responseType = responseType;
-    xhr.onload = function(oEvent) {
-      if (xhr.status == 200) {
-        //tachyfont.timer1.end('fetch ' + cnt + ' ' + url);
-        resolve(xhr.response);
-      } else
-        reject(xhr.status + ' ' + xhr.statusText);
-    };
-    xhr.onerror = function() {
-      reject(Error('Network Error'));
-    };
-    xhr.send(data);
-  });
-};
-
 
 /**
  * Sanitize base font to pass OTS
@@ -2307,6 +2234,288 @@ tachyfont.IncrementalFontUtils.loadWebFont = function(fontname, fonturl,
   });
   return face; // NOTE: the face has to be stored in a global variable or
                // the font seems to disappear.
+};
+
+/**
+ * @param {string} version
+ * @param {string} signature
+ * @param {number} count
+ * @param {number} flags
+ * @param {number} offsetToGlyphData
+ * @param {ArrayBuffer} glyphData
+ * @constructor
+ */
+tachyfont.GlyphBundleResponse = function(
+    version, signature, count, flags, offsetToGlyphData, glyphData) {
+  this.version = version;
+  this.signature = signature;
+  this.count = count;
+  this.flags = flags;
+  this.offsetToGlyphData = offsetToGlyphData;
+  this.glyphData = glyphData;
+};
+
+/**
+ * @return {number} the length of the glyph data in this response.
+ */
+tachyfont.GlyphBundleResponse.prototype.getDataLength = function() {
+  return this.glyphData.byteLength - this.offsetToGlyphData;
+};
+
+/**
+ * @return {tachyfont.BinaryFontEditor} a font editor for the glyph data in this
+ *         response.
+ */
+tachyfont.GlyphBundleResponse.prototype.getFontEditor = function() {
+  return new tachyfont.BinaryFontEditor(new DataView(this.glyphData),
+                                        this.offsetToGlyphData);
+};
+
+/**
+ * @return {number} Number of glyphs in this response.
+ */
+tachyfont.GlyphBundleResponse.prototype.getGlyphCount = function() {
+  return this.count;
+};
+
+/**
+ * @return {number} flags binary for this response.
+ */
+tachyfont.GlyphBundleResponse.prototype.getFlags = function() {
+  return this.flags;
+};
+
+/**
+ * Handles interacting with the backend server.
+ * @constructor
+ * @param {string} baseUrl URL of the tachyfont server.
+ */
+tachyfont.BackendService = function(baseUrl) {
+  this.baseUrl = baseUrl;
+};
+
+/**
+ * Request codepoints from the backend server.
+ * @param {Object} fontInfo containing info on the font (ie. name, version, ...)
+ * @param {Array.<number>} codes Codepoints to be requested
+ * @return {goog.Promise} Promise to return ArrayBuffer for the response bundle
+ */
+tachyfont.BackendService.prototype.requestCodepoints = function(
+    fontInfo, codes) {
+  var that = this;
+  var bandwidth = tachyfont.ForDebug.getCookie('bandwidth', '0');
+  return tachyfont.BackendService.requestUrl_(
+      this.baseUrl + '/incremental_fonts/request',
+      'POST',
+      JSON.stringify({'font': fontInfo.name, 'arr': codes}),
+      // Google App Engine servers do not support CORS so we cannot say
+      // the 'Content-Type' is 'application/json'.
+      //{'Content-Type': 'application/json'},
+      {'Content-Type': 'text/plain', 'X-TachyFont-bandwidth': bandwidth},
+      'arraybuffer')
+  .then(function(glyphData) {
+    return that.parseCodepointHeader_(glyphData);
+  });
+};
+
+/**
+ * Parses the header of a codepoint response and returns info on it:
+ * @param {ArrayBuffer} glyphData modified to point to the start
+ *        of the glyph data.
+ * @return Header info, {count: ..., flags: ..., version: ...,
+ *         fontSignature: ...}
+ * @private
+ */
+tachyfont.BackendService.prototype.parseCodepointHeader_ = function(glyphData) {
+  var dataView = new DataView(glyphData);
+  var offset = 0;
+  var count = dataView.getUint16(offset);
+  offset += 2;
+  var flags = dataView.getUint8(offset++);
+  return new tachyfont.GlyphBundleResponse(
+      '1.0', '', count, flags, offset, glyphData);
+};
+
+/**
+ * Request a font's base data from the backend server.
+ * @param {Object} fontInfo containing info on the font (ie. name, version, ...)
+ * @return {goog.Promise} Promise to return ArrayBuffer for the base.
+ */
+tachyfont.BackendService.prototype.requestFontBase = function(fontInfo) {
+  var bandwidth = tachyfont.ForDebug.getCookie('bandwidth', '0');
+  return tachyfont.BackendService.requestUrl_(this.baseUrl +
+      '/incremental_fonts/incrfonts/' + fontInfo.name + '/base', 'GET',
+      null, { 'X-TachyFont-bandwidth': bandwidth });
+};
+
+/**
+ * Send a log message to the server
+ * @param {string} message The message to log.
+ * @return {goog.Promise} Promise to return ArrayBuffer for the response.
+ */
+tachyfont.BackendService.prototype.log = function(message) {
+  return tachyfont.BackendService.requestUrl_(
+      this.baseUrl + '/incremental_fonts/logger',
+      'POST',
+      message,
+      // Google App Engine servers do not support CORS so we cannot say
+      // the 'Content-Type' is 'application/json'.
+      //{'Content-Type': 'application/json'},
+      {'Content-Type': 'text/plain'});
+};
+
+/**
+ * Async XMLHttpRequest to given url using given method, data and header
+ * @param {string} url Destination url
+ * @param {string} method Request method
+ * @param {?string} postData Request data
+ * @param {Object} headers Request headers
+ * @return {goog.Promise} Promise to return response
+ * @private
+ */
+tachyfont.BackendService.requestUrl_ =
+    function(url, method, postData, headers) {
+  return new goog.Promise(function(resolve, reject) {
+    var xhr = new goog.net.XhrIo();
+    xhr.setResponseType(goog.net.XhrIo.ResponseType.ARRAY_BUFFER);
+    goog.events.listen(xhr, goog.net.EventType.COMPLETE, function(e) {
+      if (this.isSuccess()) {
+        resolve(this.getResponse());
+      } else {
+        reject(this.getStatus() + ' ' + this.getStatusText());
+      }
+    });
+    xhr.send(url, method, postData, headers);
+  });
+};
+
+/**
+ * Handles interacting with the backend server.
+ * @param {string} baseUrl of the backend server.
+ * @constructor
+ */
+tachyfont.GoogleBackendService = function(baseUrl) {
+  this.baseUrl = baseUrl;
+};
+
+var GLYPHS_REQUEST_PREFIX = 'g';
+var GLYPHS_REQUEST_SUFFIX = 'glyphs';
+var FRAMEWORK_REQUEST_PREFIX = 't';
+var FRAMEWORK_REQUEST_SUFFIX = 'framework';
+
+/**
+ * Request codepoints from the backend server.
+ * @param {Object} fontInfo containing info on the font (ie. name, version, ...)
+ * @param {Array.<number>} codes Codepoints to be requested
+ * @return {goog.Promise} Promise to return ArrayBuffer for the response bundle
+ */
+tachyfont.GoogleBackendService.prototype.requestCodepoints = function(
+    fontInfo, codes) {
+  var self = this;
+  return tachyfont.BackendService.requestUrl_(this.getUrl_(fontInfo,
+      GLYPHS_REQUEST_PREFIX,
+      GLYPHS_REQUEST_SUFFIX),
+      'POST',
+      'glyphs=' + encodeURIComponent(this.compressedGlyphsList_(codes)),
+      {'Content-Type': 'application/x-www-form-urlencoded'})
+  .then(function(glyphData) {
+    return self.parseHeader_(glyphData);
+  });
+};
+
+/**
+ * Parses the header of a codepoint response and returns info on it:
+ * @param {ArrayBuffer} glyphData from a code point request.
+ * @return Header info, {count: ..., flags: ..., version: ...,
+ *         fontSignature: ...}
+ * @private
+ */
+tachyfont.GoogleBackendService.prototype.parseHeader_ = function(glyphData) {
+  var dataView = new DataView(glyphData);
+  var offset = 0;
+  var magicNumber = '';
+  for (var i = 0; i < 4; i++) {
+    magicNumber += String.fromCharCode(dataView.getUint8(offset++));
+  }
+
+  if (magicNumber == 'BSAC') {
+    var version = dataView.getUint8(offset++) + '.' +
+        dataView.getUint8(offset++);
+    offset += 2; // Skip reserved section.
+    var signature = '';
+    for (var i = 0; i < 20; i++) {
+      signature += dataView.getUint8(offset++).toString(16);
+    }
+    var count = dataView.getUint16(offset);
+    offset += 2;
+    var flags = dataView.getUint16(offset);
+    offset += 2;
+    var offset = offset;
+    return new tachyfont.GlyphBundleResponse(
+        version, signature, count, flags, offset, glyphData);
+  } else {
+    throw new Error('Invalid code point bundle header magic number: ' +
+        magicNumber);
+  }
+};
+
+/**
+ * Request a font's base data from the backend server.
+ * @param {Object} fontInfo containing info on the font (ie. name, version, ...)
+ * @return {goog.Promise} Promise to return ArrayBuffer for the base.
+ */
+tachyfont.GoogleBackendService.prototype.requestFontBase = function(fontInfo) {
+  return tachyfont.BackendService.requestUrl_(this.getUrl_(fontInfo,
+      FRAMEWORK_REQUEST_PREFIX,
+      FRAMEWORK_REQUEST_SUFFIX),
+      'GET');
+};
+
+/**
+ * Send a log message to the server
+ * @param {string} message The message to log.
+ * @return {goog.Promise} Promise to return ArrayBuffer for the response.
+ */
+tachyfont.GoogleBackendService.prototype.log = function(message) {
+  // Not implemented yet.
+  return new goog.Promise(function(resolve, reject) {
+    resolve(new ArrayBuffer(0));
+  });
+};
+
+/**
+ * @private
+ * @param {Object} fontInfo Info on the font.
+ * @param {string} prefix Action prefix in the URL.
+ * @param {string} suffix Action suffset in the URL.
+ * @return {string} URL for the specified font action.
+ */
+tachyfont.GoogleBackendService.prototype.getUrl_ = function(
+    fontInfo, prefix, suffix) {
+  var family = fontInfo['name'].replace(' ', '').toLowerCase();
+  return this.baseUrl + '/' + prefix + '/' + family + '/' +
+      fontInfo['version'] + '/' + fontInfo['fontkit'] + '.' + suffix;
+};
+
+/**
+ * @private
+ * @param {Array.<number>} codes list of code points to compress.
+ * @return {string} compressed code point list.
+ */
+tachyfont.GoogleBackendService.prototype.compressedGlyphsList_ = function(
+    codes) {
+  var result = '';
+  for (var i = 0; i < codes.length; i++) {
+    var cp = codes[i];
+    if (cp != 45) { // Dash
+      result = result + String.fromCharCode(cp);
+    } else {
+      // Dash is a special character in the compressed glyph list and must
+      // be at the start of the string.
+      result = '-' + result;
+    }
+  }
+  return result;
 };
 
 /**
@@ -2635,3 +2844,9 @@ webfonttailor.getTachyFontsInfo = function(fontFamlies, languages, faces,
   fontsInfo['url'] = '';
   return fontsInfo;
 };
+
+goog.exportSymbol('tachyfont', tachyfont);
+goog.exportSymbol('tachyfont.TachyFont', tachyfont.TachyFont);
+goog.exportSymbol('tachyfont.TachyFontSet', tachyfont.TachyFontSet);
+goog.exportSymbol('tachyfont.TachyFontSet.prototype.addFont',
+                  tachyfont.TachyFontSet.prototype.addFont);
