@@ -24,6 +24,7 @@ goog.require('goog.Promise');
 goog.require('goog.debug.Console');
 goog.require('goog.log');
 goog.require('goog.log.Logger');
+goog.require('goog.net.XhrIo');
 
 if (goog.DEBUG) {
   // Send the debug output to the console.
