@@ -28,6 +28,9 @@ goog.require('goog.net.XhrIo');
 goog.require('goog.style');
 goog.require('goog.Uri');
 
+tachyfont = function() {
+};
+
 if (goog.DEBUG) {
   // Get any URL debug parameters.
   var uri = goog.Uri.parse(window.location.href);
@@ -2854,9 +2857,7 @@ webfonttailor.getTachyFontsInfo = function(fontFamlies, languages, faces,
   return fontsInfo;
 };
 
-/*
 goog.exportSymbol('tachyfont', tachyfont);
-*/
 goog.exportSymbol('tachyfont.TachyFont', tachyfont.TachyFont);
 goog.exportSymbol('tachyfont.TachyFontSet', tachyfont.TachyFontSet);
 goog.exportSymbol('tachyfont.TachyFontSet.prototype.addFont',
