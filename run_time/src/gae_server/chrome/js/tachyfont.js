@@ -21,12 +21,12 @@ goog.provide('tachyfont');
 goog.provide('webfonttailor');
 
 goog.require('goog.Promise');
+goog.require('goog.Uri');
 goog.require('goog.debug.Console');
 goog.require('goog.log');
 goog.require('goog.log.Logger');
 goog.require('goog.net.XhrIo');
 goog.require('goog.style');
-goog.require('goog.Uri');
 
 tachyfont = function() {
 };
@@ -208,7 +208,7 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
   //create an observer instance
   var observer = new MutationObserver(function(mutations) {
     if (goog.DEBUG) {
-      goog.log.info(tachyfont.logger_, 'MutationObserver');
+      goog.log.fine(tachyfont.logger_, 'MutationObserver');
     }
     var needUpdate = false;
     mutations.forEach(function(mutation) {
@@ -220,7 +220,7 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
         for (var i = 0; i < mutation.addedNodes.length; i++) {
           var node = mutation.addedNodes[i];
           if (node.nodeName == '#text') {
-            var parentName = node.parentNode.nodeName;
+            var parentName = node.parentNode ? node.parentNode.nodeName : '';
             if (parentName != 'SCRIPT' && parentName != 'STYLE') {
               textNode = node;
               if (goog.DEBUG) {
@@ -243,11 +243,16 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
         if (text) {
           needUpdate = true;
           var parentNode = textNode.parentNode;
-          var font_family = goog.style.getComputedStyle(parentNode, 'font-family');
-          var font_weight = goog.style.getComputedStyle(parentNode, 'font-weight');
-          if (goog.DEBUG) {
-            goog.log.fine(tachyfont.logger_, changeType + font_family + '/' +
-                font_weight + ': "' + text + '"');
+          // <title> text does not have a parentNode.
+          if (parentNode) {
+            var font_family = goog.style.getComputedStyle(parentNode,
+                'font-family');
+            var font_weight = goog.style.getComputedStyle(parentNode,
+                'font-weight');
+            if (goog.DEBUG) {
+              goog.log.fine(tachyfont.logger_, changeType + font_family + '/' +
+                  font_weight + ': "' + text + '"');
+            }
           }
         }
       }
@@ -571,7 +576,7 @@ tachyfont.IncrementalFont.obj_.prototype.setFont_ = function(fontdata,
 tachyfont.IncrementalFont.obj_.prototype.loadChars =
   function(element_name) {
   if (goog.DEBUG) {
-    goog.log.info(tachyfont.logger_, 'loadChars');
+    goog.log.fine(tachyfont.logger_, 'loadChars');
   }
   var that = this;
   var chars = '';
@@ -615,16 +620,16 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars =
               goog.log.fine(tachyfont.logger_, neededCodes);
             }
           } else {
-            // if (goog.DEBUG) {
-            //   goog.log.info(tachyfont.logger_,
-            //     'do not need anymore characters');
-            // }
+            if (goog.DEBUG) {
+              goog.log.info(tachyfont.logger_,
+                'do not need anymore characters');
+            }
             return null;
           }
           if (goog.DEBUG) {
             goog.log.warning(tachyfont.logger_, 're-enable sort');
           }
-          neededCodes.sort(function(a, b) { return a - b} );
+          neededCodes.sort(function(a, b) { return a - b; });
           if (goog.DEBUG) {
             goog.log.fine(tachyfont.logger_, 'neededCodes = ' + neededCodes);
             goog.log.info(tachyfont.logger_, 'neededCodes.length = ' +
@@ -864,8 +869,8 @@ tachyfont.IncrementalFont.obj_.prototype.saveData_ = function(idb, name, data) {
     }).
     thenCatch(function(e) {
       if (goog.DEBUG) {
-        goog.log.error(tachyfont.logger_, 'saveData ' + db.name + ' ' + name + ': ' +
-          e.message);
+        goog.log.error(tachyfont.logger_, 'saveData ' + db.name + ' ' + name +
+            ': ' + e.message);
         debugger;
       }
     });
