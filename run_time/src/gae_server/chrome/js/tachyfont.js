@@ -2863,7 +2863,4 @@ webfonttailor.getTachyFontsInfo = function(fontFamlies, languages, faces,
 };
 
 goog.exportSymbol('tachyfont', tachyfont);
-goog.exportSymbol('tachyfont.TachyFont', tachyfont.TachyFont);
-goog.exportSymbol('tachyfont.TachyFontSet', tachyfont.TachyFontSet);
-goog.exportSymbol('tachyfont.TachyFontSet.prototype.addFont',
-                  tachyfont.TachyFontSet.prototype.addFont);
+goog.exportSymbol('tachyfont.loadFonts', tachyfont.loadFonts);
