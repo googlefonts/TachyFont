@@ -25,8 +25,19 @@ goog.require('goog.debug.Console');
 goog.require('goog.log');
 goog.require('goog.log.Logger');
 goog.require('goog.net.XhrIo');
+goog.require('goog.style');
+goog.require('goog.Uri');
 
 if (goog.DEBUG) {
+  // Get any URL debug parameters.
+  var uri = goog.Uri.parse(window.location.href);
+
+  var debug_level;
+  var debug_level_str = uri.getParameterValue('TachyFontDebugLevel');
+  if (debug_level_str) {
+    debug_level = goog.debug.Logger.Level.getPredefinedLevel(debug_level_str);
+  }
+
   // Send the debug output to the console.
   /**
    * @type {goog.debug.Console}
@@ -38,7 +49,7 @@ if (goog.DEBUG) {
    * @type {goog.debug.Logger}
    * @private
    */
-  tachyfont.logger_ = goog.log.getLogger('debug');
+  tachyfont.logger_ = goog.log.getLogger('debug', debug_level);
   /**
    * @type {boolean}
    * @private
@@ -228,11 +239,12 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
         var text = textNode.nodeValue.trim();
         if (text) {
           needUpdate = true;
-          var parent = textNode.parentNode;
-          var style = getComputedStyle(parent, null);
+          var parentNode = textNode.parentNode;
+          var font_family = goog.style.getComputedStyle(parentNode, 'font-family');
+          var font_weight = goog.style.getComputedStyle(parentNode, 'font-weight');
           if (goog.DEBUG) {
-            goog.log.fine(tachyfont.logger_, changeType + style.fontFamily + '/' + style.fontWeight +
-            ': "' + text + '"');
+            goog.log.fine(tachyfont.logger_, changeType + font_family + '/' +
+                font_weight + ': "' + text + '"');
           }
         }
       }
@@ -245,11 +257,10 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
       tachyFontSet.updateFonts();
     }
   });
-   
-  // configuration of the observer:
-  var config = { 'childList': true, 'subtree': true, 'characterData': true };
-   
-  // pass in the target node, as well as the observer options
+
+  // Watch for these mutations.
+  var config = /** @type {!MutationObserverInit} */ ({ 'childList': true,
+    'subtree': true, 'characterData': true });
   observer.observe(target, config);
 
   return tachyFontSet;
@@ -478,15 +489,14 @@ tachyfont.IncrementalFont.createManager = function(fontInfo, params) {
     }
   });
 
-  // TODO(bstell) wrap this in "if (tachyfont.DEMO)"
   if (tachyfont.buildDemo_) {
     tachyfont.buildDemo_ = false;
     // For Debug: add a button to clear the IndexedDB.
     tachyfont.ForDebug.addDropIdbButton(incrFontMgr, fontname);
-  
+
     // For Debug: add a control to set the bandwidth.
     tachyfont.ForDebug.addBandwidthControl();
-  
+
     // For Debug: add a control to set the timing text size.
     tachyfont.ForDebug.addTimingTextSizeControl();
   }
@@ -611,12 +621,12 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars =
           if (goog.DEBUG) {
             goog.log.warning(tachyfont.logger_, 're-enable sort');
           }
-          // neededCodes.sort(function(a, b){ return a - b}; );
-          // if (goog.DEBUG) {
-          //   goog.log.fine(tachyfont.logger_, 'neededCodes = ' + neededCodes);
-          //   goog.log.info(tachyfont.logger_, 'neededCodes.length = ' +
-          //     neededCodes.length);
-          // }
+          neededCodes.sort(function(a, b) { return a - b} );
+          if (goog.DEBUG) {
+            goog.log.fine(tachyfont.logger_, 'neededCodes = ' + neededCodes);
+            goog.log.info(tachyfont.logger_, 'neededCodes.length = ' +
+              neededCodes.length);
+          }
           if (that.req_size) {
             remaining = neededCodes.slice(that.req_size);
             neededCodes = neededCodes.slice(0, that.req_size);
@@ -2312,8 +2322,7 @@ tachyfont.BackendService.prototype.requestCodepoints = function(
       // Google App Engine servers do not support CORS so we cannot say
       // the 'Content-Type' is 'application/json'.
       //{'Content-Type': 'application/json'},
-      {'Content-Type': 'text/plain', 'X-TachyFont-bandwidth': bandwidth},
-      'arraybuffer')
+      {'Content-Type': 'text/plain', 'X-TachyFont-bandwidth': bandwidth})
   .then(function(glyphData) {
     return that.parseCodepointHeader_(glyphData);
   });
@@ -2451,7 +2460,6 @@ tachyfont.GoogleBackendService.prototype.parseHeader_ = function(glyphData) {
     offset += 2;
     var flags = dataView.getUint16(offset);
     offset += 2;
-    var offset = offset;
     return new tachyfont.GlyphBundleResponse(
         version, signature, count, flags, offset, glyphData);
   } else {
@@ -2469,7 +2477,7 @@ tachyfont.GoogleBackendService.prototype.requestFontBase = function(fontInfo) {
   return tachyfont.BackendService.requestUrl_(this.getUrl_(fontInfo,
       FRAMEWORK_REQUEST_PREFIX,
       FRAMEWORK_REQUEST_SUFFIX),
-      'GET');
+      'GET', null, {});
 };
 
 /**
@@ -2846,7 +2854,9 @@ webfonttailor.getTachyFontsInfo = function(fontFamlies, languages, faces,
   return fontsInfo;
 };
 
+/*
 goog.exportSymbol('tachyfont', tachyfont);
+*/
 goog.exportSymbol('tachyfont.TachyFont', tachyfont.TachyFont);
 goog.exportSymbol('tachyfont.TachyFontSet', tachyfont.TachyFontSet);
 goog.exportSymbol('tachyfont.TachyFontSet.prototype.addFont',
