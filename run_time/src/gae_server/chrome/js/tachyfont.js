@@ -67,6 +67,19 @@ if (goog.DEBUG) {
 tachyfont.persistData = true;
 
 /**
+ * If the number of characters in the request is less than this count then add
+ * additional characters to obfuscate the actual request.
+ * @type {number}
+ */
+tachyfont.MINIMUM_NON_OBFUSCATION_LENGTH = 20;
+
+/**
+ * The range of characters to pick from.
+ * @type {number}
+ */
+tachyfont.OBFUSCATION_RANGE = 256;
+
+/**
  * @typedef {number}
  */
 tachyfont.uint8;
@@ -569,6 +582,67 @@ tachyfont.IncrementalFont.obj_.prototype.setFont_ = function(fontdata,
 };
 
 /**
+ * Obfuscate small requests to make it harder for a TachyFont server to
+ * determine the content on a page.
+ */
+tachyfont.possibly_obfuscate = function(codes, charlist) {
+  // Check if we need to obfuscate the request.
+  if (codes.length >= tachyfont.MINIMUM_NON_OBFUSCATION_LENGTH)
+    return codes;
+
+  var code_map = {};
+  for (var i = 0; i < codes.length; i++) {
+    var code = codes[i];
+    code_map[code] = code;
+  }
+  var num_new_codes = tachyfont.MINIMUM_NON_OBFUSCATION_LENGTH - codes.length;
+  var target_length = tachyfont.MINIMUM_NON_OBFUSCATION_LENGTH;
+  var max_tries = num_new_codes * 10 + 100; 
+  for (var i = 0;
+      Object.keys(code_map).length < target_length && i < max_tries;
+      i++) {
+    var code = codes[i % codes.length];
+    var bottom = code - tachyfont.OBFUSCATION_RANGE / 2;
+    if (bottom < 0) {
+      bottom = 0;
+    }
+    var top = code + tachyfont.OBFUSCATION_RANGE / 2;
+    var new_code = Math.floor(goog.math.uniformRandom(bottom, top + 1));
+    if (charlist[new_code] == undefined) {
+      code_map[new_code] = new_code;
+      var new_char = String.fromCharCode(new_code);
+      charlist[new_char] = 1;
+    }
+    if (goog.DEBUG) {
+      goog.log.log(tachyfont.logger_, goog.log.Level.FINER,
+        Object.keys(code_map).length.toString());
+    }
+  }
+
+  if (goog.DEBUG) {
+    goog.log.info(tachyfont.logger_, 'before obfuscation: ' +
+      'codes.length = ' + codes.length);
+    codes.sort(function(a, b) { return a - b; });
+    goog.log.fine(tachyfont.logger_, 'codes = ' + codes);
+  }
+  var combined_codes = [];
+  var keys = Object.keys(code_map);
+  for (var i = 0; i < keys.length; i++) {
+    var key = keys[i];
+    combined_codes.push(code_map[key]);
+  }
+  if (goog.DEBUG) {
+    goog.log.info(tachyfont.logger_, 'after obfuscation: ' +
+      'combined_codes.length = ' + combined_codes.length);
+    combined_codes.sort(function(a, b) { return a - b; });
+    goog.log.fine(tachyfont.logger_, 'combined_codes = ' +
+        combined_codes);
+  }
+  return combined_codes;
+};
+
+
+/**
  * Lazily load the data for these chars.
  * @param {string} element_name The name of the data item.
  * @return {Object}
@@ -614,6 +688,7 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars =
           }
 
           if (neededCodes.length) {
+            neededCodes = tachyfont.possibly_obfuscate(neededCodes, tmp_charlist);
             if (goog.DEBUG) {
               goog.log.info(tachyfont.logger_, 'load ' + neededCodes.length +
                 ' codes:');
@@ -631,19 +706,13 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars =
           }
           neededCodes.sort(function(a, b) { return a - b; });
           if (goog.DEBUG) {
-            goog.log.fine(tachyfont.logger_, 'neededCodes = ' + neededCodes);
             goog.log.info(tachyfont.logger_, 'neededCodes.length = ' +
               neededCodes.length);
+            goog.log.fine(tachyfont.logger_, 'neededCodes = ' + neededCodes);
           }
           if (that.req_size) {
             remaining = neededCodes.slice(that.req_size);
             neededCodes = neededCodes.slice(0, that.req_size);
-            // if (goog.DEBUG) {
-            //   goog.log.fine(tachyfont.logger_, 'neededCodes.length = ' +
-            //     neededCodes.length);
-            //   goog.log.fine(tachyfont.logger_, 'remaining.length = ' +
-            //     remaining.length);
-            // }
           }
           for (var i = 0; i < neededCodes.length; i++) {
             var c = String.fromCharCode(neededCodes[i]);
