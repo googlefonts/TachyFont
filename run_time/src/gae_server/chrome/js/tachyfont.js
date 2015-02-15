@@ -33,12 +33,14 @@ tachyfont = function() {
 
 if (goog.DEBUG) {
   // Get any URL debug parameters.
-  var uri = goog.Uri.parse(window.location.href);
+  tachyfont.uri = goog.Uri.parse(window.location.href);
 
-  var debug_level;
-  var debug_level_str = uri.getParameterValue('TachyFontDebugLevel');
-  if (debug_level_str) {
-    debug_level = goog.debug.Logger.Level.getPredefinedLevel(debug_level_str);
+  tachyfont.debug_level;
+  tachyfont.debug_level_str =
+    tachyfont.uri.getParameterValue('TachyFontDebugLevel');
+  if (tachyfont.debug_level_str) {
+    tachyfont.debug_level =
+      goog.debug.Logger.Level.getPredefinedLevel(tachyfont.debug_level_str);
   }
 
   // Send the debug output to the console.
@@ -52,7 +54,7 @@ if (goog.DEBUG) {
    * @type {goog.debug.Logger}
    * @private
    */
-  tachyfont.logger_ = goog.log.getLogger('debug', debug_level);
+  tachyfont.logger_ = goog.log.getLogger('debug', tachyfont.debug_level);
   /**
    * @type {boolean}
    * @private
@@ -700,9 +702,6 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars =
                 'do not need anymore characters');
             }
             return null;
-          }
-          if (goog.DEBUG) {
-            goog.log.warning(tachyfont.logger_, 're-enable sort');
           }
           neededCodes.sort(function(a, b) { return a - b; });
           if (goog.DEBUG) {
