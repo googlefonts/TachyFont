@@ -437,39 +437,8 @@ tachyfont.IncrementalFont.createManager = function(fontInfo, params) {
       true);
   }, maxVisibilityTimeout);
 
-  incrFontMgr.getPersistedBase().
-  then(function(arr) {
-    if (arr != null) {
-      return arr;
-    } else {
-      return incrFontMgr.getUrlBase(backendService, fontInfo).
-      then(function(arr) {
-        return arr;
-      });
-    }
-  }).
-  then(function(arr) {
-    incrFontMgr.base.resolve(arr);
-
-    //tachyfont.timer1.end('load base');
-    var fileinfo = arr[0];
-    // Create the @font-face rule.
-    //tachyfont.IncrementalFontUtils.setFont(fontInfo, arr[2], fileinfo.isTTF,
-    //  '');
-    //tachyfont.timer1.done();
-    // Make the class visible.
-    //tachyfont.IncrementalFontUtils.setVisibility(incrFontMgr.style, fontInfo,
-    //  true);
-
-    return arr;
-  }).
-  thenCatch(function(e) {
-    if (goog.DEBUG) {
-      goog.log.error(tachyfont.logger_, 'failed to get the font.');
-    }
-    tachyfont.IncrementalFontUtils.setVisibility(incrFontMgr.style, fontInfo,
-      true);
-  });
+  // Get the base data.
+  incrFontMgr.initBase();
 
   // Start the operation to get the list of already fetched chars.
   if (goog.DEBUG) {
@@ -550,6 +519,36 @@ tachyfont.IncrementalFont.obj_ = function(fontInfo, params, backendService) {
   this.getCharList = null;
   this.finishPersistingData = goog.Promise.resolve();
   this.finishPendingCharsRequest = goog.Promise.resolve();
+};
+
+
+tachyfont.IncrementalFont.obj_.prototype.initBase = function() {
+  var that = this;
+  this.getPersistedBase().
+  then(function(arr) {
+    if (arr != null) {
+      return arr;
+    } else {
+      return that.getUrlBase(that.backendService, that.fontInfo).
+      then(function(arr) {
+        return arr;
+      });
+    }
+  }).
+  then(function(arr) {
+    that.base.resolve(arr);
+    return arr;
+  }).
+  thenCatch(function(e) {
+    if (goog.DEBUG) {
+      debugger;
+      goog.log.error(tachyfont.logger_, 'failed to get the font.');
+    }
+    tachyfont.IncrementalFontUtils.setVisibility(that.style, fontInfo,
+      true);
+  });
+
+
 };
 
 tachyfont.IncrementalFont.obj_.prototype.getPersistedBase = function() {
