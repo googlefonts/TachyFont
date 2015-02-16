@@ -585,11 +585,9 @@ tachyfont.IncrementalFont.obj_.prototype.getPersistedBase = function() {
 
 tachyfont.IncrementalFont.obj_.prototype.getUrlBase =
   function(backendService, fontInfo) {
-  //debugger;
   var that = this;
   var rslt = backendService.requestFontBase(fontInfo).
   then(function(xfer_bytes) {
-    //debugger;
     //tachyfont.timer1.start('uncompact base');
     var xfer_data = new DataView(xfer_bytes);
     var fileinfo = tachyfont.IncrementalFontUtils.parseBaseHeader(xfer_data);
@@ -604,7 +602,6 @@ tachyfont.IncrementalFont.obj_.prototype.getUrlBase =
       fileinfo);
     var basefont =
       tachyfont.IncrementalFontUtils.sanitizeBaseFont(fileinfo, raw_basefont);
-    //debugger;
     that.persistDelayed_(tachyfont.IncrementalFont.BASE);
     //tachyfont.timer1.end('uncompact base');
     return [fileinfo, basefont];
