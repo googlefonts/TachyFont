@@ -351,6 +351,14 @@ tachyfont.charToCode = function(in_char) {
 };
 
 
+tachyfont.promise = function(obj) {
+  this.get_ = new goog.Promise(function(resolve, reject) {
+    this.resolve = resolve;
+    this.reject = reject;
+  }, this);
+};
+
+
 /**
  * Get the incremental font object.
  * This class does the following:
@@ -429,49 +437,20 @@ tachyfont.IncrementalFont.createManager = function(fontInfo, params) {
       true);
   }, maxVisibilityTimeout);
 
-  incrFontMgr.getBase = incrFontMgr.getIDB_.
-  then(function(idb) {
-    var filedata;
-    if (tachyfont.persistData) {
-      filedata = incrFontMgr.getData_(idb, tachyfont.IncrementalFont.BASE);
+  incrFontMgr.getPersistedBase().
+  then(function(arr) {
+    if (arr != null) {
+      return arr;
     } else {
-      var e = new Event('not using persisting data');
-      filedata = goog.Promise.all([goog.Promise.resolve(idb),
-          goog.Promise.reject(e)]);
+      return incrFontMgr.getUrlBase(backendService, fontInfo).
+      then(function(arr) {
+        return arr;
+      });
     }
-    return goog.Promise.all([goog.Promise.resolve(idb), filedata]);
   }).
   then(function(arr) {
-    var idb = arr[0];
-    var filedata = new DataView(arr[1]);
-    var fileinfo = tachyfont.IncrementalFontUtils.parseBaseHeader(filedata);
-    var fontdata = new DataView(arr[1], fileinfo.headSize);
-    return goog.Promise.all([goog.Promise.resolve(fileinfo),
-        goog.Promise.resolve(fontdata)]);
-  }).
-  thenCatch(function(e) {
-    return backendService.requestFontBase(fontInfo).
-    then(function(xfer_bytes) {
-      //tachyfont.timer1.start('uncompact base');
-      var xfer_data = new DataView(xfer_bytes);
-      var fileinfo = tachyfont.IncrementalFontUtils.parseBaseHeader(xfer_data);
-      var header_data = new DataView(xfer_bytes, 0, fileinfo.headSize);
-      var rle_fontdata = new DataView(xfer_bytes, fileinfo.headSize);
-      var raw_base = tachyfont.RLEDecoder.rleDecode([header_data,
-                                                     rle_fontdata]);
-      var raw_basefont = new DataView(raw_base.buffer, header_data.byteLength);
-      tachyfont.IncrementalFontUtils.writeCmap12(raw_basefont, fileinfo);
-      tachyfont.IncrementalFontUtils.writeCmap4(raw_basefont, fileinfo);
-      tachyfont.IncrementalFontUtils.writeCharsetFormat2(raw_basefont,
-        fileinfo);
-      var basefont =
-        tachyfont.IncrementalFontUtils.sanitizeBaseFont(fileinfo, raw_basefont);
-      incrFontMgr.persistDelayed_(tachyfont.IncrementalFont.BASE);
-      //tachyfont.timer1.end('uncompact base');
-      return [fileinfo, basefont];
-    });
-  }).
-  then(function(arr) {
+    incrFontMgr.base.resolve(arr);
+
     //tachyfont.timer1.end('load base');
     var fileinfo = arr[0];
     // Create the @font-face rule.
@@ -493,13 +472,18 @@ tachyfont.IncrementalFont.createManager = function(fontInfo, params) {
   });
 
   // Start the operation to get the list of already fetched chars.
-  // if (goog.DEBUG) {
-  //   goog.log.fine(tachyfont.logger_,
-  //     'Get the list of already fetched chars.');
-  // }
+  if (goog.DEBUG) {
+    goog.log.log(tachyfont.logger_, goog.log.Level.FINER,
+      'Get the list of already fetched chars.');
+  }
   incrFontMgr.getCharList = incrFontMgr.getIDB_.
   then(function(idb) {
-    return incrFontMgr.getData_(idb, tachyfont.IncrementalFont.CHARLIST);
+    if (tachyfont.persistData) {
+      return incrFontMgr.getData_(idb, tachyfont.IncrementalFont.CHARLIST);
+    } else {
+      var e = new Event('not using persisting charlist');
+      return goog.Promise.reject(e);
+    }
   }).
   thenCatch(function(e) {
     return {};
@@ -561,11 +545,73 @@ tachyfont.IncrementalFont.obj_ = function(fontInfo, params, backendService) {
 
   // Promises
   this.getIDB_ = null;
-  this.getBase = null;
+  this.base = new tachyfont.promise();
+  this.getBase = this.base.get_;
   this.getCharList = null;
   this.finishPersistingData = goog.Promise.resolve();
   this.finishPendingCharsRequest = goog.Promise.resolve();
 };
+
+tachyfont.IncrementalFont.obj_.prototype.getPersistedBase = function() {
+  var that = this;
+  var persistedBase = this.getIDB_.
+  then(function(idb) {
+    var filedata;
+    if (tachyfont.persistData) {
+      filedata = that.getData_(idb, tachyfont.IncrementalFont.BASE);
+    } else {
+      var e = new Event('not using persisting data');
+      filedata = goog.Promise.all([goog.Promise.resolve(idb),
+          goog.Promise.reject(e)]);
+    }
+    return goog.Promise.all([goog.Promise.resolve(idb), filedata]);
+  }).
+  then(function(arr) {
+    var idb = arr[0];
+    var filedata = new DataView(arr[1]);
+    var fileinfo = tachyfont.IncrementalFontUtils.parseBaseHeader(filedata);
+    var fontdata = new DataView(arr[1], fileinfo.headSize);
+    return goog.Promise.all([goog.Promise.resolve(fileinfo),
+        goog.Promise.resolve(fontdata)]);
+  }).
+  thenCatch(function(e) {
+    if (goog.DEBUG) {
+      goog.log.log(tachyfont.logger_, goog.log.Level.FINER, 'font not persisted');
+    }
+    return null;
+  });
+  return persistedBase;
+};
+
+tachyfont.IncrementalFont.obj_.prototype.getUrlBase =
+  function(backendService, fontInfo) {
+  //debugger;
+  var that = this;
+  var rslt = backendService.requestFontBase(fontInfo).
+  then(function(xfer_bytes) {
+    //debugger;
+    //tachyfont.timer1.start('uncompact base');
+    var xfer_data = new DataView(xfer_bytes);
+    var fileinfo = tachyfont.IncrementalFontUtils.parseBaseHeader(xfer_data);
+    var header_data = new DataView(xfer_bytes, 0, fileinfo.headSize);
+    var rle_fontdata = new DataView(xfer_bytes, fileinfo.headSize);
+    var raw_base = tachyfont.RLEDecoder.rleDecode([header_data,
+                                                   rle_fontdata]);
+    var raw_basefont = new DataView(raw_base.buffer, header_data.byteLength);
+    tachyfont.IncrementalFontUtils.writeCmap12(raw_basefont, fileinfo);
+    tachyfont.IncrementalFontUtils.writeCmap4(raw_basefont, fileinfo);
+    tachyfont.IncrementalFontUtils.writeCharsetFormat2(raw_basefont,
+      fileinfo);
+    var basefont =
+      tachyfont.IncrementalFontUtils.sanitizeBaseFont(fileinfo, raw_basefont);
+    //debugger;
+    that.persistDelayed_(tachyfont.IncrementalFont.BASE);
+    //tachyfont.timer1.end('uncompact base');
+    return [fileinfo, basefont];
+  });
+  return rslt;
+};
+
 
 /**
  * IncrFontIDB.obj_ - A class to handle interacting the IndexedDB.
@@ -668,6 +714,7 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars =
   this.finishPendingCharsRequest = this.finishPendingCharsRequest.
   then(function() {
     var pending_resolve, pending_reject;
+    // TODO(bstell) use tachfont.promise here?
     return new goog.Promise(function(resolve, reject) {
       pending_resolve = resolve;
       pending_reject = reject;
@@ -735,9 +782,6 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars =
         then(function(bundleResponse) {
           return that.getBase.
           then(function(arr) {
-            // if (goog.DEBUG) {
-            //   debugger;
-            // }
             var fileinfo = arr[0];
             var fontdata = arr[1];
             var data_length = 0;
