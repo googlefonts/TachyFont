@@ -217,33 +217,55 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
     var tachyFont = new tachyfont.TachyFont(fontInfo, opt_params);
     tachyFontSet.addFont(tachyFont);
   }
+  // Try to get the base from persistent store.
   var tachyFonts = tachyFontSet.fonts;
+  var bases = [];
   for (var i = 0; i < tachyFonts.length; i++) {
     var incrfont = tachyFonts[i].incrfont;
-    incrfont.getPersistedBase().
-    then(function(arr) {
-      if (arr != null) {
-        return arr;
+    var persistedBase = incrfont.getPersistedBase();
+    bases.push(persistedBase);
+  }
+  // If not persisted the fetch the base from the URL.
+  goog.Promise.all(bases).
+  then(function(arrayBaseData) {
+    var fetchedBases = [];
+    for (var i = 0; i < tachyFonts.length; i++) {
+      var loadedBase = arrayBaseData[i];
+      if (loadedBase != null) {
+        // If the font is in persistent store then:
+        //   * it is very likely that the font _already_ has the UI text so
+        //     immediately show the UI in the TachyFont.
+        var incrfont = tachyFonts[i].incrfont;
+        incrfont.setFont_(loadedBase[1], loadedBase[0], '');
+        tachyfont.IncrementalFontUtils.setVisibility(incrfont.style, 
+          incrfont.fontInfo, true);
       } else {
-        return this.getUrlBase(this.backendService, this.fontInfo).
-        then(function(arr) {
-          return arr;
-        });
+        var incrfont = tachyFonts[i].incrfont;
+        loadedBase = incrfont.getUrlBase(incrfont.backendService, incrfont.fontInfo);
       }
-    }.bind(incrfont)).
-    then(function(arr) {
-      this.base.resolve(arr);
-      return arr;
-    }.bind(incrfont)).
+      arrayBaseData[i] = goog.Promise.resolve(loadedBase);
+    }
+    // Loaded fonts from persistent store or URL.
+    goog.Promise.all(arrayBaseData).
+    then(function(arrayBaseData) {
+      for (var i = 0; i < tachyFonts.length; i++) {
+        var incrfont = tachyFonts[i].incrfont;
+        var loadedBase = arrayBaseData[i];
+        incrfont.base.resolve(loadedBase);
+      }
+    }).
+    then(function(arrayBaseData) {
+      for (var i = 0; i < tachyFonts.length; i++) {
+      }
+    }).
     thenCatch(function(e) {
       if (goog.DEBUG) {
         debugger;
-        goog.log.error(tachyfont.logger_, 'failed to get the font.');
+        goog.log.error(tachyfont.logger_, 'failed to get the font: ' +
+          e.stack);
       }
-      tachyfont.IncrementalFontUtils.setVisibility(this.style, this.fontInfo,
-        true);
-    }.bind(incrfont));
-  }
+    });
+  });
 
   // Add DOM mutation observer.
   var target = document.documentElement;
@@ -262,6 +284,7 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
         for (var i = 0; i < mutation.addedNodes.length; i++) {
           var node = mutation.addedNodes[i];
           if (node.nodeName == '#text') {
+            // TODO(bstell) skip password fields
             var parentName = node.parentNode ? node.parentNode.nodeName : '';
             if (parentName != 'SCRIPT' && parentName != 'STYLE') {
               textNode = node;
@@ -636,7 +659,7 @@ tachyfont.possibly_obfuscate = function(codes, charlist) {
   }
   var num_new_codes = tachyfont.MINIMUM_NON_OBFUSCATION_LENGTH - codes.length;
   var target_length = tachyfont.MINIMUM_NON_OBFUSCATION_LENGTH;
-  var max_tries = num_new_codes * 10 + 100; 
+  var max_tries = num_new_codes * 10 + 100;
   for (var i = 0;
       Object.keys(code_map).length < target_length && i < max_tries;
       i++) {
