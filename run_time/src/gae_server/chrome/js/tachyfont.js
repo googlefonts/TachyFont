@@ -335,12 +335,13 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
     });
   });
   
-  // Need to handle input fields
-  if (typeof tachyfont.todo_handle_input_fields == 'undefined') {
-    tachyfont.todo_handle_input_fields = 1;
-    goog.log.error(tachyfont.logger_, 'need to handle input fields');
+  if (goog.DEBUG) {
+    // Need to handle input fields
+    if (typeof tachyfont.todo_handle_input_fields == 'undefined') {
+      tachyfont.todo_handle_input_fields = 1;
+      goog.log.error(tachyfont.logger_, 'need to handle input fields');
+    }
   }
-
   // Add DOM mutation observer.
   // This records the changes on a per-font basis.
   // Note: mutation observers do not look at INPUT field changes.
