@@ -208,7 +208,9 @@ tachyfont.TachyFontSet.prototype.addTextToFontGroups =
   // Look for this in the font set.
   var index = tachyFontSet.fontIdToIndex[fontId];
   if (index == undefined) {
-    console.log('did not find = ' + fontId);
+    if (goog.DEBUG) {
+      goog.log.log(tachyfont.logger_, 'did not find = ' + fontId);
+    }
     return;
   }
 
