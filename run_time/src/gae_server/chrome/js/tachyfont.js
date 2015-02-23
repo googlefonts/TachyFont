@@ -2713,7 +2713,7 @@ tachyfont.GoogleBackendService.prototype.log = function(message) {
  */
 tachyfont.GoogleBackendService.prototype.getUrl_ = function(
     fontInfo, prefix, suffix) {
-  var family = fontInfo['name'].replace(' ', '').toLowerCase();
+  var family = fontInfo['familyName'].replace(/ /g, '').toLowerCase();
   return this.baseUrl + '/' + prefix + '/' + family + '/' +
       fontInfo['version'] + '/' + fontInfo['fontkit'] + '.' + suffix;
 };
