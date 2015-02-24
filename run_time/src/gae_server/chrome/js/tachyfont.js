@@ -2706,7 +2706,10 @@ tachyfont.GoogleBackendService.prototype.log = function(message) {
 
 /**
  * @private
- * @param {Object} fontInfo Info on the font.
+ * @param {Object} fontInfo Metadata for the font including weight, version, fontkit,
+*                  familyName = Full font family name, not compressed ie. "Noto Sans", and
+*                  name = Unique name for this particular instance of the font (style/weight)
+*                  ie. "notosans100".
  * @param {string} prefix Action prefix in the URL.
  * @param {string} suffix Action suffset in the URL.
  * @return {string} URL for the specified font action.
