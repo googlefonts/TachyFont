@@ -71,6 +71,8 @@ tachyfont.persistData = true;
 
 /**
  * A mapping from css weight names to weights.
+ *
+ * @type {!Object.<string, string>}
  */
 tachyfont.cssWeightToNumber = {
         'lighter': '300',
@@ -183,12 +185,34 @@ tachyfont.TachyFontSet.prototype.addFont = function(font) {
 /**
  * Record the needed text for each TachyFont.
  *
- * @param {string} text The text to add to the need-to-load list.
- * @param {string} css_family The css family to add to the text to.
- * @param {string} weight The weight to add the text to.
+ * @param {Object} node The text node.
+ * @return {boolean} True if text was added.
  */
-tachyfont.TachyFontSet.prototype.addTextToFontGroups =
-  function(text, css_family, weight) {
+tachyfont.TachyFontSet.prototype.addTextToFontGroups = function(node) {
+  var text = node.nodeValue.trim();
+  if (!text) {
+    return false;
+  }
+
+  var parentNode = node.parentNode;
+  // <title> text does not have a parentNode.
+  if (!parentNode) {
+    return false;
+  }
+  var parentName = node.parentNode.nodeName;
+  if (parentName == 'SCRIPT' || parentName == 'STYLE') {
+    return false;
+  }
+  var css_family = goog.style.getComputedStyle(parentNode,
+      'font-family');
+  var weight = goog.style.getComputedStyle(parentNode,
+      'font-weight');
+  // TODO(bstell) add support for slant, width, etc.
+  if (goog.DEBUG) {
+    goog.log.fine(tachyfont.logger_, css_family + '/' + weight + ': "' +
+      text + '"');
+  }
+
   // Convert the css_family to a family (empty string if not supported)
   var family = this.css_family_to_family[css_family];
   if (family == undefined) {
@@ -207,7 +231,7 @@ tachyfont.TachyFontSet.prototype.addTextToFontGroups =
       goog.log.log(tachyfont.logger_, goog.log.Level.FINER,
         'css_family \'' + css_family + '\' not supported');
     }
-    return;
+    return false;
   }
 
   // Normalize the weight; eg, 'normal' -> '400'
@@ -221,7 +245,7 @@ tachyfont.TachyFontSet.prototype.addTextToFontGroups =
       goog.log.log(tachyfont.logger_, goog.log.Level.FINER,
           'did not find = ' + fontId);
     }
-    return;
+    return false;
   }
 
   var tachyFont = this.fonts[index];
@@ -233,6 +257,7 @@ tachyfont.TachyFontSet.prototype.addTextToFontGroups =
     var c = char_array[i];
     charlist[c] = 1;
   }
+  return true;
 };
 
 /**
@@ -245,7 +270,7 @@ tachyfont.TachyFontSet.prototype.updateFonts = function() {
   var updatingFonts = [];
   for (var i = 0; i < this.fonts.length; i++) {
     var fontObj = this.fonts[i].incrfont;
-    var load = fontObj.loadChars('body');
+    var load = fontObj.loadChars();
     updatingFonts.push(load);
   }
   var allLoaded = goog.Promise.all(updatingFonts).
@@ -280,6 +305,23 @@ tachyfont.fontId = function(family, weight) {
   // TODO(bstell) need to support slant/width/etc.
   var fontId = family + ';' + weight;
   return fontId;
+};
+
+/**
+ * Walk the DOM.
+ *
+ * @param {Object} node The starting point for walk.
+ * @param {function(Object)} func The function to call for each node.
+ * TODO(bstell) The return value should be more flexible.
+ * @return {boolean} Boolean result of the function.
+ */
+tachyfont.walkDom = function(node, func) {
+  var addedText = func(node);
+  var children = node.childNodes;
+  for (var i = 0; i < children.length; i++) {
+    addedText = tachyfont.walkDom(children[i], func) || addedText;
+  }
+  return addedText;
 };
 
 /**
@@ -363,82 +405,64 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
       goog.log.error(tachyfont.logger_, 'need to handle input fields');
     }
   }
+
+  // Get any characters that are already in the DOM.
+  tachyfont.walkDom(document.documentElement, function(node) {
+    if (node.nodeName == '#text') {
+      return this.addTextToFontGroups(node);
+    } else {
+      return false;
+    }
+  }.bind(tachyFontSet));
+
   // Add DOM mutation observer.
   // This records the changes on a per-font basis.
   // Note: mutation observers do not look at INPUT field changes.
-  var target = document.documentElement;
   //create an observer instance
   var observer = new MutationObserver(function(mutations) {
     if (goog.DEBUG) {
       goog.log.fine(tachyfont.logger_, 'MutationObserver');
     }
-    var needUpdate = false;
     mutations.forEach(function(mutation) {
-      var textNode;
-      if (goog.DEBUG) {
-        var changeType;
-      }
       if (mutation.type == 'childList') {
         for (var i = 0; i < mutation.addedNodes.length; i++) {
           var node = mutation.addedNodes[i];
-          // Skip text in the <title> element.
-          if (node.parentNode == null) {
-            continue;
-          }
           // Look for text elements.
           if (node.nodeName == '#text') {
-            var parentName = node.parentNode.nodeName;
-            if (parentName != 'SCRIPT' && parentName != 'STYLE') {
-              textNode = node;
-              if (goog.DEBUG) {
-                changeType = 'a: ';
-              }
-            }
+            tachyFontSet.addTextToFontGroups(node);
           }
         }
       } else if (mutation.type == 'characterData') {
         if (mutation.target.nodeName == '#text') {
-          textNode = mutation.target;
+          tachyFontSet.addTextToFontGroups(mutation.target);
+        } else {
           if (goog.DEBUG) {
-            changeType = 'c: ';
-          }
-        }
-      }
-      // Load the text if necessary.
-      if (textNode) {
-        var text = textNode.nodeValue.trim();
-        if (text) {
-          needUpdate = true;
-          var parentNode = textNode.parentNode;
-          // <title> text does not have a parentNode.
-          if (parentNode) {
-            var css_family = goog.style.getComputedStyle(parentNode,
-                'font-family');
-            var weight = goog.style.getComputedStyle(parentNode,
-                'font-weight');
-            // TODO(bstell) add support for slant, width, etc.
-            tachyFontSet.addTextToFontGroups(text, css_family, weight);
-            if (goog.DEBUG) {
-              goog.log.fine(tachyfont.logger_, changeType + css_family + '/' +
-                  weight + ': "' + text + '"');
-            }
+            goog.log.info(tachyfont.logger_,
+                'need to handle characterData for non-text');
           }
         }
       }
     });
-    if (needUpdate) {
-      if (goog.DEBUG) {
-        goog.log.info(tachyfont.logger_, 'MutationObserver: updateFonts');
-      }
-      // TODO(bstell) should pass in what is needed for each font.
-      tachyFontSet.updateFonts();
-    }
   });
 
   // Watch for these mutations.
   var config = /** @type {!MutationObserverInit} */ ({ 'childList': true,
     'subtree': true, 'characterData': true });
-  observer.observe(target, config);
+  observer.observe(document.documentElement, config);
+
+  // Update the fonts when the page content is loaded.
+  document.addEventListener('DOMContentLoaded', function(event) {
+    if (goog.DEBUG) {
+      goog.log.info(tachyfont.logger_, 'DOMContentLoaded: updateFonts');
+    }
+    tachyFontSet.updateFonts();
+  });
+
+  // TODO(bstell) Update the fonts when new characters are added to the page.
+  if (goog.DEBUG) {
+    goog.log.error(tachyfont.logger_,
+        'need to update the fonts when new characters are added to the page');
+  }
 
   return tachyFontSet;
 };
@@ -449,15 +473,19 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
  * @param {Array.<Object>|Object} tachyFonts The list of font objects.
  */
 tachyfont.updateFonts = function(tachyFonts) {
-  if (goog.DEBUG) {
-    goog.log.info(tachyfont.logger_, 'tachyfont.updateFonts is deprecated');
-  }
   if (tachyFonts.constructor == Array) {
+    if (goog.DEBUG) {
+      goog.log.info(tachyfont.logger_,
+          'tachyfont.updateFonts: passing in an array is deprecated');
+    }
     for (var i = 0; i < tachyFonts.length; i++) {
       var tachyFont = tachyFonts[i];
-      tachyFont.incrfont.loadChars('body');
+      tachyFont.incrfont.loadChars();
     }
   } else if (tachyFonts.constructor == tachyfont.TachyFontSet) {
+    if (goog.DEBUG) {
+      goog.log.info(tachyfont.logger_, 'tachyfont.updateFonts');
+    }
     tachyFonts.updateFonts();
   }
 };
@@ -773,6 +801,9 @@ tachyfont.IncrementalFont.obj_.prototype.setFont_ = function(fontdata,
   fileinfo, msg) {
   if (this.needToSetFont) {
     this.needToSetFont = false;
+    if (goog.DEBUG) {
+      goog.log.info(tachyfont.logger_, 'setFont');
+    }
     tachyfont.IncrementalFontUtils.setFont(this.fontInfo, fontdata,
       fileinfo.isTTF, msg);
   }
@@ -820,8 +851,8 @@ tachyfont.possibly_obfuscate = function(codes, charlist) {
   }
 
   if (goog.DEBUG) {
-    goog.log.info(tachyfont.logger_, 'before obfuscation: ' +
-      'codes.length = ' + codes.length);
+    goog.log.log(tachyfont.logger_, goog.log.Level.FINER,
+        'before obfuscation: codes.length = ' + codes.length);
     codes.sort(function(a, b) { return a - b; });
     goog.log.fine(tachyfont.logger_, 'codes = ' + codes);
   }
@@ -832,8 +863,8 @@ tachyfont.possibly_obfuscate = function(codes, charlist) {
     combined_codes.push(code_map[key]);
   }
   if (goog.DEBUG) {
-    goog.log.info(tachyfont.logger_, 'after obfuscation: ' +
-      'combined_codes.length = ' + combined_codes.length);
+    goog.log.log(tachyfont.logger_, goog.log.Level.FINER,
+        'after obfuscation: combined_codes.length = ' + combined_codes.length);
     combined_codes.sort(function(a, b) { return a - b; });
     goog.log.fine(tachyfont.logger_, 'combined_codes = ' +
         combined_codes);
@@ -844,11 +875,9 @@ tachyfont.possibly_obfuscate = function(codes, charlist) {
 
 /**
  * Lazily load the data for these chars.
- * @param {string} element_name The name of the data item.
  * @return {Object}
  */
-tachyfont.IncrementalFont.obj_.prototype.loadChars =
-  function(element_name) {
+tachyfont.IncrementalFont.obj_.prototype.loadChars = function() {
   if (goog.DEBUG) {
     goog.log.fine(tachyfont.logger_, 'loadChars');
   }
@@ -894,8 +923,7 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars =
             }
           } else {
             if (goog.DEBUG) {
-              goog.log.info(tachyfont.logger_,
-                'do not need anymore characters');
+              goog.log.fine(tachyfont.logger_, 'no new characters');
             }
             return null;
           }
@@ -913,7 +941,7 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars =
           then(function(bundleResponse) {
             if (remaining.length) {
               setTimeout(function() {
-                that.loadChars(element_name);
+                that.loadChars();
               }, 1);
             }
             // if (goog.DEBUG) {
@@ -1052,7 +1080,7 @@ tachyfont.IncrementalFont.obj_.prototype.persist_ = function(name) {
         }).
         then(function(arr) {
           if (goog.DEBUG) {
-            goog.log.info(tachyfont.logger_, 'save base');
+            goog.log.fine(tachyfont.logger_, 'save base');
           }
           return that.saveData_(arr[0],
             tachyfont.IncrementalFont.BASE, arr[2].buffer);
@@ -1068,7 +1096,7 @@ tachyfont.IncrementalFont.obj_.prototype.persist_ = function(name) {
         }).
         then(function(arr) {
           if (goog.DEBUG) {
-            goog.log.info(tachyfont.logger_, 'save charlist');
+            goog.log.fine(tachyfont.logger_, 'save charlist');
           }
           return that.saveData_(arr[0], tachyfont.IncrementalFont.CHARLIST,
             arr[1]);
@@ -1962,10 +1990,9 @@ tachyfont.TachyFont = function(fontInfo, params) {
 
 /**
  * Lazily load the data for these chars.;
- * @param {string} element_name The name of the data item.
  */
-tachyfont.TachyFont.prototype.loadNeededChars = function(element_name) {
-  this.incrfont.loadChars(element_name);
+tachyfont.TachyFont.prototype.loadNeededChars = function() {
+  this.incrfont.loadChars();
 };
 
 /**
