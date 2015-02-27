@@ -298,7 +298,7 @@ tachyfont.TachyFontSet.prototype.updateFonts = function() {
 /**
  * Create a font identifing string.
  * @param {string} family The font family name;
- * @param {string|number} weight The font weight;
+ * @param {string} weight The font weight;
  * @return {string} The identifier for this font.
  */
 tachyfont.fontId = function(family, weight) {
@@ -2418,8 +2418,8 @@ tachyfont.IncrementalFontUtils.setFont = function(fontInfo, data, isTTF, msg) {
  */
 tachyfont.IncrementalFontUtils.setFont_oldStyle = function(fontInfo, blobUrl,
   isTTF) {
-  var fontname = fontInfo['name'];
-  var fontFamily = fontInfo['familyName'];
+  var fontname = fontInfo['name']; // The font name.
+  var fontFamily = fontInfo['familyName']; // The @font-face font-family.
   var weight = fontInfo['weight'];
   // Get the style sheet.
   var style = document.getElementById(
@@ -2443,8 +2443,9 @@ tachyfont.IncrementalFontUtils.setFont_oldStyle = function(fontInfo, blobUrl,
         // }
         var this_style = this_rule.style;
         var font_family = this_style.getPropertyValue('font-family');
-        // TODO(bstell) consider using weight/slant.
-        if (font_family == fontname) {
+        var font_weight = this_style.getPropertyValue('font-weight');
+        // TODO(bstell) consider using slant/width.
+        if (font_family == fontFamily && font_weight == weight) {
           rule_to_delete = i;
           break;
         }
@@ -3060,19 +3061,19 @@ if (window.ForDebug) {
  * This list of supported weights for Noto Sans JP normal (upright).
  */
 webfonttailor.jaNormalInfo = {
-  '100': { 'name': 'NotoSansJP-Thin', 'weight': 100,
+  '100': { 'name': 'NotoSansJP-Thin', 'weight': '100',
            'class': 'NotoSansJP-Thin' },
-  '200': { 'name': 'NotoSansJP-Light', 'weight': 200,
+  '200': { 'name': 'NotoSansJP-Light', 'weight': '200',
            'class': 'NotoSansJP-light' },
-  '300': { 'name': 'NotoSansJP-DemiLight', 'weight': 300,
+  '300': { 'name': 'NotoSansJP-DemiLight', 'weight': '300',
            'class': 'NotoSansJP-DemiLight' },
-  '400': { 'name': 'NotoSansJP-Regular', 'weight': 400,
+  '400': { 'name': 'NotoSansJP-Regular', 'weight': '400',
            'class': 'NotoSansJP-Regular' },
-  '500': { 'name': 'NotoSansJP-Medium', 'weight': 500,
+  '500': { 'name': 'NotoSansJP-Medium', 'weight': '500',
            'class': 'NotoSansJP-Medium' },
-  '700': { 'name': 'NotoSansJP-Bold', 'weight': 700,
+  '700': { 'name': 'NotoSansJP-Bold', 'weight': '700',
            'class': 'NotoSansJP-Bold' },
-  '900': { 'name': 'NotoSansJP-Black', 'weight': 900,
+  '900': { 'name': 'NotoSansJP-Black', 'weight': '900',
            'class': 'NotoSansJP-Black' }
 };
 
