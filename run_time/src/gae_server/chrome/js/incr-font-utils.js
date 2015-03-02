@@ -521,50 +521,51 @@ IncrementalFontUtils.setFont_oldStyle = function(fontname, blobUrl, isTTF) {
 
 
 /**
+ * Load a web font.
+ * This is currently only used for demos but in the future loading web fonts
+ * could become an integral part of TachyFont.
+ * 
  * Add the '@font-face' rule
  * @param {string} fontname The CSS fontname
- * @param {string} url The url of the webfont.
+ * @param {string} fonturl The url of the webfont.
  * @param {string} fonttype The type of the font; eg truetype or opentype.
+ * @return {?Object}
  */
-IncrementalFontUtils.loadWebFont = function(fontname, fonturl, fonttype) {
-  timer2.start('load web font');
+// TODO(bstell) this was changed without testing.
+IncrementalFontUtils.loadWebFont = function(fontname, fonturl,
+  fonttype) {
   var timeout_id;
   function font_loading_timeout() {
-    timer2.end('load web font');
     timeout_id = setTimeout(font_loading_timeout, 100);
   }
   font_loading_timeout();
 
   var bandwidth = ForDebug.getCookie('bandwidth', '0');
-  if (true || typeof window.FontFace == 'undefined') {
+  if (typeof window.FontFace == 'undefined') {
     var style = document.createElement('style');
     document.head.appendChild(style);
     var sheet = style.sheet;
-    var rule_str = 
+    var rule_str =
       '@font-face {\n' +
-      '    font-family: "' + fontname + '";\n' + 
-      '    src: url("' + fonturl + "?bandwidth=" + bandwidth + 
+      '    font-family: "' + fontname + '";\n' +
+      '    src: url("' + fonturl + '?bandwidth=' + bandwidth +
       '&ts=' + Date.now() + '") format("' + fonttype + '")\n' +
       '}';
-    sheet.insertRule(rule_str, 0);
+    sheet.insertRule(rule_str, 0); 
     // A lazy way to time the web font.
-    window.addEventListener("load", function(event) {
+    window.addEventListener('load', function(event) {
       clearTimeout(timeout_id);
-      timer2.end('load web font');
-    });
-
-
-  	return;
+    }); 
+    return null;
   }
-
-  var face = new FontFace(fontname, "url(" + fonturl + 
-    "?bandwidth=" + bandwidth + '&ts=' + Date.now() + ")", {});
-  face.load().then(function (loadedFace) {
+  var face = new FontFace(fontname, 'url(' + fonturl +
+    '?bandwidth=' + bandwidth + '&ts=' + Date.now() + ')', {});
+  face.load().then(function(loadedFace) {
     document.fonts.add(loadedFace);
     document.body.style.fontFamily = fontname;
-    timer2.end('load web font:<br>' + fontname);
     clearTimeout(timeout_id);
   });
-  return face;
-}
+  return face; // NOTE: the face has to be stored in a global variable or
+               // the font seems to disappear.
+};
 
