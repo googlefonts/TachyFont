@@ -791,21 +791,20 @@ tachyfont.IncrementalFont.obj_.prototype.getUrlBase_ =
 
 
 /**
- * IncrFontIDB.obj_ - A class to handle interacting the IndexedDB.
+ * Set the \@font-face rule.
  * @param {DataView} fontdata The font dataview.
  * @param {Object} fileinfo The font file information.
- * @param {string} msg A message for the timer.
  * @private
  */
 tachyfont.IncrementalFont.obj_.prototype.setFont_ = function(fontdata,
-  fileinfo, msg) {
+  fileinfo) {
   if (this.needToSetFont) {
     this.needToSetFont = false;
     if (goog.DEBUG) {
-      goog.log.info(tachyfont.logger_, 'setFont');
+      goog.log.info(tachyfont.logger_, 'setFont_');
     }
     tachyfont.IncrementalFontUtils.setFont(this.fontInfo, fontdata,
-      fileinfo.isTTF, msg);
+      fileinfo.isTTF);
   }
 };
 
@@ -2343,16 +2342,12 @@ tachyfont.IncrementalFontUtils.setVisibility = function(style, fontInfo,
  * @param {Object} fontInfo Info about this font.
  * @param {DataView} data The font data.
  * @param {boolean} isTTF True is the font is of type TTF.
- * @param {string} msg A message to display in a timer.
  */
-tachyfont.IncrementalFontUtils.setFont = function(fontInfo, data, isTTF, msg) {
-  // if (goog.DEBUG) {
-  //   goog.log.fine(tachyfont.logger_, 'setFont');
-  // }
-  var fontFamily = fontInfo['familyName'];
-  if (msg) {
-    tachyfont.timer1.start(msg);
-  }
+tachyfont.IncrementalFontUtils.setFont = function(fontInfo, data, isTTF) {
+  var fontFamily = fontInfo['familyName']; // The @font-face font-family.
+  var fontname = fontInfo['name']; // The font name.
+  var weight = fontInfo['weight'];
+
   var mime_type = '';
   if (isTTF) {
     mime_type = 'font/ttf'; // 'application/x-font-ttf';
@@ -2372,55 +2367,6 @@ tachyfont.IncrementalFontUtils.setFont = function(fontInfo, data, isTTF, msg) {
   }
   var blobUrl = window.URL.createObjectURL(blob);
 
-  var weight = parseInt(fontInfo['weight'], 10);
-  var nonSupportedWeight = weight % 100;
-  if (nonSupportedWeight) {
-    if (goog.DEBUG) {
-      goog.log.warning(tachyfont.logger_, fontInfo['name'] + ' weight ' +
-        weight + ' unsupported');
-    }
-  }
-  nonSupportedWeight = true;
-  // if (goog.DEBUG) {
-  //   goog.log.warning(tachyfont.logger_, 'nonSupportedWeight = ' +
-  //     nonSupportedWeight);
-  // }
-  // FontFace does not allow non-hundred weights
-  if (nonSupportedWeight || typeof FontFace == 'undefined') {
-    tachyfont.IncrementalFontUtils.setFont_oldStyle(fontInfo, blobUrl, isTTF);
-    return;
-  } else {
-    var font = new FontFace(fontFamily, 'url(' + blobUrl + ')', {
-      'weight': fontInfo['weight']
-    });
-    document.fonts.add(font);
-    goog.Promise.all([font.load()])
-    .then(function() {
-      // if (goog.DEBUG) {
-      //   goog.log.fine(tachyfont.logger_, fontInfo['name'] +
-      //     ' load succeeded');
-      // }
-    })
-    .thenCatch(function() {
-      if (goog.DEBUG) {
-        goog.log.error(tachyfont.logger_, fontInfo['name'] + ' load failed');
-      }
-    });
-  }
-};
-
-
-/**
- * Add the '@font-face' rule without using CSS Fonts Module Level 3.
- * @param {Object} fontInfo Info about this font.
- * @param {string} blobUrl The blob URL of the font data.
- * @param {boolean} isTTF True is the font is of type TTF.
- */
-tachyfont.IncrementalFontUtils.setFont_oldStyle = function(fontInfo, blobUrl,
-  isTTF) {
-  var fontname = fontInfo['name']; // The font name.
-  var fontFamily = fontInfo['familyName']; // The @font-face font-family.
-  var weight = fontInfo['weight'];
   // Get the style sheet.
   var style = document.getElementById(
     tachyfont.IncrementalFontUtils.STYLESHEET_ID);
@@ -2438,9 +2384,6 @@ tachyfont.IncrementalFontUtils.setFont_oldStyle = function(fontInfo, blobUrl,
     for (var i = 0; i < rules.length; i++) {
       var this_rule = rules[i];
       if (this_rule.type == CSSRule.FONT_FACE_RULE) {
-        // if (goog.DEBUG) {
-        //   goog.log.fine(tachyfont.logger_, 'found an @font-face rule');
-        // }
         var this_style = this_rule.style;
         var font_family = this_style.getPropertyValue('font-family');
         var font_weight = this_style.getPropertyValue('font-weight');
@@ -2466,9 +2409,10 @@ tachyfont.IncrementalFontUtils.setFont_oldStyle = function(fontInfo, blobUrl,
     ' format("' + format + '")' +
     ';' +
     '}';
-  // if (goog.DEBUG) {
-  //   goog.log.fine(tachyfont.logger_, 'rule = ' + rule_str);
-  // }
+   if (goog.DEBUG) {
+     goog.log.log(tachyfont.logger_, goog.log.Level.FINER,
+       'rule = ' + rule_str);
+   }
   sheet.insertRule(rule_str, sheet.cssRules.length);
 
   if (rule_to_delete >= 0) {
@@ -2484,60 +2428,6 @@ tachyfont.IncrementalFontUtils.setFont_oldStyle = function(fontInfo, blobUrl,
   }
 };
 
-
-/**
- * Load a web font.
- * This is currently only used for demos but in the future loading web fonts
- * could become an integral part of TachyFont.
- * @param {string} fontname The CSS fontname
- * @param {string} fonturl The url of the webfont.
- * @param {string} fonttype The type of the font; eg truetype or opentype.
- * @return {?Object}
- */
-// THIS SHOULD NOT BE IN TACHYFONT.JS
-tachyfont.IncrementalFontUtils.loadWebFont = function(fontname, fonturl,
-  fonttype) {
-  tachyfont.timer2.start('load web font');
-  var timeout_id;
-  function font_loading_timeout() {
-    tachyfont.timer2.end('load web font');
-    timeout_id = setTimeout(font_loading_timeout, 100);
-  }
-  font_loading_timeout();
-
-  var bandwidth = tachyfont.ForDebug.getCookie('bandwidth', '0');
-  if (typeof window.FontFace == 'undefined') {
-    var style = document.createElement('style');
-    document.head.appendChild(style);
-    var sheet = style.sheet;
-    var rule_str =
-      '@font-face {\n' +
-      '    font-family: "' + fontname + '";\n' +
-      '    src: url("' + fonturl + '?bandwidth=' + bandwidth +
-      '&ts=' + Date.now() + '") format("' + fonttype + '")\n' +
-      '}';
-    sheet.insertRule(rule_str, 0);
-    // A lazy way to time the web font.
-    window.addEventListener('load', function(event) {
-      clearTimeout(timeout_id);
-      tachyfont.timer2.end('load web font');
-      tachyfont.timer2.done();
-    });
-    return null;
-  }
-
-  var face = new FontFace(fontname, 'url(' + fonturl +
-    '?bandwidth=' + bandwidth + '&ts=' + Date.now() + ')', {});
-  face.load().then(function(loadedFace) {
-    document.fonts.add(loadedFace);
-    document.body.style.fontFamily = fontname;
-    tachyfont.timer2.end('load web font:<br>' + fontname);
-    tachyfont.timer2.done();
-    clearTimeout(timeout_id);
-  });
-  return face; // NOTE: the face has to be stored in a global variable or
-               // the font seems to disappear.
-};
 
 /**
  * @param {string} version
