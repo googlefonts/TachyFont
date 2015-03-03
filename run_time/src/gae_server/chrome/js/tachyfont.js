@@ -219,6 +219,12 @@ tachyfont.TachyFontSet.prototype.addTextToFontGroups = function(node) {
     var families = css_family.split(',');
     for (var i = 0; i < families.length; i++) {
       var a_family = families[i].trim();
+      // Where there are spaces in the CSS familyName, the name has single
+      // quotes around it.
+      if (a_family.charAt(0) == "'" &&
+          a_family.charAt(a_family.length-1) == "'") {
+        a_family = a_family.substring(1, a_family.length-1);
+      }
       if (a_family == this.familyName) {
         this.css_family_to_family[css_family] = this.familyName;
         break;
@@ -328,9 +334,11 @@ tachyfont.walkDom = function(node, func) {
  * Create a list of TachyFonts
  *
  * @param {string} familyName The font-family name.
- * @param {Object} fontsInfo The font information object.
- * @param {Object} opt_params Optional parameters.
- * @return {Object} The TachyFontSet object.
+ * // TODO(bstell) remove the Object type.
+ * @param {tachyfont.TachyFontsInfo|Object} fontsInfo The information about the
+ *     fonts.
+ * @param {Object.<string, string>} opt_params Optional parameters.
+ * @return {tachyfont.TachyFontSet} The TachyFontSet object.
  */
 tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
   var tachyFontSet = new tachyfont.TachyFontSet(familyName);
@@ -470,7 +478,9 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
 /**
  * Update a list of TachyFonts
  *
- * @param {Array.<Object>|Object} tachyFonts The list of font objects.
+ * // TODO(bstell) remove the tachyfont.TachyFont type.
+ * @param {Array.<tachyfont.TachyFont>|tachyfont.TachyFontSet} tachyFonts The
+ *     list of font objects.
  */
 tachyfont.updateFonts = function(tachyFonts) {
   if (tachyFonts.constructor == Array) {
@@ -572,7 +582,7 @@ tachyfont.promise.prototype.get_ = function() {
  * @return {tachyfont.IncrementalFont.obj_} The incremental font manager object.
  */
 tachyfont.IncrementalFont.createManager = function(fontInfo, params) {
-  var fontname = fontInfo['name'];
+  var fontName = fontInfo['name'];
   var backendService =
       fontInfo['fontkit'] ?
       new tachyfont.GoogleBackendService(fontInfo['url']) :
@@ -595,19 +605,19 @@ tachyfont.IncrementalFont.createManager = function(fontInfo, params) {
   // Create a style for this font.
   var style = document.createElement('style');
   document.head.appendChild(style);
-  var rule = '.' + fontname + ' { font-family: ' + fontname + '; ' +
+  var rule = '.' + fontName + ' { font-family: ' + fontName + '; ' +
     'visibility: ' + initialVisibilityStr + '; }';
   style.sheet.insertRule(rule, 0);
 
   //tachyfont.timer1.start('load base');
-  tachyfont.timer1.start('load Tachyfont base+data for ' + fontname);
+  tachyfont.timer1.start('load Tachyfont base+data for ' + fontName);
   // if (goog.DEBUG) {
   //   goog.log.info(tachyfont.logger_,
   //     'check to see if a webfont is in cache');
   // }
   var incrFontMgr =
       new tachyfont.IncrementalFont.obj_(fontInfo, params, backendService);
-  //tachyfont.timer1.start('openIndexedDB.open ' + fontname);
+  //tachyfont.timer1.start('openIndexedDB.open ' + fontName);
 //  tachyfont.IncrementalFontUtils.logger(incrFontMgr.url,
 //    'need to report info');
   /*
@@ -622,8 +632,8 @@ tachyfont.IncrementalFont.createManager = function(fontInfo, params) {
         '* errors');
   }
   */
-  incrFontMgr.getIDB_ = incrFontMgr.openIndexedDB(fontname);
-  //tachyfont.timer1.end('openIndexedDB.open ' + fontname);
+  incrFontMgr.getIDB_ = incrFontMgr.openIndexedDB(fontName);
+  //tachyfont.timer1.end('openIndexedDB.open ' + fontName);
 
   // Create a class with initial visibility.
   incrFontMgr.style = tachyfont.IncrementalFontUtils.setVisibility(null,
@@ -662,7 +672,7 @@ tachyfont.IncrementalFont.createManager = function(fontInfo, params) {
   if (tachyfont.buildDemo_) {
     tachyfont.buildDemo_ = false;
     // For Debug: add a button to clear the IndexedDB.
-    tachyfont.ForDebug.addDropIdbButton(incrFontMgr, fontname);
+    tachyfont.ForDebug.addDropIdbButton(incrFontMgr, fontName);
 
     // For Debug: add a control to set the bandwidth.
     tachyfont.ForDebug.addBandwidthControl();
@@ -685,7 +695,7 @@ tachyfont.IncrementalFont.createManager = function(fontInfo, params) {
  */
 tachyfont.IncrementalFont.obj_ = function(fontInfo, params, backendService) {
   this.fontInfo = fontInfo;
-  this.fontname = fontInfo['name'];
+  this.fontName = fontInfo['name'];
   this.charsToLoad = {};
   this.req_size = params['req_size'];
   this.needToSetFont = true;
@@ -968,7 +978,7 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars = function() {
               } else {
                 msg = '';
                 tachyfont.timer1.end('load Tachyfont base+data for ' +
-                    that.fontname);
+                    that.fontName);
                 tachyfont.timer1.done();
               }
               // Update the data promises.
@@ -982,7 +992,7 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars = function() {
             } else {
               var msg = '';
               tachyfont.timer1.end('load Tachyfont base+data for ' +
-                  that.fontname);
+                  that.fontName);
               tachyfont.timer1.done();
             }
             var result = {
@@ -1166,14 +1176,14 @@ tachyfont.IncrementalFont.obj_.prototype.saveData_ = function(idb, name, data) {
 
 /**
  * Get the fontDB.
- * @param {string} fontname The name of the font.
+ * @param {string} fontName The name of the font.
  * @return {goog.Promise} The font DB.
  */
-tachyfont.IncrementalFont.obj_.prototype.openIndexedDB = function(fontname) {
+tachyfont.IncrementalFont.obj_.prototype.openIndexedDB = function(fontName) {
   var that = this;
 
   var openIDB = new goog.Promise(function(resolve, reject) {
-    var db_name = tachyfont.IncrementalFont.DB_NAME + '/' + fontname;
+    var db_name = tachyfont.IncrementalFont.DB_NAME + '/' + fontName;
     //tachyfont.timer1.start('indexedDB.open ' + db_name);
     var dbOpen = window.indexedDB.open(db_name,
       tachyfont.IncrementalFont.version);
@@ -2345,7 +2355,7 @@ tachyfont.IncrementalFontUtils.setVisibility = function(style, fontInfo,
  */
 tachyfont.IncrementalFontUtils.setFont = function(fontInfo, data, isTTF) {
   var fontFamily = fontInfo['familyName']; // The @font-face font-family.
-  var fontname = fontInfo['name']; // The font name.
+  var fontName = fontInfo['name']; // The font name.
   var weight = fontInfo['weight'];
 
   var mime_type = '';
@@ -2931,9 +2941,9 @@ if (window.ForDebug) {
 
   /** Stub out the debug functions.
    * @param {Object} incrFontMgr The incremental font manager object.
-   * @param {string} fontname The font name.
+   * @param {string} fontName The font name.
    */
-  tachyfont.ForDebug.addDropIdbButton = function(incrFontMgr, fontname) {};
+  tachyfont.ForDebug.addDropIdbButton = function(incrFontMgr, fontName) {};
   /** Stub out the debug functions. */
   tachyfont.ForDebug.addBandwidthControl = function() {};
   /** Stub out the debug functions. */
@@ -2994,18 +3004,30 @@ webfonttailor.fontFamliesInfo = {
   'Noto Sans': webfonttailor.notoSansLanguageInfo
 };
 
+
+/**
+ * Object holding information about the requested fonts.
+ *
+ * @constructor
+ */
+tachyfont.TachyFontsInfo = function() {
+  // TODO(bstell) Define the fields.
+  // TODO(bstell) Fix the constructor parameters.
+};
+
+
 /**
  * getTachyFontInfo: get the font information.
  *
  * @param {Array.<string>} fontFamlies The suggested list of font families.
  * @param {Array.<string>} languages The language codes list.
  * @param {Array.<Object>} faces The faces (eg, slant, weight) list.
- * @param {Object} options The additional font options; eg, stretch
- * @return {Object} The information for the fonts.
+ * @param {Object.<string, string>} options Additional info; eg, stretch.
+ * @return {tachyfont.TachyFontsInfo} The information describing the fonts.
  */
 webfonttailor.getTachyFontsInfo = function(fontFamlies, languages, faces,
   options) {
-  var fontsInfo = {};
+  var fontsInfo = new tachyfont.TachyFontsInfo();
   var fonts = [];
   for (var i = 0; i < fontFamlies.length; i++) {
     var fontFamily = fontFamlies[i];
