@@ -219,8 +219,9 @@ tachyfont.TachyFontSet.prototype.addTextToFontGroups = function(node) {
     var families = css_family.split(',');
     for (var i = 0; i < families.length; i++) {
       var a_family = families[i].trim();
-      // Where there are spaces in the CSS familyName, the name has single
-      // quotes around it.
+      // When there are spaces in the font-name, Chromium adds single quotes
+      // around the font name in the style object.
+      // https://code.google.com/p/chromium/issues/detail?id=368293
       if (a_family.charAt(0) == "'" &&
           a_family.charAt(a_family.length-1) == "'") {
         a_family = a_family.substring(1, a_family.length-1);
