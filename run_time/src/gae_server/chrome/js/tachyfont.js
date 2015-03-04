@@ -169,7 +169,30 @@ tachyfont.TachyFontSet = function(familyName) {
   this.fontIdToIndex = {};
   this.css_family_to_family = {};
   this.familyName = familyName;
+
+  /**
+   * Do not need to scan the DOM if there have been mutation events before
+   * DOMContentLoaded.
+   *
+   * @private {boolean}
+   */
+  this.hadMutationEvents_ = false;
+
+  /**
+   * The timerID from setTimeout.
+   *
+   * @private {?number} The timerID from setTimeout.
+   */
+  this.pendingUpdateRequest_ = null;
 };
+
+
+/**
+ * Maximum time in milliseconds to wait before doing a character update.
+ *
+ * @type {number}
+ */
+tachyfont.TachyFontSet.TIMEOUT = 3000;
 
 
 /**
@@ -223,8 +246,8 @@ tachyfont.TachyFontSet.prototype.addTextToFontGroups = function(node) {
       // around the font name in the style object.
       // https://code.google.com/p/chromium/issues/detail?id=368293
       if (a_family.charAt(0) == "'" &&
-          a_family.charAt(a_family.length-1) == "'") {
-        a_family = a_family.substring(1, a_family.length-1);
+          a_family.charAt(a_family.length - 1) == "'") {
+        a_family = a_family.substring(1, a_family.length - 1);
       }
       if (a_family == this.familyName) {
         this.css_family_to_family[css_family] = this.familyName;
@@ -257,23 +280,51 @@ tachyfont.TachyFontSet.prototype.addTextToFontGroups = function(node) {
 
   var tachyFont = this.fonts[index];
   // Handle UTF16.
-  var char_array = tachyfont.stringToChars(text);
+  var charArray = tachyfont.stringToChars(text);
   // Tell the font it needs these characters.
   var charlist = tachyFont.incrfont.charsToLoad;
-  for (var i = 0; i < char_array.length; i++) {
-    var c = char_array[i];
+  for (var i = 0; i < charArray.length; i++) {
+    var c = charArray[i];
     charlist[c] = 1;
   }
   return true;
 };
 
+
 /**
- * Update a group TachyFonts
+ * Request an update of a group of TachyFonts
+ */
+tachyfont.TachyFontSet.prototype.requestUpdateFonts = function() {
+  // Set a pending request.
+  if (this.pendingUpdateRequest_ == null) {
+    this.pendingUpdateRequest_ = setTimeout(function() {
+      if (goog.DEBUG) {
+        goog.log.info(tachyfont.logger_, 'requestUpdateFonts: updateFonts');
+      }
+      this.updateFonts();
+    }.bind(this), tachyfont.TachyFontSet.TIMEOUT);
+  }
+};
+
+
+/**
+ * Update a group of TachyFonts
  *
  * @return {goog.Promise}
  *
  */
 tachyfont.TachyFontSet.prototype.updateFonts = function() {
+  // Clear any pending request.
+  if (this.pendingUpdateRequest_ != null) {
+    if (goog.DEBUG) {
+      goog.log.info(tachyfont.logger_, 'clear pendingUpdateRequest_');
+    }
+    clearTimeout(this.pendingUpdateRequest_);
+    this.pendingUpdateRequest_ = null;
+  }
+  if (goog.DEBUG) {
+    goog.log.info(tachyfont.logger_, 'TachyFontSet.updateFonts');
+  }
   var updatingFonts = [];
   for (var i = 0; i < this.fonts.length; i++) {
     var fontObj = this.fonts[i].incrfont;
@@ -284,6 +335,9 @@ tachyfont.TachyFontSet.prototype.updateFonts = function() {
   then(function(load_results) {
     for (var i = 0; i < load_results.length; i++) {
       var load_result = load_results[i];
+      if (load_result == null) {
+        continue;
+      }
       var fontObj = this.fonts[i].incrfont;
       if (load_result['data_length'] != 0) {
         fontObj.needToSetFont = true;
@@ -432,6 +486,7 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
     if (goog.DEBUG) {
       goog.log.fine(tachyfont.logger_, 'MutationObserver');
     }
+    tachyFontSet.hadMutationEvents_ = true;
     mutations.forEach(function(mutation) {
       if (mutation.type == 'childList') {
         for (var i = 0; i < mutation.addedNodes.length; i++) {
@@ -452,6 +507,13 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
         }
       }
     });
+    // TODO(bstell) Should check if there were any chars.
+    // For pages that load new data slowly: request the fonts be updated soon.
+    // This attempts to minimize expensive operations:
+    //     1. The round trip delays to fetch data.
+    //     2. The set @font-family time (it takes significant time to pass the
+    //        blobUrl data from Javascript to C++).
+    tachyFontSet.requestUpdateFonts();
   });
 
   // Watch for these mutations.
@@ -464,14 +526,28 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
     if (goog.DEBUG) {
       goog.log.info(tachyfont.logger_, 'DOMContentLoaded: updateFonts');
     }
+    // On DOMContentLoaded we want to update the fonts immediately. If there
+    // have not any been mutation events then scan the DOM now. It is expensive
+    // to scan the DOM and basically duplicates the soon-to-follow mutation
+    // event. Unfortunately, mutation events do not update the fonts immediately
+    // and there is no way to tell which subsequent mutation event should do an
+    // immediate update.
+    if (!tachyFontSet.hadMutationEvents_) {
+      if (goog.DEBUG) {
+        goog.log.error(tachyfont.logger_, 'DOMContentLoaded: need to scan DOM');
+      }
+      // Get any characters that are already in the DOM.
+      tachyfont.walkDom(document.documentElement, function(node) {
+          if (node.nodeName == '#text') {
+            return this.addTextToFontGroups(node);
+          } else {
+            return false;
+          }
+        }.bind(tachyFontSet));
+    }
+    // On page load update the fonts immediately.
     tachyFontSet.updateFonts();
   });
-
-  // TODO(bstell) Update the fonts when new characters are added to the page.
-  if (goog.DEBUG) {
-    goog.log.error(tachyfont.logger_,
-        'need to update the fonts when new characters are added to the page');
-  }
 
   return tachyFontSet;
 };
@@ -510,7 +586,7 @@ tachyfont.updateFonts = function(tachyFonts) {
  * @return {Array.<string>} The array of characters.
  */
 tachyfont.stringToChars = function(str) {
-  var char_array = [];
+  var charArray = [];
   for (var i = 0; i < str.length; i++) {
     var c = str.charAt(i);
     var cc = c.charCodeAt(0);
@@ -518,9 +594,9 @@ tachyfont.stringToChars = function(str) {
       i += 1;
       c += str.charAt(i);
     }
-    char_array.push(c);
+    charArray.push(c);
   }
-  return char_array;
+  return charArray;
 };
 
 
@@ -896,10 +972,26 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars = function() {
   var charlist;
   var neededCodes = [];
   var remaining = [];
-  var char_array = Object.keys(this.charsToLoad);
-  this.charsToLoad = {};
+  // TODO(bstell) this method of serializing the requests seems like it could
+  // allow multiple requests to wait on a single promise. When that promise
+  // resolved all the waiting requests would be unblocked.
+  //
+  // This probably needs to be replaced with a queue of requests that works as
+  // follows:
+  //
+  //   An initial resolved promise is added to the front of the queue. As a new
+  //   request comes it addes itself to the end of the queue and waits on the
+  //   previous request to resolve.
   this.finishPendingCharsRequest = this.finishPendingCharsRequest.
   then(function() {
+    var charArray = Object.keys(that.charsToLoad);
+    that.charsToLoad = {};
+    // Check if there are any new characters.
+    // TODO(bstell) until the serializing is fixed this stops multiple requests
+    // running on the same resolved promise.
+    if (charArray.length == 0) {
+      return null;
+    }
     var pending_resolve, pending_reject;
     // TODO(bstell) use tachfont.promise here?
     return new goog.Promise(function(resolve, reject) {
@@ -914,8 +1006,8 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars = function() {
           for (var key in charlist) {
             tmp_charlist[key] = charlist[key];
           }
-          for (var i = 0; i < char_array.length; i++) {
-            var c = char_array[i];
+          for (var i = 0; i < charArray.length; i++) {
+            var c = charArray[i];
             if (!tmp_charlist[c]) {
               neededCodes.push(tachyfont.charToCode(c));
               tmp_charlist[c] = 1;
@@ -926,8 +1018,8 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars = function() {
             neededCodes = tachyfont.possibly_obfuscate(neededCodes,
                 tmp_charlist);
             if (goog.DEBUG) {
-              goog.log.info(tachyfont.logger_, 'load ' + neededCodes.length +
-                ' codes:');
+              goog.log.info(tachyfont.logger_, that.fontInfo['name'] +
+                  ': load ' + neededCodes.length + ' codes:');
               goog.log.log(tachyfont.logger_, goog.log.Level.FINER,
                   '' + neededCodes);
             }
@@ -970,9 +1062,8 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars = function() {
             if (bundleResponse != null) {
               data_length = bundleResponse.getDataLength();
               that.needToSetFont = true;
-              fontdata =
-                tachyfont.IncrementalFontUtils.injectCharacters(fileinfo,
-                  fontdata, bundleResponse);
+              fontdata = tachyfont.IncrementalFontUtils.injectCharacters(
+                  fileinfo, fontdata, bundleResponse);
               var msg;
               if (remaining.length) {
                 msg = 'display ' + Object.keys(charlist).length + ' chars';
