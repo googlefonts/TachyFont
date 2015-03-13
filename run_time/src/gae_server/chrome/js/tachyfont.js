@@ -45,18 +45,24 @@ goog.require('goog.style');
  *            after DOMContentLoaded.
  *          * Mutation events happen multiple times before DOMContentLoaded and
  *            multiple times after DOMContentLoaded.
- *        * Because the mutation events can happen before or after
- *          DOMContentLoaded
- *          * At DOMContentLoaded we must scan the entire DOM to guarantee we
- *            know the needed characters. Unfortunately, this is expensive.
+ *        * Mutation events can happen before or after DOMContentLoaded so at
+ *          DOMContentLoaded:
+ *          * If there have been mutation events then immediately update the
+ *            fonts.
+ *          * If there have not been mutation events then wait for mutation
+ *            event which will follow soon.  We could scan the DOM to do the
+ *            update immediately on DOMContentLoaded but scanning the DOM is
+ *            expensive.
  *
  *   2. Character Data Fetching
  *      We want to have all the character data as close to DOMContentLoaded as
  *      possible. Because of round trip latency, we want to avoid lots of small
  *      fetches.
- *      * To reduce  the number of fetches only fetch every few seconds.
- *      * At DOMContentLoaded fetch immediately.
- *      * After DOMContentLoaded fetch every few seconds.
+ *      * Before and after DOMContentLoaded: to reduce  the number of fetches
+ *        only fetch every few seconds.
+ *      * On DOMContentLoaded if there have been mutation events then fetch
+ *        immediately. If there have not been any mutation events then wait to
+ *        fetch the data on the soon to follow mutation event.
  *
  *   3. CSS Updating
  *      * It is _very_ CPU/time expensive to ship multiple multi-megabyte fonts
@@ -69,11 +75,12 @@ goog.require('goog.style');
  *        * The 'flash' can perhaps be solved by rendering to an off screen area
  *          and only switching the CSS once the transfer is complete. Note that
  *          this will not do anything about the CPU usage.
- *      * Update the CSS immediately if the font is already persisted as it
- *        is very likely the font already has the UI text. The positive of this
- *        is the UI text is in the right font as soon as possible. The negative
- *        of the is there may be a ransom note effect and the CSS update makes
- *        the page unresponsived during the data transfer.
+ *      * If on start up the font is already persisted then update the CSS
+ *        immediately as it is very likely the font already has the UI text. The
+ *        positive of this is that the UI shows the correct glyphs as soon as
+ *        possible. The negative of this is there may be a ransom note effect
+ *        and the CSS update makes the page unresponsived during the data
+ *        transfer.
  *      * Before DOMContentLoaded do not display updates to the font as this
  *        would make the page unresponsive (even if the flashing is fixed).
  *      * At DOMContentLoaded display the font (this is the main goal)
@@ -218,7 +225,13 @@ tachyfont.IncrementalFont.CHARLIST_DIRTY = 'charlist_dirty';
  * @constructor
  */
 tachyfont.TachyFontSet = function(familyName) {
-  this.fonts = [];
+  /**
+   * The TachyFonts managed in this set.
+   *
+   * @private {Array.<tachyfont.TachyFont>}
+   */
+  this.fonts_ = [];
+
   this.fontIdToIndex = {};
   this.css_family_to_family = {};
   this.familyName = familyName;
@@ -237,6 +250,13 @@ tachyfont.TachyFontSet = function(familyName) {
    * @private {boolean}
    */
   this.hadMutationEvents_ = false;
+
+  /**
+   * The updateFont operation takes time so serialize them.
+   *
+   * @private {tachyfont.chainedPromises}
+   */
+  this.finishPrecedingUpdateFont_ = new tachyfont.chainedPromises();
 
   /**
    * The timerID from setTimeout.
@@ -258,10 +278,10 @@ tachyfont.TachyFontSet.TIMEOUT = 3000;
 /**
  * Add a TachyFont.
  *
- * @param {Object} font The TachyFont to add to the set.
+ * @param {tachyfont.TachyFont} font The TachyFont to add to the set.
  */
 tachyfont.TachyFontSet.prototype.addFont = function(font) {
-  this.fonts.push(font);
+  this.fonts_.push(font);
 };
 
 
@@ -338,7 +358,7 @@ tachyfont.TachyFontSet.prototype.addTextToFontGroups = function(node) {
     return false;
   }
 
-  var tachyFont = this.fonts[index];
+  var tachyFont = this.fonts_[index];
   // Handle UTF16.
   var charArray = tachyfont.stringToChars(text);
   // Tell the font it needs these characters.
@@ -376,6 +396,9 @@ tachyfont.TachyFontSet.prototype.requestUpdateFonts = function() {
  *
  */
 tachyfont.TachyFontSet.prototype.updateFonts = function(allowEarlyUse) {
+  if (goog.DEBUG) {
+    goog.log.fine(tachyfont.logger_, 'updateFonts');
+  }
   // Clear any pending request.
   if (this.pendingUpdateRequest_ != null) {
     if (goog.DEBUG) {
@@ -385,19 +408,28 @@ tachyfont.TachyFontSet.prototype.updateFonts = function(allowEarlyUse) {
     this.pendingUpdateRequest_ = null;
   }
   if (goog.DEBUG) {
-    goog.log.info(tachyfont.logger_, 'TachyFontSet.updateFonts');
+    goog.log.log(tachyfont.logger_, goog.log.Level.FINER,
+        'updateFonts: wait for preceding update');
   }
-  var updatingFonts = [];
-  for (var i = 0; i < this.fonts.length; i++) {
-    var fontObj = this.fonts[i].incrfont;
-    var load = fontObj.loadChars();
-    updatingFonts.push(load);
-  }
-  var allLoaded = goog.Promise.all(updatingFonts).
+  var allUpdated = this.finishPrecedingUpdateFont_.getChainedPromise();
+  allUpdated.getPrecedingPromise().
+  then(function() {
+    if (goog.DEBUG) {
+      goog.log.log(tachyfont.logger_, goog.log.Level.FINER,
+          'updateFonts: done waiting for preceding update');
+    }
+    var updatingFonts = [];
+    for (var i = 0; i < this.fonts_.length; i++) {
+      var fontObj = this.fonts_[i].incrfont;
+      var load = fontObj.loadChars();
+      updatingFonts.push(load);
+    }
+    return goog.Promise.all(updatingFonts);
+  }.bind(this)).
   then(function(/*loadResults*/) {
     var fontsData = [];
-    for (var i = 0; i < this.fonts.length; i++) {
-      var fontObj = this.fonts[i].incrfont;
+    for (var i = 0; i < this.fonts_.length; i++) {
+      var fontObj = this.fonts_[i].incrfont;
       var needToSetFont = fontObj.needToSetFont_;
       // It takes significant time to pass the font data from Javascript to the
       // browser. So unless specifically told to do so, do not update the font
@@ -417,30 +449,58 @@ tachyfont.TachyFontSet.prototype.updateFonts = function(allowEarlyUse) {
       }
       fontsData.push(fontData);
     }
+    if (goog.DEBUG) {
+      goog.log.log(tachyfont.logger_, goog.log.Level.FINER,
+        'updateFonts: wait for font bases');
+    }
     return goog.Promise.all(fontsData);
   }.bind(this)).
   then(function(loadResults) {
+    if (goog.DEBUG) {
+      goog.log.log(tachyfont.logger_, goog.log.Level.FINER,
+        'updateFonts: got font bases');
+    }
+    var allCssSet = [];
     for (var i = 0; i < loadResults.length; i++) {
       var loadResult = loadResults[i];
       if (loadResult == null) {
+        allCssSet.push(goog.Promise.resolve(null));
         continue;
       }
-      var fileInfo = loadResult[0];
-      var fontData = loadResult[1];
-      var fontObj = this.fonts[i].incrfont;
-      fontObj.setFont_(fontData, fileInfo.isTtf);
-      tachyfont.IncrementalFontUtils.setVisibility(fontObj.style,
-        fontObj.fontInfo, true);
+      var fontObj = this.fonts_[i].incrfont;
+      if (loadResult['data_length'] == 0) {
+        allCssSet.push(goog.Promise.resolve(null));
+        continue;
+      }
+      fontObj.needToSetFont = true;
+      if (goog.DEBUG) {
+        goog.log.fine(tachyfont.logger_, 'updateFonts: setFont: ');
+      }
+      var cssSetResult = fontObj.setFont(loadResult['fontdata'],
+          loadResult['fileinfo']).
+        then(function(cssSetResult) {
+          var fontObj = this.fonts_[i].incrfont;
+          tachyfont.IncrementalFontUtils.setVisibility(fontObj.style,
+            fontObj.fontInfo_, true);
+        });
+      allCssSet.push(cssSetResult);
     }
+    return goog.Promise.all(allCssSet);
+  }.bind(this)).
+  then(function(setResults) {
+    if (goog.DEBUG) {
+      goog.log.fine(tachyfont.logger_, 'updateFonts: updated all fonts');
+    }
+    allUpdated.resolve();
   }.bind(this)).
   thenCatch(function(e) {
     if (goog.DEBUG) {
-      debugger;
       goog.log.error(tachyfont.logger_, 'failed to load all fonts' +
           e.stack);
+      debugger;
     }
   });
-  return allLoaded;
+  return allUpdated.getPromise();
 };
 
 
@@ -484,7 +544,11 @@ tachyfont.walkDom = function(node, func) {
  * @return {tachyfont.TachyFontSet} The TachyFontSet object.
  */
 tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
+  if (goog.DEBUG) {
+    goog.log.fine(tachyfont.logger_, 'loadFonts');
+  }
   var tachyFontSet = new tachyfont.TachyFontSet(familyName);
+  var tachyFonts = tachyFontSet.fonts_;
   // TODO(bstell) this initialization of TachyFontSet should be in the
   // constructor or and init function.
   opt_params = opt_params || {};
@@ -500,16 +564,26 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
     var fontId = tachyfont.fontId(familyName, fontInfo['weight']);
     tachyFontSet.fontIdToIndex[fontId] = i;
   }
-  // Try to get the base from persistent store.
-  var tachyFonts = tachyFontSet.fonts;
-  var bases = [];
-  for (var i = 0; i < tachyFonts.length; i++) {
-    var incrfont = tachyFonts[i].incrfont;
-    var persistedBase = incrfont.getPersistedBase_();
-    bases.push(persistedBase);
+  if (goog.DEBUG) {
+    goog.log.log(tachyfont.logger_, goog.log.Level.FINER,
+      'loadFonts: wait for preceding update');
   }
-  // If not persisted the fetch the base from the URL.
-  goog.Promise.all(bases).
+  var allLoaded = tachyFontSet.finishPrecedingUpdateFont_.getChainedPromise();
+  allLoaded.getPrecedingPromise().
+  then(function() {
+    if (goog.DEBUG) {
+      goog.log.log(tachyfont.logger_, goog.log.Level.FINER,
+          'loadFonts: done waiting for preceding update');
+    }
+    // Try to get the base from persistent store.
+    var bases = [];
+    for (var i = 0; i < tachyFonts.length; i++) {
+      var incrfont = tachyFonts[i].incrfont;
+      var persistedBase = incrfont.getPersistedBase_();
+      bases.push(persistedBase);
+    }
+    return goog.Promise.all(bases);
+  }).
   then(function(arrayBaseData) {
     var fetchedBases = [];
     for (var i = 0; i < tachyFonts.length; i++) {
@@ -519,27 +593,57 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
         incrfont.alreadyPersisted = true;
         incrfont.needToSetFont_ = true;
       } else {
+        // If not persisted the fetch the base from the URL.
         loadedBase = incrfont.getUrlBase_(incrfont.backendService,
-            incrfont.fontInfo);
+            incrfont.fontInfo_);
       }
       arrayBaseData[i] = goog.Promise.resolve(loadedBase);
     }
     // Have loaded fonts from persistent store or URL.
     goog.Promise.all(arrayBaseData).
     then(function(arrayBaseData) {
+      var allCssSet = [];
       for (var i = 0; i < tachyFonts.length; i++) {
         var incrfont = tachyFonts[i].incrfont;
         var loadedBase = arrayBaseData[i];
-        if (incrfont.alreadyPersisted) {
-          // If the font is in persistent store then:
-          //   * it is very likely that the font _already_ has the UI text so
-          //     immediately show the UI in the TachyFont.
-          incrfont.setFont_(loadedBase[1], loadedBase[0].isTtf);
-          tachyfont.IncrementalFontUtils.setVisibility(incrfont.style,
-            incrfont.fontInfo, true);
+        // If not persisted then need to wait for DOMContentLoaded to set the
+        // font.
+        if (!incrfont.alreadyPersisted) {
+          incrfont.base.resolve(loadedBase);
+          if (goog.DEBUG) {
+            goog.log.fine(tachyfont.logger_, 'loadFonts: not persisted');
+          }
+          allCssSet.push(goog.Promise.resolve(null));
+          continue;
         }
-        incrfont.base.resolve(loadedBase);
+        // The font was in persistent store so:
+        // * it is very likely that the font _already_ has the UI text so
+        //   immediately show the UI in the TachyFont.
+        if (goog.DEBUG) {
+          goog.log.fine(tachyfont.logger_, 'loadFonts: setFont_');
+        }
+        // TODO(bstell) only set the font if there are characters.
+        var cssSet = incrfont.setFont(loadedBase[1], loadedBase[0].isTtf).
+          then(function(cssSetResult) {
+            if (goog.DEBUG) {
+              goog.log.fine(tachyfont.logger_, 'loadFonts: setFont_ done');
+            }
+            tachyfont.IncrementalFontUtils.setVisibility(incrfont.style,
+              incrfont.fontInfo_, true);
+            // Release other operations to proceede.
+            incrfont.base.resolve(loadedBase);
+          });
+        allCssSet.push(cssSet);
       }
+      return goog.Promise.all(allCssSet);
+    }).
+    then(function(allSetResults) {
+      if (goog.DEBUG) {
+        goog.log.fine(tachyfont.logger_, 'loadFonts: all fonts loaded');
+      }
+      // Allow any pending updates to happen.
+      allLoaded.resolve();
+
     }).
     thenCatch(function(e) {
       if (goog.DEBUG) {
@@ -573,9 +677,8 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
   //create an observer instance
   var observer = new MutationObserver(function(mutations) {
     if (goog.DEBUG) {
-      goog.log.fine(tachyfont.logger_, 'MutationObserver');
+      goog.log.info(tachyfont.logger_, 'MutationObserver');
     }
-    tachyFontSet.hadMutationEvents_ = true;
     mutations.forEach(function(mutation) {
       if (mutation.type == 'childList') {
         for (var i = 0; i < mutation.addedNodes.length; i++) {
@@ -597,12 +700,25 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
       }
     });
     // TODO(bstell) Should check if there were any chars.
-    // For pages that load new data slowly: request the fonts be updated soon.
-    // This attempts to minimize expensive operations:
-    //     1. The round trip delays to fetch data.
-    //     2. The set @font-family time (it takes significant time to pass the
-    //        blobUrl data from Javascript to C++).
-    tachyFontSet.requestUpdateFonts();
+    // If this is the 1st mutation event and it happened after DOMContentLoaded
+    // then do the update now.
+    var immediateUpdate;
+    if (!tachyFontSet.hadMutationEvents_ && tachyFontSet.domContentLoaded_) {
+      immediateUpdate = true;
+    } else {
+      immediateUpdate = false;
+    }
+    tachyFontSet.hadMutationEvents_ = true;
+    if (immediateUpdate) {
+      tachyFontSet.updateFonts(true);
+    } else {
+      // For pages that load new data slowly: request the fonts be updated soon.
+      // This attempts to minimize expensive operations:
+      //     1. The round trip delays to fetch data.
+      //     2. The set @font-family time (it takes significant time to pass the
+      //        blobUrl data from Javascript to C++).
+      tachyFontSet.requestUpdateFonts();
+    }
   });
 
   // Watch for these mutations.
@@ -616,27 +732,21 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
       goog.log.info(tachyfont.logger_, 'DOMContentLoaded: updateFonts');
     }
     tachyFontSet.domContentLoaded_ = true;
-    // On DOMContentLoaded we want to update the fonts immediately. If there
-    // have not any been mutation events then scan the DOM now. It is expensive
-    // to scan the DOM and basically duplicates the soon-to-follow mutation
-    // event. Unfortunately, mutation events do not update the fonts immediately
-    // and there is no way to tell which subsequent mutation event should do an
-    // immediate update.
-    if (!tachyFontSet.hadMutationEvents_) {
+    // On DOMContentLoaded we want to update the fonts. If there have been
+    // mutation events then do the update now. Characters should be in the DOM
+    // now but the order of DOMContentLoaded and mutation events is not defined
+    // and a mutation event should be coming right after this. We could scan the
+    // DOM and do the update right now but scanning the DOM is expensive. So
+    // instead wait for the mutation event.
+    if (tachyFontSet.hadMutationEvents_) {
+      // We have characters so update the fonts.
+      tachyFontSet.updateFonts(true);
+    } else {
+      // The mutation event should be very soon.
       if (goog.DEBUG) {
-        goog.log.error(tachyfont.logger_, 'DOMContentLoaded: need to scan DOM');
+        goog.log.info(tachyfont.logger_, 'wait for mutation event');
       }
-      // Get any characters that are already in the DOM.
-      tachyfont.walkDom(document.documentElement, function(node) {
-          if (node.nodeName == '#text') {
-            return this.addTextToFontGroups(node);
-          } else {
-            return false;
-          }
-        }.bind(tachyFontSet));
     }
-    // On page load update the fonts immediately.
-    tachyFontSet.updateFonts(true);
   });
 
   return tachyFontSet;
@@ -711,25 +821,102 @@ tachyfont.charToCode = function(in_char) {
 
 
 /**
- * A class that creates a promise with the resolve and reject functions
- * attached.
+ * A class that holds a promise and the associated resolve and reject functions.
  *
+ * @param {tachyfont.chainedPromises} opt_container If used to chain promises
+ *     then this holds the object that implements the chaining.
  * @constructor
  */
-tachyfont.promise = function() {
+tachyfont.promise = function(opt_container) {
+  /**
+   * The promise.
+   *
+   * @private {goog.Promise}
+   */
+  this.promise_ = new goog.Promise(function(resolve, reject) {
+    this.resolver_ = resolve;
+    this.rejecter_ = reject;
+    this.container_ = opt_container;
+  }, this);
+
+  /**
+   * If this is being used to serialize promises then this is the preceeding
+   * promise that the current thread needs to wait for.
+   *
+   * @private {goog.Promise|undefined}
+   */
+  this.precedingPromise_;
 };
 
 
 /**
- * A promise with the resolve and reject functions attached.
- * @return {Object}
- * @private
+ * Get the actual goog.Promise.
+ *
+ * @return {goog.Promise}
  */
-tachyfont.promise.prototype.get_ = function() {
-  return new goog.Promise(function(resolve, reject) {
-    this.resolve = resolve;
-    this.reject = reject;
-  }, this);
+tachyfont.promise.prototype.getPromise = function() {
+  return this.promise_;
+};
+
+
+/**
+ * Get the preceding/chained goog.Promise.
+ *
+ * @return {goog.Promise|undefined}
+ */
+tachyfont.promise.prototype.getPrecedingPromise = function() {
+  if (goog.DEBUG) {
+    if (!this.precedingPromise_) {
+      debugger;
+    }
+  }
+  return this.precedingPromise_;
+};
+
+
+/**
+ * Resolve the promise.
+ *
+ * @param {*} opt_value An optional value to pass to the resolve function.
+ */
+tachyfont.promise.prototype.resolve = function(opt_value) {
+  this.resolver_(opt_value);
+  if (this.container_) {
+    if (this.container_.promises.length > 1) {
+      this.container_.promises.shift();
+    }
+  }
+};
+
+
+/**
+ * A class that manages chaining promises.
+ *
+ * This class maintains a queue of promises. As a new request is made it is set
+ * to wait for the preceding promise to resolve.
+ *
+ * @constructor
+ */
+tachyfont.chainedPromises = function() {
+  this.promises = [];
+  var firstPromise = new tachyfont.promise(this);
+  firstPromise.precedingPromise_ = firstPromise.promise_;
+  firstPromise.resolve();
+  this.promises.push(firstPromise);
+};
+
+
+/**
+ * Get a chained promise.
+ *
+ * @return {tachyfont.promise}
+ */
+tachyfont.chainedPromises.prototype.getChainedPromise = function() {
+  var precedingPromise = this.promises[this.promises.length - 1];
+  var newPromise = new tachyfont.promise(this);
+  newPromise.precedingPromise_ = precedingPromise.promise_;
+  this.promises.push(newPromise);
+  return newPromise;
 };
 
 
@@ -744,7 +931,7 @@ tachyfont.promise.prototype.get_ = function() {
  * 6. Create a "@font-face" rule (need the data to make the blob URL).
  * 7. When the base is available set the class visibility=visible
  *
- * @param {Object} fontInfo Info about this font.
+ * @param {Object.<string, string>} fontInfo Info about this font.
  * @param {Object} params Optional parameters.
  * @return {tachyfont.IncrementalFont.obj_} The incremental font manager object.
  */
@@ -855,14 +1042,20 @@ tachyfont.IncrementalFont.createManager = function(fontInfo, params) {
 
 /**
  * IncrFontIDB.obj_ - A class to handle interacting the IndexedDB.
- * @param {Object} fontInfo Info about this font.
+ * @param {Object.<string, string>} fontInfo Info about this font.
  * @param {Object} params Optional parameters.
  * @param {Object} backendService object used to generate backend requests.
  * @constructor
  * @private
  */
 tachyfont.IncrementalFont.obj_ = function(fontInfo, params, backendService) {
-  this.fontInfo = fontInfo;
+  /**
+   * Information about the fonts
+   *
+   * @private {Object.<string, string>}
+   */
+  this.fontInfo_ = fontInfo;
+
   this.fontName = fontInfo['name'];
   this.charsToLoad = {};
   this.req_size = params['req_size'];
@@ -896,10 +1089,26 @@ tachyfont.IncrementalFont.obj_ = function(fontInfo, params, backendService) {
   // Promises
   this.getIDB_ = null;
   this.base = new tachyfont.promise();
-  this.getBase = this.base.get_();
+  this.getBase = this.base.getPromise();
   this.getCharList = null;
+  // TODO(bstell) Use ChainedPromise to properly serialize the promises.
   this.finishPersistingData = goog.Promise.resolve();
-  this.finishPendingCharsRequest = goog.Promise.resolve();
+
+  /**
+   * The character request operation takes time so serialize them.
+   *
+   * @private {goog.Promise}
+   */
+  // TODO(bstell) Use ChainedPromise to properly serialize the promises.
+  this.finishPrecedingCharsRequest_ = goog.Promise.resolve();
+
+  /**
+   * The setFont operation takes time so serialize them.
+   *
+   * @private {goog.Promise}
+   */
+  // TODO(bstell) Use ChainedPromise to properly serialize the promises.
+  this.finishPrecedingSetFont_ = goog.Promise.resolve();
 };
 
 
@@ -944,7 +1153,7 @@ tachyfont.IncrementalFont.obj_.prototype.getPersistedBase_ = function() {
 /**
  * Get the font base from a URL.
  * @param {Object} backendService The object that interacts with the backend.
- * @param {Object} fontInfo Info about this font.
+ * @param {Object.<string, string>} fontInfo Info about this font.
  * @return {goog.Promise} The base bytes in DataView.
  * @private
  */
@@ -979,14 +1188,45 @@ tachyfont.IncrementalFont.obj_.prototype.getUrlBase_ =
  * Set the \@font-face rule.
  * @param {DataView} fontdata The font dataview.
  * @param {boolean} isTtf True if the font is a TrueType font.
- * @private
+ * @return {goog.Promise} The promise resolves when the glyphs are displaying.
  */
-tachyfont.IncrementalFont.obj_.prototype.setFont_ = function(fontdata, isTtf) {
-  this.needToSetFont_ = false;
+tachyfont.IncrementalFont.obj_.prototype.setFont = function(fontdata, isTtf) {
   if (goog.DEBUG) {
-    goog.log.info(tachyfont.logger_, 'setFont_ ' + this.fontInfo['name']);
+    goog.log.log(tachyfont.logger_, goog.log.Level.FINER,
+      'setFont: wait for preceding');
   }
-  tachyfont.IncrementalFontUtils.setFont(this.fontInfo, fontdata, isTtf);
+  return this.finishPrecedingSetFont_
+  .then(function() {
+    if (goog.DEBUG) {
+      goog.log.log(tachyfont.logger_, goog.log.Level.FINER,
+        'setFont: done waiting for preceding');
+    }
+    this.needToSetFont_ = false;
+    this.finishPrecedingSetFont_ = new goog.Promise(function(resolve) {
+      if (goog.DEBUG) {
+        goog.log.info(tachyfont.logger_, 'setFont ' + this.fontInfo_['name']);
+      }
+      var mimeType, format;
+      if (isTtf) {
+        mimeType = 'font/ttf'; // 'application/x-font-ttf';
+        format = 'truetype';
+      } else {
+        mimeType = 'font/otf'; // 'application/font-sfnt';
+        format = 'opentype';
+      }
+      var blobUrl = tachyfont.IncrementalFontUtils.getBlobUrl(
+        this.fontInfo_, fontdata, isTtf);
+
+      return this.setFontNoFlash(this.fontInfo_, format, blobUrl).
+        then(function() {
+          if (goog.DEBUG) {
+            goog.log.fine(tachyfont.logger_, 'setFont: setFont done');
+          }
+          resolve();
+        });
+    }.bind(this));
+    return this.finishPrecedingSetFont_;
+  }.bind(this));
 };
 
 /**
@@ -1056,7 +1296,7 @@ tachyfont.possibly_obfuscate = function(codes, charlist) {
 /**
  * Load the data for needed chars.
  *
- * @return {goog.Promise} The promise returns true if the char data was loaded
+ * @return {goog.Promise} Returns the getBase promise.
  * successfully
  */
 tachyfont.IncrementalFont.obj_.prototype.loadChars = function() {
@@ -1078,7 +1318,7 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars = function() {
   //   An initial resolved promise is added to the front of the queue. As a new
   //   request comes it addes itself to the end of the queue and waits on the
   //   previous request to resolve.
-  this.finishPendingCharsRequest = this.finishPendingCharsRequest.
+  this.finishPrecedingCharsRequest_ = this.finishPrecedingCharsRequest_.
   then(function() {
     var charArray = Object.keys(that.charsToLoad);
     that.charsToLoad = {};
@@ -1114,7 +1354,7 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars = function() {
             neededCodes = tachyfont.possibly_obfuscate(neededCodes,
                 tmp_charlist);
             if (goog.DEBUG) {
-              goog.log.info(tachyfont.logger_, that.fontInfo['name'] +
+              goog.log.info(tachyfont.logger_, that.fontInfo_['name'] +
                   ': load ' + neededCodes.length + ' codes:');
               goog.log.log(tachyfont.logger_, goog.log.Level.FINER,
                   '' + neededCodes);
@@ -1134,7 +1374,7 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars = function() {
             var c = String.fromCharCode(neededCodes[i]);
             charlist[c] = 1;
           }
-          return that.backendService.requestCodepoints(that.fontInfo,
+          return that.backendService.requestCodepoints(that.fontInfo_,
                                                        neededCodes).
           then(function(bundleResponse) {
             if (remaining.length) {
@@ -1210,7 +1450,7 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars = function() {
       debugger;
     }
   });
-  return this.finishPendingCharsRequest;
+  return this.finishPrecedingCharsRequest_;
 };
 
 /**
@@ -1249,7 +1489,7 @@ tachyfont.IncrementalFont.obj_.prototype.persistDelayed_ = function(name) {
  */
 tachyfont.IncrementalFont.obj_.prototype.persist_ = function(name) {
   var that = this;
-  // Wait for any pending persist operation to finish.
+  // Wait for any preceding persist operation to finish.
   this.finishPersistingData.then(function() {
     // Previous persists may have already saved the data so see if there is
     // anything still to persist.
@@ -2173,7 +2413,7 @@ tachyfont.BinaryFontEditor.prototype.setGlyphDataOffset =
 
 /**
  * TachyFont - A namespace.
- * @param {Object} fontInfo The font info.
+ * @param {Object.<string, string>} fontInfo The font info.
  * @param {Object} params Optional parameters.
  * @constructor
  */
@@ -2181,6 +2421,11 @@ tachyfont.TachyFont = function(fontInfo, params) {
   params = params || {};
 
   // TODO(bstell) integrate the manager into this object.
+  /**
+   * The object that handles the binary manipulation of the font data.
+   *
+   * @type {tachyfont.IncrementalFont.obj_}
+   */
   this.incrfont = tachyfont.IncrementalFont.createManager(fontInfo, params);
 };
 
@@ -2505,7 +2750,7 @@ tachyfont.IncrementalFontUtils.sanitizeBaseFont = function(obj, baseFont) {
 /**
  * Set a style's visibility.
  * @param {Object} style The style object
- * @param {Object} fontInfo The font information object
+ * @param {Object.<string, string>} fontInfo The font information object
  * @param {boolean} visible True is setting visibility to visible.
  * @return {Object} New style object for given font and visibility
  */
@@ -2534,37 +2779,120 @@ tachyfont.IncrementalFontUtils.setVisibility = function(style, fontInfo,
   return style;
 };
 
+
 /**
  * Add the '@font-face' rule
- * @param {Object} fontInfo Info about this font.
+ * @param {Object.<string, string>} fontInfo Info about this font.
  * @param {DataView} data The font data.
  * @param {boolean} isTtf True is the font is of type TTF.
+ * @return {string} The blob URL.
  */
-tachyfont.IncrementalFontUtils.setFont = function(fontInfo, data, isTtf) {
+tachyfont.IncrementalFontUtils.getBlobUrl = function(fontInfo, data, isTtf) {
   var fontFamily = fontInfo['familyName']; // The @font-face font-family.
   var fontName = fontInfo['name']; // The font name.
   var weight = fontInfo['weight'];
-
-  var mime_type = '';
+  var mimeType, format;
   if (isTtf) {
-    mime_type = 'font/ttf'; // 'application/x-font-ttf';
+    mimeType = 'font/ttf'; // 'application/x-font-ttf';
+    format = 'truetype';
   } else {
-    mime_type = 'font/otf'; // 'application/font-sfnt';
+    mimeType = 'font/otf'; // 'application/font-sfnt';
+    format = 'opentype';
   }
 
   var blob;
   try {
-    blob = new Blob([data], { type: mime_type });
+    blob = new Blob([data], { type: mimeType });
   } catch (e) {
     // IE 11 does not like using DataView here.
     if (e.name == 'InvalidStateError') {
       var buffer = data.buffer.slice(data.byteOffset);
-      blob = new Blob([buffer], { type: mime_type});
+      blob = new Blob([buffer], { type: mimeType});
     }
   }
   var blobUrl = window.URL.createObjectURL(blob);
+  return blobUrl;
+};
 
-  // Get the style sheet.
+
+/**
+ * Add the '@font-face' rule.
+ *
+ * Simply setting the \@font-face causes a Flash Of Invisible Text (FOIT). The
+ * FOIT is the time it takes to:
+ *   1. Pass the blobUrl data from Javascript memory to browser (C++) memory.
+ *   2. Check the font with the OpenType Sanitizer (OTS).
+ *   3. Rasterize the outlines into pixels.
+ *
+ * To avoid the FOIT this function first passes the blobUrl data to a temporary
+ * \@font-face rule that is not being used to display text. Once the temporary
+ * \@font-face is ready (ie: the data has been transferred, and OTS has run) any
+ * existing \@font-face is deleted and the temporary \@font-face switched to be
+ * the desired \@font-face.
+ *
+ * @param {Object.<string, string>} fontInfo Info about this font.
+ * @param {string} format The \@font-face format.
+ * @param {string} blobUrl The blobUrl to the font data.
+ * @return {goog.Promise} The promise resolves when the glyphs are displaying.
+ */
+tachyfont.IncrementalFont.obj_.prototype.setFontNoFlash =
+  function(fontInfo, format, blobUrl) {
+  // The desired @font-face font-family.
+  var fontFamily = fontInfo['familyName'];
+  // The temporary @font-face font-family.
+  var tmpFontFamily = 'tmp-' + fontFamily;
+  var fontName = fontInfo['name']; // The font name.
+  var weight = fontInfo['weight'];
+  var sheet = tachyfont.IncrementalFontUtils.getStyleSheet();
+
+  // Create a temporary @font-face rule to transfer the blobUrl data from
+  // Javascript to the browser side.
+  if (goog.DEBUG) {
+    goog.log.error(tachyfont.logger_,
+        'setFont: ' + tmpFontFamily + '/' + weight);
+  }
+  tachyfont.IncrementalFontUtils.setCssFontRule(sheet, tmpFontFamily, weight,
+    blobUrl, format);
+
+  var setFontPromise = new goog.Promise(function(resolve, reject) {
+    // Transfer the data.
+    // TODO(bstell) Make this cross platform.
+    var fontStr = weight + ' 20px ' + tmpFontFamily;
+    document.fonts.load(fontStr).
+    then(function(value) {
+      resolve();
+    });
+  }).
+  then(function() {
+    // Now that the font is ready switch the @font-face to the desired name.
+    // Delete the old @font-face.
+    var ruleToDelete = tachyfont.IncrementalFontUtils.findFontFaceRule(sheet,
+      fontFamily, weight);
+    tachyfont.IncrementalFontUtils.deleteCssRule(ruleToDelete, sheet);
+    // Switch the name to use the newly transfered blobUrl data.
+    var rule_to_switch = tachyfont.IncrementalFontUtils.findFontFaceRule(sheet,
+      tmpFontFamily, weight);
+    var rules = sheet.cssRules || sheet.rules;
+    if (rules && rule_to_switch != -1) {
+      var this_rule = rules[rule_to_switch];
+      var this_style = this_rule.style;
+      goog.log.error(tachyfont.logger_, '**** switched from ' +
+        this_style.fontFamily + ' to ' + fontFamily + ' ****');
+      this_style.fontFamily = fontFamily;
+    }
+  });
+
+  return setFontPromise;
+};
+
+
+/**
+ * Get the TachyFont style sheet.
+ *
+ * @return {CSSStyleSheet} The style sheet.
+ */
+tachyfont.IncrementalFontUtils.getStyleSheet = function() {
+  // TODO(bstell) consider caching this.
   var style = document.getElementById(
     tachyfont.IncrementalFontUtils.STYLESHEET_ID);
   if (!style) {
@@ -2573,56 +2901,91 @@ tachyfont.IncrementalFontUtils.setFont = function(fontInfo, data, isTtf) {
     document.head.appendChild(style);
   }
   var sheet = style.sheet;
+  return sheet;
+};
 
-  // Delete the rule for this font (if it exists).
-  var rule_to_delete = -1;
+
+/**
+ * Delete a CSS style rule.
+ *
+ * @param {number} ruleToDelete The rule to delete.
+ * @param {CSSStyleSheet} sheet The style sheet.
+ */
+tachyfont.IncrementalFontUtils.deleteCssRule = function(ruleToDelete, sheet) {
+  if (ruleToDelete != -1) {
+    if (sheet.deleteRule) {
+      sheet.deleteRule(ruleToDelete);
+    } else if (sheet.removeRule) {
+      sheet.removeRule(ruleToDelete);
+    } else {
+      if (goog.DEBUG) {
+        goog.log.error(tachyfont.logger_, 'no delete/drop rule');
+      }
+    }
+  }
+};
+
+
+/**
+ * Find the \@font-face rule for the given font spec.
+ *
+ * @param {CSSStyleSheet} sheet The style sheet.
+ * @param {string} fontFamily The fontFamily.
+ * @param {string} weight The weight.
+ * @return {number} The rule index; -1 if not found.
+ */
+// TODO(bstell) Add slant, width, etc.
+tachyfont.IncrementalFontUtils.findFontFaceRule =
+  function(sheet, fontFamily, weight) {
+  var rule = -1;
   var rules = sheet.cssRules || sheet.rules;
   if (rules) {
     for (var i = 0; i < rules.length; i++) {
       var this_rule = rules[i];
       if (this_rule.type == CSSRule.FONT_FACE_RULE) {
+        if (goog.DEBUG) {
+          goog.log.log(tachyfont.logger_, goog.log.Level.FINER,
+            'found an @font-face rule');
+        }
         var this_style = this_rule.style;
         var font_family = this_style.getPropertyValue('font-family');
         var font_weight = this_style.getPropertyValue('font-weight');
         // TODO(bstell) consider using slant/width.
         if (font_family == fontFamily && font_weight == weight) {
-          rule_to_delete = i;
+          rule = i;
           break;
         }
       }
     }
   }
+  return rule;
+};
 
-  var format;
-  if (isTtf) {
-    format = 'truetype';
-  } else {
-    format = 'opentype';
-  }
+
+/**
+ * Set the CSS \@font-face rule.
+ *
+ * @param {CSSStyleSheet} sheet The style sheet.
+ * @param {string} fontFamily The fontFamily.
+ * @param {string} weight The weight.
+ * @param {string} blobUrl The blob URL of the font data.
+ * @param {string} format The format (truetype vs opentype) of the font.
+ */
+tachyfont.IncrementalFontUtils.setCssFontRule =
+  function(sheet, fontFamily, weight, blobUrl, format) {
   var rule_str = '@font-face {\n' +
-    '    font-family: ' + fontInfo['familyName'] + ';\n' +
+    '    font-family: ' + fontFamily + ';\n' +
     '    font-weight: ' + weight + ';\n' +
     '    src: url("' + blobUrl + '")' +
-    ' format("' + format + '")' +
-    ';' +
-    '}';
-   if (goog.DEBUG) {
-     goog.log.log(tachyfont.logger_, goog.log.Level.FINER,
-       'rule = ' + rule_str);
-   }
-  sheet.insertRule(rule_str, sheet.cssRules.length);
-
-  if (rule_to_delete >= 0) {
-    if (sheet.deleteRule) {
-      sheet.deleteRule(rule_to_delete);
-    } else if (sheet.removeRule) {
-      sheet.removeRule(rule_to_delete);
-    } else {
-      if (goog.DEBUG) {
-        goog.log.fine(tachyfont.logger_, 'no delete/drop rule');
-      }
-    }
+    ' format("' + format + '");\n' +
+    '}\n';
+  if (goog.DEBUG) {
+    goog.log.log(tachyfont.logger_, goog.log.Level.FINER, 'rule = ' + rule_str);
   }
+  var ruleToDelete = tachyfont.IncrementalFontUtils.findFontFaceRule(
+     sheet, fontFamily, weight);
+  tachyfont.IncrementalFontUtils.deleteCssRule(ruleToDelete, sheet);
+  sheet.insertRule(rule_str, sheet.cssRules.length);
 };
 
 
@@ -2686,7 +3049,8 @@ tachyfont.BackendService = function(baseUrl) {
 
 /**
  * Request codepoints from the backend server.
- * @param {Object} fontInfo containing info on the font (ie. name, version, ...)
+ * @param {Object.<string, string>} fontInfo containing info on the font; ie:
+ *     name, version, ...
  * @param {Array.<number>} codes Codepoints to be requested
  * @return {goog.Promise} Promise to return ArrayBuffer for the response bundle
  */
@@ -2727,7 +3091,8 @@ tachyfont.BackendService.prototype.parseCodepointHeader_ = function(glyphData) {
 
 /**
  * Request a font's base data from the backend server.
- * @param {Object} fontInfo containing info on the font (ie. name, version, ...)
+ * @param {Object.<string, string>} fontInfo containing info on the font; ie:
+ *     name, version, ...
  * @return {goog.Promise} Promise to return ArrayBuffer for the base.
  */
 tachyfont.BackendService.prototype.requestFontBase = function(fontInfo) {
@@ -2794,7 +3159,8 @@ var FRAMEWORK_REQUEST_SUFFIX = 'framework';
 
 /**
  * Request codepoints from the backend server.
- * @param {Object} fontInfo containing info on the font (ie. name, version, ...)
+ * @param {Object.<string, string>} fontInfo containing info on the font; ie:
+ *     name, version, ...
  * @param {Array.<number>} codes Codepoints to be requested
  * @return {goog.Promise} Promise to return ArrayBuffer for the response bundle
  */
@@ -2849,7 +3215,8 @@ tachyfont.GoogleBackendService.prototype.parseHeader_ = function(glyphData) {
 
 /**
  * Request a font's base data from the backend server.
- * @param {Object} fontInfo containing info on the font (ie. name, version, ...)
+ * @param {Object.<string, string>} fontInfo containing info on the font; ie:
+ *     name, version, ...
  * @return {goog.Promise} Promise to return ArrayBuffer for the base.
  */
 tachyfont.GoogleBackendService.prototype.requestFontBase = function(fontInfo) {
@@ -2873,7 +3240,7 @@ tachyfont.GoogleBackendService.prototype.log = function(message) {
 
 /**
  * @private
- * @param {Object} fontInfo Metadata for the font including weight, version,
+ * @param {Object.<string, string>} fontInfo containing info on the font; ie:
  *                 fontkit, familyName = Full font family name, not compressed
  *                 ie. "Noto Sans", and name = Unique name for this particular
  *                 instance of the font (style/weight) ie. "notosans100".
