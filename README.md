@@ -27,7 +27,7 @@ Incremental fonts works for both OpenType/TrueType and OpenType/CFF fonts.
 TachyFont is not an official Google project, and Google provides no support for it.
 
 Status
-======
+=======
 
 Overall status 2014-12-10:
 
