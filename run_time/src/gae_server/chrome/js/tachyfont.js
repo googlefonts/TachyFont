@@ -92,13 +92,23 @@ goog.require('tachyfont.BinaryFontEditor');
 
 
 if (goog.DEBUG) {
-  tachyfont.hasInitializedDebug = false;
+  /**
+   * A class variable to limit debug initialization to a single time.
+   *
+   * @private {boolean}
+   */
+  tachyfont.hasInitializedDebug_ = false;
 
-  tachyfont.debugInitialization = function() {
-    if (tachyfont.hasInitializedDebug) {
+  /**
+   * A function to initialize the debug setup.
+   *
+   * @private
+   */
+  tachyfont.debugInitialization_ = function() {
+    if (tachyfont.hasInitializedDebug_) {
       return;
     }
-    tachyfont.hasInitializedDebug = true;
+    tachyfont.hasInitializedDebug_ = true;
     // Get any URL debug parameters.
     /** @type {goog.Uri} */
     tachyfont.uri = goog.Uri.parse(window.location.href);
@@ -564,7 +574,7 @@ tachyfont.walkDom = function(node, func) {
  */
 tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
   if (goog.DEBUG) {
-    tachyfont.debugInitialization();
+    tachyfont.debugInitialization_();
     goog.log.fine(tachyfont.logger_, 'loadFonts');
   }
   var tachyFontSet = new tachyfont.TachyFontSet(familyName);
