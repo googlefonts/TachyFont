@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2014 Google Inc. All rights reserved.
+ * Copyright 2015 Google Inc. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,6 +14,9 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+goog.addDependency('../../../backendservice.js',
+    ['tachyfont.BackendService', 'tachyfont.GoogleBackendService'],
+    ['goog.Promise', 'goog.net.XhrIo', 'goog.events', 'goog.net.EventType']);
 goog.addDependency('../../../binaryfonteditor.js',
     ['tachyfont.BinaryFontEditor'],
     []);
