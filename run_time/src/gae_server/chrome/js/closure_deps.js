@@ -14,7 +14,9 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-//debugger;
 goog.addDependency('../../../binaryfonteditor.js',
     ['tachyfont.BinaryFontEditor'],
     []);
+goog.addDependency('../../../tachyfontpromise.js',
+    ['tachyfont.promise', 'tachyfont.chainedPromises'],
+    ['goog.Promise']);
