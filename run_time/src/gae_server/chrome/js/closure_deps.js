@@ -17,6 +17,9 @@
 goog.addDependency('../../../binaryfonteditor.js',
     ['tachyfont.BinaryFontEditor'],
     []);
+goog.addDependency('../../../rledecoder.js',
+    ['tachyfont.RLEDecoder'],
+    []);
 goog.addDependency('../../../tachyfontpromise.js',
     ['tachyfont.promise', 'tachyfont.chainedPromises'],
     ['goog.Promise']);
