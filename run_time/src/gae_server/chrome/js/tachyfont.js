@@ -568,7 +568,7 @@ tachyfont.walkDom = function(node, func) {
  *
  * @param {string} familyName The font-family name.
  * TODO(bstell): remove the Object type.
- * @param {tachyfont.TachyFontsInfo|Object} fontsInfo The information about the
+ * @param {webfonttailor.FontsInfo|Object} fontsInfo The information about the
  *     fonts.
  * @param {Object.<string, string>} opt_params Optional parameters.
  * @return {tachyfont.TachyFontSet} The TachyFontSet object.
@@ -2794,7 +2794,7 @@ webfonttailor.fontFamliesInfo = {
  *
  * @constructor
  */
-tachyfont.TachyFontsInfo = function() {
+webfonttailor.FontsInfo = function() {
   // TODO(bstell): Define the fields.
   // TODO(bstell): Fix the constructor parameters.
 };
@@ -2807,11 +2807,11 @@ tachyfont.TachyFontsInfo = function() {
  * @param {Array.<string>} languages The language codes list.
  * @param {Array.<Object>} faces The faces (eg, slant, weight) list.
  * @param {Object.<string, string>} options Additional info; eg, stretch.
- * @return {tachyfont.TachyFontsInfo} The information describing the fonts.
+ * @return {webfonttailor.FontsInfo} The information describing the fonts.
  */
 webfonttailor.getTachyFontsInfo = function(fontFamlies, languages, faces,
   options) {
-  var fontsInfo = new tachyfont.TachyFontsInfo();
+  var fontsInfo = new webfonttailor.FontsInfo();
   var fonts = [];
   for (var i = 0; i < fontFamlies.length; i++) {
     var fontFamily = fontFamlies[i];
