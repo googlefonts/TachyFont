@@ -20,3 +20,6 @@ goog.addDependency('../../../binaryfonteditor.js',
 goog.addDependency('../../../tachyfontpromise.js',
     ['tachyfont.promise', 'tachyfont.chainedPromises'],
     ['goog.Promise']);
+goog.addDependency('../../../webfonttailor.js',
+    ['webfonttailor', 'webfonttailor.FontsInfo'],
+    []);
