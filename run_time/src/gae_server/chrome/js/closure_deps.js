@@ -26,6 +26,9 @@ goog.addDependency('../../../incrementalfontutils.js',
 goog.addDependency('../../../rledecoder.js',
     ['tachyfont.RLEDecoder'],
     []);
+goog.addDependency('../../../tachyfontset.js',
+    ['tachyfont.TachyFontSet'],
+    ['tachyfont.IncrementalFontUtils', 'tachyfont.chainedPromises']);
 goog.addDependency('../../../tachyfontpromise.js',
     ['tachyfont.promise', 'tachyfont.chainedPromises'],
     ['goog.Promise']);
