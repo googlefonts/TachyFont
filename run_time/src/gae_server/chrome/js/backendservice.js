@@ -23,6 +23,7 @@ goog.provide('tachyfont.GoogleBackendService');
 goog.require('goog.net.XhrIo');
 goog.require('goog.events');
 goog.require('goog.net.EventType');
+goog.require('goog.Promise');
 
 /**
  * Handles interacting with the backend server.
