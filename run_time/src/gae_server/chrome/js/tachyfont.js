@@ -38,65 +38,6 @@ goog.require('tachyfont.TachyFontSet');
 goog.require('webfonttailor');
 goog.require('webfonttailor.FontsInfo');
 
-/*
- * There are multiple issues for the 'character detection', 'character data
- * fetching', and 'CSS update' logic to manage:
- *
- *   1. Character Detection
- *      * Use a Mutation Observer to record the characters as they are added to
- *        the DOM.
- *        * Behavior of simple web pages:
- *          * Load the DOM in a single operation and fire DOMContentLoaded
- *          * Note: the mutation event can happen before or after the
- *            DOMContentLoaded event.
- *        * Behavior of complex web pages:
- *          * Slowly load chunks of characters into the DOM both before and
- *            after DOMContentLoaded.
- *          * Mutation events happen multiple times before DOMContentLoaded and
- *            multiple times after DOMContentLoaded.
- *        * Mutation events can happen before or after DOMContentLoaded so at
- *          DOMContentLoaded:
- *          * If there have been mutation events then immediately update the
- *            fonts.
- *          * If there have not been mutation events then wait for mutation
- *            event which will follow soon.  We could scan the DOM to do the
- *            update immediately on DOMContentLoaded but scanning the DOM is
- *            expensive.
- *
- *   2. Character Data Fetching
- *      We want to have all the character data as close to DOMContentLoaded as
- *      possible. Because of round trip latency, we want to avoid lots of small
- *      fetches.
- *      * Before and after DOMContentLoaded: to reduce  the number of fetches
- *        only fetch every few seconds.
- *      * On DOMContentLoaded if there have been mutation events then fetch
- *        immediately. If there have not been any mutation events then wait to
- *        fetch the data on the soon to follow mutation event.
- *
- *   3. CSS Updating
- *      * It is _very_ CPU/time expensive to ship multiple multi-megabyte fonts
- *        from Javascript to the browser native code.
- *        * During the transfer the heavy CPU usage makes the page unresponsive.
- *        * Currently during the transfer the text becomes blank. The user sees
- *          an unpleasant 'flash' of blank text between the time when the
- *          fallback glyphs are cleared and the new glyphs are available for
- *          display.
- *        * The 'flash' can perhaps be solved by rendering to an off screen area
- *          and only switching the CSS once the transfer is complete. Note that
- *          this will not do anything about the CPU usage.
- *      * If on start up the font is already persisted then update the CSS
- *        immediately as it is very likely the font already has the UI text. The
- *        positive of this is that the UI shows the correct glyphs as soon as
- *        possible. The negative of this is there may be a ransom note effect
- *        and the CSS update makes the page unresponsived during the data
- *        transfer.
- *      * Before DOMContentLoaded do not display updates to the font as this
- *        would make the page unresponsive (even if the flashing is fixed).
- *      * At DOMContentLoaded display the font (this is the main goal)
- *      * After DOMContentLoaded only fetch characters and set the font every
- *        few seconds to balance keeping the display correct vs CPU loading.
- */
-
 
 if (goog.DEBUG) {
   /**
