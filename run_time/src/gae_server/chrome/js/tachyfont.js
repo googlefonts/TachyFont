@@ -356,14 +356,7 @@ tachyfont.TachyFontSet.prototype.addTextToFontGroups = function(node) {
   if (family == undefined) {
     var families = css_family.split(',');
     for (var i = 0; i < families.length; i++) {
-      var a_family = families[i].trim();
-      // When there are spaces in the font-name, Chromium adds single quotes
-      // around the font name in the style object.
-      // https://code.google.com/p/chromium/issues/detail?id=368293
-      if (a_family.charAt(0) == "'" &&
-          a_family.charAt(a_family.length - 1) == "'") {
-        a_family = a_family.substring(1, a_family.length - 1);
-      }
+      var a_family = tachyfont.IncrementalFontUtils.trimFamilyName(families[i]);
       if (a_family == this.familyName) {
         this.css_family_to_family[css_family] = this.familyName;
         break;
@@ -1266,7 +1259,6 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars = function() {
   this.finishPrecedingCharsRequest_ = this.finishPrecedingCharsRequest_.
   then(function() {
     var charArray = Object.keys(that.charsToLoad);
-    that.charsToLoad = {};
     // Check if there are any new characters.
     // TODO(bstell): until the serializing is fixed this stops multiple requests
     // running on the same resolved promise.
@@ -1318,6 +1310,7 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars = function() {
           for (var i = 0; i < neededCodes.length; i++) {
             var c = String.fromCharCode(neededCodes[i]);
             charlist[c] = 1;
+            delete that.charsToLoad[c];
           }
           return that.backendService.requestCodepoints(that.fontInfo_,
                                                        neededCodes).

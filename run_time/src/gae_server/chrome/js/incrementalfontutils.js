@@ -391,6 +391,26 @@ tachyfont.IncrementalFontUtils.getBlobUrl = function(fontInfo, data, mimeType) {
 
 
 /**
+ * Trim a CSSStyleSheet font-family string.
+ *
+ * @param {string} familyName The font-family name to trim.
+ * @return {string} The trimed font-family name.
+ */
+tachyfont.IncrementalFontUtils.trimFamilyName = function(familyName) {
+  var trimmedFamilyName = familyName.trim();
+  // When there are spaces in the font-name, Chromium adds single quotes
+  // around the font name in the style object; eg, "Noto Sans Japanese"
+  // becomes "'Noto Sans Japanese'".
+  // https://code.google.com/p/chromium/issues/detail?id=368293
+  if (trimmedFamilyName.charAt(0) == "'" &&
+      trimmedFamilyName.charAt(trimmedFamilyName.length - 1) == "'") {
+    trimmedFamilyName = trimmedFamilyName.substring(1, trimmedFamilyName.length - 1);
+  }
+  return trimmedFamilyName;
+};
+
+
+/**
  * Get the TachyFont style sheet.
  *
  * @return {CSSStyleSheet} The style sheet.
@@ -452,10 +472,11 @@ tachyfont.IncrementalFontUtils.findFontFaceRule =
             'found an @font-face rule');
         }
         var this_style = this_rule.style;
-        var font_family = this_style.getPropertyValue('font-family');
-        var font_weight = this_style.getPropertyValue('font-weight');
+        var thisFamily = this_style.getPropertyValue('font-family');
+        thisFamily = tachyfont.IncrementalFontUtils.trimFamilyName(thisFamily);
+        var thisWeight = this_style.getPropertyValue('font-weight');
         // TODO(bstell): consider using slant/width.
-        if (font_family == fontFamily && font_weight == weight) {
+        if (thisFamily == fontFamily && thisWeight == weight) {
           rule = i;
           break;
         }
