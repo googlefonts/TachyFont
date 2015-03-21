@@ -27,6 +27,7 @@ goog.require('tachyfont.IncrementalFontUtils');
 goog.require('tachyfont.chainedPromises');
 
 
+
 /**
  * Manage a group of TachyFonts.
  *
@@ -65,9 +66,9 @@ tachyfont.TachyFontSet = function(familyName) {
    * Do not need to scan the DOM if there have been mutation events before
    * DOMContentLoaded.
    *
-   * @private {boolean}
+   * @type {boolean}
    */
-  this.hadMutationEvents_ = false;
+  this.hadMutationEvents = false;
 
   /**
    * The updateFont operation takes time so serialize them.
@@ -191,7 +192,7 @@ tachyfont.TachyFontSet.prototype.addTextToFontGroups = function(node) {
   // TODO(bstell): add support for slant, width, etc.
   if (goog.DEBUG) {
     goog.log.fine(tachyfont.logger_, css_family + '/' + weight + ': "' +
-      text + '"');
+        text + '"');
   }
 
   // Convert the css_family to a family (empty string if not supported)
@@ -210,7 +211,7 @@ tachyfont.TachyFontSet.prototype.addTextToFontGroups = function(node) {
   if (!family) {
     if (goog.DEBUG) {
       goog.log.log(tachyfont.logger_, goog.log.Level.FINER,
-        'css_family \'' + css_family + '\' not supported');
+          'css_family \'' + css_family + '\' not supported');
     }
     return false;
   }
@@ -289,87 +290,88 @@ tachyfont.TachyFontSet.prototype.updateFonts = function(allowEarlyUse) {
   }
   var allUpdated = this.finishPrecedingUpdateFont_.getChainedPromise();
   allUpdated.getPrecedingPromise().
-  then(function() {
-    if (goog.DEBUG) {
-      goog.log.log(tachyfont.logger_, goog.log.Level.FINER,
-          'updateFonts: done waiting for preceding update');
-    }
-    var updatingFonts = [];
-    for (var i = 0; i < this.fonts_.length; i++) {
-      var fontObj = this.fonts_[i].incrfont;
-      var load = fontObj.loadChars();
-      updatingFonts.push(load);
-    }
-    return goog.Promise.all(updatingFonts);
-  }.bind(this)).
-  then(function(/*loadResults*/) {
-    var fontsData = [];
-    for (var i = 0; i < this.fonts_.length; i++) {
-      var fontObj = this.fonts_[i].incrfont;
-      var needToSetFont = fontObj.needToSetFont_;
-      // It takes significant time to pass the font data from Javascript to the
-      // browser. So unless specifically told to do so, do not update the font
-      // before the page loads.
-      if (!this.domContentLoaded_) {
-        if (!allowEarlyUse) {
-          needToSetFont = false;
+      then(function() {
+        if (goog.DEBUG) {
+          goog.log.log(tachyfont.logger_, goog.log.Level.FINER,
+              'updateFonts: done waiting for preceding update');
         }
-      }
-      // TODO(bstell): check the font has loaded char data. If no char data was
-      // ever loaded then don't waste CPU and time loading a useless font.
-      var fontData;
-      if (needToSetFont) {
-        fontData = fontObj.getBase;
-      } else {
-        fontData = goog.Promise.resolve(null);
-      }
-      fontsData.push(fontData);
-    }
-    if (goog.DEBUG) {
-      goog.log.log(tachyfont.logger_, goog.log.Level.FINER,
-        'updateFonts: wait for font bases');
-    }
-    return goog.Promise.all(fontsData);
-  }.bind(this)).
-  then(function(loadResults) {
-    if (goog.DEBUG) {
-      goog.log.log(tachyfont.logger_, goog.log.Level.FINER,
-        'updateFonts: got font bases');
-    }
-    var allCssSet = [];
-    for (var i = 0; i < loadResults.length; i++) {
-      var loadResult = loadResults[i];
-      if (loadResult == null) {
-        allCssSet.push(goog.Promise.resolve(null));
-        continue;
-      }
-      var fileInfo = loadResult[0];
-      var fontData = loadResult[1];
-      var fontObj = this.fonts_[i].incrfont;
-      if (goog.DEBUG) {
-        goog.log.fine(tachyfont.logger_, 'updateFonts: setFont: ');
-      }
-      var cssSetResult = fontObj.setFont(fontData, fileInfo).
-        then(function(cssSetResult) {
-          tachyfont.IncrementalFontUtils.setVisibility(fontObj.style,
-            fontObj.fontInfo_, true);
-        });
-      allCssSet.push(cssSetResult);
-    }
-    return goog.Promise.all(allCssSet);
-  }.bind(this)).
-  then(function(setResults) {
-    if (goog.DEBUG) {
-      goog.log.fine(tachyfont.logger_, 'updateFonts: updated all fonts');
-    }
-    allUpdated.resolve();
-  }.bind(this)).
-  thenCatch(function(e) {
-    if (goog.DEBUG) {
-      goog.log.error(tachyfont.logger_, 'failed to load all fonts' +
-          e.stack);
-      debugger;
-    }
-  });
+        var updatingFonts = [];
+        for (var i = 0; i < this.fonts_.length; i++) {
+          var fontObj = this.fonts_[i].incrfont;
+          var load = fontObj.loadChars();
+          updatingFonts.push(load);
+        }
+        return goog.Promise.all(updatingFonts);
+      }.bind(this)).
+      then(function(/*loadResults*/) {
+        var fontsData = [];
+        for (var i = 0; i < this.fonts_.length; i++) {
+          var fontObj = this.fonts_[i].incrfont;
+          var needToSetFont = fontObj.needToSetFont_;
+          // It takes significant time to pass the font data from Javascript to
+          // the browser. So unless specifically told to do so, do not update
+          // the font before the page loads.
+          if (!this.domContentLoaded_) {
+            if (!allowEarlyUse) {
+              needToSetFont = false;
+            }
+          }
+          // TODO(bstell): check the font has loaded char data. If no char data
+          // was ever loaded then don't waste CPU and time loading a useless
+          // font.
+          var fontData;
+          if (needToSetFont) {
+            fontData = fontObj.getBase;
+          } else {
+            fontData = goog.Promise.resolve(null);
+          }
+          fontsData.push(fontData);
+        }
+        if (goog.DEBUG) {
+          goog.log.log(tachyfont.logger_, goog.log.Level.FINER,
+              'updateFonts: wait for font bases');
+        }
+        return goog.Promise.all(fontsData);
+      }.bind(this)).
+      then(function(loadResults) {
+        if (goog.DEBUG) {
+          goog.log.log(tachyfont.logger_, goog.log.Level.FINER,
+              'updateFonts: got font bases');
+        }
+        var allCssSet = [];
+        for (var i = 0; i < loadResults.length; i++) {
+          var loadResult = loadResults[i];
+          if (loadResult == null) {
+            allCssSet.push(goog.Promise.resolve(null));
+            continue;
+          }
+          var fileInfo = loadResult[0];
+          var fontData = loadResult[1];
+          var fontObj = this.fonts_[i].incrfont;
+          if (goog.DEBUG) {
+            goog.log.fine(tachyfont.logger_, 'updateFonts: setFont: ');
+          }
+          var cssSetResult = fontObj.setFont(fontData, fileInfo).
+              then(function(cssSetResult) {
+                tachyfont.IncrementalFontUtils.setVisibility(fontObj.style,
+                fontObj.fontInfo_, true);
+              });
+          allCssSet.push(cssSetResult);
+        }
+        return goog.Promise.all(allCssSet);
+      }.bind(this)).
+      then(function(setResults) {
+        if (goog.DEBUG) {
+          goog.log.fine(tachyfont.logger_, 'updateFonts: updated all fonts');
+        }
+        allUpdated.resolve();
+      }.bind(this)).
+      thenCatch(function(e) {
+        if (goog.DEBUG) {
+          goog.log.error(tachyfont.logger_, 'failed to load all fonts' +
+              e.stack);
+          debugger;
+        }
+      });
   return allUpdated.getPromise();
 };

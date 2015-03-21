@@ -19,29 +19,34 @@
 
 goog.provide('tachyfont.RLEDecoder');
 
+
+
 /**
  * tachyfont.RLEDecoder class to decode RLE'd data
  * @constructor
  */
 tachyfont.RLEDecoder = function() {};
 
+
 /**
  * Defined RLE operations
  * @type {Object}
  */
 tachyfont.RLEDecoder.RLE_OPS = {
-    0xC0: 'copy',
-    0xC8: 'fill'
+  0xC0: 'copy',
+  0xC8: 'fill'
 };
+
 
 /**
  * Masks to interpret byte code
  * @type {Object}
  */
 tachyfont.RLEDecoder.MASKS = {
-    SIZE: 0x03,
-    OP: 0xFC
+  SIZE: 0x03,
+  OP: 0xFC
 };
+
 
 /**
  * Interpret the byte code
@@ -51,9 +56,10 @@ tachyfont.RLEDecoder.MASKS = {
 tachyfont.RLEDecoder.byteOp = function(op) {
   var byteCount = op & tachyfont.RLEDecoder.MASKS.SIZE;
   var byteOperation =
-    tachyfont.RLEDecoder.RLE_OPS[op & tachyfont.RLEDecoder.MASKS.OP];
+      tachyfont.RLEDecoder.RLE_OPS[op & tachyfont.RLEDecoder.MASKS.OP];
   return [byteCount, byteOperation];
 };
+
 
 /**
  * Decode given rle encoded data and return decoded data

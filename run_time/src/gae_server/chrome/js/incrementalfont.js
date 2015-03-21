@@ -22,12 +22,11 @@ goog.provide('tachyfont.TachyFont');
 
 goog.require('goog.Promise');
 goog.require('goog.log');
-
 goog.require('tachyfont.BackendService');
 goog.require('tachyfont.GoogleBackendService');
 goog.require('tachyfont.IncrementalFontUtils');
-goog.require('tachyfont.promise');
 goog.require('tachyfont.RLEDecoder');
+goog.require('tachyfont.promise');
 
 
 /**
@@ -35,6 +34,7 @@ goog.require('tachyfont.RLEDecoder');
  */
 tachyfont.IncrementalFont = function() {
 };
+
 
 /**
  * The IndexedDB version.
@@ -125,7 +125,7 @@ tachyfont.IncrementalFont.createManager = function(fontInfo, params) {
   var style = document.createElement('style');
   document.head.appendChild(style);
   var rule = '.' + fontName + ' { font-family: ' + fontName + '; ' +
-    'visibility: ' + initialVisibilityStr + '; }';
+      'visibility: ' + initialVisibilityStr + '; }';
   style.sheet.insertRule(rule, 0);
 
   //tachyfont.timer1.start('load base');
@@ -137,8 +137,8 @@ tachyfont.IncrementalFont.createManager = function(fontInfo, params) {
   var incrFontMgr =
       new tachyfont.IncrementalFont.obj_(fontInfo, params, backendService);
   //tachyfont.timer1.start('openIndexedDB.open ' + fontName);
-//  tachyfont.IncrementalFontUtils.logger(incrFontMgr.url,
-//    'need to report info');
+  //  tachyfont.IncrementalFontUtils.logger(incrFontMgr.url,
+  //    'need to report info');
   /*
   if (goog.DEBUG) {
     goog.log.info(tachyfont.logger_, 'It would be good to report status of:\n' +
@@ -156,38 +156,38 @@ tachyfont.IncrementalFont.createManager = function(fontInfo, params) {
 
   // Create a class with initial visibility.
   incrFontMgr.style = tachyfont.IncrementalFontUtils.setVisibility(null,
-    fontInfo, initialVisibility);
+      fontInfo, initialVisibility);
   // Limit the maximum visibility=hidden time.
   setTimeout(function() {
     tachyfont.IncrementalFontUtils.setVisibility(incrFontMgr.style, fontInfo,
-      true);
+        true);
   }, maxVisibilityTimeout);
 
   // Start the operation to get the list of already fetched chars.
   if (goog.DEBUG) {
     goog.log.log(tachyfont.logger_, goog.log.Level.FINER,
-      'Get the list of already fetched chars.');
+        'Get the list of already fetched chars.');
   }
   incrFontMgr.getCharList = incrFontMgr.getIDB_.
-  then(function(idb) {
-    if (tachyfont.persistData) {
-      return incrFontMgr.getData_(idb, tachyfont.IncrementalFont.CHARLIST);
-    } else {
-      var e = new Event('not using persisting charlist');
-      return goog.Promise.reject(e);
-    }
-  }).
-  thenCatch(function(e) {
-    return {};
-  }).
-  then(function(charlist_data) {
-    return charlist_data;
-  }).thenCatch(function(e) {
-    if (goog.DEBUG) {
-      goog.log.error(tachyfont.logger_, e.stack);
-      debugger;
-    }
-  });
+      then(function(idb) {
+        if (tachyfont.persistData) {
+          return incrFontMgr.getData_(idb, tachyfont.IncrementalFont.CHARLIST);
+        } else {
+          var e = new Event('not using persisting charlist');
+          return goog.Promise.reject(e);
+        }
+      }).
+      thenCatch(function(e) {
+        return {};
+      }).
+      then(function(charlist_data) {
+        return charlist_data;
+      }).thenCatch(function(e) {
+        if (goog.DEBUG) {
+          goog.log.error(tachyfont.logger_, e.stack);
+          debugger;
+        }
+      });
 
   if (tachyfont.buildDemo_) {
     tachyfont.buildDemo_ = false;
@@ -203,6 +203,7 @@ tachyfont.IncrementalFont.createManager = function(fontInfo, params) {
 
   return incrFontMgr;
 };
+
 
 
 /**
@@ -288,32 +289,32 @@ tachyfont.IncrementalFont.obj_ = function(fontInfo, params, backendService) {
 tachyfont.IncrementalFont.obj_.prototype.getPersistedBase_ = function() {
   var that = this;
   var persistedBase = this.getIDB_.
-  then(function(idb) {
-    var filedata;
-    if (tachyfont.persistData) {
-      filedata = that.getData_(idb, tachyfont.IncrementalFont.BASE);
-    } else {
-      var e = new Event('not using persisting data');
-      filedata = goog.Promise.all([goog.Promise.resolve(idb),
-          goog.Promise.reject(e)]);
-    }
-    return goog.Promise.all([goog.Promise.resolve(idb), filedata]);
-  }).
-  then(function(arr) {
-    var idb = arr[0];
-    var filedata = new DataView(arr[1]);
-    var fileinfo = tachyfont.IncrementalFontUtils.parseBaseHeader(filedata);
-    var fontdata = new DataView(arr[1], fileinfo.headSize);
-    return goog.Promise.all([goog.Promise.resolve(fileinfo),
-        goog.Promise.resolve(fontdata)]);
-  }).
-  thenCatch(function(e) {
-    if (goog.DEBUG) {
-      goog.log.log(tachyfont.logger_, goog.log.Level.FINER,
-          'font not persisted: ' + e.stack);
-    }
-    return null;
-  });
+      then(function(idb) {
+        var filedata;
+        if (tachyfont.persistData) {
+          filedata = that.getData_(idb, tachyfont.IncrementalFont.BASE);
+        } else {
+          var e = new Event('not using persisting data');
+          filedata = goog.Promise.all([goog.Promise.resolve(idb),
+                goog.Promise.reject(e)]);
+        }
+        return goog.Promise.all([goog.Promise.resolve(idb), filedata]);
+      }).
+      then(function(arr) {
+        var idb = arr[0];
+        var filedata = new DataView(arr[1]);
+        var fileinfo = tachyfont.IncrementalFontUtils.parseBaseHeader(filedata);
+        var fontdata = new DataView(arr[1], fileinfo.headSize);
+        return goog.Promise.all([goog.Promise.resolve(fileinfo),
+              goog.Promise.resolve(fontdata)]);
+      }).
+      thenCatch(function(e) {
+        if (goog.DEBUG) {
+          goog.log.log(tachyfont.logger_, goog.log.Level.FINER,
+              'font not persisted: ' + e.stack);
+        }
+        return null;
+      });
   return persistedBase;
 };
 
@@ -326,28 +327,30 @@ tachyfont.IncrementalFont.obj_.prototype.getPersistedBase_ = function() {
  * @private
  */
 tachyfont.IncrementalFont.obj_.prototype.getUrlBase_ =
-  function(backendService, fontInfo) {
+    function(backendService, fontInfo) {
   var that = this;
   var rslt = backendService.requestFontBase(fontInfo).
-  then(function(xfer_bytes) {
-    //tachyfont.timer1.start('uncompact base');
-    var xfer_data = new DataView(xfer_bytes);
-    var fileinfo = tachyfont.IncrementalFontUtils.parseBaseHeader(xfer_data);
-    var header_data = new DataView(xfer_bytes, 0, fileinfo.headSize);
-    var rle_fontdata = new DataView(xfer_bytes, fileinfo.headSize);
-    var raw_base = tachyfont.RLEDecoder.rleDecode([header_data,
-                                                   rle_fontdata]);
-    var raw_basefont = new DataView(raw_base.buffer, header_data.byteLength);
-    tachyfont.IncrementalFontUtils.writeCmap12(raw_basefont, fileinfo);
-    tachyfont.IncrementalFontUtils.writeCmap4(raw_basefont, fileinfo);
-    tachyfont.IncrementalFontUtils.writeCharsetFormat2(raw_basefont,
-      fileinfo);
-    var basefont =
-      tachyfont.IncrementalFontUtils.sanitizeBaseFont(fileinfo, raw_basefont);
-    that.persistDelayed_(tachyfont.IncrementalFont.BASE);
-    //tachyfont.timer1.end('uncompact base');
-    return [fileinfo, basefont];
-  });
+      then(function(xfer_bytes) {
+        //tachyfont.timer1.start('uncompact base');
+        var xfer_data = new DataView(xfer_bytes);
+        var fileinfo = tachyfont.IncrementalFontUtils.parseBaseHeader(
+            xfer_data);
+        var header_data = new DataView(xfer_bytes, 0, fileinfo.headSize);
+        var rle_fontdata = new DataView(xfer_bytes, fileinfo.headSize);
+        var raw_base = tachyfont.RLEDecoder.rleDecode([header_data,
+          rle_fontdata]);
+        var raw_basefont = new DataView(raw_base.buffer,
+            header_data.byteLength);
+        tachyfont.IncrementalFontUtils.writeCmap12(raw_basefont, fileinfo);
+        tachyfont.IncrementalFontUtils.writeCmap4(raw_basefont, fileinfo);
+        tachyfont.IncrementalFontUtils.writeCharsetFormat2(raw_basefont,
+            fileinfo);
+        var basefont = tachyfont.IncrementalFontUtils.sanitizeBaseFont(
+            fileinfo, raw_basefont);
+        that.persistDelayed_(tachyfont.IncrementalFont.BASE);
+        //tachyfont.timer1.end('uncompact base');
+        return [fileinfo, basefont];
+      });
   return rslt;
 };
 
@@ -361,41 +364,43 @@ tachyfont.IncrementalFont.obj_.prototype.getUrlBase_ =
 tachyfont.IncrementalFont.obj_.prototype.setFont = function(fontdata, isTtf) {
   if (goog.DEBUG) {
     goog.log.log(tachyfont.logger_, goog.log.Level.FINER,
-      'setFont: wait for preceding');
+        'setFont: wait for preceding');
   }
   return this.finishPrecedingSetFont_
-  .then(function() {
-    if (goog.DEBUG) {
-      goog.log.log(tachyfont.logger_, goog.log.Level.FINER,
-        'setFont: done waiting for preceding');
-    }
-    this.needToSetFont_ = false;
-    this.finishPrecedingSetFont_ = new goog.Promise(function(resolve) {
-      if (goog.DEBUG) {
-        goog.log.fine(tachyfont.logger_, 'setFont ' + this.fontInfo_['name']);
-      }
-      var mimeType, format;
-      if (isTtf) {
-        mimeType = 'font/ttf'; // 'application/x-font-ttf';
-        format = 'truetype';
-      } else {
-        mimeType = 'font/otf'; // 'application/font-sfnt';
-        format = 'opentype';
-      }
-      var blobUrl = tachyfont.IncrementalFontUtils.getBlobUrl(
-        this.fontInfo_, fontdata, mimeType);
-
-      return this.setFontNoFlash(this.fontInfo_, format, blobUrl).
-        then(function() {
+      .then(function() {
+        if (goog.DEBUG) {
+          goog.log.log(tachyfont.logger_, goog.log.Level.FINER,
+             'setFont: done waiting for preceding');
+        }
+        this.needToSetFont_ = false;
+        this.finishPrecedingSetFont_ = new goog.Promise(function(resolve) {
           if (goog.DEBUG) {
-            goog.log.fine(tachyfont.logger_, 'setFont: setFont done');
+            goog.log.fine(tachyfont.logger_, 'setFont ' +
+                this.fontInfo_['name']);
           }
-          resolve();
-        });
-    }.bind(this));
-    return this.finishPrecedingSetFont_;
-  }.bind(this));
+          var mimeType, format;
+          if (isTtf) {
+            mimeType = 'font/ttf'; // 'application/x-font-ttf';
+            format = 'truetype';
+          } else {
+            mimeType = 'font/otf'; // 'application/font-sfnt';
+            format = 'opentype';
+          }
+          var blobUrl = tachyfont.IncrementalFontUtils.getBlobUrl(
+             this.fontInfo_, fontdata, mimeType);
+
+          return this.setFontNoFlash(this.fontInfo_, format, blobUrl).
+             then(function() {
+               if (goog.DEBUG) {
+                 goog.log.fine(tachyfont.logger_, 'setFont: setFont done');
+               }
+               resolve();
+             });
+        }.bind(this));
+        return this.finishPrecedingSetFont_;
+      }.bind(this));
 };
+
 
 /**
  * Obfuscate small requests to make it harder for a TachyFont server to
@@ -434,7 +439,7 @@ tachyfont.possibly_obfuscate = function(codes, charlist) {
     }
     if (goog.DEBUG) {
       goog.log.log(tachyfont.logger_, goog.log.Level.FINER,
-        Object.keys(code_map).length.toString());
+          Object.keys(code_map).length.toString());
     }
   }
 
@@ -487,144 +492,147 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars = function() {
   //   request comes it addes itself to the end of the queue and waits on the
   //   previous request to resolve.
   this.finishPrecedingCharsRequest_ = this.finishPrecedingCharsRequest_.
-  then(function() {
-    var charArray = Object.keys(that.charsToLoad);
-    // Check if there are any new characters.
-    // TODO(bstell): until the serializing is fixed this stops multiple requests
-    // running on the same resolved promise.
-    if (charArray.length == 0) {
-      return null;
-    }
-    var pending_resolve, pending_reject;
-    // TODO(bstell): use tachfont.promise here?
-    return new goog.Promise(function(resolve, reject) {
-      pending_resolve = resolve;
-      pending_reject = reject;
+      then(function() {
+        var charArray = Object.keys(that.charsToLoad);
+        // Check if there are any new characters.
+        // TODO(bstell): until the serializing is fixed this stops multiple
+        // requests running on the same resolved promise.
+        if (charArray.length == 0) {
+          return null;
+        }
+        var pending_resolve, pending_reject;
+        // TODO(bstell): use tachfont.promise here?
+        return new goog.Promise(function(resolve, reject) {
+          pending_resolve = resolve;
+          pending_reject = reject;
 
-        return that.getCharList.
-        then(function(charlist_) {
-          charlist = charlist_;
-          // Make a tmp copy in case we are chunking the requests.
-          var tmp_charlist = {};
-          for (var key in charlist) {
-            tmp_charlist[key] = charlist[key];
-          }
-          for (var i = 0; i < charArray.length; i++) {
-            var c = charArray[i];
-            if (!tmp_charlist[c]) {
-              neededCodes.push(tachyfont.charToCode(c));
-              tmp_charlist[c] = 1;
-            }
-          }
+          return that.getCharList.
+              then(function(charlist_) {
+                charlist = charlist_;
+                // Make a tmp copy in case we are chunking the requests.
+                var tmp_charlist = {};
+                for (var key in charlist) {
+                  tmp_charlist[key] = charlist[key];
+                }
+                for (var i = 0; i < charArray.length; i++) {
+                  var c = charArray[i];
+                  if (!tmp_charlist[c]) {
+                    neededCodes.push(tachyfont.charToCode(c));
+                    tmp_charlist[c] = 1;
+                  }
+                }
 
-          if (neededCodes.length) {
-            neededCodes = tachyfont.possibly_obfuscate(neededCodes,
-                tmp_charlist);
-            if (goog.DEBUG) {
-              goog.log.info(tachyfont.logger_, that.fontInfo_['name'] +
-                  ': load ' + neededCodes.length + ' codes:');
-              goog.log.log(tachyfont.logger_, goog.log.Level.FINER,
-                  '' + neededCodes);
-            }
-          } else {
-            if (goog.DEBUG) {
-              goog.log.fine(tachyfont.logger_, 'no new characters');
-            }
-            return null;
-          }
-          neededCodes.sort(function(a, b) { return a - b; });
-          if (that.req_size) {
-            remaining = neededCodes.slice(that.req_size);
-            neededCodes = neededCodes.slice(0, that.req_size);
-          }
-          for (var i = 0; i < neededCodes.length; i++) {
-            var c = String.fromCharCode(neededCodes[i]);
-            charlist[c] = 1;
-            delete that.charsToLoad[c];
-          }
-          return that.backendService.requestCodepoints(that.fontInfo_,
-                                                       neededCodes).
-          then(function(bundleResponse) {
-            if (remaining.length) {
-              setTimeout(function() {
-                that.loadChars();
-              }, 1);
-            }
-            // if (goog.DEBUG) {
-            //   goog.log.info(tachyfont.logger_,
-            //     'requested char data length = ' +chardata.byteLength);
-            // }
-            return bundleResponse;
-          });
-        }).
-        then(function(bundleResponse) {
-          return that.getBase.
-          then(function(arr) {
-            var fileinfo = arr[0];
-            var fontdata = arr[1];
-            var dataLength = 0;
-            if (bundleResponse != null) {
-              dataLength = bundleResponse.getDataLength();
-              if (dataLength != 0) {
-                that.needToSetFont_ = true;
-              }
-              if (goog.DEBUG) {
-                goog.log.info(tachyfont.logger_,
-                    'injectCharacters: glyph count / data length = ' +
-                    bundleResponse.getGlyphCount() + ' / ' + dataLength);
-              }
-              fontdata = tachyfont.IncrementalFontUtils.injectCharacters(
-                  fileinfo, fontdata, bundleResponse);
-              var msg;
-              if (remaining.length) {
-                msg = 'display ' + Object.keys(charlist).length + ' chars';
-              } else {
-                msg = '';
-                tachyfont.timer1.end('load Tachyfont base+data for ' +
+                if (neededCodes.length) {
+                  neededCodes = tachyfont.possibly_obfuscate(neededCodes,
+                  tmp_charlist);
+                  if (goog.DEBUG) {
+                    goog.log.info(tachyfont.logger_, that.fontInfo_['name'] +
+                    ': load ' + neededCodes.length + ' codes:');
+                    goog.log.log(tachyfont.logger_, goog.log.Level.FINER,
+                    '' + neededCodes);
+                  }
+                } else {
+                  if (goog.DEBUG) {
+                    goog.log.fine(tachyfont.logger_, 'no new characters');
+                  }
+                  return null;
+                }
+                neededCodes.sort(function(a, b) { return a - b; });
+                if (that.req_size) {
+                  remaining = neededCodes.slice(that.req_size);
+                  neededCodes = neededCodes.slice(0, that.req_size);
+                }
+                for (var i = 0; i < neededCodes.length; i++) {
+                  var c = String.fromCharCode(neededCodes[i]);
+                  charlist[c] = 1;
+                  delete that.charsToLoad[c];
+                }
+                return that.backendService.requestCodepoints(that.fontInfo_,
+                neededCodes).
+                then(function(bundleResponse) {
+                  if (remaining.length) {
+                    setTimeout(function() {
+                      that.loadChars();
+                    }, 1);
+                  }
+                  // if (goog.DEBUG) {
+                  //   goog.log.info(tachyfont.logger_,
+                  //     'requested char data length = ' +chardata.byteLength);
+                  // }
+                  return bundleResponse;
+                });
+              }).
+              then(function(bundleResponse) {
+                return that.getBase.
+                then(function(arr) {
+                  var fileinfo = arr[0];
+                  var fontdata = arr[1];
+                  var dataLength = 0;
+                  if (bundleResponse != null) {
+                    dataLength = bundleResponse.getDataLength();
+                    if (dataLength != 0) {
+                      that.needToSetFont_ = true;
+                    }
+                    if (goog.DEBUG) {
+                      goog.log.info(tachyfont.logger_,
+                      'injectCharacters: glyph count / data length = ' +
+                      bundleResponse.getGlyphCount() + ' / ' + dataLength);
+                    }
+                    fontdata = tachyfont.IncrementalFontUtils.injectCharacters(
+                    fileinfo, fontdata, bundleResponse);
+                    var msg;
+                    if (remaining.length) {
+                      msg = 'display ' + Object.keys(charlist).length +
+                          ' chars';
+                    } else {
+                      msg = '';
+                      tachyfont.timer1.end('load Tachyfont base+data for ' +
+                      that.fontName);
+                      tachyfont.timer1.done();
+                    }
+                    // Update the data promises.
+                    that.getBase = goog.Promise.all(
+                        [goog.Promise.resolve(fileinfo),
+                      goog.Promise.resolve(fontdata)]);
+                    that.getCharlist = goog.Promise.resolve(charlist);
+
+                    // Persist the data.
+                    that.persistDelayed_(tachyfont.IncrementalFont.BASE);
+                    that.persistDelayed_(tachyfont.IncrementalFont.CHARLIST);
+                  } else {
+                    var msg = '';
+                    tachyfont.timer1.end('load Tachyfont base+data for ' +
                     that.fontName);
-                tachyfont.timer1.done();
+                    tachyfont.timer1.done();
+                  }
+                  pending_resolve(true);
+                }).
+                thenCatch(function(e) {
+                  if (goog.DEBUG) {
+                    goog.log.error(tachyfont.logger_, 'failed to getBase: ' +
+                    e.stack);
+                    debugger;
+                  }
+                  pending_reject(false);
+                });
+              });
+        }).
+            thenCatch(function(e) {
+              if (goog.DEBUG) {
+                goog.log.error(tachyfont.logger_, 'loadChars: ' + e.stack);
+                debugger;
               }
-              // Update the data promises.
-              that.getBase = goog.Promise.all([goog.Promise.resolve(fileinfo),
-                  goog.Promise.resolve(fontdata)]);
-              that.getCharlist = goog.Promise.resolve(charlist);
-
-              // Persist the data.
-              that.persistDelayed_(tachyfont.IncrementalFont.BASE);
-              that.persistDelayed_(tachyfont.IncrementalFont.CHARLIST);
-            } else {
-              var msg = '';
-              tachyfont.timer1.end('load Tachyfont base+data for ' +
-                  that.fontName);
-              tachyfont.timer1.done();
-            }
-            pending_resolve(true);
-          }).
-          thenCatch(function(e) {
-            if (goog.DEBUG) {
-              goog.log.error(tachyfont.logger_, 'failed to getBase: ' +
-                e.stack);
-              debugger;
-            }
-            pending_reject(false);
-          });
-        });
-      }).
-      thenCatch(function(e) {
+              pending_reject(false);
+            });
+      }).thenCatch(function(e) {
         if (goog.DEBUG) {
-          goog.log.error(tachyfont.logger_, 'loadChars: ' + e.stack);
+          goog.log.error(tachyfont.logger_, e.stack);
           debugger;
         }
-        pending_reject(false);
       });
-  }).thenCatch(function(e) {
-    if (goog.DEBUG) {
-      goog.log.error(tachyfont.logger_, e.stack);
-      debugger;
-    }
-  });
   return this.finishPrecedingCharsRequest_;
 };
+
 
 /**
  * Save data that needs to be persisted.
@@ -668,7 +676,7 @@ tachyfont.IncrementalFont.obj_.prototype.persist_ = function(name) {
     // anything still to persist.
     var base_dirty = that.persistInfo[tachyfont.IncrementalFont.BASE_DIRTY];
     var charlist_dirty =
-      that.persistInfo[tachyfont.IncrementalFont.CHARLIST_DIRTY];
+        that.persistInfo[tachyfont.IncrementalFont.CHARLIST_DIRTY];
     if (!base_dirty && !charlist_dirty) {
       return;
     }
@@ -679,49 +687,49 @@ tachyfont.IncrementalFont.obj_.prototype.persist_ = function(name) {
 
     // Note that there is now a persist operation running.
     that.finishPersistingData = goog.Promise.resolve().
-    then(function() {
-      if (base_dirty) {
-        return that.getBase.
-        then(function(arr) {
-          return goog.Promise.all([that.getIDB_, goog.Promise.resolve(arr[0]),
-                                   goog.Promise.resolve(arr[1])]);
-        }).
-        then(function(arr) {
-          if (goog.DEBUG) {
-            goog.log.fine(tachyfont.logger_, 'save base');
+        then(function() {
+          if (base_dirty) {
+            return that.getBase.
+            then(function(arr) {
+              return goog.Promise.all([that.getIDB_,
+                goog.Promise.resolve(arr[0]), goog.Promise.resolve(arr[1])]);
+            }).
+            then(function(arr) {
+              if (goog.DEBUG) {
+                goog.log.fine(tachyfont.logger_, 'save base');
+              }
+              return that.saveData_(arr[0],
+              tachyfont.IncrementalFont.BASE, arr[2].buffer);
+            });
           }
-          return that.saveData_(arr[0],
-            tachyfont.IncrementalFont.BASE, arr[2].buffer);
-        });
-      }
-    }).
-    then(function() {
-      if (charlist_dirty) {
-        return that.getCharList.
-        then(function(charlist) {
-          return goog.Promise.all([that.getIDB_,
-                                   goog.Promise.resolve(charlist)]);
         }).
-        then(function(arr) {
-          if (goog.DEBUG) {
-            goog.log.fine(tachyfont.logger_, 'save charlist');
+        then(function() {
+          if (charlist_dirty) {
+            return that.getCharList.
+            then(function(charlist) {
+              return goog.Promise.all([that.getIDB_,
+                goog.Promise.resolve(charlist)]);
+            }).
+            then(function(arr) {
+              if (goog.DEBUG) {
+                goog.log.fine(tachyfont.logger_, 'save charlist');
+              }
+              return that.saveData_(arr[0], tachyfont.IncrementalFont.CHARLIST,
+              arr[1]);
+            });
           }
-          return that.saveData_(arr[0], tachyfont.IncrementalFont.CHARLIST,
-            arr[1]);
+        }).
+        thenCatch(function(e) {
+          if (goog.DEBUG) {
+            goog.log.error(tachyfont.logger_, 'persistDelayed_: ' + e.stack);
+            debugger;
+          }
+        }).
+        then(function() {
+          // if (goog.DEBUG) {
+          //   goog.log.fine(tachyfont.logger_, 'persisted ' + name);
+          // }
         });
-      }
-    }).
-    thenCatch(function(e) {
-      if (goog.DEBUG) {
-        goog.log.error(tachyfont.logger_, 'persistDelayed_: ' + e.stack);
-        debugger;
-      }
-    }).
-    then(function() {
-      // if (goog.DEBUG) {
-      //   goog.log.fine(tachyfont.logger_, 'persisted ' + name);
-      // }
-    });
   }).thenCatch(function(e) {
     if (goog.DEBUG) {
       goog.log.error(tachyfont.logger_, e.stack);
@@ -742,38 +750,39 @@ tachyfont.IncrementalFont.obj_.prototype.persist_ = function(name) {
 tachyfont.IncrementalFont.obj_.prototype.saveData_ = function(idb, name, data) {
   var that = this;
   return that.getIDB_.
-  then(function(db) {
-    // the initialization form x = { varname: value } handles the key is a
-    // literal string. If a variable varname is used for the key then the
-    // string varname will be used ... NOT the value of the varname.
-    return new goog.Promise(function(resolve, reject) {
-      var trans = db.transaction([name], 'readwrite');
-      var store = trans.objectStore(name);
-      var request = store.put(data, 0);
-      request.onsuccess = function(e) {
-        resolve();
-      };
-      request.onerror = function(e) {
+      then(function(db) {
+        // the initialization form x = { varname: value } handles the key is a
+        // literal string. If a variable varname is used for the key then the
+        // string varname will be used ... NOT the value of the varname.
+        return new goog.Promise(function(resolve, reject) {
+          var trans = db.transaction([name], 'readwrite');
+          var store = trans.objectStore(name);
+          var request = store.put(data, 0);
+          request.onsuccess = function(e) {
+            resolve();
+          };
+          request.onerror = function(e) {
+            if (goog.DEBUG) {
+              debugger;
+            }
+            reject(null);
+          };
+        }).
+           thenCatch(function(e) {
+             if (goog.DEBUG) {
+               goog.log.error(tachyfont.logger_, 'saveData ' + db.name + ' ' +
+                   name + ': ' + e.stack);
+               debugger;
+             }
+           });
+      }).thenCatch(function(e) {
         if (goog.DEBUG) {
+          goog.log.error(tachyfont.logger_, e.stack);
           debugger;
         }
-        reject(null);
-      };
-    }).
-    thenCatch(function(e) {
-      if (goog.DEBUG) {
-        goog.log.error(tachyfont.logger_, 'saveData ' + db.name + ' ' + name +
-            ': ' + e.stack);
-        debugger;
-      }
-    });
-  }).thenCatch(function(e) {
-    if (goog.DEBUG) {
-      goog.log.error(tachyfont.logger_, e.stack);
-      debugger;
-    }
-  });
+      });
 };
+
 
 /**
  * Get the fontDB.
@@ -787,7 +796,7 @@ tachyfont.IncrementalFont.obj_.prototype.openIndexedDB = function(fontName) {
     var db_name = tachyfont.IncrementalFont.DB_NAME + '/' + fontName;
     //tachyfont.timer1.start('indexedDB.open ' + db_name);
     var dbOpen = window.indexedDB.open(db_name,
-      tachyfont.IncrementalFont.version);
+        tachyfont.IncrementalFont.version);
     //tachyfont.timer1.end('indexedDB.open ' + db_name);
 
     dbOpen.onsuccess = function(e) {
@@ -797,7 +806,7 @@ tachyfont.IncrementalFont.obj_.prototype.openIndexedDB = function(fontName) {
     dbOpen.onerror = function(e) {
       if (goog.DEBUG) {
         goog.log.error(tachyfont.logger_, '!!! IncrFontIDB.obj_ "' + db_name +
-          '": ' + e.value);
+            '": ' + e.value);
         debugger;
       }
       reject(e);
@@ -809,7 +818,7 @@ tachyfont.IncrementalFont.obj_.prototype.openIndexedDB = function(fontName) {
       e.target.transaction.onerror = function(e) {
         if (goog.DEBUG) {
           goog.log.error(tachyfont.logger_, 'onupgradeneeded error: ' +
-            e.value);
+              e.value);
           debugger;
         }
         reject(e);
@@ -859,11 +868,12 @@ tachyfont.IncrementalFont.obj_.prototype.getData_ = function(idb, name) {
       reject(e);
     };
   }).
-  thenCatch(function(e) {
-    return goog.Promise.reject(e);
-  });
+      thenCatch(function(e) {
+        return goog.Promise.reject(e);
+      });
   return getData;
 };
+
 
 
 /**
@@ -884,6 +894,7 @@ tachyfont.TachyFont = function(fontInfo, params) {
    */
   this.incrfont = tachyfont.IncrementalFont.createManager(fontInfo, params);
 };
+
 
 /**
  * Lazily load the data for these chars.;
@@ -914,7 +925,7 @@ tachyfont.TachyFont.prototype.loadNeededChars = function() {
  * @return {goog.Promise} The promise resolves when the glyphs are displaying.
  */
 tachyfont.IncrementalFont.obj_.prototype.setFontNoFlash =
-  function(fontInfo, format, blobUrl) {
+    function(fontInfo, format, blobUrl) {
   // The desired @font-face font-family.
   var fontFamily = fontInfo['familyName'];
   // The temporary @font-face font-family.
@@ -930,7 +941,7 @@ tachyfont.IncrementalFont.obj_.prototype.setFontNoFlash =
         'setFont: ' + tmpFontFamily + '/' + weight);
   }
   tachyfont.IncrementalFontUtils.setCssFontRule(sheet, tmpFontFamily, weight,
-    blobUrl, format);
+      blobUrl, format);
 
   var setFontPromise = new goog.Promise(function(resolve, reject) {
     // Transfer the data.
@@ -941,38 +952,39 @@ tachyfont.IncrementalFont.obj_.prototype.setFontNoFlash =
           'setFont: fontStr = ' + fontStr);
     }
     document.fonts.load(fontStr).
-    then(function(value) {
-      if (goog.DEBUG) {
-        goog.log.fine(tachyfont.logger_, 'loaded ' + tmpFontFamily + '/' +
-            weight);
-      }
-      resolve();
-    });
+        then(function(value) {
+          if (goog.DEBUG) {
+            goog.log.fine(tachyfont.logger_, 'loaded ' + tmpFontFamily + '/' +
+                weight);
+          }
+          resolve();
+        });
   }).
-  then(function() {
-    // Now that the font is ready switch the @font-face to the desired name.
-    if (goog.DEBUG) {
-      goog.log.log(tachyfont.logger_, goog.log.Level.FINER,
-          'switch to fontFamily');
-    }
-    // Delete the old @font-face.
-    var ruleToDelete = tachyfont.IncrementalFontUtils.findFontFaceRule(sheet,
-      fontFamily, weight);
-    tachyfont.IncrementalFontUtils.deleteCssRule(ruleToDelete, sheet);
-    // Switch the name to use the newly transfered blobUrl data.
-    var rule_to_switch = tachyfont.IncrementalFontUtils.findFontFaceRule(sheet,
-      tmpFontFamily, weight);
-    var rules = sheet.cssRules || sheet.rules;
-    if (rules && rule_to_switch != -1) {
-      var this_rule = rules[rule_to_switch];
-      var this_style = this_rule.style;
-      if (goog.DEBUG) {
-        goog.log.info(tachyfont.logger_, '**** switched ' + weight + ' from ' +
-            this_style.fontFamily + ' to ' + fontFamily + ' ****');
-      }
-      this_style.fontFamily = fontFamily;
-    }
-  });
+      then(function() {
+        // Now that the font is ready switch the @font-face to the desired name.
+        if (goog.DEBUG) {
+          goog.log.log(tachyfont.logger_, goog.log.Level.FINER,
+              'switch to fontFamily');
+        }
+        // Delete the old @font-face.
+        var ruleToDelete = tachyfont.IncrementalFontUtils.findFontFaceRule(
+            sheet, fontFamily, weight);
+        tachyfont.IncrementalFontUtils.deleteCssRule(ruleToDelete, sheet);
+        // Switch the name to use the newly transfered blobUrl data.
+        var rule_to_switch = tachyfont.IncrementalFontUtils.findFontFaceRule(
+            sheet, tmpFontFamily, weight);
+        var rules = sheet.cssRules || sheet.rules;
+        if (rules && rule_to_switch != -1) {
+          var this_rule = rules[rule_to_switch];
+          var this_style = this_rule.style;
+          if (goog.DEBUG) {
+            goog.log.info(tachyfont.logger_, '**** switched ' + weight +
+                ' from ' + this_style.fontFamily + ' to ' + fontFamily +
+                ' ****');
+          }
+          this_style.fontFamily = fontFamily;
+        }
+      });
 
   return setFontPromise;
 };
