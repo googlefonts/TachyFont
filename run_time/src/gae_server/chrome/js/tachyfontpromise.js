@@ -17,16 +17,17 @@
  * the License.
  */
 
-goog.provide('tachyfont.promise');
 goog.provide('tachyfont.chainedPromises');
+goog.provide('tachyfont.promise');
 
 goog.require('goog.Promise');
+
 
 
 /**
  * A class that holds a promise and the associated resolve and reject functions.
  *
- * @param {tachyfont.chainedPromises} opt_container If used to chain promises
+ * @param {tachyfont.chainedPromises=} opt_container If used to chain promises
  *     then this holds the object that implements the chaining.
  * @constructor
  */
@@ -80,7 +81,7 @@ tachyfont.promise.prototype.getPrecedingPromise = function() {
 /**
  * Resolve the promise.
  *
- * @param {*} opt_value An optional value to pass to the resolve function.
+ * @param {*=} opt_value An optional value to pass to the resolve function.
  */
 tachyfont.promise.prototype.resolve = function(opt_value) {
   this.resolver_(opt_value);
@@ -90,6 +91,7 @@ tachyfont.promise.prototype.resolve = function(opt_value) {
     }
   }
 };
+
 
 
 /**
