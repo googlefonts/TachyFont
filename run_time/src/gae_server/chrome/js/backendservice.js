@@ -20,10 +20,12 @@
 goog.provide('tachyfont.BackendService');
 goog.provide('tachyfont.GoogleBackendService');
 
-goog.require('goog.net.XhrIo');
+goog.require('goog.Promise');
 goog.require('goog.events');
 goog.require('goog.net.EventType');
-goog.require('goog.Promise');
+goog.require('goog.net.XhrIo');
+
+
 
 /**
  * Handles interacting with the backend server.
@@ -33,6 +35,7 @@ goog.require('goog.Promise');
 tachyfont.BackendService = function(baseUrl) {
   this.baseUrl = baseUrl;
 };
+
 
 /**
  * Request codepoints from the backend server.
@@ -53,10 +56,11 @@ tachyfont.BackendService.prototype.requestCodepoints = function(
       // the 'Content-Type' is 'application/json'.
       //{'Content-Type': 'application/json'},
       {'Content-Type': 'text/plain', 'X-TachyFont-bandwidth': bandwidth})
-  .then(function(glyphData) {
-    return that.parseCodepointHeader_(glyphData);
-  });
+      .then(function(glyphData) {
+        return that.parseCodepointHeader_(glyphData);
+      });
 };
+
 
 /**
  * Parses the header of a codepoint response and returns info on it:
@@ -76,6 +80,7 @@ tachyfont.BackendService.prototype.parseCodepointHeader_ = function(glyphData) {
       '1.0', '', count, flags, offset, glyphData);
 };
 
+
 /**
  * Request a font's base data from the backend server.
  * @param {Object.<string, string>} fontInfo containing info on the font; ie:
@@ -88,6 +93,7 @@ tachyfont.BackendService.prototype.requestFontBase = function(fontInfo) {
       '/incremental_fonts/incrfonts/' + fontInfo.name + '/base', 'GET',
       null, { 'X-TachyFont-bandwidth': bandwidth });
 };
+
 
 /**
  * Send a log message to the server
@@ -104,6 +110,7 @@ tachyfont.BackendService.prototype.log = function(message) {
       //{'Content-Type': 'application/json'},
       {'Content-Type': 'text/plain'});
 };
+
 
 /**
  * Async XMLHttpRequest to given url using given method, data and header
@@ -130,6 +137,8 @@ tachyfont.BackendService.requestUrl_ =
   });
 };
 
+
+
 /**
  * Handles interacting with the backend server.
  * @param {string} baseUrl of the backend server.
@@ -143,6 +152,7 @@ var GLYPHS_REQUEST_PREFIX = 'g';
 var GLYPHS_REQUEST_SUFFIX = 'glyphs';
 var FRAMEWORK_REQUEST_PREFIX = 't';
 var FRAMEWORK_REQUEST_SUFFIX = 'framework';
+
 
 /**
  * Request codepoints from the backend server.
@@ -160,10 +170,11 @@ tachyfont.GoogleBackendService.prototype.requestCodepoints = function(
       'POST',
       'glyphs=' + encodeURIComponent(this.compressedGlyphsList_(codes)),
       {'Content-Type': 'application/x-www-form-urlencoded'})
-  .then(function(glyphData) {
-    return self.parseHeader_(glyphData);
-  });
+      .then(function(glyphData) {
+        return self.parseHeader_(glyphData);
+      });
 };
+
 
 /**
  * Parses the header of a codepoint response and returns info on it:
@@ -200,6 +211,7 @@ tachyfont.GoogleBackendService.prototype.parseHeader_ = function(glyphData) {
   }
 };
 
+
 /**
  * Request a font's base data from the backend server.
  * @param {Object.<string, string>} fontInfo containing info on the font; ie:
@@ -213,6 +225,7 @@ tachyfont.GoogleBackendService.prototype.requestFontBase = function(fontInfo) {
       'GET', null, {});
 };
 
+
 /**
  * Send a log message to the server
  * @param {string} message The message to log.
@@ -224,6 +237,7 @@ tachyfont.GoogleBackendService.prototype.log = function(message) {
     resolve(new ArrayBuffer(0));
   });
 };
+
 
 /**
  * @private
@@ -241,6 +255,7 @@ tachyfont.GoogleBackendService.prototype.getUrl_ = function(
   return this.baseUrl + '/' + prefix + '/' + family + '/' +
       fontInfo['version'] + '/' + fontInfo['fontkit'] + '.' + suffix;
 };
+
 
 /**
  * @private
