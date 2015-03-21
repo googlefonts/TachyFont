@@ -20,6 +20,7 @@
 goog.provide('webfonttailor');
 goog.provide('webfonttailor.FontsInfo');
 
+
 /**
  * webfonttailor.jaNormalInfo
  *
@@ -27,20 +28,21 @@ goog.provide('webfonttailor.FontsInfo');
  */
 webfonttailor.jaNormalInfo = {
   '100': { 'name': 'NotoSansJP-Thin', 'weight': '100',
-           'class': 'NotoSansJP-Thin' },
+    'class': 'NotoSansJP-Thin' },
   '200': { 'name': 'NotoSansJP-Light', 'weight': '200',
-           'class': 'NotoSansJP-light' },
+    'class': 'NotoSansJP-light' },
   '300': { 'name': 'NotoSansJP-DemiLight', 'weight': '300',
-           'class': 'NotoSansJP-DemiLight' },
+    'class': 'NotoSansJP-DemiLight' },
   '400': { 'name': 'NotoSansJP-Regular', 'weight': '400',
-           'class': 'NotoSansJP-Regular' },
+    'class': 'NotoSansJP-Regular' },
   '500': { 'name': 'NotoSansJP-Medium', 'weight': '500',
-           'class': 'NotoSansJP-Medium' },
+    'class': 'NotoSansJP-Medium' },
   '700': { 'name': 'NotoSansJP-Bold', 'weight': '700',
-           'class': 'NotoSansJP-Bold' },
+    'class': 'NotoSansJP-Bold' },
   '900': { 'name': 'NotoSansJP-Black', 'weight': '900',
-           'class': 'NotoSansJP-Black' }
+    'class': 'NotoSansJP-Black' }
 };
+
 
 /**
  * webfonttailor.jaStyleInfo
@@ -51,6 +53,7 @@ webfonttailor.jaStyleInfo = {
   'normal': webfonttailor.jaNormalInfo
 };
 
+
 /**
  * webfonttailor.notoSansLanguageInfo
  *
@@ -60,6 +63,7 @@ webfonttailor.notoSansLanguageInfo = {
   'ja': webfonttailor.jaStyleInfo
 };
 
+
 /**
  * webfonttailor.fontFamliesInfo
  *
@@ -68,6 +72,7 @@ webfonttailor.notoSansLanguageInfo = {
 webfonttailor.fontFamliesInfo = {
   'Noto Sans': webfonttailor.notoSansLanguageInfo
 };
+
 
 
 /**
@@ -91,7 +96,7 @@ webfonttailor.FontsInfo = function() {
  * @return {webfonttailor.FontsInfo} The information describing the fonts.
  */
 webfonttailor.getTachyFontsInfo = function(fontFamlies, languages, faces,
-  options) {
+    options) {
   var fontsInfo = new webfonttailor.FontsInfo();
   var fonts = [];
   for (var i = 0; i < fontFamlies.length; i++) {
