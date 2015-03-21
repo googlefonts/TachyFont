@@ -57,10 +57,10 @@ if (goog.DEBUG) {
     tachyfont.debug_level;
     /** @type {string} */
     tachyfont.debug_level_str =
-      tachyfont.uri.getParameterValue('TachyFontDebugLevel') || '';
+        tachyfont.uri.getParameterValue('TachyFontDebugLevel') || '';
     if (tachyfont.debug_level_str) {
       tachyfont.debug_level =
-        goog.debug.Logger.Level.getPredefinedLevel(tachyfont.debug_level_str);
+          goog.debug.Logger.Level.getPredefinedLevel(tachyfont.debug_level_str);
     }
 
     // Send the debug output to the console.
@@ -80,8 +80,9 @@ if (goog.DEBUG) {
      * @private
      */
     tachyfont.buildDemo_ = false;
-  }
+  };
 }
+
 
 /**
  * Enable/disable using/saving persisted data.
@@ -89,17 +90,19 @@ if (goog.DEBUG) {
  */
 tachyfont.persistData = true;
 
+
 /**
  * A mapping from css weight names to weights.
  *
  * @type {!Object.<string, string>}
  */
 tachyfont.cssWeightToNumber = {
-        'lighter': '300',
-         'normal': '400',
-           'bold': '700',
-         'bolder': '800'
+  'lighter': '300',
+  'normal': '400',
+  'bold': '700',
+  'bolder': '800'
 };
+
 
 /**
  * If the number of characters in the request is less than this count then add
@@ -108,16 +111,19 @@ tachyfont.cssWeightToNumber = {
  */
 tachyfont.MINIMUM_NON_OBFUSCATION_LENGTH = 20;
 
+
 /**
  * The range of characters to pick from.
  * @type {number}
  */
 tachyfont.OBFUSCATION_RANGE = 256;
 
+
 /**
  * @typedef {number}
  */
 tachyfont.uint8;
+
 
 /**
  * @typedef {Object}
@@ -138,6 +144,7 @@ tachyfont.fontId = function(family, weight) {
   return fontId;
 };
 
+
 /**
  * Walk the DOM.
  *
@@ -155,6 +162,7 @@ tachyfont.walkDom = function(node, func) {
   return addedText;
 };
 
+
 /**
  * Create a list of TachyFonts
  *
@@ -162,7 +170,7 @@ tachyfont.walkDom = function(node, func) {
  * TODO(bstell): remove the Object type.
  * @param {webfonttailor.FontsInfo|Object} fontsInfo The information about the
  *     fonts.
- * @param {Object.<string, string>} opt_params Optional parameters.
+ * @param {Object.<string, string>=} opt_params Optional parameters.
  * @return {tachyfont.TachyFontSet} The TachyFontSet object.
  */
 tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
@@ -189,93 +197,96 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
   }
   if (goog.DEBUG) {
     goog.log.log(tachyfont.logger_, goog.log.Level.FINER,
-      'loadFonts: wait for preceding update');
+        'loadFonts: wait for preceding update');
   }
   var allLoaded = tachyFontSet.finishPrecedingUpdateFont_.getChainedPromise();
   allLoaded.getPrecedingPromise().
-  then(function() {
-    if (goog.DEBUG) {
-      goog.log.log(tachyfont.logger_, goog.log.Level.FINER,
-          'loadFonts: done waiting for preceding update');
-    }
-    // Try to get the base from persistent store.
-    var bases = [];
-    for (var i = 0; i < tachyFonts.length; i++) {
-      var incrfont = tachyFonts[i].incrfont;
-      var persistedBase = incrfont.getPersistedBase_();
-      bases.push(persistedBase);
-    }
-    return goog.Promise.all(bases);
-  }).
-  then(function(arrayBaseData) {
-    var fetchedBases = [];
-    for (var i = 0; i < tachyFonts.length; i++) {
-      var loadedBase = arrayBaseData[i];
-      var incrfont = tachyFonts[i].incrfont;
-      if (loadedBase != null) {
-        incrfont.alreadyPersisted = true;
-        incrfont.needToSetFont_ = true;
-      } else {
-        // If not persisted the fetch the base from the URL.
-        loadedBase = incrfont.getUrlBase_(incrfont.backendService,
-            incrfont.fontInfo_);
-      }
-      arrayBaseData[i] = goog.Promise.resolve(loadedBase);
-    }
-    // Have loaded fonts from persistent store or URL.
-    goog.Promise.all(arrayBaseData).
-    then(function(arrayBaseData) {
-      var allCssSet = [];
-      for (var i = 0; i < tachyFonts.length; i++) {
-        var incrfont = tachyFonts[i].incrfont;
-        var loadedBase = arrayBaseData[i];
-        // If not persisted then need to wait for DOMContentLoaded to set the
-        // font.
-        if (!incrfont.alreadyPersisted) {
-          incrfont.base.resolve(loadedBase);
-          if (goog.DEBUG) {
-            goog.log.fine(tachyfont.logger_, 'loadFonts: not persisted');
-          }
-          allCssSet.push(goog.Promise.resolve(null));
-          continue;
-        }
-        // The font was in persistent store so:
-        // * it is very likely that the font _already_ has the UI text so
-        //   immediately show the UI in the TachyFont.
+      then(function() {
         if (goog.DEBUG) {
-          goog.log.fine(tachyfont.logger_, 'loadFonts: setFont_');
+          goog.log.log(tachyfont.logger_, goog.log.Level.FINER,
+              'loadFonts: done waiting for preceding update');
         }
-        // TODO(bstell): only set the font if there are characters.
-        var cssSet = incrfont.setFont(loadedBase[1], loadedBase[0].isTtf).
-          then(function(cssSetResult) {
-            if (goog.DEBUG) {
-              goog.log.fine(tachyfont.logger_, 'loadFonts: setFont_ done');
-            }
-            tachyfont.IncrementalFontUtils.setVisibility(incrfont.style,
-              incrfont.fontInfo_, true);
-            // Release other operations to proceede.
-            incrfont.base.resolve(loadedBase);
-          });
-        allCssSet.push(cssSet);
-      }
-      return goog.Promise.all(allCssSet);
-    }).
-    then(function(allSetResults) {
-      if (goog.DEBUG) {
-        goog.log.fine(tachyfont.logger_, 'loadFonts: all fonts loaded');
-      }
-      // Allow any pending updates to happen.
-      allLoaded.resolve();
+        // Try to get the base from persistent store.
+        var bases = [];
+        for (var i = 0; i < tachyFonts.length; i++) {
+          var incrfont = tachyFonts[i].incrfont;
+          var persistedBase = incrfont.getPersistedBase_();
+          bases.push(persistedBase);
+        }
+        return goog.Promise.all(bases);
+      }).
+      then(function(arrayBaseData) {
+        var fetchedBases = [];
+        for (var i = 0; i < tachyFonts.length; i++) {
+          var loadedBase = arrayBaseData[i];
+          var incrfont = tachyFonts[i].incrfont;
+          if (loadedBase != null) {
+            incrfont.alreadyPersisted = true;
+            incrfont.needToSetFont_ = true;
+          } else {
+            // If not persisted the fetch the base from the URL.
+            loadedBase = incrfont.getUrlBase_(incrfont.backendService,
+                incrfont.fontInfo_);
+          }
+          arrayBaseData[i] = goog.Promise.resolve(loadedBase);
+        }
+        // Have loaded fonts from persistent store or URL.
+        goog.Promise.all(arrayBaseData).
+            then(function(arrayBaseData) {
+              var allCssSet = [];
+              for (var i = 0; i < tachyFonts.length; i++) {
+                var incrfont = tachyFonts[i].incrfont;
+                var loadedBase = arrayBaseData[i];
+                // If not persisted then need to wait for DOMContentLoaded to
+                // set the font.
+                if (!incrfont.alreadyPersisted) {
+                  incrfont.base.resolve(loadedBase);
+                  if (goog.DEBUG) {
+                    goog.log.fine(tachyfont.logger_,
+                        'loadFonts: not persisted');
+                  }
+                  allCssSet.push(goog.Promise.resolve(null));
+                  continue;
+                }
+                // The font was in persistent store so:
+                // * it is very likely that the font _already_ has the UI text
+                //   so immediately show the UI in the TachyFont.
+                if (goog.DEBUG) {
+                  goog.log.fine(tachyfont.logger_, 'loadFonts: setFont_');
+                }
+                // TODO(bstell): only set the font if there are characters.
+                var cssSet = incrfont.setFont(loadedBase[1],
+                    loadedBase[0].isTtf).
+                then(function(cssSetResult) {
+                  if (goog.DEBUG) {
+                    goog.log.fine(tachyfont.logger_,
+                        'loadFonts: setFont_ done');
+                  }
+                  tachyfont.IncrementalFontUtils.setVisibility(incrfont.style,
+                  incrfont.fontInfo_, true);
+                  // Release other operations to proceede.
+                  incrfont.base.resolve(loadedBase);
+                });
+                allCssSet.push(cssSet);
+              }
+              return goog.Promise.all(allCssSet);
+            }).
+            then(function(allSetResults) {
+              if (goog.DEBUG) {
+                goog.log.fine(tachyfont.logger_, 'loadFonts: all fonts loaded');
+              }
+              // Allow any pending updates to happen.
+              allLoaded.resolve();
 
-    }).
-    thenCatch(function(e) {
-      if (goog.DEBUG) {
-        goog.log.error(tachyfont.logger_, 'failed to get the font: ' +
-          e.stack);
-        debugger;
-      }
-    });
-  });
+            }).
+            thenCatch(function(e) {
+              if (goog.DEBUG) {
+                goog.log.error(tachyfont.logger_, 'failed to get the font: ' +
+                e.stack);
+                debugger;
+              }
+            });
+      });
 
   if (goog.DEBUG) {
     // Need to handle input fields
@@ -329,12 +340,12 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
     // If this is the 1st mutation event and it happened after DOMContentLoaded
     // then do the update now.
     var immediateUpdate;
-    if (!tachyFontSet.hadMutationEvents_ && tachyFontSet.domContentLoaded_) {
+    if (!tachyFontSet.hadMutationEvents && tachyFontSet.domContentLoaded_) {
       immediateUpdate = true;
     } else {
       immediateUpdate = false;
     }
-    tachyFontSet.hadMutationEvents_ = true;
+    tachyFontSet.hadMutationEvents = true;
     if (immediateUpdate) {
       if (goog.DEBUG) {
         goog.log.info(tachyfont.logger_, 'mutation observer: updateFont');
@@ -364,7 +375,7 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
     // and a mutation event should be coming right after this. We could scan the
     // DOM and do the update right now but scanning the DOM is expensive. So
     // instead wait for the mutation event.
-    if (tachyFontSet.hadMutationEvents_) {
+    if (tachyFontSet.hadMutationEvents) {
       // We have characters so update the fonts.
       if (goog.DEBUG) {
         goog.log.info(tachyfont.logger_, 'DOMContentLoaded: updateFonts');
@@ -381,6 +392,7 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
 
   return tachyFontSet;
 };
+
 
 /**
  * Update a list of TachyFonts
@@ -450,6 +462,7 @@ tachyfont.charToCode = function(in_char) {
 };
 
 
+
 /**
  * @param {string} version
  * @param {string} signature
@@ -469,12 +482,14 @@ tachyfont.GlyphBundleResponse = function(
   this.glyphData = glyphData;
 };
 
+
 /**
  * @return {number} the length of the glyph data in this response.
  */
 tachyfont.GlyphBundleResponse.prototype.getDataLength = function() {
   return this.glyphData.byteLength - this.offsetToGlyphData;
 };
+
 
 /**
  * @return {tachyfont.BinaryFontEditor} a font editor for the glyph data in this
@@ -485,12 +500,14 @@ tachyfont.GlyphBundleResponse.prototype.getFontEditor = function() {
                                         this.offsetToGlyphData);
 };
 
+
 /**
  * @return {number} Number of glyphs in this response.
  */
 tachyfont.GlyphBundleResponse.prototype.getGlyphCount = function() {
   return this.count;
 };
+
 
 /**
  * @return {number} flags binary for this response.
@@ -506,6 +523,7 @@ tachyfont.GlyphBundleResponse.prototype.getFlags = function() {
  */
 window.timer1;
 
+
 /**
  * Timing object for performance analysis.
  * @type {Object}
@@ -520,6 +538,7 @@ tachyfont.TachyFontEnv = function() {
 };
 
 
+
 /**
  * Timing class for performance analysis.
  * @constructor
@@ -527,11 +546,13 @@ tachyfont.TachyFontEnv = function() {
 tachyfont.Timer = function() {
 };
 
+
 /**
  * Placeholder for recording a timer start time.
  */
 tachyfont.Timer.prototype.start = function() {
 };
+
 
 /**
  * Placeholder for recording a timer end time.
@@ -539,17 +560,20 @@ tachyfont.Timer.prototype.start = function() {
 tachyfont.Timer.prototype.end = function() {
 };
 
+
 /**
  * Placeholder for recording a timer done time (which changes the color).
  */
 tachyfont.Timer.prototype.done = function() {
 };
 
+
 /**
  * Timing object for performance analysis.
  * @type {Object}
  */
 tachyfont.timer2;
+
 
 /**
  * Timing object for performance analysis.
@@ -568,6 +592,7 @@ if (window.Timer) {
   tachyfont.timer2 = new tachyfont.Timer();
 }
 
+
 /**
  * Debugging help
  * Stub out the debug functions.
@@ -575,6 +600,7 @@ if (window.Timer) {
  */
 tachyfont.ForDebug = function() {
 };
+
 
 /**
  * Useful for debugging.
