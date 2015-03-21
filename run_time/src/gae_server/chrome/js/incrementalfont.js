@@ -223,7 +223,8 @@ tachyfont.IncrementalFont.obj_ = function(fontInfo, params, backendService) {
 
   this.fontName = fontInfo['name'];
   this.charsToLoad = {};
-  this.req_size = params['req_size'];
+  //TODO(bstell): need to fix the request size.
+  this.req_size = params['req_size'] || 2200;
 
   /**
    * True if new characters have been loaded since last setFont
