@@ -38,9 +38,8 @@ tachyfont.BinaryFontEditor = function(dataView, baseOffset) {
 
 /**
  * @return {tachyfont.uint8} Unsigned byte
- * @private
  */
-tachyfont.BinaryFontEditor.prototype.getUint8_ = function() {
+tachyfont.BinaryFontEditor.prototype.getUint8 = function() {
   var data = this.dataView.getUint8(this.baseOffset + this.offset);
   this.offset++;
   return data;
@@ -49,9 +48,8 @@ tachyfont.BinaryFontEditor.prototype.getUint8_ = function() {
 
 /**
  * @param {number} data Unsigned byte
- * @private
  */
-tachyfont.BinaryFontEditor.prototype.setUint8_ = function(data) {
+tachyfont.BinaryFontEditor.prototype.setUint8 = function(data) {
   this.dataView.setUint8(this.baseOffset + this.offset, data);
   this.offset++;
 };
@@ -59,9 +57,8 @@ tachyfont.BinaryFontEditor.prototype.setUint8_ = function(data) {
 
 /**
  * @return {number} Unsigned short
- * @private
  */
-tachyfont.BinaryFontEditor.prototype.getUint16_ = function() {
+tachyfont.BinaryFontEditor.prototype.getUint16 = function() {
   var data = this.dataView.getUint16(this.baseOffset + this.offset);
   this.offset += 2;
   return data;
@@ -70,9 +67,8 @@ tachyfont.BinaryFontEditor.prototype.getUint16_ = function() {
 
 /**
  * @param {number} data Unsigned short
- * @private
  */
-tachyfont.BinaryFontEditor.prototype.setUint16_ = function(data) {
+tachyfont.BinaryFontEditor.prototype.setUint16 = function(data) {
   this.dataView.setUint16(this.baseOffset + this.offset, data);
   this.offset += 2;
 };
@@ -80,9 +76,8 @@ tachyfont.BinaryFontEditor.prototype.setUint16_ = function(data) {
 
 /**
  * @param {number} data Signed short
- * @private
  */
-tachyfont.BinaryFontEditor.prototype.setInt16_ = function(data) {
+tachyfont.BinaryFontEditor.prototype.setInt16 = function(data) {
   this.dataView.setInt16(this.baseOffset + this.offset, data);
   this.offset += 2;
 };
@@ -90,9 +85,8 @@ tachyfont.BinaryFontEditor.prototype.setInt16_ = function(data) {
 
 /**
  * @return {number} Unsigned integer
- * @private
  */
-tachyfont.BinaryFontEditor.prototype.getUint32_ = function() {
+tachyfont.BinaryFontEditor.prototype.getUint32 = function() {
   var data = this.dataView.getUint32(this.baseOffset + this.offset);
   this.offset += 4;
   return data;
@@ -101,9 +95,8 @@ tachyfont.BinaryFontEditor.prototype.getUint32_ = function() {
 
 /**
  * @param {number} data Unsigned integer
- * @private
  */
-tachyfont.BinaryFontEditor.prototype.setUint32_ = function(data) {
+tachyfont.BinaryFontEditor.prototype.setUint32 = function(data) {
   this.dataView.setUint32(this.baseOffset + this.offset, data);
   this.offset += 4;
 };
@@ -124,9 +117,8 @@ tachyfont.BinaryFontEditor.prototype.getInt32_ = function() {
  * @param {function()} getter One of getUint or getInt functions
  * @param {number} count Size of array
  * @return {Array.<number>}
- * @private
  */
-tachyfont.BinaryFontEditor.prototype.getArrayOf_ = function(getter, count) {
+tachyfont.BinaryFontEditor.prototype.getArrayOf = function(getter, count) {
   var arr = [];
   for (var i = 0; i < count; i++) {
     arr.push(getter.call(this));
@@ -138,9 +130,8 @@ tachyfont.BinaryFontEditor.prototype.getArrayOf_ = function(getter, count) {
 /**
  * @param {function(number)} setter One of setUint or setInt functions
  * @param {Array.<number>} arr
- * @private
  */
-tachyfont.BinaryFontEditor.prototype.setArrayOf_ = function(setter, arr) {
+tachyfont.BinaryFontEditor.prototype.setArrayOf = function(setter, arr) {
   var count = arr.length;
   for (var i = 0; i < count; i++) {
     setter.call(this, arr[i]);
@@ -157,17 +148,17 @@ tachyfont.BinaryFontEditor.prototype.getOffset_ = function(offSize) {
   var offset;
   switch (offSize) {
     case 1:
-      offset = this.getUint8_();
+      offset = this.getUint8();
       break;
     case 2:
-      offset = this.getUint16_();
+      offset = this.getUint16();
       break;
     case 3:
-      offset = this.getUint32_() >>> 8;
+      offset = this.getUint32() >>> 8;
       this.offset--;
       break;
     case 4:
-      offset = this.getUint32_();
+      offset = this.getUint32();
       break;
     default:
       throw 'invalid offset size: ' + offSize;
@@ -184,17 +175,17 @@ tachyfont.BinaryFontEditor.prototype.getOffset_ = function(offSize) {
 tachyfont.BinaryFontEditor.prototype.setOffset_ = function(offSize, value) {
   switch (offSize) {
     case 1:
-      this.setUint8_(value);
+      this.setUint8(value);
       break;
     case 2:
-      this.setUint16_(value);
+      this.setUint16(value);
       break;
     case 3:
-      this.setUint16_(value >>> 8);
-      this.setUint8_(value & 0xFF);
+      this.setUint16(value >>> 8);
+      this.setUint8(value & 0xFF);
       break;
     case 4:
-      this.setUint32_(value);
+      this.setUint32(value);
       break;
   }
 };
@@ -208,7 +199,7 @@ tachyfont.BinaryFontEditor.prototype.setOffset_ = function(offSize, value) {
 tachyfont.BinaryFontEditor.prototype.readString_ = function(length) {
   var str = '';
   for (var i = 0; i < length; i++) {
-    str += String.fromCharCode(this.getUint8_());
+    str += String.fromCharCode(this.getUint8());
   }
   return str;
 };
@@ -248,7 +239,7 @@ tachyfont.BinaryFontEditor.prototype.nibbleReader = function() {
   var that = this, value, nibbleByte, aligned = true;
   return function() {
     if (aligned) {
-      nibbleByte = that.getUint8_();
+      nibbleByte = that.getUint8();
       value = (nibbleByte & 0xF0) >>> 4;
     } else {
       value = (nibbleByte & 0x0F);
@@ -294,23 +285,23 @@ tachyfont.BinaryFontEditor.prototype.readExtraArray = function(extraLen) {
  */
 tachyfont.BinaryFontEditor.prototype.readNextGOS = function() {
   var gos = {};
-  var type = this.getUint8_();
-  var nGroups = this.getUint16_();
+  var type = this.getUint8();
+  var nGroups = this.getUint16();
   var segments = [];
 
   if (type == 5) {
     var startCode, length, gid;
     for (var i = 0; i < nGroups; i++) {
-      startCode = this.getUint32_();
-      length = this.getUint32_();
-      gid = this.getUint32_();
+      startCode = this.getUint32();
+      length = this.getUint32();
+      gid = this.getUint32();
       segments.push([startCode, length, gid]);
     }
   } else if (type == 4) {
     var extraOffset = [];
     var i = 0, nextByte, value;
     while (i < nGroups) {
-      nextByte = this.getUint8_();
+      nextByte = this.getUint8();
       for (var j = 0; j < 4; j++) {
         if (i < nGroups) {
           value = nextByte & (0xC0 >>> (2 * j));
@@ -358,7 +349,7 @@ tachyfont.BinaryFontEditor.prototype.readNextGOS = function() {
     var extraOffset = [];
     var deltaStartCode, length, deltaGid, segment;
     for (var i = 0; i < nGroups; i++) {
-      segment = this.getUint8_();
+      segment = this.getUint8();
       deltaStartCode = (segment & 0xE0) >> 5;
       length = (segment & 0x18) >> 3;
       deltaGid = segment & 0x07;
@@ -386,7 +377,7 @@ tachyfont.BinaryFontEditor.prototype.readNextGOS = function() {
     var extraOffset = [];
     var deltaFirst, deltaNleft, segment;
     for (var i = 0; i < nGroups; i++) {
-      segment = this.getUint8_();
+      segment = this.getUint8();
       deltaFirst = (segment & 0xF8) >> 3;
       deltaNleft = (segment & 0x07);
       segments.push([deltaFirst, deltaNleft]);
@@ -441,7 +432,7 @@ tachyfont.BinaryFontEditor.readOps = {};
  * @param {tachyfont.IncrementalFontLoader} font Font loader object
  */
 tachyfont.BinaryFontEditor.readOps.GLOF = function(editor, font) {
-  font.glyphOffset = editor.getUint32_();
+  font.glyphOffset = editor.getUint32();
 };
 
 
@@ -450,7 +441,7 @@ tachyfont.BinaryFontEditor.readOps.GLOF = function(editor, font) {
  * @param {tachyfont.IncrementalFontLoader} font Font loader object
  */
 tachyfont.BinaryFontEditor.readOps.GLCN = function(editor, font) {
-  font.numGlyphs = editor.getUint16_();
+  font.numGlyphs = editor.getUint16();
 };
 
 
@@ -459,7 +450,7 @@ tachyfont.BinaryFontEditor.readOps.GLCN = function(editor, font) {
  * @param {tachyfont.IncrementalFontLoader} font Font loader object
  */
 tachyfont.BinaryFontEditor.readOps.LCOF = function(editor, font) {
-  font.glyphDataOffset = editor.getUint32_();
+  font.glyphDataOffset = editor.getUint32();
 };
 
 
@@ -468,7 +459,7 @@ tachyfont.BinaryFontEditor.readOps.LCOF = function(editor, font) {
  * @param {tachyfont.IncrementalFontLoader} font Font loader object
  */
 tachyfont.BinaryFontEditor.readOps.LCFM = function(editor, font) {
-  font.offsetSize = editor.getUint8_();
+  font.offsetSize = editor.getUint8();
 };
 
 
@@ -477,7 +468,7 @@ tachyfont.BinaryFontEditor.readOps.LCFM = function(editor, font) {
  * @param {tachyfont.IncrementalFontLoader} font Font loader object
  */
 tachyfont.BinaryFontEditor.readOps.HMOF = function(editor, font) {
-  font.hmtxOffset = editor.getUint32_();
+  font.hmtxOffset = editor.getUint32();
 };
 
 
@@ -486,7 +477,7 @@ tachyfont.BinaryFontEditor.readOps.HMOF = function(editor, font) {
  * @param {tachyfont.IncrementalFontLoader} font Font loader object
  */
 tachyfont.BinaryFontEditor.readOps.VMOF = function(editor, font) {
-  font.vmtxOffset = editor.getUint32_();
+  font.vmtxOffset = editor.getUint32();
 };
 
 
@@ -495,7 +486,7 @@ tachyfont.BinaryFontEditor.readOps.VMOF = function(editor, font) {
  * @param {tachyfont.IncrementalFontLoader} font Font loader object
  */
 tachyfont.BinaryFontEditor.readOps.HMMC = function(editor, font) {
-  font.hmetricCount = editor.getUint16_();
+  font.hmetricCount = editor.getUint16();
 };
 
 
@@ -504,7 +495,7 @@ tachyfont.BinaryFontEditor.readOps.HMMC = function(editor, font) {
  * @param {tachyfont.IncrementalFontLoader} font Font loader object
  */
 tachyfont.BinaryFontEditor.readOps.VMMC = function(editor, font) {
-  font.vmetricCount = editor.getUint16_();
+  font.vmetricCount = editor.getUint16();
 };
 
 
@@ -513,7 +504,7 @@ tachyfont.BinaryFontEditor.readOps.VMMC = function(editor, font) {
  * @param {tachyfont.IncrementalFontLoader} font Font loader object
  */
 tachyfont.BinaryFontEditor.readOps.TYPE = function(editor, font) {
-  font.isTtf = editor.getUint8_();
+  font.isTtf = editor.getUint8();
 };
 
 
@@ -523,8 +514,8 @@ tachyfont.BinaryFontEditor.readOps.TYPE = function(editor, font) {
  */
 tachyfont.BinaryFontEditor.readOps.CM12 = function(editor, font) {
   var cmap12 = {};
-  cmap12.offset = editor.getUint32_();
-  cmap12.nGroups = editor.getUint32_();
+  cmap12.offset = editor.getUint32();
+  cmap12.nGroups = editor.getUint32();
   font.cmap12 = cmap12;
 };
 
@@ -535,8 +526,8 @@ tachyfont.BinaryFontEditor.readOps.CM12 = function(editor, font) {
  */
 tachyfont.BinaryFontEditor.readOps.CM04 = function(editor, font) {
   var cmap4 = {};
-  cmap4.offset = editor.getUint32_();
-  cmap4.length = editor.getUint32_();
+  cmap4.offset = editor.getUint32();
+  cmap4.length = editor.getUint32();
   font.cmap4 = cmap4;
 };
 
@@ -547,7 +538,7 @@ tachyfont.BinaryFontEditor.readOps.CM04 = function(editor, font) {
  */
 tachyfont.BinaryFontEditor.readOps.CCMP = function(editor, font) {
   var compact_gos = {};
-  var GOSCount = editor.getUint8_();
+  var GOSCount = editor.getUint8();
   var GOSArray = [];
   for (var i = 0; i < GOSCount; i++) {
     GOSArray.push(editor.readNextGOS());
@@ -628,7 +619,7 @@ tachyfont.BinaryFontEditor.readOps.CCMP = function(editor, font) {
  */
 tachyfont.BinaryFontEditor.readOps.CS02 = function(editor, font) {
   var charset = {};
-  charset.offset = editor.getUint32_();
+  charset.offset = editor.getUint32();
   charset.gos = editor.readNextGOS();
   font.charset_fmt = charset;
 };
@@ -711,12 +702,12 @@ tachyfont.BinaryFontEditor.prototype.parseBaseHeader = function() {
   if (results.version != tachyfont.BinaryFontEditor.BASE_VERSION) {
     throw 'Incompatible Base Font Version detected!';
   }
-  var count = this.getUint16_();
+  var count = this.getUint16();
   var tags = [], tag, tagOffset, saveOffset,
       dataStart = count * 8 + 4 + 4 + 2 + 4;//magic,ver,count,headSize
   for (var i = 0; i < count; i++) {
     tag = this.readString_(4);
-    tagOffset = this.getUint32_();
+    tagOffset = this.getUint32();
     if (!tachyfont.BinaryFontEditor.TAGS.hasOwnProperty(tag)) {//unknown tag
       throw 'Unknown Base Font Header TAG';
     }
@@ -741,10 +732,10 @@ tachyfont.BinaryFontEditor.prototype.setMtxSideBearing =
     gid, value) {
   if (gid < metricCount) {
     this.seek(start + gid * 4 + 2);
-    this.setInt16_(value);
+    this.setInt16(value);
   }else {
     this.seek(start + 2 * gid + 2 * metricCount);
-    this.setInt16_(value);
+    this.setInt16(value);
   }
 };
 
