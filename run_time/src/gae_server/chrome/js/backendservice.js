@@ -24,6 +24,7 @@ goog.require('goog.Promise');
 goog.require('goog.events');
 goog.require('goog.net.EventType');
 goog.require('goog.net.XhrIo');
+goog.require('tachyfont.GlyphBundleResponse');
 
 
 
