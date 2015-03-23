@@ -80,21 +80,21 @@ tachyfont.IncrementalFontUtils.injectCharacters = function(obj, baseFont,
     offsetDivisor = 2;
   }
   for (var i = 0; i < count; i += 1) {
-    var id = bundleBinEd.getUint16_();
+    var id = bundleBinEd.getUint16();
     var nextId = id + 1;
     var hmtx, vmtx;
     if (flags & tachyfont.IncrementalFontUtils.FLAGS.HAS_HMTX) {
-      hmtx = bundleBinEd.getUint16_();
+      hmtx = bundleBinEd.getUint16();
       baseBinEd.setMtxSideBearing(obj.hmtxOffset, obj.hmetricCount,
           id, hmtx);
     }
     if (flags & tachyfont.IncrementalFontUtils.FLAGS.HAS_VMTX) {
-      vmtx = bundleBinEd.getUint16_();
+      vmtx = bundleBinEd.getUint16();
       baseBinEd.setMtxSideBearing(obj.vmtxOffset, obj.vmetricCount,
           id, vmtx);
     }
-    var offset = bundleBinEd.getUint32_();
-    var length = bundleBinEd.getUint16_();
+    var offset = bundleBinEd.getUint32();
+    var length = bundleBinEd.getUint16();
 
     if (!isCFF) {
       // Set the loca for this glyph.
@@ -127,14 +127,14 @@ tachyfont.IncrementalFontUtils.injectCharacters = function(obj, baseFont,
         // Fix the loca value after this one.
         baseBinEd.seek(obj.glyphOffset + newNextOne);
         if (length > 0) {
-          baseBinEd.setInt16_(-1);
+          baseBinEd.setInt16(-1);
         }else if (length == 0) {
           /*if it is still zero,then could write -1*/
-          var currentUint1 = baseBinEd.getUint32_(),
-              currentUint2 = baseBinEd.getUint32_();
+          var currentUint1 = baseBinEd.getUint32(),
+              currentUint2 = baseBinEd.getUint32();
           if (currentUint1 == 0 && currentUint2 == 0) {
             baseBinEd.seek(obj.glyphOffset + newNextOne);
-            baseBinEd.setInt16_(-1);
+            baseBinEd.setInt16(-1);
           }
         }
       }
@@ -150,7 +150,7 @@ tachyfont.IncrementalFontUtils.injectCharacters = function(obj, baseFont,
       var currentIdOffset = offset + length, nextIdOffset;
       if (oldNextOne < currentIdOffset && nextId - 1 < offsetCount - 1) {
         baseBinEd.seek(obj.glyphOffset + currentIdOffset);
-        baseBinEd.setUint8_(14);
+        baseBinEd.setUint8(14);
       }
       while (nextId < offsetCount) {
         nextIdOffset = baseBinEd.getGlyphDataOffset(obj.glyphDataOffset,
@@ -161,7 +161,7 @@ tachyfont.IncrementalFontUtils.injectCharacters = function(obj, baseFont,
               nextId, currentIdOffset);
           if (nextId < offsetCount - 1) {
             baseBinEd.seek(obj.glyphOffset + currentIdOffset);
-            baseBinEd.setUint8_(14);
+            baseBinEd.setUint8(14);
           }
           nextId++;
         } else {
@@ -170,9 +170,9 @@ tachyfont.IncrementalFontUtils.injectCharacters = function(obj, baseFont,
       }
     }
 
-    var bytes = bundleBinEd.getArrayOf_(bundleBinEd.getUint8_, length);
+    var bytes = bundleBinEd.getArrayOf(bundleBinEd.getUint8, length);
     baseBinEd.seek(obj.glyphOffset + offset);
-    baseBinEd.setArrayOf_(baseBinEd.setUint8_, bytes);
+    baseBinEd.setArrayOf(baseBinEd.setUint8, bytes);
   }
   // time_end('inject')
 
@@ -193,9 +193,9 @@ tachyfont.IncrementalFontUtils.writeCmap12 = function(baseFont, headerInfo) {
   var nGroups = headerInfo.cmap12.nGroups;
   var segments = headerInfo.compact_gos.cmap12.segments;
   for (var i = 0; i < nGroups; i++) {
-    binEd.setUint32_(segments[i][0]);
-    binEd.setUint32_(segments[i][0] + segments[i][1] - 1);
-    binEd.setUint32_(segments[i][2]);
+    binEd.setUint32(segments[i][0]);
+    binEd.setUint32(segments[i][0] + segments[i][1] - 1);
+    binEd.setUint32(segments[i][2]);
   }
 };
 
@@ -212,7 +212,7 @@ tachyfont.IncrementalFontUtils.writeCmap4 = function(baseFont, headerInfo) {
   var glyphIdArray = headerInfo.compact_gos.cmap4.glyphIdArray;
   var binEd = new tachyfont.BinaryFontEditor(baseFont,
       headerInfo.cmap4.offset + 6);
-  var segCount = binEd.getUint16_() / 2;
+  var segCount = binEd.getUint16() / 2;
   if (segCount != segments.length) {
     if (goog.DEBUG) {
       alert('segCount=' + segCount + ', segments.length=' + segments.length);
@@ -225,24 +225,24 @@ tachyfont.IncrementalFontUtils.writeCmap4 = function(baseFont, headerInfo) {
   binEd.skip(6); //skip searchRange,entrySelector,rangeShift
   // Write endCount values.
   for (var i = 0; i < segCount; i++) {
-    binEd.setUint16_(segments[i][1]);
+    binEd.setUint16(segments[i][1]);
   }
   binEd.skip(2);//skip reservePad
   // Write startCount values.
   for (var i = 0; i < segCount; i++) {
-    binEd.setUint16_(segments[i][0]);
+    binEd.setUint16(segments[i][0]);
   }
   // Write idDelta values.
   for (var i = 0; i < segCount; i++) {
-    binEd.setUint16_(segments[i][2]);
+    binEd.setUint16(segments[i][2]);
   }
   // Write idRangeOffset vValues.
   for (var i = 0; i < segCount; i++) {
-    binEd.setUint16_(segments[i][3]);
+    binEd.setUint16(segments[i][3]);
   }
   // Write glyphIdArray values.
   if (glyphIdArrayLen > 0)
-    binEd.setArrayOf_(binEd.setUint16_, glyphIdArray);
+    binEd.setArrayOf(binEd.setUint16, glyphIdArray);
 };
 
 
@@ -261,11 +261,11 @@ tachyfont.IncrementalFontUtils.writeCharsetFormat2 =
   var segments = headerInfo.charset_fmt.gos.segments;
   var is_fmt_2 = (headerInfo.charset_fmt.gos.type == 6);
   for (var i = 0; i < nGroups; i++) {
-    binEd.setUint16_(segments[i][0]);
+    binEd.setUint16(segments[i][0]);
     if (is_fmt_2)
-      binEd.setUint16_(segments[i][1]);
+      binEd.setUint16(segments[i][1]);
     else
-      binEd.setUint8_(segments[i][1]);
+      binEd.setUint8(segments[i][1]);
   }
 };
 
@@ -310,7 +310,7 @@ tachyfont.IncrementalFontUtils.sanitizeBaseFont = function(obj, baseFont) {
       glyphSize = nextOne - thisOne;
       if (glyphSize) {
         binEd.seek(glyphOffset + thisOne);
-        binEd.setInt16_(-1);
+        binEd.setInt16(-1);
       }
     }
   } else {
@@ -335,7 +335,7 @@ tachyfont.IncrementalFontUtils.sanitizeBaseFont = function(obj, baseFont) {
       }
       if (i < glyphCount) {
         binEd.seek(glyphOffset + thisOne);
-        binEd.setUint8_(14);
+        binEd.setUint8(14);
       }
     }
   }
@@ -452,7 +452,7 @@ tachyfont.IncrementalFontUtils.deleteCssRule = function(ruleToDelete, sheet) {
       sheet.removeRule(ruleToDelete);
     } else {
       if (goog.DEBUG) {
-        goog.log.error(tachyfont.logger_, 'no delete/drop rule');
+        goog.log.error(tachyfont.logger, 'no delete/drop rule');
       }
     }
   }
@@ -477,7 +477,7 @@ tachyfont.IncrementalFontUtils.findFontFaceRule =
       var this_rule = rules[i];
       if (this_rule.type == CSSRule.FONT_FACE_RULE) {
         if (goog.DEBUG) {
-          goog.log.log(tachyfont.logger_, goog.log.Level.FINER,
+          goog.log.log(tachyfont.logger, goog.log.Level.FINER,
               'found an @font-face rule');
         }
         var this_style = this_rule.style;
@@ -514,7 +514,7 @@ tachyfont.IncrementalFontUtils.setCssFontRule =
       ' format("' + format + '");\n' +
       '}\n';
   if (goog.DEBUG) {
-    goog.log.log(tachyfont.logger_, goog.log.Level.FINER, 'rule = ' + rule_str);
+    goog.log.log(tachyfont.logger, goog.log.Level.FINER, 'rule = ' + rule_str);
   }
   var ruleToDelete = tachyfont.IncrementalFontUtils.findFontFaceRule(
       sheet, fontFamily, weight);
