@@ -72,14 +72,12 @@ if (goog.DEBUG) {
     tachyfont.debugConsole_.setCapturing(true);
     /**
      * @type {goog.debug.Logger}
-     * @private
      */
-    tachyfont.logger_ = goog.log.getLogger('debug', tachyfont.debug_level);
+    tachyfont.logger = goog.log.getLogger('debug', tachyfont.debug_level);
     /**
      * @type {boolean}
-     * @private
      */
-    tachyfont.buildDemo_ = false;
+    tachyfont.buildDemo = false;
   };
 }
 
@@ -176,10 +174,10 @@ tachyfont.walkDom = function(node, func) {
 tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
   if (goog.DEBUG) {
     tachyfont.debugInitialization_();
-    goog.log.fine(tachyfont.logger_, 'loadFonts');
+    goog.log.fine(tachyfont.logger, 'loadFonts');
   }
   var tachyFontSet = new tachyfont.TachyFontSet(familyName);
-  var tachyFonts = tachyFontSet.fonts_;
+  var tachyFonts = tachyFontSet.fonts;
   // TODO(bstell): this initialization of TachyFontSet should be in the
   // constructor or and init function.
   opt_params = opt_params || {};
@@ -196,21 +194,21 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
     tachyFontSet.fontIdToIndex[fontId] = i;
   }
   if (goog.DEBUG) {
-    goog.log.log(tachyfont.logger_, goog.log.Level.FINER,
+    goog.log.log(tachyfont.logger, goog.log.Level.FINER,
         'loadFonts: wait for preceding update');
   }
-  var allLoaded = tachyFontSet.finishPrecedingUpdateFont_.getChainedPromise();
+  var allLoaded = tachyFontSet.finishPrecedingUpdateFont.getChainedPromise();
   allLoaded.getPrecedingPromise().
       then(function() {
         if (goog.DEBUG) {
-          goog.log.log(tachyfont.logger_, goog.log.Level.FINER,
+          goog.log.log(tachyfont.logger, goog.log.Level.FINER,
               'loadFonts: done waiting for preceding update');
         }
         // Try to get the base from persistent store.
         var bases = [];
         for (var i = 0; i < tachyFonts.length; i++) {
           var incrfont = tachyFonts[i].incrfont;
-          var persistedBase = incrfont.getPersistedBase_();
+          var persistedBase = incrfont.getPersistedBase();
           bases.push(persistedBase);
         }
         return goog.Promise.all(bases);
@@ -222,11 +220,11 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
           var incrfont = tachyFonts[i].incrfont;
           if (loadedBase != null) {
             incrfont.alreadyPersisted = true;
-            incrfont.needToSetFont_ = true;
+            incrfont.needToSetFont = true;
           } else {
             // If not persisted the fetch the base from the URL.
-            loadedBase = incrfont.getUrlBase_(incrfont.backendService,
-                incrfont.fontInfo_);
+            loadedBase = incrfont.getUrlBase(incrfont.backendService,
+                incrfont.fontInfo);
           }
           arrayBaseData[i] = goog.Promise.resolve(loadedBase);
         }
@@ -242,7 +240,7 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
                 if (!incrfont.alreadyPersisted) {
                   incrfont.base.resolve(loadedBase);
                   if (goog.DEBUG) {
-                    goog.log.fine(tachyfont.logger_,
+                    goog.log.fine(tachyfont.logger,
                         'loadFonts: not persisted');
                   }
                   allCssSet.push(goog.Promise.resolve(null));
@@ -252,18 +250,18 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
                 // * it is very likely that the font _already_ has the UI text
                 //   so immediately show the UI in the TachyFont.
                 if (goog.DEBUG) {
-                  goog.log.fine(tachyfont.logger_, 'loadFonts: setFont_');
+                  goog.log.fine(tachyfont.logger, 'loadFonts: setFont_');
                 }
                 // TODO(bstell): only set the font if there are characters.
                 var cssSet = incrfont.setFont(loadedBase[1],
                     loadedBase[0].isTtf).
                 then(function(cssSetResult) {
                   if (goog.DEBUG) {
-                    goog.log.fine(tachyfont.logger_,
+                    goog.log.fine(tachyfont.logger,
                         'loadFonts: setFont_ done');
                   }
                   tachyfont.IncrementalFontUtils.setVisibility(incrfont.style,
-                  incrfont.fontInfo_, true);
+                  incrfont.fontInfo, true);
                   // Release other operations to proceede.
                   incrfont.base.resolve(loadedBase);
                 });
@@ -273,7 +271,7 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
             }).
             then(function(allSetResults) {
               if (goog.DEBUG) {
-                goog.log.fine(tachyfont.logger_, 'loadFonts: all fonts loaded');
+                goog.log.fine(tachyfont.logger, 'loadFonts: all fonts loaded');
               }
               // Allow any pending updates to happen.
               allLoaded.resolve();
@@ -281,7 +279,7 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
             }).
             thenCatch(function(e) {
               if (goog.DEBUG) {
-                goog.log.error(tachyfont.logger_, 'failed to get the font: ' +
+                goog.log.error(tachyfont.logger, 'failed to get the font: ' +
                 e.stack);
                 debugger;
               }
@@ -292,7 +290,7 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
     // Need to handle input fields
     if (typeof tachyfont.todo_handle_input_fields == 'undefined') {
       tachyfont.todo_handle_input_fields = 1;
-      goog.log.error(tachyfont.logger_, 'need to handle input fields');
+      goog.log.error(tachyfont.logger, 'need to handle input fields');
     }
   }
 
@@ -311,7 +309,7 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
   //create an observer instance
   var observer = new MutationObserver(function(mutations) {
     if (goog.DEBUG) {
-      goog.log.fine(tachyfont.logger_, 'MutationObserver');
+      goog.log.fine(tachyfont.logger, 'MutationObserver');
     }
     mutations.forEach(function(mutation) {
       if (mutation.type == 'childList') {
@@ -327,7 +325,7 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
           tachyFontSet.addTextToFontGroups(mutation.target);
         } else {
           if (goog.DEBUG) {
-            goog.log.info(tachyfont.logger_,
+            goog.log.info(tachyfont.logger,
                 'need to handle characterData for non-text');
           }
         }
@@ -340,7 +338,7 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
     // If this is the 1st mutation event and it happened after DOMContentLoaded
     // then do the update now.
     var immediateUpdate;
-    if (!tachyFontSet.hadMutationEvents && tachyFontSet.domContentLoaded_) {
+    if (!tachyFontSet.hadMutationEvents && tachyFontSet.domContentLoaded) {
       immediateUpdate = true;
     } else {
       immediateUpdate = false;
@@ -348,7 +346,7 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
     tachyFontSet.hadMutationEvents = true;
     if (immediateUpdate) {
       if (goog.DEBUG) {
-        goog.log.info(tachyfont.logger_, 'mutation observer: updateFont');
+        goog.log.info(tachyfont.logger, 'mutation observer: updateFont');
       }
       tachyFontSet.updateFonts(true);
     } else {
@@ -368,7 +366,7 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
 
   // Update the fonts when the page content is loaded.
   document.addEventListener('DOMContentLoaded', function(event) {
-    tachyFontSet.domContentLoaded_ = true;
+    tachyFontSet.domContentLoaded = true;
     // On DOMContentLoaded we want to update the fonts. If there have been
     // mutation events then do the update now. Characters should be in the DOM
     // now but the order of DOMContentLoaded and mutation events is not defined
@@ -378,13 +376,13 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
     if (tachyFontSet.hadMutationEvents) {
       // We have characters so update the fonts.
       if (goog.DEBUG) {
-        goog.log.info(tachyfont.logger_, 'DOMContentLoaded: updateFonts');
+        goog.log.info(tachyfont.logger, 'DOMContentLoaded: updateFonts');
       }
       tachyFontSet.updateFonts(true);
     } else {
       // The mutation event should be very soon.
       if (goog.DEBUG) {
-        goog.log.info(tachyfont.logger_,
+        goog.log.info(tachyfont.logger,
             'DOMContentLoaded: wait for mutation event');
       }
     }
@@ -404,7 +402,7 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
 tachyfont.updateFonts = function(tachyFonts) {
   if (tachyFonts.constructor == Array) {
     if (goog.DEBUG) {
-      goog.log.info(tachyfont.logger_,
+      goog.log.info(tachyfont.logger,
           'tachyfont.updateFonts: passing in an array is deprecated');
     }
     for (var i = 0; i < tachyFonts.length; i++) {
@@ -413,7 +411,7 @@ tachyfont.updateFonts = function(tachyFonts) {
     }
   } else if (tachyFonts.constructor == tachyfont.TachyFontSet) {
     if (goog.DEBUG) {
-      goog.log.info(tachyfont.logger_, 'tachyfont.updateFonts');
+      goog.log.info(tachyfont.logger, 'tachyfont.updateFonts');
     }
     tachyFonts.updateFonts(true);
   }
@@ -459,61 +457,6 @@ tachyfont.charToCode = function(in_char) {
   } else {
     return cc;
   }
-};
-
-
-
-/**
- * @param {string} version
- * @param {string} signature
- * @param {number} count
- * @param {number} flags
- * @param {number} offsetToGlyphData
- * @param {ArrayBuffer} glyphData
- * @constructor
- */
-tachyfont.GlyphBundleResponse = function(
-    version, signature, count, flags, offsetToGlyphData, glyphData) {
-  this.version = version;
-  this.signature = signature;
-  this.count = count;
-  this.flags = flags;
-  this.offsetToGlyphData = offsetToGlyphData;
-  this.glyphData = glyphData;
-};
-
-
-/**
- * @return {number} the length of the glyph data in this response.
- */
-tachyfont.GlyphBundleResponse.prototype.getDataLength = function() {
-  return this.glyphData.byteLength - this.offsetToGlyphData;
-};
-
-
-/**
- * @return {tachyfont.BinaryFontEditor} a font editor for the glyph data in this
- *         response.
- */
-tachyfont.GlyphBundleResponse.prototype.getFontEditor = function() {
-  return new tachyfont.BinaryFontEditor(new DataView(this.glyphData),
-                                        this.offsetToGlyphData);
-};
-
-
-/**
- * @return {number} Number of glyphs in this response.
- */
-tachyfont.GlyphBundleResponse.prototype.getGlyphCount = function() {
-  return this.count;
-};
-
-
-/**
- * @return {number} flags binary for this response.
- */
-tachyfont.GlyphBundleResponse.prototype.getFlags = function() {
-  return this.flags;
 };
 
 
