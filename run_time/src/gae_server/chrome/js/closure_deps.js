@@ -20,6 +20,9 @@ goog.addDependency('../../../backendservice.js',
 goog.addDependency('../../../binaryfonteditor.js',
     ['tachyfont.BinaryFontEditor'],
     []);
+goog.addDependency('../../../glyphbundleresponse.js',
+    ['tachyfont.GlyphBundleResponse'],
+    []);
 goog.addDependency('../../../incrementalfont.js',
     ['tachyfont.IncrementalFont', 'tachyfont.TachyFont'],
     ['goog.Promise', 'goog.log', 'tachyfont.BackendService',
