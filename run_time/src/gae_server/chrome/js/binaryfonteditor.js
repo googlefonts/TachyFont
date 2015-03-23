@@ -25,6 +25,7 @@ goog.provide('tachyfont.BinaryFontEditor');
  * Binary Font Editor - A namespace.
  * Binary operation over font file or glyph bundle.
  * Always big endian byte order.
+ *
  * @param {DataView} dataView DataView which includes data
  * @param {number} baseOffset Set this offset as 0 offset for operations
  * @constructor
