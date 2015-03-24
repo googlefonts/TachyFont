@@ -315,10 +315,13 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
       if (mutation.type == 'childList') {
         for (var i = 0; i < mutation.addedNodes.length; i++) {
           var node = mutation.addedNodes[i];
-          // Look for text elements.
-          if (node.nodeName == '#text') {
-            tachyFontSet.addTextToFontGroups(node);
-          }
+          tachyfont.walkDom(node, function(node) {
+            if (node.nodeName == '#text') {
+              return this.addTextToFontGroups(node);
+            } else {
+              return false;
+            }
+          }.bind(tachyFontSet));
         }
       } else if (mutation.type == 'characterData') {
         if (mutation.target.nodeName == '#text') {
