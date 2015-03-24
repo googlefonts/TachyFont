@@ -144,24 +144,6 @@ tachyfont.fontId = function(family, weight) {
 
 
 /**
- * Walk the DOM.
- *
- * @param {Object} node The starting point for walk.
- * @param {function(Object)} func The function to call for each node.
- * TODO(bstell): The return value should be more flexible.
- * @return {boolean} Boolean result of the function.
- */
-tachyfont.walkDom = function(node, func) {
-  var addedText = func(node);
-  var children = node.childNodes;
-  for (var i = 0; i < children.length; i++) {
-    addedText = tachyfont.walkDom(children[i], func) || addedText;
-  }
-  return addedText;
-};
-
-
-/**
  * Create a list of TachyFonts
  *
  * @param {string} familyName The font-family name.
@@ -295,13 +277,7 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
   }
 
   // Get any characters that are already in the DOM.
-  tachyfont.walkDom(document.documentElement, function(node) {
-    if (node.nodeName == '#text') {
-      return this.addTextToFontGroups(node);
-    } else {
-      return false;
-    }
-  }.bind(tachyFontSet));
+  tachyFontSet.recursivelyAddTextToFontGroups(document.documentElement);
 
   // Add DOM mutation observer.
   // This records the changes on a per-font basis.
@@ -315,23 +291,16 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
       if (mutation.type == 'childList') {
         for (var i = 0; i < mutation.addedNodes.length; i++) {
           var node = mutation.addedNodes[i];
-          tachyfont.walkDom(node, function(node) {
-            if (node.nodeName == '#text') {
-              return this.addTextToFontGroups(node);
-            } else {
-              return false;
-            }
-          }.bind(tachyFontSet));
+          tachyFontSet.recursivelyAddTextToFontGroups(node);
         }
       } else if (mutation.type == 'characterData') {
-        if (mutation.target.nodeName == '#text') {
-          tachyFontSet.addTextToFontGroups(mutation.target);
-        } else {
-          if (goog.DEBUG) {
+        if (goog.DEBUG) {
+          if (mutation.target.nodeName !== '#text') {
             goog.log.info(tachyfont.logger,
                 'need to handle characterData for non-text');
           }
         }
+        tachyFontSet.recursivelyAddTextToFontGroups(mutation.target);
       }
     });
     // TODO(bstell): need to figure out if pendingChars_ is helpful in
