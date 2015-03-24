@@ -165,12 +165,31 @@ tachyfont.TachyFontSet.prototype.addFont = function(font) {
 
 
 /**
+ * For the node and sub-nodes record the needed text for each TachyFont.
+ *
+ * @param {Object} node The starting point for walking the node/sub-nodes.
+ */
+tachyfont.TachyFontSet.prototype.recursivelyAddTextToFontGroups =
+    function(node) {
+  this.addTextToFontGroups(node);
+  var children = node.childNodes;
+  for (var i = 0; i < children.length; i++) {
+    this.recursivelyAddTextToFontGroups(children[i]);
+  }
+};
+
+
+/**
  * Record the needed text for each TachyFont.
  *
  * @param {Object} node The text node.
  * @return {boolean} True if text was added.
  */
 tachyfont.TachyFontSet.prototype.addTextToFontGroups = function(node) {
+  if (node.nodeName != '#text') {
+    return false;
+  }
+
   var text = node.nodeValue.trim();
   if (!text) {
     return false;
