@@ -1,0 +1,49 @@
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <!--  STUFF ONLY NEEDED FOR A DEMO -->
+  <!-- 
+  <link rel="stylesheet" type="text/css" href="css/table_styles.css">
+  <script src="js/time-utils.js"></script>
+  <script src="js/for_debug.js"></script>
+   -->
+
+  <!-- TachyFont -->
+  <script src="js/closure-library/closure/goog/base.js"></script>
+  <script src="js/closure_deps.js"></script>
+  <script src="js/tachyfont.js"></script>
+</head>
+
+<body>
+  <script>
+    // Because of the way Closure includes javascript file this has to be after
+    // the head section.
+    var fontsInfo = webfonttailor.getTachyFontsInfo( ['Noto Sans'], ['ja'],
+        [ { 'style': 'normal', 
+            'weights': [ '100' ],
+          },
+        ],
+        {});
+    var tachyFontSet = tachyfont.loadFonts('NotoSansJP', fontsInfo);
+  </script>
+<b>By font-family and font-weight</b><br>
+font-weight: 100: <span style='font-family: NotoSansJP; font-weight: 100;'>
+人類社会のすべての構成員の固有の尊厳と平等で譲ることのできない権利とを承認することは、世界における
+</span><br>
+<br>
+
+<b>By Class</b><br>
+NotoSansJP-Thin: <span class='NotoSansJP-Thin'>
+人類社会のすべての構成員の固有の尊厳と平等で譲ることのできない権利とを承認することは、世界における
+</span><br>
+
+font-weight: 100: <span style='font-family: NotoSansJP; font-weight: 100;'>
+一上下不与世両並中主乏事互亡享人他代仰件任休会伝位住体何余作使価侮侵係促保信個値健偶働儀償優充先児入全公共内再出分刑初判別利到制則前創力加助努労効動務化医十協単原厳去参又及友反取受可各合同名向否含命和品員問因団固国圧地域基報場境増壊売変大失奪女奴好姻婚嫡子学守安完宗定実宣害家容密寛審対専尊導少居屈展属層差己布帰常干平年序度庭康弁式弟強当形役律後従徳心必応念怖思性恐恩息恵情想意憲成所手扱承技投抗択拘拝拷持指挙捕授採接推措掲援撃支攻放政救教文施族明時普暇更最有服望期本条来果格業構権機欠止正歩死残段母民水求決治法活消済渉満源準為無然物特犯独現理生産用由男界疾病療発的皮益盟目直相真破確礎礼社祉神票禁福私科秘秩移種立章童第等管籍精約組経結給統続維総織罪置罰美義老者職肝育胞能膚自般良色芸苦虐蛮行術衣表裁補要見規視親解言託設訴証誉認誓語課論諸譲護負財責買資賞質越踏身転軽轄辱迫追逆通連逮進遍道達違適遵選避配酬釈重野鑑門開間関限階際障隷集難非頭願類食高齢
+</span><br>
+
+<br>
+<input id='input-01' type="PASSWORD" name="input-password" value="sample password text"><br>
+<input id='input-02' type="text" name="input-text" value="sample text"
+   style='font-family: NotoSansJP; font-weight: 100;'><br>
+</body>
+</html>
