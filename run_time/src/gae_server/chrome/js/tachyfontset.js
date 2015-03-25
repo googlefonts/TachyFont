@@ -20,9 +20,9 @@
 goog.provide('tachyfont.TachyFontSet');
 
 goog.require('goog.Promise');
+goog.require('goog.array');
 goog.require('goog.log');
 goog.require('goog.style');
-
 goog.require('tachyfont.IncrementalFontUtils');
 goog.require('tachyfont.chainedPromises');
 
@@ -38,7 +38,7 @@ tachyfont.TachyFontSet = function(familyName) {
   /**
    * The TachyFonts managed in this set.
    *
-   * @type {Array.<tachyfont.TachyFont>}
+   * @type {!Array.<tachyfont.TachyFont>}
    */
   this.fonts = [];
 
@@ -47,7 +47,7 @@ tachyfont.TachyFontSet = function(familyName) {
   /**
    * Map of CSS family spec to TachyFont family.
    *
-   * @type {Object.<string, string>}
+   * @type {!Object.<string, string>}
    */
   this.cssFamilyToTachyFontFamily = {};
 
@@ -205,20 +205,19 @@ tachyfont.TachyFontSet.prototype.removeTachyFontFromInputField =
   }
 
   var families = cssFamily.split(',');
-  var familyLessTachyfont = [];
-  for (var i = 0; i < families.length; i++) {
-    var aFamily = tachyfont.IncrementalFontUtils.trimFamilyName(families[i]);
-    if (aFamily != this.familyName) {
-      familyLessTachyfont.push(aFamily);
-    }
-  }
-  var newCssFamily = familyLessTachyfont.join(', ');
+  // Remove the TachyFont if it is in the family list.
+  goog.array.removeAllIf(families, function(val, index, array) {
+    // Handle extra quotes.
+    val = tachyfont.IncrementalFontUtils.trimFamilyName(val);
+    return this.familyName == val;
+  }, this);
+  var newCssFamily = families.join(', ');
+  node.style.fontFamily = newCssFamily;
   if (goog.DEBUG) {
     goog.log.log(tachyfont.logger, goog.log.Level.FINER, 'newCssFamily: ' +
         goog.style.getComputedStyle(/** @type {Element} */ (node),
             'font-family'));
   }
-  node.style.fontFamily = newCssFamily;
 };
 
 

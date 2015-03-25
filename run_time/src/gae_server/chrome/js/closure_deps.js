@@ -40,8 +40,8 @@ goog.addDependency('../../../tachyfontpromise.js',
     ['goog.Promise']);
 goog.addDependency('../../../tachyfontset.js',
     ['tachyfont.TachyFontSet'],
-    ['goog.Promise', 'goog.log', 'goog.style', 'tachyfont.IncrementalFontUtils',
-     'tachyfont.chainedPromises'
+    ['goog.array', 'goog.Promise', 'goog.log', 'goog.style',
+     'tachyfont.IncrementalFontUtils', 'tachyfont.chainedPromises'
     ]);
 goog.addDependency('../../../webfonttailor.js',
     ['webfonttailor', 'webfonttailor.FontsInfo'],
