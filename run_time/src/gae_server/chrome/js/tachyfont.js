@@ -278,6 +278,9 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
 
   // Get any characters that are already in the DOM.
   tachyFontSet.recursivelyAddTextToFontGroups(document.documentElement);
+  // Remove TachyFont from INPUT fields.
+  tachyFontSet.recursivelyRemoveTachyFontFromInputFields(
+      document.documentElement);
 
   // Add DOM mutation observer.
   // This records the changes on a per-font basis.
@@ -292,6 +295,8 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
         for (var i = 0; i < mutation.addedNodes.length; i++) {
           var node = mutation.addedNodes[i];
           tachyFontSet.recursivelyAddTextToFontGroups(node);
+          // Remove TachyFont from INPUT fields.
+          tachyFontSet.recursivelyRemoveTachyFontFromInputFields(node);
         }
       } else if (mutation.type == 'characterData') {
         if (goog.DEBUG) {

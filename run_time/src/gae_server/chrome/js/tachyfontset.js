@@ -43,7 +43,14 @@ tachyfont.TachyFontSet = function(familyName) {
   this.fonts = [];
 
   this.fontIdToIndex = {};
-  this.css_family_to_family = {};
+
+  /**
+   * Map of CSS family spec to TachyFont family.
+   *
+   * @type {Object.<string, string>}
+   */
+  this.cssFamilyToTachyFontFamily = {};
+
   this.familyName = familyName;
 
   /**
@@ -165,9 +172,60 @@ tachyfont.TachyFontSet.prototype.addFont = function(font) {
 
 
 /**
+ * For the node and sub-nodes remove TachyFont from input fields.
+ *
+ * @param {Node} node The starting point for walking the node/sub-nodes.
+ */
+tachyfont.TachyFontSet.prototype.recursivelyRemoveTachyFontFromInputFields =
+    function(node) {
+  this.removeTachyFontFromInputField(node);
+  var children = node.childNodes;
+  for (var i = 0; i < children.length; i++) {
+    this.recursivelyRemoveTachyFontFromInputFields(children[i]);
+  }
+};
+
+
+/**
+ * Remove TachyFont from an input field.
+ *
+ * @param {Node} node The node to work on.
+ */
+tachyfont.TachyFontSet.prototype.removeTachyFontFromInputField =
+    function(node) {
+  if (node.nodeName != 'INPUT') {
+    return;
+  }
+
+  var cssFamily = goog.style.getComputedStyle(/** @type {Element} */ (node),
+      'font-family');
+  if (goog.DEBUG) {
+    goog.log.log(tachyfont.logger, goog.log.Level.FINER,
+        'INPUT css family: ' + cssFamily);
+  }
+
+  var families = cssFamily.split(',');
+  var familyLessTachyfont = [];
+  for (var i = 0; i < families.length; i++) {
+    var aFamily = tachyfont.IncrementalFontUtils.trimFamilyName(families[i]);
+    if (aFamily != this.familyName) {
+      familyLessTachyfont.push(aFamily);
+    }
+  }
+  var newCssFamily = familyLessTachyfont.join(', ');
+  if (goog.DEBUG) {
+    goog.log.log(tachyfont.logger, goog.log.Level.FINER, 'newCssFamily: ' +
+        goog.style.getComputedStyle(/** @type {Element} */ (node),
+            'font-family'));
+  }
+  node.style.fontFamily = newCssFamily;
+};
+
+
+/**
  * For the node and sub-nodes record the needed text for each TachyFont.
  *
- * @param {Object} node The starting point for walking the node/sub-nodes.
+ * @param {Node} node The starting point for walking the node/sub-nodes.
  */
 tachyfont.TachyFontSet.prototype.recursivelyAddTextToFontGroups =
     function(node) {
@@ -182,7 +240,7 @@ tachyfont.TachyFontSet.prototype.recursivelyAddTextToFontGroups =
 /**
  * Record the needed text for each TachyFont.
  *
- * @param {Object} node The text node.
+ * @param {Node} node The text node.
  * @return {boolean} True if text was added.
  */
 tachyfont.TachyFontSet.prototype.addTextToFontGroups = function(node) {
@@ -195,7 +253,7 @@ tachyfont.TachyFontSet.prototype.addTextToFontGroups = function(node) {
     return false;
   }
 
-  var parentNode = node.parentNode;
+  var parentNode = /** @type {Element} */ (node.parentNode);
   // <title> text does not have a parentNode.
   if (!parentNode) {
     return false;
@@ -204,33 +262,31 @@ tachyfont.TachyFontSet.prototype.addTextToFontGroups = function(node) {
   if (parentName == 'SCRIPT' || parentName == 'STYLE') {
     return false;
   }
-  var css_family = goog.style.getComputedStyle(parentNode,
-      'font-family');
-  var weight = goog.style.getComputedStyle(parentNode,
-      'font-weight');
+  var cssFamily = goog.style.getComputedStyle(parentNode, 'font-family');
+  var weight = goog.style.getComputedStyle(parentNode, 'font-weight');
   // TODO(bstell): add support for slant, width, etc.
   if (goog.DEBUG) {
-    goog.log.fine(tachyfont.logger, css_family + '/' + weight + ': "' +
+    goog.log.fine(tachyfont.logger, cssFamily + '/' + weight + ': "' +
         text + '"');
   }
 
-  // Convert the css_family to a family (empty string if not supported)
-  var family = this.css_family_to_family[css_family];
+  // Convert the cssFamily to a family (empty string if not supported)
+  var family = this.cssFamilyToTachyFontFamily[cssFamily];
   if (family == undefined) {
-    var families = css_family.split(',');
+    var families = cssFamily.split(',');
     for (var i = 0; i < families.length; i++) {
-      var a_family = tachyfont.IncrementalFontUtils.trimFamilyName(families[i]);
-      if (a_family == this.familyName) {
-        this.css_family_to_family[css_family] = this.familyName;
+      var aFamily = tachyfont.IncrementalFontUtils.trimFamilyName(families[i]);
+      if (aFamily == this.familyName) {
+        this.cssFamilyToTachyFontFamily[cssFamily] = this.familyName;
         break;
       }
     }
-    family = this.css_family_to_family[css_family];
+    family = this.cssFamilyToTachyFontFamily[cssFamily];
   }
   if (!family) {
     if (goog.DEBUG) {
       goog.log.log(tachyfont.logger, goog.log.Level.FINER,
-          'css_family \'' + css_family + '\' not supported');
+          'cssFamily \'' + cssFamily + '\' not supported');
     }
     return false;
   }
