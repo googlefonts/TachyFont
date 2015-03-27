@@ -52,15 +52,27 @@ def main(args):
   # Get the item. to keep in the subset.
   text = cmd_args.text
   unicodes_str = cmd_args.unicodes.lower().replace('0x', '').replace('u+', '')
-  unicodes = [int(c, 16) for c in unicodes_str.split(',') if c]
+  # TODO(bstell) replace this whole files by using the new subset.py code
+  unicodes_input = [c for c in unicodes_str.split(',') if c]
+  unicodes = []
+  for c in unicodes_input:
+    if '-' in c:
+      uni_range = c.split('-')
+      uni_range_expanded = range(int(uni_range[0], 16), int(uni_range[1], 16) + 1)
+      unicodes.extend(uni_range_expanded)
+    else:
+      unicodes.append(int(c, 16))
+  #unicodes = [int(c, 16) for c in unicodes_input_expanded]
   glyphs = [int(c) for c in cmd_args.glyphs.split(',') if c]
   fontfile = cmd_args.fontfile
   options.hinting = cmd_args.hinting  # False => no hinting
+  options.hinting = True  # hint stripping for CFF is currently broken
 
   dirname = os.path.dirname(fontfile)
   basename = os.path.basename(fontfile)
   filename, extension = os.path.splitext(basename)
   output_file = dirname + '/' + filename + '_subset' + extension
+  print "output_file =", output_file
   font = load_font(fontfile, options, lazy=False)
 
   subsetter = Subsetter(options)
