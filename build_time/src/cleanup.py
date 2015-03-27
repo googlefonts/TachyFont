@@ -26,6 +26,7 @@ def clean_invalid_glyphs_and_remove_hinting(fontfile, hinting, output, verbose):
   cleaner.clean(verbose)
   # Flatten cmap format 4 (no idRangeOffset/glyphIdArray) so it is a simple 
   # subset of format 12.
+  # do we still what this?
   change_method(_c_m_a_p.cmap_format_4,_cmap_format_4_compile, 'compile')
   cleaner.save(output)
   cleaner.close()
