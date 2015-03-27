@@ -301,7 +301,7 @@ tachyfont.IncrementalFont.obj_.prototype.getPersistedBase = function() {
         } else {
           if (goog.DEBUG) {
             goog.log.fine(tachyfont.logger,
-              'not using persisting data: ' + this.fontName);
+                'not using persisting data: ' + this.fontName);
           }
           filedata = goog.Promise.resolve(null);
         }
@@ -636,7 +636,7 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars = function() {
       then(function() {
         if (goog.DEBUG) {
           goog.log.log(tachyfont.logger, goog.log.Level.FINER,
-            'finished loadChars for ' + that.fontName);
+              'finished loadChars for ' + that.fontName);
         }
       }).
           thenCatch(function(e) {
