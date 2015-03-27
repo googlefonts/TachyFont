@@ -257,7 +257,14 @@ tachyfont.IncrementalFont.obj_ = function(fontInfo, params, backendService) {
   this.getIDB_ = null;
   this.base = new tachyfont.promise();
   this.getBase = this.base.getPromise();
+
+//  /**
+//   * Get the list of characters than have been requested for this TachyFont.
+//   * type {goog.Promise}
+//   */
+//  this.getCharList = goog.Promise.resolve({});
   this.getCharList = null;
+
   // TODO(bstell): Use ChainedPromise to properly serialize the promises.
   this.finishPersistingData = goog.Promise.resolve();
 
@@ -286,19 +293,20 @@ tachyfont.IncrementalFont.obj_ = function(fontInfo, params, backendService) {
  * @return {goog.Promise} The base bytes in DataView.
  */
 tachyfont.IncrementalFont.obj_.prototype.getPersistedBase = function() {
-  var that = this;
   var persistedBase = this.getIDB_.
       then(function(idb) {
         var filedata;
         if (tachyfont.persistData) {
-          filedata = that.getData_(idb, tachyfont.IncrementalFont.BASE);
+          filedata = this.getData_(idb, tachyfont.IncrementalFont.BASE);
         } else {
-          var e = new Event('not using persisting data');
-          filedata = goog.Promise.all([goog.Promise.resolve(idb),
-                goog.Promise.reject(e)]);
+          if (goog.DEBUG) {
+            goog.log.fine(tachyfont.logger,
+              'not using persisting data: ' + this.fontName);
+          }
+          filedata = goog.Promise.resolve(null);
         }
         return goog.Promise.all([goog.Promise.resolve(idb), filedata]);
-      }).
+      }.bind(this)).
       then(function(arr) {
         var idb = arr[0];
         var filedata = new DataView(arr[1]);
@@ -310,10 +318,10 @@ tachyfont.IncrementalFont.obj_.prototype.getPersistedBase = function() {
       thenCatch(function(e) {
         if (goog.DEBUG) {
           goog.log.log(tachyfont.logger, goog.log.Level.FINER,
-              'font not persisted: ' + e.stack);
+              'font not persisted: ' + this.fontName);
         }
-        return null;
-      });
+        return goog.Promise.resolve(null);
+      }.bind(this));
   return persistedBase;
 };
 
@@ -467,8 +475,8 @@ tachyfont.possibly_obfuscate = function(codes, charlist) {
 /**
  * Load the data for needed chars.
  *
- * @return {goog.Promise} Returns the getBase promise.
- * successfully
+ * TODO(bstell): fix the return value.
+ * @return {goog.Promise} Returns the true if characters loaded.
  */
 tachyfont.IncrementalFont.obj_.prototype.loadChars = function() {
   if (goog.DEBUG) {
@@ -574,7 +582,8 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars = function() {
                     }
                     if (goog.DEBUG) {
                       goog.log.info(tachyfont.logger,
-                      'injectCharacters: glyph count / data length = ' +
+                      that.fontName +
+                      ' injectCharacters: glyph count / data length = ' +
                       bundleResponse.getGlyphCount() + ' / ' + dataLength);
                     }
                     fontdata = tachyfont.IncrementalFontUtils.injectCharacters(
@@ -608,9 +617,9 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars = function() {
                 }).
                 thenCatch(function(e) {
                   if (goog.DEBUG) {
+                    debugger;
                     goog.log.error(tachyfont.logger, 'failed to getBase: ' +
                     e.stack);
-                    debugger;
                   }
                   pendingRejectFn(false);
                 });
@@ -618,17 +627,25 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars = function() {
         }).
             thenCatch(function(e) {
               if (goog.DEBUG) {
-                goog.log.error(tachyfont.logger, 'loadChars: ' + e.stack);
                 debugger;
+                goog.log.error(tachyfont.logger, 'loadChars: ' + e.stack);
               }
               pendingRejectFn(false);
             });
-      }).thenCatch(function(e) {
+      }).
+      then(function() {
         if (goog.DEBUG) {
-          goog.log.error(tachyfont.logger, e.stack);
-          debugger;
+          goog.log.log(tachyfont.logger, goog.log.Level.FINER,
+            'finished loadChars for ' + that.fontName);
         }
-      });
+      }).
+          thenCatch(function(e) {
+            if (goog.DEBUG) {
+              debugger;
+              goog.log.error(tachyfont.logger, e.stack);
+              return goog.Promise.resolve(false);
+            }
+          });
   return this.finishPrecedingCharsRequest_;
 };
 
