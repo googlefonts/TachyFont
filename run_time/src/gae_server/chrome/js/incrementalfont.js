@@ -498,11 +498,11 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars = function() {
         if (charArray.length == 0) {
           return null;
         }
-        var pending_resolve, pending_reject;
+        var pendingResolveFn, pendingRejectFn;
         // TODO(bstell): use tachfont.promise here?
         return new goog.Promise(function(resolve, reject) {
-          pending_resolve = resolve;
-          pending_reject = reject;
+          pendingResolveFn = resolve;
+          pendingRejectFn = reject;
 
           return that.getCharList.
               then(function(charlist_) {
@@ -533,7 +533,7 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars = function() {
                   if (goog.DEBUG) {
                     goog.log.fine(tachyfont.logger, 'no new characters');
                   }
-                  pending_resolve(false);
+                  pendingResolveFn(false);
                   return;
                 }
                 neededCodes.sort(function(a, b) { return a - b; });
@@ -604,7 +604,7 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars = function() {
                     that.fontName);
                     tachyfont.timer1.done();
                   }
-                  pending_resolve(true);
+                  pendingResolveFn(true);
                 }).
                 thenCatch(function(e) {
                   if (goog.DEBUG) {
@@ -612,7 +612,7 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars = function() {
                     e.stack);
                     debugger;
                   }
-                  pending_reject(false);
+                  pendingRejectFn(false);
                 });
               });
         }).
@@ -621,7 +621,7 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars = function() {
                 goog.log.error(tachyfont.logger, 'loadChars: ' + e.stack);
                 debugger;
               }
-              pending_reject(false);
+              pendingRejectFn(false);
             });
       }).thenCatch(function(e) {
         if (goog.DEBUG) {
