@@ -83,6 +83,9 @@ tachyfont.TachyFontSet = function(familyName) {
    * @type {tachyfont.chainedPromises}
    */
   this.finishPrecedingUpdateFont = new tachyfont.chainedPromises();
+  if (goog.DEBUG) {
+    this.finishPrecedingUpdateFont.setDebugMessage('finishPrecedingUpdateFont');
+  }
 
   /**
    * The timerID from setTimeout.
@@ -358,11 +361,13 @@ tachyfont.TachyFontSet.prototype.updateFonts = function(allowEarlyUse) {
     clearTimeout(this.pendingUpdateRequest_);
     this.pendingUpdateRequest_ = null;
   }
+  var msg;
   if (goog.DEBUG) {
     goog.log.log(tachyfont.logger, goog.log.Level.FINER,
         'updateFonts: wait for preceding update');
+    msg = 'updateFonts';
   }
-  var allUpdated = this.finishPrecedingUpdateFont.getChainedPromise();
+  var allUpdated = this.finishPrecedingUpdateFont.getChainedPromise(msg);
   allUpdated.getPrecedingPromise().
       then(function() {
         if (goog.DEBUG) {
@@ -377,6 +382,11 @@ tachyfont.TachyFontSet.prototype.updateFonts = function(allowEarlyUse) {
         }
         return goog.Promise.all(updatingFonts);
       }.bind(this)).
+      thenCatch(function(err) {
+        if (goog.DEBUG) {
+          debugger;
+        }
+      }).
       then(function(/*loadResults*/) {
         var fontsData = [];
         for (var i = 0; i < this.fonts.length; i++) {
