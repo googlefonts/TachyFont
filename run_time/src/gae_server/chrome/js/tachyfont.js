@@ -175,11 +175,15 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
     var fontId = tachyfont.fontId(familyName, fontInfo['weight']);
     tachyFontSet.fontIdToIndex[fontId] = i;
   }
+  var msg;
   if (goog.DEBUG) {
     goog.log.log(tachyfont.logger, goog.log.Level.FINER,
         'loadFonts: wait for preceding update');
+    msg = 'loadFonts';
   }
-  var allLoaded = tachyFontSet.finishPrecedingUpdateFont.getChainedPromise();
+  var allLoaded = tachyFontSet.finishPrecedingUpdateFont.getChainedPromise(msg);
+  // TODO(bstell): this call 'getPrecedingPromise' should be the return from the
+  // getChainedPromise. getChainedPromise should be waitForPrecedingPromise.
   allLoaded.getPrecedingPromise().
       then(function() {
         if (goog.DEBUG) {
@@ -244,7 +248,7 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
                   }
                   tachyfont.IncrementalFontUtils.setVisibility(incrfont.style,
                   incrfont.fontInfo, true);
-                  // Release other operations to proceede.
+                  // Release other operations to proceed.
                   incrfont.base.resolve(loadedBase);
                 });
                 allCssSet.push(cssSet);
@@ -266,15 +270,15 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
                 debugger;
               }
             });
+      }).
+      thenCatch(function(e) {
+        if (goog.DEBUG) {
+          goog.log.error(tachyfont.logger, 'failed to get the font: ' +
+              e.message);
+          debugger;
+        }
       });
 
-  if (goog.DEBUG) {
-    // Need to handle input fields
-    if (typeof tachyfont.todo_handle_input_fields == 'undefined') {
-      tachyfont.todo_handle_input_fields = 1;
-      goog.log.error(tachyfont.logger, 'need to handle input fields');
-    }
-  }
 
   // Get any characters that are already in the DOM.
   tachyFontSet.recursivelyAddTextToFontGroups(document.documentElement);
