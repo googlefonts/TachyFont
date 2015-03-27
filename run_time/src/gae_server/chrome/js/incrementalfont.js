@@ -533,7 +533,8 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars = function() {
                   if (goog.DEBUG) {
                     goog.log.fine(tachyfont.logger, 'no new characters');
                   }
-                  return null;
+                  pending_resolve(false);
+                  return;
                 }
                 neededCodes.sort(function(a, b) { return a - b; });
                 if (that.req_size) {
@@ -592,7 +593,7 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars = function() {
                     that.getBase = goog.Promise.all(
                         [goog.Promise.resolve(fileinfo),
                       goog.Promise.resolve(fontdata)]);
-                    that.getCharlist = goog.Promise.resolve(charlist);
+                    that.getCharList = goog.Promise.resolve(charlist);
 
                     // Persist the data.
                     that.persistDelayed_(tachyfont.IncrementalFont.BASE);
