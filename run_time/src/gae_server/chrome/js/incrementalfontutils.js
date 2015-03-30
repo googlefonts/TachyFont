@@ -173,6 +173,7 @@ tachyfont.IncrementalFontUtils.injectCharacters = function(obj, baseFont,
     var bytes = bundleBinEd.getArrayOf(bundleBinEd.getUint8, length);
     baseBinEd.seek(obj.glyphOffset + offset);
     baseBinEd.setArrayOf(baseBinEd.setUint8, bytes);
+
   }
   // time_end('inject')
 
