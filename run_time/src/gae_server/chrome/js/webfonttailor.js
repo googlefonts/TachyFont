@@ -18,13 +18,12 @@
  */
 
 goog.provide('webfonttailor');
-goog.provide('webfonttailor.FontsInfo');
 
 
 /**
- * webfonttailor.jaNormalInfo
- *
  * This list of supported weights for Noto Sans JP normal (upright).
+ *
+ * @type {!Object.<string, !Object.<string, string>>}
  */
 webfonttailor.jaNormalInfo = {
   '100': { 'name': 'NotoSansJP-Thin', 'weight': '100',
@@ -45,9 +44,9 @@ webfonttailor.jaNormalInfo = {
 
 
 /**
- * webfonttailor.jaStyleInfo
- *
  * This list of supported styles (slants) for Noto Sans JP.
+ *
+ * @type {!Object.<string, webfonttailor.jaNormalInfo>}
  */
 webfonttailor.jaStyleInfo = {
   'normal': webfonttailor.jaNormalInfo
@@ -55,9 +54,9 @@ webfonttailor.jaStyleInfo = {
 
 
 /**
- * webfonttailor.notoSansLanguageInfo
- *
  * This list of supported languages for the Noto Sans font family.
+ *
+ * @type {!Object.<string, webfonttailor.jaStyleInfo>}
  */
 webfonttailor.notoSansLanguageInfo = {
   'ja': webfonttailor.jaStyleInfo
@@ -65,50 +64,40 @@ webfonttailor.notoSansLanguageInfo = {
 
 
 /**
- * webfonttailor.fontFamliesInfo
- *
  * This list of supported font families.
+ *
+ * @type {!Object.<string, webfonttailor.notoSansLanguageInfo>}
  */
 webfonttailor.fontFamliesInfo = {
   'Noto Sans': webfonttailor.notoSansLanguageInfo
 };
 
 
-
-/**
- * Object holding information about the requested fonts.
- *
- * @constructor
- */
-webfonttailor.FontsInfo = function() {
-  // TODO(bstell): Define the fields.
-  // TODO(bstell): Fix the constructor parameters.
-};
-
-
 /**
  * getTachyFontInfo: get the font information.
  *
- * @param {Array.<string>} fontFamlies The suggested list of font families.
- * @param {Array.<string>} languages The language codes list.
- * @param {Array.<Object>} faces The faces (eg, slant, weight) list.
- * @param {Object.<string, string>} options Additional info; eg, stretch.
- * @return {webfonttailor.FontsInfo} The information describing the fonts.
+ * @param {!Array.<string>} fontFamlies The suggested list of font families.
+ * @param {!Array.<string>} languages The language codes list.
+ * @param {!Array.<Object>} faces The faces (eg, slant, weight) list.
+ * @param {!Object.<string, string>} options Additional info; eg, stretch.
+ * @return {!Object.<string, *>} The information describing the fonts, include:
+ *     fonts: A list of font.
+ *     url: The url to the tachyfont server.
  */
 webfonttailor.getTachyFontsInfo = function(fontFamlies, languages, faces,
     options) {
-  var fontsInfo = new webfonttailor.FontsInfo();
+  var fontsInfo = {};
   var fonts = [];
   for (var i = 0; i < fontFamlies.length; i++) {
     var fontFamily = fontFamlies[i];
     var languagesInfo = webfonttailor.fontFamliesInfo[fontFamily];
-    if (languagesInfo == undefined) {
+    if (!languagesInfo) {
       continue;
     }
     for (var j = 0; j < languages.length; j++) {
       var language = languages[j];
       var styleInfo = languagesInfo[language];
-      if (styleInfo == undefined) {
+      if (!styleInfo) {
         continue;
       }
       for (var k = 0; k < faces.length; k++) {
@@ -130,3 +119,4 @@ webfonttailor.getTachyFontsInfo = function(fontFamlies, languages, faces,
   fontsInfo['url'] = '';
   return fontsInfo;
 };
+
