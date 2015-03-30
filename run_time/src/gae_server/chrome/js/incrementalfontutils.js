@@ -243,11 +243,7 @@ tachyfont.IncrementalFontUtils.writeCmap4 = function(baseFont, headerInfo) {
   }
   // Write glyphIdArray values.
   if (glyphIdArrayLen > 0)
-<<<<<<< HEAD
     binEd.setArrayOf(binEd.setUint16, glyphIdArray);
-=======
-    binEd.setArrayOf(binEd.setUint16_, glyphIdArray);
->>>>>>> A tiny change which corrects some wrongly privated methods.
 };
 
 
