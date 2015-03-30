@@ -46,7 +46,7 @@ tachyfont.promise = function(opt_container, opt_msg) {
       if (opt_container) {
         this.chainCount_ = opt_container.chainedCount_;
       }
-      this.opt_msg_ = opt_msg;
+      this.msg_ = opt_msg;
     }
   }, this);
 
@@ -106,8 +106,7 @@ tachyfont.promise.prototype.resolve = function(opt_value) {
       if (goog.DEBUG) {
         this.container_.pendingCount_--;
         goog.log.log(tachyfont.logger, goog.log.Level.FINER,
-            this.opt_msg_ + 'dropped count to ' +
-            this.container_.pendingCount_);
+            this.msg_ + 'dropped count to ' + this.container_.pendingCount_);
       }
     }
   }
