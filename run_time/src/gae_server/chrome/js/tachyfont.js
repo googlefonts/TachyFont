@@ -22,13 +22,14 @@ goog.provide('tachyfont');
 goog.require('goog.Promise');
 goog.require('goog.Uri');
 goog.require('goog.debug.Console');
+goog.require('goog.debug.Logger');
 goog.require('goog.log');
-
+goog.require('goog.log.Level');
 goog.require('tachyfont.BinaryFontEditor');
+goog.require('tachyfont.FontsInfo');
 goog.require('tachyfont.IncrementalFontUtils');
 goog.require('tachyfont.TachyFont');
 goog.require('tachyfont.TachyFontSet');
-goog.require('webfonttailor.FontsInfo');
 
 
 if (goog.DEBUG) {
@@ -148,7 +149,7 @@ tachyfont.fontId = function(family, weight) {
  *
  * @param {string} familyName The font-family name.
  * TODO(bstell): remove the Object type.
- * @param {webfonttailor.FontsInfo|Object} fontsInfo The information about the
+ * @param {!tachyfont.FontsInfo} fontsInfo The information about the
  *     fonts.
  * @param {Object.<string, string>=} opt_params Optional parameters.
  * @return {tachyfont.TachyFontSet} The TachyFontSet object.
