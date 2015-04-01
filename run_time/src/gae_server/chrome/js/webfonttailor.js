@@ -19,13 +19,15 @@
 
 goog.provide('webfonttailor');
 
+goog.require('tachyfont.FontsInfo');
+
 
 /**
  * This list of supported weights for Noto Sans JP normal (upright).
  *
  * @type {!Object.<string, !Object.<string, string>>}
  */
-webfonttailor.jaNormalInfo = {
+webfonttailor.JaNormalInfo = {
   '100': { 'name': 'NotoSansJP-Thin', 'weight': '100',
     'class': 'NotoSansJP-Thin' },
   '200': { 'name': 'NotoSansJP-Light', 'weight': '200',
@@ -46,30 +48,30 @@ webfonttailor.jaNormalInfo = {
 /**
  * This list of supported styles (slants) for Noto Sans JP.
  *
- * @type {!Object.<string, webfonttailor.jaNormalInfo>}
+ * @type {!Object.<string, !Object>}
  */
-webfonttailor.jaStyleInfo = {
-  'normal': webfonttailor.jaNormalInfo
+webfonttailor.JaStyleInfo = {
+  'normal': webfonttailor.JaNormalInfo
 };
 
 
 /**
  * This list of supported languages for the Noto Sans font family.
  *
- * @type {!Object.<string, webfonttailor.jaStyleInfo>}
+ * @type {!Object.<string, !Object>}
  */
-webfonttailor.notoSansLanguageInfo = {
-  'ja': webfonttailor.jaStyleInfo
+webfonttailor.NotoSansLanguageInfo = {
+  'ja': webfonttailor.JaStyleInfo
 };
 
 
 /**
  * This list of supported font families.
  *
- * @type {!Object.<string, webfonttailor.notoSansLanguageInfo>}
+ * @type {!Object.<string, !Object>}
  */
-webfonttailor.fontFamliesInfo = {
-  'Noto Sans': webfonttailor.notoSansLanguageInfo
+webfonttailor.FontFamliesInfo = {
+  'Noto Sans': webfonttailor.NotoSansLanguageInfo
 };
 
 
@@ -80,17 +82,16 @@ webfonttailor.fontFamliesInfo = {
  * @param {!Array.<string>} languages The language codes list.
  * @param {!Array.<Object>} faces The faces (eg, slant, weight) list.
  * @param {!Object.<string, string>} options Additional info; eg, stretch.
- * @return {!Object.<string, *>} The information describing the fonts, include:
+ * @return {!tachyfont.FontsInfo} The information describing the fonts, include:
  *     fonts: A list of font.
  *     url: The url to the tachyfont server.
  */
 webfonttailor.getTachyFontsInfo = function(fontFamlies, languages, faces,
     options) {
-  var fontsInfo = {};
   var fonts = [];
   for (var i = 0; i < fontFamlies.length; i++) {
     var fontFamily = fontFamlies[i];
-    var languagesInfo = webfonttailor.fontFamliesInfo[fontFamily];
+    var languagesInfo = webfonttailor.FontFamliesInfo[fontFamily];
     if (!languagesInfo) {
       continue;
     }
@@ -115,8 +116,6 @@ webfonttailor.getTachyFontsInfo = function(fontFamlies, languages, faces,
       }
     }
   }
-  fontsInfo['fonts'] = fonts;
-  fontsInfo['url'] = '';
-  return fontsInfo;
+  return new tachyfont.FontsInfo(fonts, '');
 };
 
