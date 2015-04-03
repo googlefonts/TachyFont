@@ -51,43 +51,33 @@ if (goog.DEBUG) {
     if (tachyfont.hasInitializedDebug_) {
       return;
     }
-
     tachyfont.hasInitializedDebug_ = true;
 
-    /** @type {goog.Uri} */
-    tachyfont.uri = goog.Uri.parse(window.location.href);
-
-
-    /** @type {goog.debug.Logger.Level} */
-    tachyfont.debugLevel;
-
-
-    /** @type {string} */
-    tachyfont.debugLevel_str =
-        tachyfont.uri.getParameterValue('TachyFontDebugLevel') || '';
-    if (tachyfont.debugLevel_str) {
-      tachyfont.debugLevel =
-          goog.debug.Logger.Level.getPredefinedLevel(tachyfont.debugLevel_str);
+    var uri = goog.Uri.parse(window.location.href);
+    var debugLevel;
+    var debugLevelStr = uri.getParameterValue('TachyFontDebugLevel') || '';
+    if (debugLevelStr) {
+      debugLevel = goog.debug.Logger.Level.getPredefinedLevel(debugLevelStr);
     }
-
-    /**
-     * @type {!goog.debug.Console}
-     * @private
-     */
-    tachyfont.debugConsole_ = new goog.debug.Console();
-    tachyfont.debugConsole_.setCapturing(true);
+    var debugConsole_ = new goog.debug.Console();
+    debugConsole_.setCapturing(true);
 
 
     /**
      * @type {goog.debug.Logger}
      */
-    tachyfont.logger = goog.log.getLogger('debug', tachyfont.debugLevel);
+    tachyfont.logger = goog.log.getLogger('debug', debugLevel);
 
 
     /**
      * @type {boolean}
      */
     tachyfont.buildDemo = false;
+
+    var persistDataStr = uri.getParameterValue('TachyFontPersistData') || '';
+    if (persistDataStr.toLowerCase() == "false") {
+      tachyfont.persistData = false;
+    }
   };
 }
 
