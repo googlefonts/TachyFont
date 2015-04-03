@@ -18,6 +18,8 @@
  */
 
 goog.provide('tachyfont');
+goog.provide('tachyfont.IncrementalFontLoader');
+goog.provide('tachyfont.uint8');
 
 goog.require('goog.Promise');
 goog.require('goog.Uri');
@@ -49,32 +51,39 @@ if (goog.DEBUG) {
     if (tachyfont.hasInitializedDebug_) {
       return;
     }
+
     tachyfont.hasInitializedDebug_ = true;
-    // Get any URL debug parameters.
+
     /** @type {goog.Uri} */
     tachyfont.uri = goog.Uri.parse(window.location.href);
 
+
     /** @type {goog.debug.Logger.Level} */
-    tachyfont.debug_level;
+    tachyfont.debugLevel;
+
+
     /** @type {string} */
-    tachyfont.debug_level_str =
+    tachyfont.debugLevel_str =
         tachyfont.uri.getParameterValue('TachyFontDebugLevel') || '';
-    if (tachyfont.debug_level_str) {
-      tachyfont.debug_level =
-          goog.debug.Logger.Level.getPredefinedLevel(tachyfont.debug_level_str);
+    if (tachyfont.debugLevel_str) {
+      tachyfont.debugLevel =
+          goog.debug.Logger.Level.getPredefinedLevel(tachyfont.debugLevel_str);
     }
 
-    // Send the debug output to the console.
     /**
-     * @type {goog.debug.Console}
+     * @type {!goog.debug.Console}
      * @private
      */
     tachyfont.debugConsole_ = new goog.debug.Console();
     tachyfont.debugConsole_.setCapturing(true);
+
+
     /**
      * @type {goog.debug.Logger}
      */
-    tachyfont.logger = goog.log.getLogger('debug', tachyfont.debug_level);
+    tachyfont.logger = goog.log.getLogger('debug', tachyfont.debugLevel);
+
+
     /**
      * @type {boolean}
      */
@@ -85,7 +94,8 @@ if (goog.DEBUG) {
 
 /**
  * Enable/disable using/saving persisted data.
- * @typedef {boolean}
+ *
+ * @type {boolean}
  */
 tachyfont.persistData = true;
 
@@ -106,6 +116,7 @@ tachyfont.cssWeightToNumber = {
 /**
  * If the number of characters in the request is less than this count then add
  * additional characters to obfuscate the actual request.
+ *
  * @type {number}
  */
 tachyfont.MINIMUM_NON_OBFUSCATION_LENGTH = 20;
@@ -113,6 +124,7 @@ tachyfont.MINIMUM_NON_OBFUSCATION_LENGTH = 20;
 
 /**
  * The range of characters to pick from.
+ *
  * @type {number}
  */
 tachyfont.OBFUSCATION_RANGE = 256;
@@ -133,6 +145,7 @@ tachyfont.IncrementalFontLoader;
 
 /**
  * Create a font identifing string.
+ *
  * @param {string} family The font family name;
  * @param {string} weight The font weight;
  * @return {string} The identifier for this font.
@@ -159,18 +172,19 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
     tachyfont.debugInitialization_();
     goog.log.fine(tachyfont.logger, 'loadFonts');
   }
+
   var tachyFontSet = new tachyfont.TachyFontSet(familyName);
   var tachyFonts = tachyFontSet.fonts;
   // TODO(bstell): this initialization of TachyFontSet should be in the
   // constructor or and init function.
-  opt_params = opt_params || {};
+  var params = opt_params || {};
   var url = fontsInfo['url'];
   var fonts = fontsInfo['fonts'];
   for (var i = 0; i < fonts.length; i++) {
     var fontInfo = fonts[i];
     fontInfo['familyName'] = familyName;
     fontInfo['url'] = url;
-    var tachyFont = new tachyfont.TachyFont(fontInfo, opt_params);
+    var tachyFont = new tachyfont.TachyFont(fontInfo, params);
     tachyFontSet.addFont(tachyFont);
     // TODO(bstell): need to support slant/width/etc.
     var fontId = tachyfont.fontId(familyName, fontInfo['weight']);
@@ -426,14 +440,14 @@ tachyfont.stringToChars = function(str) {
  * Convert a char to its codepoint.
  * This function handles surrogate pairs.
  *
- * @param {string} in_char The input char (string).
+ * @param {string} inputChar The input char (string).
  * @return {number} The numeric value.
  */
-tachyfont.charToCode = function(in_char) {
-  var cc = in_char.charCodeAt(0);
+tachyfont.charToCode = function(inputChar) {
+  var cc = inputChar.charCodeAt(0);
   if (cc >= 0xD800 && cc <= 0xDBFF) {
     var high = (cc - 0xD800) << 10;
-    var low = in_char.charCodeAt(1) - 0xDC00;
+    var low = inputChar.charCodeAt(1) - 0xDC00;
     var codepoint = high + low + 0x10000;
     return codepoint;
   } else {
@@ -444,6 +458,7 @@ tachyfont.charToCode = function(in_char) {
 
 /**
  * Timing object for performance analysis.
+ *
  * @type {Object}
  */
 window.timer1;

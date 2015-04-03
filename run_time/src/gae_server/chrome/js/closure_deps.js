@@ -17,6 +17,14 @@
 goog.addDependency('../../../backendservice.js',
     ['tachyfont.BackendService', 'tachyfont.GoogleBackendService'],
     ['goog.Promise', 'goog.net.XhrIo', 'goog.events', 'goog.net.EventType']);
+goog.addDependency('../../../demobackendservice.js',
+    ['tachyfont.DemoBackendService'],
+    ['goog.Promise', 'goog.net.XhrIo', 'goog.events', 'goog.net.EventType',
+     'tachyfont.BackendService'
+    ]);
+goog.addDependency('../../../googlebackendservice.js',
+    ['tachyfont.GoogleBackendService'],
+    ['goog.Promise', 'tachyfont.BackendService']);
 goog.addDependency('../../../binaryfonteditor.js',
     ['tachyfont.BinaryFontEditor'],
     []);
@@ -25,7 +33,7 @@ goog.addDependency('../../../glyphbundleresponse.js',
     []);
 goog.addDependency('../../../incrementalfont.js',
     ['tachyfont.IncrementalFont', 'tachyfont.TachyFont'],
-    ['goog.Promise', 'goog.log', 'tachyfont.BackendService',
+    ['goog.Promise', 'goog.log', 'tachyfont.DemoBackendService',
      'tachyfont.GoogleBackendService', 'tachyfont.IncrementalFontUtils',
      'tachyfont.promise', 'tachyfont.RLEDecoder'
     ]);

@@ -22,10 +22,12 @@ goog.provide('tachyfont.TachyFont');
 
 goog.require('goog.Promise');
 goog.require('goog.log');
-goog.require('tachyfont.BackendService');
+goog.require('goog.log.Level');
+goog.require('goog.math');
 goog.require('tachyfont.GoogleBackendService');
 goog.require('tachyfont.IncrementalFontUtils');
 goog.require('tachyfont.RLEDecoder');
+goog.require('tachyfont.DemoBackendService');
 goog.require('tachyfont.promise');
 
 
@@ -105,7 +107,7 @@ tachyfont.IncrementalFont.createManager = function(fontInfo, params) {
   var backendService =
       fontInfo['fontkit'] ?
       new tachyfont.GoogleBackendService(fontInfo['url']) :
-      new tachyfont.BackendService(fontInfo['url']);
+      new tachyfont.DemoBackendService(fontInfo['url']);
 
   var initialVisibility = false;
   var initialVisibilityStr = 'hidden';
@@ -210,7 +212,8 @@ tachyfont.IncrementalFont.createManager = function(fontInfo, params) {
  * IncrFontIDB.obj_ - A class to handle interacting the IndexedDB.
  * @param {Object.<string, string>} fontInfo Info about this font.
  * @param {Object} params Optional parameters.
- * @param {Object} backendService object used to generate backend requests.
+ * @param {!tachyfont.BackendService} backendService object used to generate
+ *     backend requests.
  * @constructor
  * @private
  */
@@ -242,6 +245,8 @@ tachyfont.IncrementalFont.obj_ = function(fontInfo, params, backendService) {
   this.persistInfo[tachyfont.IncrementalFont.BASE_DIRTY] = false;
   this.persistInfo[tachyfont.IncrementalFont.CHARLIST_DIRTY] = false;
   this.style = null;
+
+  /** @type {!tachyfont.BackendService} */
   this.backendService = backendService;
 
   if (params['persistData'] == false || !tachyfont.persistData) {
@@ -257,12 +262,6 @@ tachyfont.IncrementalFont.obj_ = function(fontInfo, params, backendService) {
   this.getIDB_ = null;
   this.base = new tachyfont.promise();
   this.getBase = this.base.getPromise();
-
-//  /**
-//   * Get the list of characters than have been requested for this TachyFont.
-//   * type {goog.Promise}
-//   */
-//  this.getCharList = goog.Promise.resolve({});
   this.getCharList = null;
 
   // TODO(bstell): Use ChainedPromise to properly serialize the promises.
@@ -639,13 +638,13 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars = function() {
               'finished loadChars for ' + that.fontName);
         }
       }).
-          thenCatch(function(e) {
-            if (goog.DEBUG) {
-              debugger;
-              goog.log.error(tachyfont.logger, e.stack);
-              return goog.Promise.resolve(false);
-            }
-          });
+      thenCatch(function(e) {
+        if (goog.DEBUG) {
+          debugger;
+          goog.log.error(tachyfont.logger, e.stack);
+          return goog.Promise.resolve(false);
+        }
+      });
   return this.finishPrecedingCharsRequest_;
 };
 

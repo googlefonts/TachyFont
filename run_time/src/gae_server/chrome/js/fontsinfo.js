@@ -41,8 +41,8 @@ goog.scope(function() {
 goog.exportSymbol('tachyfont.FontsInfo', tachyfont.FontsInfo);
 var FontsInfoPrototype = tachyfont.FontsInfo.prototype;
 goog.exportProperty(FontsInfoPrototype, 'fonts',
-      FontsInfoPrototype.fonts);
+    FontsInfoPrototype.fonts);
 goog.exportProperty(FontsInfoPrototype, 'url',
-      FontsInfoPrototype.url);
+    FontsInfoPrototype.url);
 });  // goog.scope
 
