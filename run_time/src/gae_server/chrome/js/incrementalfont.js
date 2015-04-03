@@ -24,10 +24,10 @@ goog.require('goog.Promise');
 goog.require('goog.log');
 goog.require('goog.log.Level');
 goog.require('goog.math');
+goog.require('tachyfont.DemoBackendService');
 goog.require('tachyfont.GoogleBackendService');
 goog.require('tachyfont.IncrementalFontUtils');
 goog.require('tachyfont.RLEDecoder');
-goog.require('tachyfont.DemoBackendService');
 goog.require('tachyfont.promise');
 
 
@@ -333,30 +333,39 @@ tachyfont.IncrementalFont.obj_.prototype.getPersistedBase = function() {
  */
 tachyfont.IncrementalFont.obj_.prototype.getUrlBase =
     function(backendService, fontInfo) {
-  var that = this;
   var rslt = backendService.requestFontBase(fontInfo).
-      then(function(xfer_bytes) {
-        //tachyfont.timer1.start('uncompact base');
-        var xfer_data = new DataView(xfer_bytes);
-        var fileinfo = tachyfont.IncrementalFontUtils.parseBaseHeader(
-            xfer_data);
-        var header_data = new DataView(xfer_bytes, 0, fileinfo.headSize);
-        var rle_fontdata = new DataView(xfer_bytes, fileinfo.headSize);
-        var raw_base = tachyfont.RLEDecoder.rleDecode([header_data,
-          rle_fontdata]);
-        var raw_basefont = new DataView(raw_base.buffer,
-            header_data.byteLength);
-        tachyfont.IncrementalFontUtils.writeCmap12(raw_basefont, fileinfo);
-        tachyfont.IncrementalFontUtils.writeCmap4(raw_basefont, fileinfo);
-        tachyfont.IncrementalFontUtils.writeCharsetFormat2(raw_basefont,
-            fileinfo);
-        var basefont = tachyfont.IncrementalFontUtils.sanitizeBaseFont(
-            fileinfo, raw_basefont);
-        that.persistDelayed_(tachyfont.IncrementalFont.BASE);
-        //tachyfont.timer1.end('uncompact base');
-        return [fileinfo, basefont];
-      });
+      then(function(fetchedBytes) {
+        var results = this.processUrlBase_(fetchedBytes);
+        this.persistDelayed_(tachyfont.IncrementalFont.BASE);
+        return results;
+      }.bind(this));
   return rslt;
+};
+
+
+/**
+ * Process the font base fetched from a URL.
+ * @param {ArrayBuffer} fetchedBytes The fetched data.
+ * @return {Array.<Object>} The fileinfo (information about the font bytes) and
+ *     the font data ready for character data to be added.
+ * @private
+ */
+tachyfont.IncrementalFont.obj_.prototype.processUrlBase_ =
+    function(fetchedBytes) {
+  //tachyfont.timer1.start('uncompact base');
+  var fetchedData = new DataView(fetchedBytes);
+  var fileinfo = tachyfont.IncrementalFontUtils.parseBaseHeader(fetchedData);
+  var header_data = new DataView(fetchedBytes, 0, fileinfo.headSize);
+  var rle_fontdata = new DataView(fetchedBytes, fileinfo.headSize);
+  var raw_base = tachyfont.RLEDecoder.rleDecode([header_data, rle_fontdata]);
+  var raw_basefont = new DataView(raw_base.buffer, header_data.byteLength);
+  tachyfont.IncrementalFontUtils.writeCmap12(raw_basefont, fileinfo);
+  tachyfont.IncrementalFontUtils.writeCmap4(raw_basefont, fileinfo);
+  tachyfont.IncrementalFontUtils.writeCharsetFormat2(raw_basefont, fileinfo);
+  var basefont = tachyfont.IncrementalFontUtils.sanitizeBaseFont(fileinfo,
+      raw_basefont);
+  //tachyfont.timer1.end('uncompact base');
+  return [fileinfo, basefont];
 };
 
 
