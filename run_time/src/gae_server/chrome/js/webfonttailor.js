@@ -23,7 +23,7 @@ goog.require('tachyfont.FontsInfo');
 
 
 /**
- * This list of supported weights for Noto Sans JP normal (upright).
+ * The list of supported weights for Noto Sans JP normal (upright).
  *
  * @type {!Object.<string, !Object.<string, string>>}
  */
