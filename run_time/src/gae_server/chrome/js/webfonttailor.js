@@ -88,6 +88,9 @@ webfonttailor.FontFamliesInfo = {
  */
 webfonttailor.getTachyFontsInfo = function(fontFamlies, languages, faces,
     options) {
+  if (webfonttailor.getAlternateFontsInfo) {
+    return webfonttailor.getAlternateFontsInfo();
+  }
   var fonts = [];
   for (var i = 0; i < fontFamlies.length; i++) {
     var fontFamily = fontFamlies[i];
