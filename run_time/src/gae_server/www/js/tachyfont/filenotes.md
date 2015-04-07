@@ -30,7 +30,7 @@ These routines are not associated with an object.
 
 rledecoder.js
 =============
-Code to decode Run Length Encode data.
+Code to decode Run Length Encoded data.
 
 tachyfont.js
 ============
