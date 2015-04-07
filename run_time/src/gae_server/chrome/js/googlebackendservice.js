@@ -140,8 +140,7 @@ GoogleBackendService.prototype.log = function(message) {
  */
 GoogleBackendService.prototype.getUrl_ = function(
     fontInfo, prefix, suffix) {
-  var family = fontInfo['familyName'].replace(/ /g, '').toLowerCase();
-  return this.baseUrl + '/' + prefix + '/' + family + '/' +
+  return this.baseUrl + '/' + prefix + '/' + fontInfo['familyPath'] + '/' +
       fontInfo['version'] + '/' + fontInfo['fontkit'] + '.' + suffix;
 };
 
