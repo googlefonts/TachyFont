@@ -81,15 +81,21 @@ ForDebug.Bandwidths = [
 
 /**
  * Add a Bandwidth control.
- * @param {Object} incrFontMgr The incremental font manager.
+ * 
+ * @param {numbber} rightOffset The offset from the right.
+ * @param {numbber} topOffset The offset from the top.
  */
-ForDebug.addBandwidthControl = function(incrFontMgr) {
+ForDebug.addBandwidthControl = function(rightOffset, topOffset) {
+  if (typeof rightOffset != 'number' || typeof topOffset != 'number') {
+    debugger;
+    return;
+  }
   var label_innerHTML = "<a href='http://www.akamai.com/stateoftheinternet/'" +
   "target='_blank'>Akami mobile bandwidth</a> " +
   "(<a href='http://www.akamai.com/dl/akamai/akamai-soti-q114.pdf'" +
   "target='_blank'>2014 report pg 31</a>): ";
 
-  ForDebug.addDropDownCookieControl(ForDebug.Bandwidths, 120, 10, 
+  ForDebug.addDropDownCookieControl(ForDebug.Bandwidths, rightOffset, topOffset, 
     'lightYellow', label_innerHTML, 'bandwidth');
 };
 
@@ -103,10 +109,16 @@ ForDebug.TimingTextSizes = [
  * Add a control to set the timing text size.
  * For the text to be readable on WebPageTest.org it needs to be quite large.
  * For other uses it can be a normal size
- * @param {Object} incrFontMgr The incremental font manager.
+ * @param {number} rightOffset The offset from the right.
+ * @param {number} topOffset The offset from the top.
  */
-ForDebug.addTimingTextSizeControl = function() {
-  ForDebug.addDropDownCookieControl(ForDebug.TimingTextSizes, 160, 10, 
+ForDebug.addTimingTextSizeControl = function(rightOffset, topOffset) {
+  if (typeof rightOffset != 'number' || typeof topOffset != 'number') {
+    debugger;
+    return;
+  }
+  
+  ForDebug.addDropDownCookieControl(ForDebug.TimingTextSizes, rightOffset, topOffset, 
     'lightYellow', "Timing Text Size", 'timing-text-size');
 };
 
@@ -114,23 +126,25 @@ ForDebug.addTimingTextSizeControl = function() {
  * Add a control to set the timing text size.
  * For the text to be readable on WebPageTest.org it needs to be quite large.
  * For other uses it can be a normal size
- * @param {Object} incrFontMgr The incremental font manager.
+ * @param {Array.<Object.<string,string>>} options The drop down option values.
+ * @param {number} rightOffset The offset from the right.
+ * @param {number} topOffset The offset from the top.
  */
-ForDebug.addDropDownCookieControl = function(options, top, right, background_color, label_innerHTML, cookie_name) {
+ForDebug.addDropDownCookieControl = function(options, rightOffset, topOffset, background_color, label_innerHTML, cookie_name) {
   if (document.readyState == 'loading') {
     document.addEventListener("DOMContentLoaded", function(event) {
-      ForDebug.addDropDownCookieControl_(options, top, right, background_color, label_innerHTML, cookie_name);
+      ForDebug.addDropDownCookieControl_(options, rightOffset, topOffset, background_color, label_innerHTML, cookie_name);
     });
   } else {
-    ForDebug.addDropDownCookieControl_(options, top, right, background_color, label_innerHTML, cookie_name);
+    ForDebug.addDropDownCookieControl_(options, rightOffset, topOffset, background_color, label_innerHTML, cookie_name);
   }
 };
 
-ForDebug.addDropDownCookieControl_ = function(options, top, right, background_color, label_innerHTML, cookie_name) {
+ForDebug.addDropDownCookieControl_ = function(options, rightOffset, topOffset, background_color, label_innerHTML, cookie_name) {
   var span = document.createElement('span');
   span.style.position = 'absolute';
-  span.style.top = top + 'px';
-  span.style.right = right + 'px';
+  span.style.top = topOffset + 'px';
+  span.style.right = rightOffset + 'px';
   span.style.backgroundColor = background_color;
   span.style.border = '1px solid gray';
   var label = document.createElement('span');

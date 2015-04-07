@@ -19,39 +19,29 @@
 <head>
 <meta charset="UTF-8">
 <title>Tachyfont Demos</title>
-  <script>
-    //Support running without demo features.
-    function Timer() {}
-    Timer.prototype.start = function() {};
-    Timer.prototype.end = function() {};
-    Timer.prototype.numberOfTimingRecords = function() {};
-    Timer.prototype.display_timing = function() {};
-    var timer1 = new Timer();
-    var timer2 = new Timer();
-
-  </script>
+  <script src="js/closure-library/closure/goog/base.js"></script>
+  <script src="js/closure_deps.js"></script>
+  <script src="js/tachyfont.js"></script>
   <script src="js/for_debug.js"></script>
-  <script>
-    // For Debug: add a control to set the bandwidth.
-    ForDebug.addBandwidthControl();
-  
-    // For Debug: add a control to set the timing text size.
-    ForDebug.addTimingTextSizeControl();
-  </script>
   
 </head>
 <body>
+  <script>
+    // For Debug: add a control to set the bandwidth.
+    ForDebug.addBandwidthControl(10, 20);
+  
+    // For Debug: add a control to set the timing text size.
+    ForDebug.addTimingTextSizeControl(10, 60);
+  </script>
 <h1>TachyFont Demos</h1>
-<a href='NotoSansJP_demo.html'
-  target='_blank'>Noto Sans JP Demo</a> / 
-<a href='NotoSansJP_100_demo.html'
-  target='_blank'>Noto Sans JP 100 Demo</a><br>  
+<a href='NotoSansJP_demo.html' target='_blank'>Noto Sans JP Demo</a> / 
+<a href='NotoSansJP_100_demo.html' target='_blank'>Noto Sans JP 100 Demo</a><br>  
 <br>
 
+Reference: <a href='http://www.ohchr.org/EN/UDHR/Pages/Language.aspx?LangID=jpn'
+  target='_blank'>Japanese Universal Declaration Of Human Rights (UDHR)</a><br>
 <a href='UDHR-JP.html'
   target='_blank'>Noto Sans JP Thin: Universal Declaration Of Human Rights</a>  
-(<a href='http://www.ohchr.org/EN/UDHR/Pages/Language.aspx?LangID=jpn'
-  target='_blank'>original</a>)<br>
 <a href='tachyfont_noto_sans_jp_thin_with_demo_features.html'
   target='_blank'>Noto Sans JP Thin with demo features</a><br>
 <br>
