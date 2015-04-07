@@ -27,7 +27,7 @@ class BrowserRedirector(webapp2.RequestHandler):
       self.response.out.write('browser redirector under development, try back later')
       return
 
-    self.redirect('/chrome/sample_timing.html')
+    self.redirect('/www/sample_timing.html')
 
 
 app = webapp2.WSGIApplication([
