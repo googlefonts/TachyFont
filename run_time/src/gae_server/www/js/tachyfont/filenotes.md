@@ -57,5 +57,4 @@ ONLY FOR DEMO/DEBUG
 ===================
 * for_debug.js
 * time-utils.js
-* webfont-timing.js
 
