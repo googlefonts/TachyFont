@@ -37,8 +37,8 @@ handlers:
   script: browser_redirector.app
 
 
-- url: /chrome/
-  static_dir: chrome/
+- url: /www/
+  static_dir: www/
   
   
 - url: /incremental_fonts/.*
