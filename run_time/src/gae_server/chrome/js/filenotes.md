@@ -59,16 +59,3 @@ ONLY FOR DEMO/DEBUG
 * time-utils.js
 * webfont-timing.js
 
-
-DEPRECATED
-==========
-* binary-font-editor.js
-* filesystem-helper.js
-* incr-font-loader.js
-* incr-font-utils.js
-* incrfont-indexeddb.js
-* promise-1.0.0.js
-* rle-decoder.js
-
-
-
