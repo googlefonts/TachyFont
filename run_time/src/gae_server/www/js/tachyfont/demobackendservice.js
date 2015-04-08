@@ -24,10 +24,12 @@ goog.require('goog.events');
 goog.require('goog.net.EventType');
 goog.require('goog.net.XhrIo');
 goog.require('tachyfont.BackendService');
+goog.require('tachyfont.FontInfo');
 goog.require('tachyfont.GlyphBundleResponse');
 
 
 goog.scope(function() {
+
 
 
 /**
@@ -51,7 +53,7 @@ DemoBackendService.prototype.requestCodepoints = function(fontInfo, codes) {
   return this.requestUrl(
       this.baseUrl + '/incremental_fonts/request',
       'POST',
-      JSON.stringify({'font': fontInfo.name, 'arr': codes}),
+      JSON.stringify({'font': fontInfo.getName(), 'arr': codes}),
       // Google App Engine servers do not support CORS so we cannot say
       // the 'Content-Type' is 'application/json'.
       //{'Content-Type': 'application/json'},
@@ -86,7 +88,7 @@ DemoBackendService.prototype.parseCodepointHeader_ = function(glyphData) {
 DemoBackendService.prototype.requestFontBase = function(fontInfo) {
   var bandwidth = tachyfont.ForDebug.getCookie('bandwidth', '0');
   return this.requestUrl(this.baseUrl +
-      '/incremental_fonts/incrfonts/' + fontInfo.name + '/base', 'GET',
+      '/incremental_fonts/incrfonts/' + fontInfo.getName() + '/base', 'GET',
       null, { 'X-TachyFont-bandwidth': bandwidth });
 };
 
@@ -104,4 +106,4 @@ DemoBackendService.prototype.log = function(message) {
 };
 
 
-}); // goog.scope
+});  // goog.scope

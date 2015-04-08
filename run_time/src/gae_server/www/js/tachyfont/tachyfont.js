@@ -28,6 +28,7 @@ goog.require('goog.debug.Logger');
 goog.require('goog.log');
 goog.require('goog.log.Level');
 goog.require('tachyfont.BinaryFontEditor');
+goog.require('tachyfont.FontInfo');
 goog.require('tachyfont.FontsInfo');
 goog.require('tachyfont.IncrementalFontUtils');
 goog.require('tachyfont.TachyFont');
@@ -51,6 +52,7 @@ if (goog.DEBUG) {
     if (tachyfont.hasInitializedDebug_) {
       return;
     }
+
     tachyfont.hasInitializedDebug_ = true;
 
     var uri = goog.Uri.parse(window.location.href);
@@ -168,16 +170,16 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
   // TODO(bstell): this initialization of TachyFontSet should be in the
   // constructor or and init function.
   var params = opt_params || {};
-  var url = fontsInfo['url'];
-  var fonts = fontsInfo['fonts'];
+  var url = fontsInfo.getUrl();
+  var fonts = fontsInfo.getFonts();
   for (var i = 0; i < fonts.length; i++) {
     var fontInfo = fonts[i];
-    fontInfo['familyName'] = familyName;
-    fontInfo['url'] = url;
+    fontInfo.setFamilyName(familyName);
+    fontInfo.setUrl(url);
     var tachyFont = new tachyfont.TachyFont(fontInfo, params);
     tachyFontSet.addFont(tachyFont);
     // TODO(bstell): need to support slant/width/etc.
-    var fontId = tachyfont.fontId(familyName, fontInfo['weight']);
+    var fontId = tachyfont.fontId(familyName, fontInfo.getWeight());
     tachyFontSet.fontIdToIndex[fontId] = i;
   }
   var msg;

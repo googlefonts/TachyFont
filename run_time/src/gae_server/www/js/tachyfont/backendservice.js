@@ -25,6 +25,7 @@ goog.require('goog.events');
 goog.require('goog.functions');
 goog.require('goog.net.EventType');
 goog.require('goog.net.XhrIo');
+goog.require('tachyfont.FontInfo');
 
 
 goog.scope(function() {
@@ -47,7 +48,7 @@ var BackendService = tachyfont.BackendService;
 /**
  * Request codepoints from the backend server.
  *
- * @param {Object.<string, string>} fontInfo containing info on the font; ie:
+ * @param {!tachyfont.FontInfo} fontInfo containing info on the font; ie:
  *     name, version, ...
  * @param {Array.<number>} codes Codepoints to be requested
  * @return {goog.Promise} Promise to return ArrayBuffer for the response bundle
@@ -57,7 +58,7 @@ BackendService.prototype.requestCodepoints = goog.functions.NULL;
 
 /**
  * Request a font's base data from the backend server.
- * @param {Object.<string, string>} fontInfo containing info on the font; ie:
+ * @param {!tachyfont.FontInfo} fontInfo containing info on the font; ie:
  *     name, version, ...
  * @return {goog.Promise} Promise to return ArrayBuffer for the base.
  */
