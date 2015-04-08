@@ -226,6 +226,9 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
               for (var i = 0; i < tachyFonts.length; i++) {
                 var incrfont = tachyFonts[i].incrfont;
                 var loadedBase = arrayBaseData[i];
+                var fileInfo = loadedBase[0];
+                incrfont.cmapMapping_ = 
+                  tachyfont.IncrementalFontUtils.getCmapMapping(fileInfo);
                 // If not persisted then need to wait for DOMContentLoaded to
                 // set the font.
                 if (!incrfont.alreadyPersisted) {
