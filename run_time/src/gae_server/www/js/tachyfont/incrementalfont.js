@@ -226,6 +226,14 @@ tachyfont.IncrementalFont.obj_ = function(fontInfo, params, backendService) {
   this.fontInfo = fontInfo;
 
   this.fontName = fontInfo['name'];
+
+  /** 
+   * The character to format 4 / format 12 mapping.
+   * 
+   * @private {Object.<Array.<!number, ?number, ?number>>}
+   */
+  this.cmapMapping_;
+
   this.charsToLoad = {};
   //TODO(bstell): need to fix the request size.
   this.req_size = params['req_size'] || 2200;
@@ -359,6 +367,7 @@ tachyfont.IncrementalFont.obj_.prototype.processUrlBase_ =
   var rle_fontdata = new DataView(fetchedBytes, fileinfo.headSize);
   var raw_base = tachyfont.RLEDecoder.rleDecode([header_data, rle_fontdata]);
   var raw_basefont = new DataView(raw_base.buffer, header_data.byteLength);
+	this.cmapMapping = tachyfont.IncrementalFontUtils.getCmapMapping(fileinfo);
   tachyfont.IncrementalFontUtils.writeCmap12(raw_basefont, fileinfo);
   tachyfont.IncrementalFontUtils.writeCmap4(raw_basefont, fileinfo);
   tachyfont.IncrementalFontUtils.writeCharsetFormat2(raw_basefont, fileinfo);

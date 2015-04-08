@@ -19,6 +19,7 @@
 
 goog.provide('tachyfont.IncrementalFontUtils');
 
+goog.require('goog.asserts');
 goog.require('goog.log');
 goog.require('tachyfont.BinaryFontEditor');
 
@@ -177,6 +178,47 @@ tachyfont.IncrementalFontUtils.injectCharacters = function(obj, baseFont,
   // time_end('inject')
 
   return baseFont;
+};
+
+
+/**
+ * Get the character to glyphId mapping.
+ * @param {DataView} baseFont Base font.
+ * @param {Object} headerInfo Header information.
+ * @return {Object.<Array.<!number, ?number, ?number>>} Map of chars to 
+ *     [glyphId, format4Id, format12Id].
+ */
+tachyfont.IncrementalFontUtils.getCmapMapping = function(headerInfo) {
+  var cmapMapping = {};
+  // TODO(bstell): parse format 4.
+  if (!headerInfo.cmap12) {
+    debugger; // TODO(bstell): need to handle this.
+    return cmapMapping;
+  }
+  var n12Groups = headerInfo.cmap12.nGroups;
+  var segments = headerInfo.compact_gos.cmap12.segments;
+  for (var i = 0; i < n12Groups; i++) {
+    var startChar = segments[i][0];
+    var length = segments[i][1];
+    var startGlyphId = segments[i][2];
+    for (var j = 0; j < length; j++) {
+      var char = startChar + j;
+      var charInfo = cmapMapping[char];
+      if (goog.DEBUG) {
+        if (charInfo) {
+          debugger;
+          goog.asserts.assert('format 4/12 glyphId', 
+            charInfo[1] == charInfo[2]);
+        }
+      }
+      if (!charInfo) {
+        charInfo = [startGlyphId + i, null, null];
+        cmapMapping[char] = charInfo;
+      }
+      charInfo[2] = i;
+    }
+  }
+  return cmapMapping;
 };
 
 
