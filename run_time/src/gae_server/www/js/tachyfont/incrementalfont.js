@@ -25,6 +25,7 @@ goog.require('goog.log');
 goog.require('goog.log.Level');
 goog.require('goog.math');
 goog.require('tachyfont.DemoBackendService');
+goog.require('tachyfont.FontInfo');
 goog.require('tachyfont.GoogleBackendService');
 goog.require('tachyfont.IncrementalFontUtils');
 goog.require('tachyfont.RLEDecoder');
@@ -98,16 +99,16 @@ tachyfont.IncrementalFont.CHARLIST_DIRTY = 'charlist_dirty';
  * 6. Create a "@font-face" rule (need the data to make the blob URL).
  * 7. When the base is available set the class visibility=visible
  *
- * @param {Object.<string, string>} fontInfo Info about this font.
+ * @param {!tachyfont.FontInfo} fontInfo Info about this font.
  * @param {Object} params Optional parameters.
  * @return {tachyfont.IncrementalFont.obj_} The incremental font manager object.
  */
 tachyfont.IncrementalFont.createManager = function(fontInfo, params) {
-  var fontName = fontInfo['name'];
+  var fontName = fontInfo.getName();
   var backendService =
-      fontInfo['fontkit'] ?
-      new tachyfont.GoogleBackendService(fontInfo['url']) :
-      new tachyfont.DemoBackendService(fontInfo['url']);
+      fontInfo.getFontKit() ?
+      new tachyfont.GoogleBackendService(fontInfo.getUrl()) :
+      new tachyfont.DemoBackendService(fontInfo.getUrl());
 
   var initialVisibility = false;
   var initialVisibilityStr = 'hidden';
@@ -210,7 +211,7 @@ tachyfont.IncrementalFont.createManager = function(fontInfo, params) {
 
 /**
  * IncrFontIDB.obj_ - A class to handle interacting the IndexedDB.
- * @param {Object.<string, string>} fontInfo Info about this font.
+ * @param {!tachyfont.FontInfo} fontInfo Info about this font.
  * @param {Object} params Optional parameters.
  * @param {!tachyfont.BackendService} backendService object used to generate
  *     backend requests.
@@ -221,19 +222,11 @@ tachyfont.IncrementalFont.obj_ = function(fontInfo, params, backendService) {
   /**
    * Information about the fonts
    *
-   * @type {Object.<string, string>}
+   * @type {!tachyfont.FontInfo}
    */
   this.fontInfo = fontInfo;
 
-  this.fontName = fontInfo['name'];
-
-  /** 
-   * The character to format 4 / format 12 mapping.
-   * 
-   * @private {Object.<Array.<!number, ?number, ?number>>}
-   */
-  this.cmapMapping_;
-
+  this.fontName = fontInfo.getName();
   this.charsToLoad = {};
   //TODO(bstell): need to fix the request size.
   this.req_size = params['req_size'] || 2200;
@@ -245,7 +238,7 @@ tachyfont.IncrementalFont.obj_ = function(fontInfo, params, backendService) {
    */
   this.needToSetFont = false;
 
-  this.url = fontInfo['url'];
+  this.url = fontInfo.getUrl();
   this.charsURL = '/incremental_fonts/request';
   this.alreadyPersisted = false;
   this.persistData = true;
@@ -336,7 +329,7 @@ tachyfont.IncrementalFont.obj_.prototype.getPersistedBase = function() {
 /**
  * Get the font base from a URL.
  * @param {Object} backendService The object that interacts with the backend.
- * @param {Object.<string, string>} fontInfo Info about this font.
+ * @param {!tachyfont.FontInfo} fontInfo Info about this font.
  * @return {goog.Promise} The base bytes in DataView.
  */
 tachyfont.IncrementalFont.obj_.prototype.getUrlBase =
@@ -398,7 +391,7 @@ tachyfont.IncrementalFont.obj_.prototype.setFont = function(fontdata, isTtf) {
         this.finishPrecedingSetFont_ = new goog.Promise(function(resolve) {
           if (goog.DEBUG) {
             goog.log.fine(tachyfont.logger, 'setFont ' +
-                this.fontInfo['name']);
+                this.fontInfo.getName());
           }
           var mimeType, format;
           if (isTtf) {
@@ -548,7 +541,7 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars = function() {
                   neededCodes = tachyfont.possibly_obfuscate(neededCodes,
                   tmp_charlist);
                   if (goog.DEBUG) {
-                    goog.log.info(tachyfont.logger, that.fontInfo['name'] +
+                    goog.log.info(tachyfont.logger, that.fontInfo.getName() +
                     ': load ' + neededCodes.length + ' codes:');
                     goog.log.log(tachyfont.logger, goog.log.Level.FINER,
                     '' + neededCodes);
@@ -910,7 +903,7 @@ tachyfont.IncrementalFont.obj_.prototype.getData_ = function(idb, name) {
 
 /**
  * TachyFont - A namespace.
- * @param {Object.<string, string>} fontInfo The font info.
+ * @param {!tachyfont.FontInfo} fontInfo The font info.
  * @param {Object} params Optional parameters.
  * @constructor
  */
@@ -951,7 +944,7 @@ tachyfont.TachyFont.prototype.loadNeededChars = function() {
  * existing \@font-face is deleted and the temporary \@font-face switched to be
  * the desired \@font-face.
  *
- * @param {Object.<string, string>} fontInfo Info about this font.
+ * @param {!tachyfont.FontInfo} fontInfo Info about this font.
  * @param {string} format The \@font-face format.
  * @param {string} blobUrl The blobUrl to the font data.
  * @return {goog.Promise} The promise resolves when the glyphs are displaying.
@@ -959,11 +952,11 @@ tachyfont.TachyFont.prototype.loadNeededChars = function() {
 tachyfont.IncrementalFont.obj_.prototype.setFontNoFlash =
     function(fontInfo, format, blobUrl) {
   // The desired @font-face font-family.
-  var fontFamily = fontInfo['familyName'];
+  var fontFamily = fontInfo.getFamilyName();
   // The temporary @font-face font-family.
   var tmpFontFamily = 'tmp-' + fontFamily;
-  var fontName = fontInfo['name']; // The font name.
-  var weight = fontInfo['weight'];
+  var fontName = fontInfo.getName(); // The font name.
+  var weight = fontInfo.getWeight();
   var sheet = tachyfont.IncrementalFontUtils.getStyleSheet();
 
   // Create a temporary @font-face rule to transfer the blobUrl data from

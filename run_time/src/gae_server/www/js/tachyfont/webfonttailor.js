@@ -19,6 +19,7 @@
 
 goog.provide('webfonttailor');
 
+goog.require('tachyfont.FontInfo');
 goog.require('tachyfont.FontsInfo');
 
 
@@ -28,20 +29,13 @@ goog.require('tachyfont.FontsInfo');
  * @type {!Object.<string, !Object.<string, string>>}
  */
 webfonttailor.JaNormalInfo = {
-  '100': { 'name': 'NotoSansJP-Thin', 'weight': '100',
-    'class': 'NotoSansJP-Thin' },
-  '200': { 'name': 'NotoSansJP-Light', 'weight': '200',
-    'class': 'NotoSansJP-light' },
-  '300': { 'name': 'NotoSansJP-DemiLight', 'weight': '300',
-    'class': 'NotoSansJP-DemiLight' },
-  '400': { 'name': 'NotoSansJP-Regular', 'weight': '400',
-    'class': 'NotoSansJP-Regular' },
-  '500': { 'name': 'NotoSansJP-Medium', 'weight': '500',
-    'class': 'NotoSansJP-Medium' },
-  '700': { 'name': 'NotoSansJP-Bold', 'weight': '700',
-    'class': 'NotoSansJP-Bold' },
-  '900': { 'name': 'NotoSansJP-Black', 'weight': '900',
-    'class': 'NotoSansJP-Black' }
+  '100': { 'name': 'NotoSansJP-Thin', 'weight': '100' },
+  '200': { 'name': 'NotoSansJP-Light', 'weight': '200' },
+  '300': { 'name': 'NotoSansJP-DemiLight', 'weight': '300' },
+  '400': { 'name': 'NotoSansJP-Regular', 'weight': '400' },
+  '500': { 'name': 'NotoSansJP-Medium', 'weight': '500' },
+  '700': { 'name': 'NotoSansJP-Bold', 'weight': '700' },
+  '900': { 'name': 'NotoSansJP-Black', 'weight': '900' }
 };
 
 
@@ -89,7 +83,8 @@ webfonttailor.FontFamliesInfo = {
 webfonttailor.getTachyFontsInfo = function(fontFamlies, languages, faces,
     options) {
   if (webfonttailor.hasOwnProperty('alternate')) {
-    return webfonttailor.alternate.getTachyFontsInfo(fontFamlies, languages,
+    var obj = webfonttailor['alternate'];
+    return obj.getTachyFontsInfo(fontFamlies, languages,
         faces, options);
   }
   var fonts = [];
@@ -114,7 +109,8 @@ webfonttailor.getTachyFontsInfo = function(fontFamlies, languages, faces,
           var weight = weights[l];
           var font = weightsInfo[weight];
           if (font) {
-            fonts.push(font);
+            var fontInfo = new tachyfont.FontInfo(font['name'], font['weight']);
+            fonts.push(fontInfo);
           }
         }
       }

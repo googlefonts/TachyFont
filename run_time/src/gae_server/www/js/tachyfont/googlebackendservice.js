@@ -21,6 +21,7 @@ goog.provide('tachyfont.GoogleBackendService');
 
 goog.require('goog.Promise');
 goog.require('tachyfont.BackendService');
+goog.require('tachyfont.FontInfo');
 goog.require('tachyfont.GlyphBundleResponse');
 
 
@@ -130,18 +131,22 @@ GoogleBackendService.prototype.log = function(message) {
 
 /**
  * @private
- * @param {Object.<string, string>} fontInfo containing info on the font; ie:
- *                 fontkit, familyName = Full font family name, not compressed
- *                 ie. "Noto Sans", and name = Unique name for this particular
- *                 instance of the font (style/weight) ie. "notosans100".
+ * @param {!tachyfont.FontInfo} fontInfo containing info on the font; ie:
+ *     fontkit, familyPath = the font's directory; ie. "notosansjapanese", and
+ *     name = Unique name for this particular instance of the font
+ *     (style/weight) ie. "notosans100".
  * @param {string} prefix Action prefix in the URL.
  * @param {string} suffix Action suffset in the URL.
  * @return {string} URL for the specified font action.
  */
-GoogleBackendService.prototype.getUrl_ = function(
-    fontInfo, prefix, suffix) {
-  return this.baseUrl + '/' + prefix + '/' + fontInfo['familyPath'] + '/' +
-      fontInfo['version'] + '/' + fontInfo['fontkit'] + '.' + suffix;
+GoogleBackendService.prototype.getUrl_ = function(fontInfo, prefix, suffix) {
+  var familyPath = fontInfo.getfamilyPath();
+  if (!familyPath) {
+    // Using familyPath is preferred over familyName.
+    familyPath = fontInfo.getFamilyName().replace(/ /g, '').toLowerCase();
+  }
+  return this.baseUrl + '/' + prefix + '/' + familyPath + '/' +
+      fontInfo.getVersion() + '/' + fontInfo.getFontKit() + '.' + suffix;
 };
 
 
@@ -150,8 +155,7 @@ GoogleBackendService.prototype.getUrl_ = function(
  * @param {Array.<number>} codes list of code points to compress.
  * @return {string} compressed code point list.
  */
-GoogleBackendService.prototype.compressedGlyphsList_ = function(
-    codes) {
+GoogleBackendService.prototype.compressedGlyphsList_ = function(codes) {
   var result = '';
   for (var i = 0; i < codes.length; i++) {
     var cp = codes[i];

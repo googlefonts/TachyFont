@@ -22,6 +22,7 @@ goog.provide('tachyfont.IncrementalFontUtils');
 goog.require('goog.asserts');
 goog.require('goog.log');
 goog.require('tachyfont.BinaryFontEditor');
+goog.require('tachyfont.FontInfo');
 
 
 /**
@@ -425,7 +426,7 @@ tachyfont.IncrementalFontUtils.sanitizeBaseFont = function(obj, baseFont) {
 /**
  * Set a style's visibility.
  * @param {Object} style The style object
- * @param {Object.<string, string>} fontInfo The font information object
+ * @param {tachyfont.FontInfo} fontInfo The font information object
  * @param {boolean} visible True is setting visibility to visible.
  * @return {Object} New style object for given font and visibility
  */
@@ -444,9 +445,9 @@ tachyfont.IncrementalFontUtils.setVisibility = function(style, fontInfo,
   } else {
     visibility = 'hidden';
   }
-  var rule = '.' + fontInfo['name'] + ' { ' +
-      'font-family: ' + fontInfo['familyName'] + '; ' +
-      'font-weight: ' + fontInfo['weight'] + '; ' +
+  var rule = '.' + fontInfo.getName() + ' { ' +
+      'font-family: ' + fontInfo.getFamilyName() + '; ' +
+      'font-weight: ' + fontInfo.getWeight() + '; ' +
       'visibility: ' + visibility + '; }';
 
   style.sheet.insertRule(rule, style.sheet.cssRules.length);
@@ -457,7 +458,7 @@ tachyfont.IncrementalFontUtils.setVisibility = function(style, fontInfo,
 
 /**
  * Add the '@font-face' rule
- * @param {Object.<string, string>} fontInfo Info about this font.
+ * @param {tachyfont.FontInfo} fontInfo Info about this font.
  * @param {DataView} data The font data.
  * @param {string} mimeType The mime-type of the font.
   * @return {string} The blob URL.

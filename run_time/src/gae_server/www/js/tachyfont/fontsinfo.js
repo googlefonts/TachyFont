@@ -19,30 +19,51 @@
 
 goog.provide('tachyfont.FontsInfo');
 
+goog.require('tachyfont.FontInfo');
+
 
 
 /**
- * The information for the fonts.
+ * The information for a set of fonts.
  *
- * @param {!Object} fonts .
- * @param {string} url .
+ * @param {!Array.<tachyfont.FontInfo>} fonts .
+ * @param {string} url The URL of the Tachyfont server.
  * @constructor
  */
 tachyfont.FontsInfo = function(fonts, url) {
-  /** @type {!Object} */
-  this.fonts = fonts;
+  /** @private {!Array.<tachyfont.FontInfo>} */
+  this.fonts_ = fonts;
 
-  /** @type {string} */
-  this.url = url;
+  /** @private {string} */
+  this.url_ = url;
+};
+
+
+/**
+ * Get the list of information on the TachyFonts.
+ *
+ * @return {Array.<tachyfont.FontInfo>} The URL to the TachyFont server.
+ */
+tachyfont.FontsInfo.prototype.getFonts = function() {
+  return this.fonts_;
+};
+
+
+/**
+ * Get the URL to the TachyFont.
+ *
+ * @return {string} The URL to the TachyFont server.
+ */
+tachyfont.FontsInfo.prototype.getUrl = function() {
+  return this.url_;
 };
 
 
 goog.scope(function() {
 goog.exportSymbol('tachyfont.FontsInfo', tachyfont.FontsInfo);
-var FontsInfoPrototype = tachyfont.FontsInfo.prototype;
-goog.exportProperty(FontsInfoPrototype, 'fonts',
-    FontsInfoPrototype.fonts);
-goog.exportProperty(FontsInfoPrototype, 'url',
-    FontsInfoPrototype.url);
+goog.exportProperty(tachyfont.FontsInfo.prototype, 'getFonts',
+                    tachyfont.FontsInfo.prototype.getFonts);
+goog.exportProperty(tachyfont.FontsInfo.prototype, 'getUrl',
+                    tachyfont.FontsInfo.prototype.getUrl);
 });  // goog.scope
 
