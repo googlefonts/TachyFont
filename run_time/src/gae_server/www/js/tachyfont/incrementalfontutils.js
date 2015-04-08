@@ -190,7 +190,44 @@ tachyfont.IncrementalFontUtils.injectCharacters = function(obj, baseFont,
  */
 tachyfont.IncrementalFontUtils.getCmapMapping = function(headerInfo) {
   var cmapMapping = {};
-  // TODO(bstell): parse format 4.
+  // Parse format 4.
+  if (headerInfo.cmap4) {
+    var segments = headerInfo.compact_gos.cmap4.segments;
+    var glyphIdArray = headerInfo.compact_gos.cmap4.glyphIdArray;
+    var glyphIdIndex = 0;
+    for (var i = 0; i < segments.length; i++) {
+      var startChar = segments[i][0];
+      var endChar = segments[i][1];
+      var idDelta = segments[i][2];
+      var idRangeOffset = segments[i][3];
+      var length = endChar - startChar + 1;
+      for (var j = 0; j < length; j++) {
+        var char = startChar + j;
+        var glyphId = null;
+        if (idRangeOffset == 0) {
+          glyphId = (char + idDelta) % 65536;
+        } else {
+          if (goog.DEBUG) {
+            // TODO(bstell): verify this code.
+            debugger;
+          }
+          glyphId = glyphIdArray[glyphIdIndex++];
+          if (glyphId == 0) {
+            // This char is not mapped in the font.
+            if (goog.DEBUG) {
+              // TODO(bstell): verify this code.
+              debugger;
+            }
+            continue;
+          }
+        }
+        charInfo = [glyphId, i, null];
+        cmapMapping[char] = charInfo;
+      }
+    }
+  }
+
+
   if (!headerInfo.cmap12) {
     debugger; // TODO(bstell): need to handle this.
     return cmapMapping;
@@ -204,15 +241,15 @@ tachyfont.IncrementalFontUtils.getCmapMapping = function(headerInfo) {
     for (var j = 0; j < length; j++) {
       var char = startChar + j;
       var charInfo = cmapMapping[char];
+      var glyphId = startGlyphId + j;
       if (goog.DEBUG) {
         if (charInfo) {
-          debugger;
-          goog.asserts.assert('format 4/12 glyphId', 
-            charInfo[1] == charInfo[2]);
+          goog.asserts.assert(charInfo[0] == glyphId,
+            'format 4/12 glyphId mismatch');
         }
       }
       if (!charInfo) {
-        charInfo = [startGlyphId + i, null, null];
+        charInfo = [glyphId, null, null];
         cmapMapping[char] = charInfo;
       }
       charInfo[2] = i;
