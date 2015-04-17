@@ -24,6 +24,7 @@ goog.require('goog.Promise');
 goog.require('goog.log');
 goog.require('goog.log.Level');
 goog.require('goog.math');
+goog.require('tachyfont.CharCmapInfo');
 goog.require('tachyfont.DemoBackendService');
 goog.require('tachyfont.FontInfo');
 goog.require('tachyfont.GoogleBackendService');
@@ -227,6 +228,16 @@ tachyfont.IncrementalFont.obj_ = function(fontInfo, params, backendService) {
   this.fontInfo = fontInfo;
 
   this.fontName = fontInfo.getName();
+  
+  this.fileInfo_;
+
+  /** 
+   * The character to format 4 / format 12 mapping.
+   * 
+   * @private {Object.<string, !tachyfont.CharCmapInfo>}
+   */
+  this.cmapMapping_;
+
   this.charsToLoad = {};
   //TODO(bstell): need to fix the request size.
   this.req_size = params['req_size'] || 2200;
@@ -311,6 +322,7 @@ tachyfont.IncrementalFont.obj_.prototype.getPersistedBase = function() {
         var idb = arr[0];
         var filedata = new DataView(arr[1]);
         var fileinfo = tachyfont.IncrementalFontUtils.parseBaseHeader(filedata);
+        this.fileInfo_ = fileinfo;
         var fontdata = new DataView(arr[1], fileinfo.headSize);
         return goog.Promise.all([goog.Promise.resolve(fileinfo),
               goog.Promise.resolve(fontdata)]);
@@ -356,6 +368,7 @@ tachyfont.IncrementalFont.obj_.prototype.processUrlBase_ =
   //tachyfont.timer1.start('uncompact base');
   var fetchedData = new DataView(fetchedBytes);
   var fileinfo = tachyfont.IncrementalFontUtils.parseBaseHeader(fetchedData);
+  this.fileInfo_ = fileinfo;
   var header_data = new DataView(fetchedBytes, 0, fileinfo.headSize);
   var rle_fontdata = new DataView(fetchedBytes, fileinfo.headSize);
   var raw_base = tachyfont.RLEDecoder.rleDecode([header_data, rle_fontdata]);
@@ -508,6 +521,7 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars = function() {
   //   previous request to resolve.
   this.finishPrecedingCharsRequest_ = this.finishPrecedingCharsRequest_.
       then(function() {
+        // TODO(bstell): use charCmapInfo to only request chars in the font.
         var charArray = Object.keys(that.charsToLoad);
         // Check if there are any new characters.
         // TODO(bstell): until the serializing is fixed this stops multiple
@@ -532,6 +546,8 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars = function() {
                 for (var i = 0; i < charArray.length; i++) {
                   var c = charArray[i];
                   if (!tmp_charlist[c]) {
+                    // TODO(bstell): use cmapMapping_ to determine if the font
+                    // supports that code. If not, then skip it.
                     neededCodes.push(tachyfont.charToCode(c));
                     tmp_charlist[c] = 1;
                   }
@@ -595,8 +611,20 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars = function() {
                       ' injectCharacters: glyph count / data length = ' +
                       bundleResponse.getGlyphCount() + ' / ' + dataLength);
                     }
+                    //debugger;
+                    var glyphToCodeMap = {};
+                    for (var i = 0; i < neededCodes.length; i++) {
+                      var code = neededCodes[i];
+                      var charCmapInfo = that.cmapMapping_[code];
+                      if (charCmapInfo) {
+                        // TODO(bstell): need to handle multipe codes sharing a glyphId
+                        glyphToCodeMap[charCmapInfo.glyphId] = code;
+                      }
+                    }
+                    // TODO(bstell): injectCharacters should be a object function (not static)
                     fontdata = tachyfont.IncrementalFontUtils.injectCharacters(
-                    fileinfo, fontdata, bundleResponse);
+                      fileinfo, fontdata, bundleResponse, that.cmapMapping_,
+                      glyphToCodeMap);
                     var msg;
                     if (remaining.length) {
                       msg = 'display ' + Object.keys(charlist).length +
