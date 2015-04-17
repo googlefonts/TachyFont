@@ -17,6 +17,9 @@
 goog.addDependency('../../../tachyfont/backendservice.js',
     ['tachyfont.BackendService', 'tachyfont.GoogleBackendService'],
     ['goog.Promise', 'goog.net.XhrIo', 'goog.events', 'goog.net.EventType']);
+goog.addDependency('../../../tachyfont/charcmapinfo.js',
+    ['tachyfont.CharCmapInfo'],
+    []);
 goog.addDependency('../../../tachyfont/demobackendservice.js',
     ['tachyfont.DemoBackendService'],
     ['goog.Promise', 'goog.net.XhrIo', 'goog.events', 'goog.net.EventType',
