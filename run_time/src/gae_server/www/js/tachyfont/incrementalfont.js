@@ -321,11 +321,11 @@ tachyfont.IncrementalFont.obj_.prototype.getPersistedBase = function() {
       then(function(arr) {
         var idb = arr[0];
         var filedata = new DataView(arr[1]);
-        var fileinfo = tachyfont.IncrementalFontUtils.parseBaseHeader(filedata);
-        this.fileInfo_ = fileinfo;
-        var fontdata = new DataView(arr[1], fileinfo.headSize);
-        return goog.Promise.all([goog.Promise.resolve(fileinfo),
-              goog.Promise.resolve(fontdata)]);
+        var fileInfo = tachyfont.IncrementalFontUtils.parseBaseHeader(filedata);
+        this.fileInfo_ = fileInfo;
+        var fontData = new DataView(arr[1], fileInfo.headSize);
+        return goog.Promise.all([goog.Promise.resolve(fileInfo),
+              goog.Promise.resolve(fontData)]);
       }).
       thenCatch(function(e) {
         if (goog.DEBUG) {
@@ -359,7 +359,7 @@ tachyfont.IncrementalFont.obj_.prototype.getUrlBase =
 /**
  * Process the font base fetched from a URL.
  * @param {ArrayBuffer} fetchedBytes The fetched data.
- * @return {Array.<Object>} The fileinfo (information about the font bytes) and
+ * @return {Array.<Object>} The fileInfo (information about the font bytes) and
  *     the font data ready for character data to be added.
  * @private
  */
@@ -367,29 +367,29 @@ tachyfont.IncrementalFont.obj_.prototype.processUrlBase_ =
     function(fetchedBytes) {
   //tachyfont.timer1.start('uncompact base');
   var fetchedData = new DataView(fetchedBytes);
-  var fileinfo = tachyfont.IncrementalFontUtils.parseBaseHeader(fetchedData);
-  this.fileInfo_ = fileinfo;
-  var header_data = new DataView(fetchedBytes, 0, fileinfo.headSize);
-  var rle_fontdata = new DataView(fetchedBytes, fileinfo.headSize);
-  var raw_base = tachyfont.RLEDecoder.rleDecode([header_data, rle_fontdata]);
-  var raw_basefont = new DataView(raw_base.buffer, header_data.byteLength);
-  tachyfont.IncrementalFontUtils.writeCmap12(raw_basefont, fileinfo);
-  tachyfont.IncrementalFontUtils.writeCmap4(raw_basefont, fileinfo);
-  tachyfont.IncrementalFontUtils.writeCharsetFormat2(raw_basefont, fileinfo);
-  var basefont = tachyfont.IncrementalFontUtils.sanitizeBaseFont(fileinfo,
+  var fileInfo = tachyfont.IncrementalFontUtils.parseBaseHeader(fetchedData);
+  this.fileInfo_ = fileInfo;
+  var headerData = new DataView(fetchedBytes, 0, fileInfo.headSize);
+  var rleFontData = new DataView(fetchedBytes, fileInfo.headSize);
+  var raw_base = tachyfont.RLEDecoder.rleDecode([headerData, rleFontData]);
+  var raw_basefont = new DataView(raw_base.buffer, headerData.byteLength);
+  tachyfont.IncrementalFontUtils.writeCmap12(raw_basefont, fileInfo);
+  tachyfont.IncrementalFontUtils.writeCmap4(raw_basefont, fileInfo);
+  tachyfont.IncrementalFontUtils.writeCharsetFormat2(raw_basefont, fileInfo);
+  var basefont = tachyfont.IncrementalFontUtils.sanitizeBaseFont(fileInfo,
       raw_basefont);
   //tachyfont.timer1.end('uncompact base');
-  return [fileinfo, basefont];
+  return [fileInfo, basefont];
 };
 
 
 /**
  * Set the \@font-face rule.
- * @param {DataView} fontdata The font dataview.
+ * @param {DataView} fontData The font dataview.
  * @param {boolean} isTtf True if the font is a TrueType font.
  * @return {goog.Promise} The promise resolves when the glyphs are displaying.
  */
-tachyfont.IncrementalFont.obj_.prototype.setFont = function(fontdata, isTtf) {
+tachyfont.IncrementalFont.obj_.prototype.setFont = function(fontData, isTtf) {
   if (goog.DEBUG) {
     goog.log.log(tachyfont.logger, goog.log.Level.FINER,
         'setFont: wait for preceding');
@@ -415,7 +415,7 @@ tachyfont.IncrementalFont.obj_.prototype.setFont = function(fontdata, isTtf) {
             format = 'opentype';
           }
           var blobUrl = tachyfont.IncrementalFontUtils.getBlobUrl(
-             this.fontInfo, fontdata, mimeType);
+             this.fontInfo, fontData, mimeType);
 
           return this.setFontNoFlash(this.fontInfo, format, blobUrl).
              then(function() {
@@ -597,8 +597,8 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars = function() {
               then(function(bundleResponse) {
                 return that.getBase.
                 then(function(arr) {
-                  var fileinfo = arr[0];
-                  var fontdata = arr[1];
+                  var fileInfo = arr[0];
+                  var fontData = arr[1];
                   var dataLength = 0;
                   if (bundleResponse != null) {
                     dataLength = bundleResponse.getDataLength();
@@ -622,8 +622,8 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars = function() {
                       }
                     }
                     // TODO(bstell): injectCharacters should be a object function (not static)
-                    fontdata = tachyfont.IncrementalFontUtils.injectCharacters(
-                      fileinfo, fontdata, bundleResponse, that.cmapMapping_,
+                    fontData = tachyfont.IncrementalFontUtils.injectCharacters(
+                      fileInfo, fontData, bundleResponse, that.cmapMapping_,
                       glyphToCodeMap);
                     var msg;
                     if (remaining.length) {
@@ -637,8 +637,8 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars = function() {
                     }
                     // Update the data promises.
                     that.getBase = goog.Promise.all(
-                        [goog.Promise.resolve(fileinfo),
-                      goog.Promise.resolve(fontdata)]);
+                        [goog.Promise.resolve(fileInfo),
+                      goog.Promise.resolve(fontData)]);
                     that.getCharList = goog.Promise.resolve(charlist);
 
                     // Persist the data.
