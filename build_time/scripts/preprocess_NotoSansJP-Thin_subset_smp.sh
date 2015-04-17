@@ -7,7 +7,7 @@ cd `dirname $0`
 #echo cwd = $PWD
 
 # The font to preprocess (relative to the top dir).
-FONT='src_fonts/NotoSansJP/NotoSansJP-Thin_subset_bmp.otf'
+FONT='src_fonts/NotoSansJP/NotoSansJP-Thin_subset_smp.otf'
 
 # Get the command.
 PREPROCESS_CMD="./preprocess_font.sh"
