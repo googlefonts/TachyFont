@@ -21,10 +21,8 @@
     
     // Hand build a FontsInfo.
     var url = '';
-    var fonts = [
-      { 'name': 'NotoSansJP-Thin_subset', 'weight': '100', 
-        'class': 'NotoSansJP-Thin_subset' }
-    ];
+    var font = new tachyfont.FontInfo('NotoSansJP-Thin_subset', '100');
+    var fonts = [font];
     var fontsInfo = new tachyfont.FontsInfo(fonts, url);
     var tachyFontSet = tachyfont.loadFonts('NotoSansJP-Thin_subset', fontsInfo);
   </script>
