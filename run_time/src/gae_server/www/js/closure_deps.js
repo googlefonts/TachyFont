@@ -40,6 +40,9 @@ goog.addDependency('../../../tachyfont/incrementalfont.js',
 goog.addDependency('../../../tachyfont/incrementalfontutils.js',
     ['tachyfont.IncrementalFontUtils'],
     ['goog.log', 'tachyfont.BinaryFontEditor']);
+goog.addDependency('../../../misc_utils.js',
+    ['tachyfont_misc_utils'],
+    []);
 goog.addDependency('../../../tachyfont/rledecoder.js',
     ['tachyfont.RLEDecoder'],
     []);
