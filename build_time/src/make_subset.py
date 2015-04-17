@@ -31,6 +31,8 @@ def main(args):
   """
   parser = argparse.ArgumentParser()
   parser.add_argument('fontfile', help='Input font file')
+  parser.add_argument('--subset_postfix', default='',
+                      help='Postfix to the subset extension')
   parser.add_argument('--text', default='',
                       help='Text to include in the subset')
   parser.add_argument('--unicodes', default='',
@@ -71,7 +73,8 @@ def main(args):
   dirname = os.path.dirname(fontfile)
   basename = os.path.basename(fontfile)
   filename, extension = os.path.splitext(basename)
-  output_file = dirname + '/' + filename + '_subset' + extension
+  subset_postfix = cmd_args.subset_postfix
+  output_file = dirname + '/' + filename + '_subset' + subset_postfix + extension
   print "output_file =", output_file
   font = load_font(fontfile, options, lazy=False)
 
