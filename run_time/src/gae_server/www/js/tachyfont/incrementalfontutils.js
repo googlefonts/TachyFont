@@ -86,11 +86,10 @@ tachyfont.IncrementalFontUtils.injectCharacters = function(headerInfo, baseFont,
     //   "The actual local offset divided by 2 is stored."
     offsetDivisor = 2;
   }
-  var segEd = new tachyfont.BinaryFontEditor(baseFont,
-    headerInfo.cmap12.offset + 16);
-  var segments = headerInfo.compact_gos.cmap12.segments;
+  var glyphIds = [];
   for (var i = 0; i < count; i += 1) {
     var id = bundleBinEd.getUint16();
+    glyphIds.push(id);
     var nextId = id + 1;
     var hmtx, vmtx;
     if (flags & tachyfont.IncrementalFontUtils.FLAGS.HAS_HMTX) {
@@ -105,67 +104,6 @@ tachyfont.IncrementalFontUtils.injectCharacters = function(headerInfo, baseFont,
     }
     var offset = bundleBinEd.getUint32();
     var length = bundleBinEd.getUint16();
-    var code = glyphToCodeMap[id];
-    if (goog.DEBUG) {
-      goog.log.fine(tachyfont.logger, 'code = ' + code);
-
-    }
-    var charCmapInfo = cmapMapping[code];
-    if (!charCmapInfo) {
-      if (goog.DEBUG) {
-        goog.log.error(tachyfont.logger, 'format 12, code ' + code +
-          ': no CharCmapInfo');
-        debugger;
-      }
-      continue;
-    }
-    // TODO(bstell): Fix format 4
-
-    // Set the glyphId for format 12
-    var format12Seg = charCmapInfo.format12Seg;
-    var segment = segments[format12Seg];
-    var segStartCode = segment[0];
-    var segEndCode = segStartCode + segment[1] - 1;
-    var segStartGlyphId = segment[2];
-    var segOffset = format12Seg * 12;
-    segEd.seek(segOffset);
-    var inMemoryStartCode = segEd.getUint32();
-    var inMemoryEndCode = segEd.getUint32();
-    var inMemoryGlyphId = segEd.getUint32();
-    if (goog.DEBUG) {
-      // Check the code point.
-      if (inMemoryStartCode != segStartCode) {
-        goog.log.error(tachyfont.logger, 'format 12, code ' + code + ', seg ' 
-          + format12Seg + ': startCode mismatch');
-        debugger;
-      }
-      if (inMemoryEndCode != segEndCode) {
-        goog.log.error(tachyfont.logger, 'format 12 code ' + code + ', seg ' +
-          format12Seg + ': endCode mismatch');
-        debugger;
-      }
-      if (segStartCode != segEndCode) { // TODO(bstell): check length
-        goog.log.error(tachyfont.logger, 'format 12 code ' + code + ', seg ' +
-          format12Seg + ': length != 1');
-        debugger;
-      }
-      if (inMemoryGlyphId != 0) {
-        if (inMemoryGlyphId == segStartGlyphId) {
-          goog.log.error(tachyfont.logger, 'format 12 code ' + code + ', seg ' +
-            format12Seg + ' glyphId already set');
-        } else {
-          goog.log.error(tachyfont.logger, 'format 12 code ' + code + ', seg ' +
-            format12Seg + ' glyphId mismatch');
-          debugger;
-        }
-      }
-    }
-    // Seek to the glyphId.
-    segEd.seek(segOffset + 8);
-    // Set the glyphId.
-    segEd.setUint32(segStartGlyphId);
-
-
 
     if (!isCFF) {
       // Set the loca for this glyph.
@@ -245,11 +183,101 @@ tachyfont.IncrementalFontUtils.injectCharacters = function(headerInfo, baseFont,
     baseBinEd.seek(headerInfo.glyphOffset + offset);
     baseBinEd.setArrayOf(baseBinEd.setUint8, bytes);
   }
+  //debugger;
+  tachyfont.IncrementalFontUtils.setFormat12GlyphIds(headerInfo, baseFont, 
+    glyphIds, glyphToCodeMap, cmapMapping);
+
+    // TODO(bstell): Fix format 4
+
   // time_end('inject')
 
   return baseFont;
 };
 
+
+/**
+ * Set the format 12 glyph Ids.
+ * 
+ * @param {Object} headerInfo The object with the font header information.
+ * @param {DataView} baseFont Current base font
+ * @param {Array.<number>} glyphIds The glyph Ids to set.
+ * @param {Object.<number, Array.<!number>>} glyphToCodeMap The glyph Id to code
+ *     point mapping;
+ * @param {Object.<string, !tachyfont.CharCmapInfo>} cmapMapping the code point
+ *     to cmap info mapping.
+ */
+tachyfont.IncrementalFontUtils.setFormat12GlyphIds =
+  function(headerInfo, baseFont, glyphIds, glyphToCodeMap, cmapMapping) {
+  if (!headerInfo.cmap12) {
+    return;
+  }
+  var segEd = new tachyfont.BinaryFontEditor(baseFont,
+    headerInfo.cmap12.offset + 16);
+  var segments = headerInfo.compact_gos.cmap12.segments;
+  for (var i = 0; i < glyphIds.length; i += 1) {
+    var id = glyphIds[i];
+    var code = glyphToCodeMap[id];
+    if (goog.DEBUG) {
+      goog.log.info(tachyfont.logger, 'code = ' + code);
+
+    }
+    var charCmapInfo = cmapMapping[code];
+    if (!charCmapInfo) {
+      if (goog.DEBUG) {
+        goog.log.error(tachyfont.logger, 'format 12, code ' + code +
+          ': no CharCmapInfo');
+        debugger;
+      }
+      continue;
+    }
+
+    // Set the glyphId for format 12
+    var format12Seg = charCmapInfo.format12Seg;
+    var segment = segments[format12Seg];
+    var segStartCode = segment[0];
+    var segEndCode = segStartCode + segment[1] - 1;
+    var segStartGlyphId = segment[2];
+    var segOffset = format12Seg * 12;
+    segEd.seek(segOffset);
+    var inMemoryStartCode = segEd.getUint32();
+    var inMemoryEndCode = segEd.getUint32();
+    var inMemoryGlyphId = segEd.getUint32();
+    if (goog.DEBUG) {
+      // Check the code point.
+      if (inMemoryStartCode != segStartCode) {
+        goog.log.error(tachyfont.logger, 'format 12, code ' + code + ', seg ' 
+          + format12Seg + ': startCode mismatch');
+        debugger;
+      }
+      if (inMemoryEndCode != segEndCode) {
+        goog.log.error(tachyfont.logger, 'format 12 code ' + code + ', seg ' +
+          format12Seg + ': endCode mismatch');
+        debugger;
+      }
+      if (segStartCode != segEndCode) { // TODO(bstell): check length
+        goog.log.error(tachyfont.logger, 'format 12 code ' + code + ', seg ' +
+          format12Seg + ': length != 1');
+        debugger;
+      }
+      if (inMemoryGlyphId != 0) {
+        if (inMemoryGlyphId == segStartGlyphId) {
+          goog.log.error(tachyfont.logger, 'format 12 code ' + code + ', seg ' +
+            format12Seg + ' glyphId already set');
+        } else {
+          goog.log.error(tachyfont.logger, 'format 12 code ' + code + ', seg ' +
+            format12Seg + ' glyphId mismatch');
+          debugger;
+        }
+      }
+    }
+    // Seek to the glyphId.
+    segEd.seek(segOffset + 8);
+    // Set the glyphId.
+    segEd.setUint32(segStartGlyphId);
+
+
+  }
+};
 
 /**
  * Get the character to glyphId mapping.
