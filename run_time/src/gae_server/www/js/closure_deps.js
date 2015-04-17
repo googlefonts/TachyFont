@@ -31,6 +31,9 @@ goog.addDependency('../../../tachyfont/binaryfonteditor.js',
 goog.addDependency('../../../tachyfont/glyphbundleresponse.js',
     ['tachyfont.GlyphBundleResponse'],
     []);
+goog.addDependency('../../../tachyfont/fontinfo.js',
+    ['tachyfont.FontInfo'],
+    []);
 goog.addDependency('../../../tachyfont/incrementalfont.js',
     ['tachyfont.IncrementalFont', 'tachyfont.TachyFont'],
     ['goog.Promise', 'goog.log', 'tachyfont.DemoBackendService',
@@ -54,9 +57,6 @@ goog.addDependency('../../../tachyfont/tachyfontset.js',
     ['goog.array', 'goog.Promise', 'goog.log', 'goog.style',
      'tachyfont.IncrementalFontUtils', 'tachyfont.chainedPromises'
     ]);
-goog.addDependency('../../../tachyfont/fontsinfo.js',
-    ['tachyfont.FontsInfo'],
-    []);
 goog.addDependency('../../../tachyfont/webfonttailor.js',
     ['webfonttailor'],
     ['tachyfont.FontsInfo']);
