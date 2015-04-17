@@ -34,6 +34,9 @@ goog.addDependency('../../../tachyfont/glyphbundleresponse.js',
 goog.addDependency('../../../tachyfont/fontinfo.js',
     ['tachyfont.FontInfo'],
     []);
+goog.addDependency('../../../tachyfont/fontsinfo.js',
+    ['tachyfont.FontsInfo'],
+    ['tachyfont.FontInfo']);
 goog.addDependency('../../../tachyfont/incrementalfont.js',
     ['tachyfont.IncrementalFont', 'tachyfont.TachyFont'],
     ['goog.Promise', 'goog.log', 'tachyfont.DemoBackendService',
