@@ -55,20 +55,34 @@ if (goog.DEBUG) {
 
     tachyfont.hasInitializedDebug_ = true;
 
-    var uri = goog.Uri.parse(window.location.href);
-    var debugLevel;
-    var debugLevelStr = uri.getParameterValue('TachyFontDebugLevel') || '';
-    if (debugLevelStr) {
-      debugLevel = goog.debug.Logger.Level.getPredefinedLevel(debugLevelStr);
+    /** @type {goog.Uri} */
+    tachyfont.uri = goog.Uri.parse(window.location.href);
+
+
+    /** @type {goog.debug.Logger.Level} */
+    tachyfont.debugLevel;
+
+
+    /** @type {string} */
+    tachyfont.debugLevel_str =
+        tachyfont.uri.getParameterValue('TachyFontDebugLevel') || '';
+    if (tachyfont.debugLevel_str) {
+      tachyfont.debugLevel =
+          goog.debug.Logger.Level.getPredefinedLevel(tachyfont.debugLevel_str);
     }
-    var debugConsole_ = new goog.debug.Console();
-    debugConsole_.setCapturing(true);
+
+    /**
+     * @type {!goog.debug.Console}
+     * @private
+     */
+    tachyfont.debugConsole_ = new goog.debug.Console();
+    tachyfont.debugConsole_.setCapturing(true);
 
 
     /**
      * @type {goog.debug.Logger}
      */
-    tachyfont.logger = goog.log.getLogger('debug', debugLevel);
+    tachyfont.logger = goog.log.getLogger('debug', tachyfont.debugLevel);
 
 
     /**
@@ -76,7 +90,7 @@ if (goog.DEBUG) {
      */
     tachyfont.buildDemo = false;
 
-    var persistDataStr = uri.getParameterValue('TachyFontPersistData') || '';
+    var persistDataStr = tachyfont.uri.getParameterValue('TachyFontPersistData') || '';
     if (persistDataStr.toLowerCase() == "false") {
       tachyfont.persistData = false;
     }
