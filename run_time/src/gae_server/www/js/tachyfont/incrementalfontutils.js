@@ -580,8 +580,19 @@ tachyfont.IncrementalFontUtils.setFormat4GlyphIds_ =
       continue;
     }
     var format4Seg = charCmapInfo.format4Seg;
+    if (format4Seg == null) {
+      if (goog.DEBUG) {
+        if (code <= 0xFFFF) {
+          goog.log.error(tachyfont.logger,
+            'format 4, missine segment for code ' + code);
+          debugger;
+        }
+      }
+      // Character is not in the format 4 segment.
+      continue;
+    }
     binEd.seek(idDeltaOffset + format4Seg * 2);
-    binEd.setUint16(segments[i][2]);
+    binEd.setUint16(segments[format4Seg][2]);
   }
 
 };
