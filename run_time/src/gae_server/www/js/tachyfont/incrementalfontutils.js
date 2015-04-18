@@ -454,8 +454,8 @@ tachyfont.IncrementalFontUtils.writeCmap4 = function(baseFont, headerInfo) {
         debugger;
       }
     }
-//    binEd.setUint16(newIdDelta);
-    binEd.setUint16(segments[i][2]);
+    binEd.setUint16(newIdDelta);
+//    binEd.setUint16(segments[i][2]);
   }
   // Write idRangeOffset vValues.
   for (var i = 0; i < segCount; i++) {
