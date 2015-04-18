@@ -42,6 +42,7 @@ tachyfont.TachyFontSet = function(familyName) {
    */
   this.fonts = [];
 
+  /** @type {!Object} */
   this.fontIdToIndex = {};
 
   /**
@@ -51,6 +52,7 @@ tachyfont.TachyFontSet = function(familyName) {
    */
   this.cssFamilyToTachyFontFamily = {};
 
+  /** @type {string} */
   this.familyName = familyName;
 
   /**
