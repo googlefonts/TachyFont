@@ -43,48 +43,64 @@ tachyfont.IncrementalFont = function() {
 /**
  * The IndexedDB version.
  * Increment this number every time there is a change in the schema.
+ *
+ * @type {number}
  */
 tachyfont.IncrementalFont.version = 1;
 
 
 /**
  * The maximum time in milliseconds to hide the text to prevent FOUT.
+ *
+ * @type {number}
  */
 tachyfont.IncrementalFont.MAX_HIDDEN_MILLISECONDS = 3000;
 
 
 /**
  * The database name.
+ *
+ * @type {string}
  */
 tachyfont.IncrementalFont.DB_NAME = 'incrfonts';
 
 
 /**
  * The time in milliseconds to wait before persisting the data.
+ *
+ * @type {number}
  */
 tachyfont.IncrementalFont.PERSIST_TIMEOUT = 1000;
 
 
 /**
  * The base name.
+ *
+ * @type {string}
  */
 tachyfont.IncrementalFont.BASE = 'base';
 
 
 /**
  * The base is dirty (needs to be persisted) key.
+ *
+ * @type {string}
  */
 tachyfont.IncrementalFont.BASE_DIRTY = 'base_dirty';
 
 
 /**
  * The char list name.
+ *
+ * @type {string}
  */
 tachyfont.IncrementalFont.CHARLIST = 'charlist';
 
 
 /**
  * The charlist is dirty (needs to be persisted) key.
+ *
+ * @type {string}
  */
 tachyfont.IncrementalFont.CHARLIST_DIRTY = 'charlist_dirty';
 
