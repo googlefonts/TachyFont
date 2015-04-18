@@ -30,7 +30,7 @@ tachyfont.RLEDecoder = function() {};
 
 /**
  * Defined RLE operations
- * @type {Object}
+ * @type {!Object}
  */
 tachyfont.RLEDecoder.RLE_OPS = {
   0xC0: 'copy',
@@ -40,7 +40,7 @@ tachyfont.RLEDecoder.RLE_OPS = {
 
 /**
  * Masks to interpret byte code
- * @type {Object}
+ * @type {!Object}
  */
 tachyfont.RLEDecoder.MASKS = {
   SIZE: 0x03,
@@ -51,7 +51,7 @@ tachyfont.RLEDecoder.MASKS = {
 /**
  * Interpret the byte code
  * @param {number} op Byte code
- * @return {Array.<number>} Array of byte cound and operation
+ * @return {!Array.<number>} Array of byte cound and operation
  */
 tachyfont.RLEDecoder.byteOp = function(op) {
   var byteCount = op & tachyfont.RLEDecoder.MASKS.SIZE;
@@ -63,7 +63,7 @@ tachyfont.RLEDecoder.byteOp = function(op) {
 
 /**
  * Decode given rle encoded data and return decoded data
- * @param {Array.<DataView>} arr Holds the Rle encoded header and font data.
+ * @param {!Array.<DataView>} arr Holds the Rle encoded header and font data.
  * @return {DataView} Decoded data
  */
 tachyfont.RLEDecoder.rleDecode = function(arr) {
