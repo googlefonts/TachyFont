@@ -183,11 +183,13 @@ tachyfont.IncrementalFontUtils.injectCharacters = function(headerInfo, baseFont,
     baseBinEd.seek(headerInfo.glyphOffset + offset);
     baseBinEd.setArrayOf(baseBinEd.setUint8, bytes);
   }
-  //debugger;
-  tachyfont.IncrementalFontUtils.setFormat12GlyphIds(headerInfo, baseFont, 
+  // Set the glyph Ids in the cmap format 12 subtable;
+  tachyfont.IncrementalFontUtils.setFormat12GlyphIds_(headerInfo, baseFont, 
     glyphIds, glyphToCodeMap, cmapMapping);
 
-    // TODO(bstell): Fix format 4
+  // Set the glyph Ids in the cmap format 4 subtable;
+  tachyfont.IncrementalFontUtils.setFormat4GlyphIds_(headerInfo, baseFont, 
+    glyphIds, glyphToCodeMap, cmapMapping);
 
   // time_end('inject')
 
@@ -205,8 +207,9 @@ tachyfont.IncrementalFontUtils.injectCharacters = function(headerInfo, baseFont,
  *     point mapping;
  * @param {Object.<string, !tachyfont.CharCmapInfo>} cmapMapping the code point
  *     to cmap info mapping.
+ * @private
  */
-tachyfont.IncrementalFontUtils.setFormat12GlyphIds =
+tachyfont.IncrementalFontUtils.setFormat12GlyphIds_ =
   function(headerInfo, baseFont, glyphIds, glyphToCodeMap, cmapMapping) {
   if (!headerInfo.cmap12) {
     return;
@@ -218,8 +221,7 @@ tachyfont.IncrementalFontUtils.setFormat12GlyphIds =
     var id = glyphIds[i];
     var code = glyphToCodeMap[id];
     if (goog.DEBUG) {
-      goog.log.info(tachyfont.logger, 'code = ' + code);
-
+      goog.log.info(tachyfont.logger, 'format 12: code = ' + code);
     }
     var charCmapInfo = cmapMapping[code];
     if (!charCmapInfo) {
@@ -463,6 +465,127 @@ tachyfont.IncrementalFontUtils.writeCmap4 = function(baseFont, headerInfo) {
   if (glyphIdArrayLen > 0)
     binEd.setArrayOf(binEd.setUint16, glyphIdArray);
 };
+
+
+/**
+ * Set the format 4 glyph Ids.
+ * 
+ * Note: this is not well tested.
+ * 
+ * @param {Object} headerInfo The object with the font header information.
+ * @param {DataView} baseFont Current base font
+ * @param {Array.<number>} glyphIds The glyph Ids to set.
+ * @param {Object.<number, Array.<!number>>} glyphToCodeMap The glyph Id to code
+ *     point mapping;
+ * @param {Object.<string, !tachyfont.CharCmapInfo>} cmapMapping the code point
+ *     to cmap info mapping.
+ * @private
+ */
+tachyfont.IncrementalFontUtils.setFormat4GlyphIds_ =
+  function(headerInfo, baseFont, glyphIds, glyphToCodeMap, cmapMapping) {
+  if (!headerInfo.cmap4) {
+    return;
+  }
+  var segments = headerInfo.compact_gos.cmap4.segments;
+  var binEd = new tachyfont.BinaryFontEditor(baseFont,
+      headerInfo.cmap4.offset + 6);
+  var segCount = binEd.getUint16() / 2;
+  if (segCount != segments.length) {
+    if (goog.DEBUG) {
+      goog.log.error(tachyfont.logger, 'segCount=' + segCount +
+        ', segments.length=' + segments.length);
+      debugger;
+    }
+    return;
+  }
+  binEd.seek(8);
+  for (var i = 0; i < segCount; i++) {
+    // Check the end code.
+    var segEndCode = binEd.getUint16();
+    if (segEndCode != segments[i][1]) {
+      if (goog.DEBUG) {
+        goog.log.error(tachyfont.logger, 'segment ' + i + ': segEndCode (' +
+          segEndCode + ') != segments[' + i + '][1] (' + segments[i][1] + ')');
+        debugger;
+      }
+      return;
+    }
+    // Check the segment is one char long
+    if (segEndCode != segments[i][0]) {
+      if (goog.DEBUG) {
+        goog.log.error(tachyfont.logger, 'segment ' + i + ' is ' +
+          (segments[i][1] - segments[i][0] + 1) + ' chars long');
+        debugger;
+      }
+      return;
+    }
+  }
+  binEd.skip(2);//skip reservePad
+  for (var i = 0; i < segCount; i++) {
+    var segStartCode = binEd.getUint16();
+    if (segStartCode != segments[i][0]) {
+      if (goog.DEBUG) {
+        goog.log.error(tachyfont.logger, 'segment ' + i + ': segStartCode (' +
+          segStartCode + ') != segments[' + i + '][1] (' + segments[i][0] +
+          ')');
+        debugger;
+      }
+      return;
+    }
+  }
+  var idDeltaOffset = binEd.tell();
+  for (var i = 0; i < segCount; i++) {
+    var segIdDelta = binEd.getUint16();
+    var segGlyphId = (segIdDelta + segments[i][0]) & 0xFFFF;
+    if (segGlyphId != 0) {
+      if (goog.DEBUG) {
+        if (segIdDelta == segments[i][2]) {
+          goog.log.info(tachyfont.logger, 'segment ' + i + 
+            ': segIdDelta already set');
+        } else {
+          goog.log.error(tachyfont.logger, 'segment ' + i + ': segIdDelta (' +
+            segIdDelta + ') != segments[' + i + '][1] (' + segments[i][2] +
+            ')');
+          debugger;
+          return;
+        }
+      }
+    }
+  }
+  for (var i = 0; i < segCount; i++) {
+    var segIdRangeOffset = binEd.getUint16();
+    if (segIdRangeOffset != 0) {
+      if (goog.DEBUG) {
+        goog.log.error(tachyfont.logger, 'segment ' + i +
+          ': segIdRangeOffset (' + segIdRangeOffset + ') != 0');
+        debugger;
+      }
+      return;
+    }
+  }
+  for (var i = 0; i < glyphIds.length; i++) {
+    // Set the glyph Id
+    var glyphId = glyphIds[i];
+    var code = glyphToCodeMap[glyphId];
+    if (goog.DEBUG) {
+      goog.log.info(tachyfont.logger, 'format 4: code = ' + code);
+    }
+    var charCmapInfo = cmapMapping[code];
+    if (!charCmapInfo) {
+      if (goog.DEBUG) {
+        goog.log.error(tachyfont.logger, 'format 4, code ' + code +
+          ': no CharCmapInfo');
+        debugger;
+      }
+      continue;
+    }
+    var format4Seg = charCmapInfo.format4Seg;
+    binEd.seek(idDeltaOffset + format4Seg * 2);
+    binEd.setUint16(segments[i][2]);
+  }
+
+};
+
 
 
 /**
