@@ -21,6 +21,7 @@ goog.provide('webfonttailor');
 
 goog.require('tachyfont.FontInfo');
 goog.require('tachyfont.FontsInfo');
+goog.require('webfonttailor.alternate');
 
 
 /**
@@ -82,9 +83,8 @@ webfonttailor.FontFamliesInfo = {
  */
 webfonttailor.getTachyFontsInfo = function(fontFamlies, languages, faces,
     options) {
-  if (webfonttailor.hasOwnProperty('alternate')) {
-    var obj = webfonttailor['alternate'];
-    return obj.getTachyFontsInfo(fontFamlies, languages,
+  if (options['useAlternate']) {
+    return webfonttailor.alternate.getTachyFontsInfo(fontFamlies, languages,
         faces, options);
   }
   var fonts = [];
@@ -118,4 +118,8 @@ webfonttailor.getTachyFontsInfo = function(fontFamlies, languages, faces,
   }
   return new tachyfont.FontsInfo(fonts, '');
 };
+
+goog.exportSymbol('webfonttailor', webfonttailor);
+goog.exportProperty(webfonttailor, 'getTachyFontsInfo',
+    webfonttailor.getTachyFontsInfo);
 
