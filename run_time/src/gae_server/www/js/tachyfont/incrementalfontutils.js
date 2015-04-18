@@ -641,25 +641,25 @@ tachyfont.IncrementalFontUtils.parseBaseHeader = function(baseFont) {
 
 /**
  * Sanitize base font to pass OTS
- * @param {Object} obj The object with the font header information.
+ * @param {Object} headerInfo The font header information.
  * @param {DataView} baseFont Base font as DataView
  * @return {DataView} Sanitized base font
  */
-tachyfont.IncrementalFontUtils.sanitizeBaseFont = function(obj, baseFont) {
+tachyfont.IncrementalFontUtils.sanitizeBaseFont = function(headerInfo, baseFont) {
 
-  if (obj.isTtf) {
-    obj.dirty = true;
+  if (headerInfo.isTtf) {
+    headerInfo.dirty = true;
     var binEd = new tachyfont.BinaryFontEditor(baseFont, 0);
-    var glyphOffset = obj.glyphOffset;
-    var glyphCount = obj.numGlyphs;
+    var glyphOffset = headerInfo.glyphOffset;
+    var glyphCount = headerInfo.numGlyphs;
     var glyphSize, thisOne, nextOne;
     for (var i = (tachyfont.IncrementalFontUtils.LOCA_BLOCK_SIZE - 1);
         i < glyphCount;
         i += tachyfont.IncrementalFontUtils.LOCA_BLOCK_SIZE) {
-      thisOne = binEd.getGlyphDataOffset(obj.glyphDataOffset,
-          obj.offsetSize, i);
-      nextOne = binEd.getGlyphDataOffset(obj.glyphDataOffset,
-          obj.offsetSize, i + 1);
+      thisOne = binEd.getGlyphDataOffset(headerInfo.glyphDataOffset,
+          headerInfo.offsetSize, i);
+      nextOne = binEd.getGlyphDataOffset(headerInfo.glyphDataOffset,
+          headerInfo.offsetSize, i + 1);
       glyphSize = nextOne - thisOne;
       if (glyphSize) {
         binEd.seek(glyphOffset + thisOne);
@@ -667,20 +667,20 @@ tachyfont.IncrementalFontUtils.sanitizeBaseFont = function(obj, baseFont) {
       }
     }
   } else {
-    obj.dirty = true;
+    headerInfo.dirty = true;
     var binEd = new tachyfont.BinaryFontEditor(baseFont, 0);
-    var glyphOffset = obj.glyphOffset;
-    var glyphCount = obj.numGlyphs;
-    var lastRealOffset = binEd.getGlyphDataOffset(obj.glyphDataOffset,
-        obj.offsetSize, 0);
+    var glyphOffset = headerInfo.glyphOffset;
+    var glyphCount = headerInfo.numGlyphs;
+    var lastRealOffset = binEd.getGlyphDataOffset(headerInfo.glyphDataOffset,
+        headerInfo.offsetSize, 0);
     var delta = 0, thisOne;
     for (var i = 0; i < glyphCount + 1; i++) {
-      thisOne = binEd.getGlyphDataOffset(obj.glyphDataOffset,
-          obj.offsetSize, i);
+      thisOne = binEd.getGlyphDataOffset(headerInfo.glyphDataOffset,
+          headerInfo.offsetSize, i);
       if (lastRealOffset == thisOne) {
         thisOne = lastRealOffset + delta;
-        binEd.setGlyphDataOffset(obj.glyphDataOffset,
-            obj.offsetSize, i, thisOne);
+        binEd.setGlyphDataOffset(headerInfo.glyphDataOffset,
+            headerInfo.offsetSize, i, thisOne);
         delta++;
       } else {
         lastRealOffset = thisOne;
