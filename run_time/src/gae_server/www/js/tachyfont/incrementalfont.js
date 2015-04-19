@@ -395,14 +395,123 @@ tachyfont.IncrementalFont.obj_.prototype.processUrlBase_ =
   var rleFontData = new DataView(fetchedBytes, fileInfo.headSize);
   var raw_base = tachyfont.RLEDecoder.rleDecode([headerData, rleFontData]);
   var raw_basefont = new DataView(raw_base.buffer, headerData.byteLength);
-  tachyfont.IncrementalFontUtils.writeCmap12(raw_basefont, fileInfo);
-  tachyfont.IncrementalFontUtils.writeCmap4(raw_basefont, fileInfo);
+  this.writeCmap12(raw_basefont, fileInfo);
+  this.writeCmap4(raw_basefont, fileInfo);
   tachyfont.IncrementalFontUtils.writeCharsetFormat2(raw_basefont, fileInfo);
   var basefont = tachyfont.IncrementalFontUtils.sanitizeBaseFont(fileInfo,
       raw_basefont);
   //tachyfont.timer1.end('uncompact base');
   return [fileInfo, basefont];
 };
+
+
+/**
+ * Parses base font header, set properties.
+ * @param {DataView} baseFont Base font with header.
+ * @param {Object} headerInfo Header information
+ */
+tachyfont.IncrementalFont.obj_.prototype.writeCmap12 = function(baseFont, headerInfo) {
+  if (!headerInfo.cmap12)
+    return;
+  var binEd = new tachyfont.BinaryFontEditor(baseFont,
+      headerInfo.cmap12.offset + 16);
+  var nGroups = headerInfo.cmap12.nGroups;
+  var segments = headerInfo.compact_gos.cmap12.segments;
+  for (var i = 0; i < nGroups; i++) {
+    if (goog.DEBUG) {
+      var startCode = segments[i][0];
+      var length = segments[i][1];
+      var glyphId = segments[i][2];
+      if (length != 1) {
+        goog.log.error(tachyfont.logger, 'format 4, seg ' + i + 'length = ' +
+          length);
+        debugger;
+      }
+    }
+    binEd.setUint32(segments[i][0]);
+    binEd.setUint32(segments[i][0] + segments[i][1] - 1);
+    binEd.setUint32(0);
+  }
+};
+
+
+/**
+ * Parses base font header, set properties.
+ * @param {DataView} baseFont Base font with header.
+ * @param {Object} headerInfo Header information
+ */
+tachyfont.IncrementalFont.obj_.prototype.writeCmap4 = function(baseFont, headerInfo) {
+  if (!headerInfo.cmap4)
+    return;
+  var segments = headerInfo.compact_gos.cmap4.segments;
+  var glyphIdArray = headerInfo.compact_gos.cmap4.glyphIdArray;
+  var binEd = new tachyfont.BinaryFontEditor(baseFont,
+      headerInfo.cmap4.offset + 6);
+  var segCount = binEd.getUint16() / 2;
+  if (segCount != segments.length) {
+    if (goog.DEBUG) {
+      alert('segCount=' + segCount + ', segments.length=' + segments.length);
+      debugger;
+    }
+  }
+  var glyphIdArrayLen = (headerInfo.cmap4.length - 16 - segCount * 8) / 2;
+  headerInfo.cmap4.segCount = segCount;
+  headerInfo.cmap4.glyphIdArrayLen = glyphIdArrayLen;
+  binEd.skip(6); //skip searchRange,entrySelector,rangeShift
+  if (goog.DEBUG) {
+    for (var i = 0; i < segCount; i++) {
+      var startCode = segments[i][0];
+      var endCode = segments[i][1];
+      var idDelta = segments[i][2];
+      var idRangeOffset = segments[i][3];
+      var length = endCode - startCode + 1;
+      if (length != 1) {
+        goog.log.error(tachyfont.logger, 'format 4, seg ' + i + 'length = ' +
+          length);
+        debugger;
+      }
+      var idRangeOffset = segments[i][3];
+      if (idRangeOffset != 0) {
+        goog.log.error(tachyfont.logger, 'format 4, seg ' + i +
+          'idRangeOffset = ' + idRangeOffset);
+        debugger;
+      }
+    }
+  }
+  // Write endCode values.
+  for (var i = 0; i < segCount; i++) {
+    binEd.setUint16(segments[i][1]);
+  }
+  binEd.skip(2);//skip reservePad
+  // Write startCode values.
+  for (var i = 0; i < segCount; i++) {
+    binEd.setUint16(segments[i][0]);
+  }
+  // Write idDelta values.
+  for (var i = 0; i < segCount; i++) {
+    var startCode = segments[i][0];
+    var idDelta = segments[i][2];
+    var newIdDelta = 0x10000 - startCode;
+    if (goog.DEBUG) {
+      if (startCode != 0xffff && idDelta != newIdDelta + i + 1) {
+        goog.log.error(tachyfont.logger, 'format 4, seg ' + i + 'idDelta = ' +
+          idDelta);
+        debugger;
+      }
+    }
+    binEd.setUint16(newIdDelta);
+//    binEd.setUint16(segments[i][2]);
+  }
+  // Write idRangeOffset vValues.
+  for (var i = 0; i < segCount; i++) {
+    binEd.setUint16(segments[i][3]);
+  }
+  // Write glyphIdArray values.
+  if (glyphIdArrayLen > 0)
+    binEd.setArrayOf(binEd.setUint16, glyphIdArray);
+};
+
+
 
 
 /**
