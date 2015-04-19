@@ -251,7 +251,7 @@ tachyfont.IncrementalFont.obj_ = function(fontInfo, params, backendService) {
    * Indicates if the cmap may be easily kept accurate.
    * @type {boolean}
    */
-  this.oneCharPerSeg = false;
+  this.hasOneCharPerSeg = false;
 
   /** 
    * The character to format 4 / format 12 mapping.
@@ -418,19 +418,13 @@ tachyfont.IncrementalFont.obj_.prototype.writeCmap12 = function(baseFont, header
   var nGroups = headerInfo.cmap12.nGroups;
   var segments = headerInfo.compact_gos.cmap12.segments;
   for (var i = 0; i < nGroups; i++) {
-    if (goog.DEBUG) {
-      var startCode = segments[i][0];
-      var length = segments[i][1];
-      var glyphId = segments[i][2];
-      if (length != 1) {
-        goog.log.error(tachyfont.logger, 'format 4, seg ' + i + 'length = ' +
-          length);
-        debugger;
-      }
-    }
     binEd.setUint32(segments[i][0]);
     binEd.setUint32(segments[i][0] + segments[i][1] - 1);
-    binEd.setUint32(0);
+    if (this.hasOneCharPerSeg) {
+      binEd.setUint32(0);
+    } else {
+      binEd.setUint32(segments[i][2]);
+    }
   }
 };
 
@@ -466,9 +460,6 @@ tachyfont.IncrementalFont.obj_.prototype.writeCmap4 = function(baseFont, headerI
       var idRangeOffset = segments[i][3];
       var length = endCode - startCode + 1;
       if (length != 1) {
-        goog.log.error(tachyfont.logger, 'format 4, seg ' + i + 'length = ' +
-          length);
-        debugger;
       }
       var idRangeOffset = segments[i][3];
       if (idRangeOffset != 0) {
@@ -489,18 +480,14 @@ tachyfont.IncrementalFont.obj_.prototype.writeCmap4 = function(baseFont, headerI
   }
   // Write idDelta values.
   for (var i = 0; i < segCount; i++) {
-    var startCode = segments[i][0];
-    var idDelta = segments[i][2];
-    var newIdDelta = 0x10000 - startCode;
-    if (goog.DEBUG) {
-      if (startCode != 0xffff && idDelta != newIdDelta + i + 1) {
-        goog.log.error(tachyfont.logger, 'format 4, seg ' + i + 'idDelta = ' +
-          idDelta);
-        debugger;
-      }
+    if (this.hasOneCharPerSeg) {
+      // Make the single code point in this segment point to .notdef 
+      var startCode = segments[i][0];
+      binEd.setUint16(0x10000 - startCode);
+    } else {
+      // Use the normal starting glyphId
+      binEd.setUint16(segments[i][2]);
     }
-    binEd.setUint16(newIdDelta);
-//    binEd.setUint16(segments[i][2]);
   }
   // Write idRangeOffset vValues.
   for (var i = 0; i < segCount; i++) {
@@ -576,6 +563,10 @@ tachyfont.IncrementalFont.obj_.prototype.determineIfOneCharPerSeg =
       var segStartCode = segments[i][0];
       var segEndCode = segments[i][1];
       if (segStartCode != segEndCode) {
+        if (goog.DEBUG) {
+          goog.log.warning(tachyfont.logger, this.fontName +
+            ' format4 has more than one char per segment');
+        }
         return;
       }
     }
@@ -586,12 +577,21 @@ tachyfont.IncrementalFont.obj_.prototype.determineIfOneCharPerSeg =
     for (var i = 0; i < segments.length; i++) {
       var length = segments[i][1];
       if (length != 1) {
+        if (goog.DEBUG) {
+          goog.log.warning(tachyfont.logger, this.fontName +
+            ' format12 has more than one char per segment');
+        }
         return;
       }
     }
   }
 
-  this.oneCharPerSeg = true;
+  if (goog.DEBUG) {
+    goog.log.info(tachyfont.logger, this.fontName +
+      ' has one char per segment');
+  }
+
+  this.hasOneCharPerSeg = true;
 };
 
 
