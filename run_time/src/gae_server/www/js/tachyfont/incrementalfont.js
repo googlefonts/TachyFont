@@ -452,23 +452,6 @@ tachyfont.IncrementalFont.obj_.prototype.writeCmap4 = function(baseFont, headerI
   headerInfo.cmap4.segCount = segCount;
   headerInfo.cmap4.glyphIdArrayLen = glyphIdArrayLen;
   binEd.skip(6); //skip searchRange,entrySelector,rangeShift
-  if (goog.DEBUG) {
-    for (var i = 0; i < segCount; i++) {
-      var startCode = segments[i][0];
-      var endCode = segments[i][1];
-      var idDelta = segments[i][2];
-      var idRangeOffset = segments[i][3];
-      var length = endCode - startCode + 1;
-      if (length != 1) {
-      }
-      var idRangeOffset = segments[i][3];
-      if (idRangeOffset != 0) {
-        goog.log.error(tachyfont.logger, 'format 4, seg ' + i +
-          'idRangeOffset = ' + idRangeOffset);
-        debugger;
-      }
-    }
-  }
   // Write endCode values.
   for (var i = 0; i < segCount; i++) {
     binEd.setUint16(segments[i][1]);
@@ -562,7 +545,8 @@ tachyfont.IncrementalFont.obj_.prototype.determineIfOneCharPerSeg =
     for (var i = 0; i < segments.length; i++) {
       var segStartCode = segments[i][0];
       var segEndCode = segments[i][1];
-      if (segStartCode != segEndCode) {
+      var idRangeOffset = segments[i][3];
+      if (segStartCode != segEndCode || idRangeOffset != 0) {
         if (goog.DEBUG) {
           goog.log.warning(tachyfont.logger, this.fontName +
             ' format4 has more than one char per segment');
