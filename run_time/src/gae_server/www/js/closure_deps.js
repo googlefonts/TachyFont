@@ -65,4 +65,11 @@ goog.addDependency('../../../tachyfont/tachyfontset.js',
     ]);
 goog.addDependency('../../../tachyfont/webfonttailor.js',
     ['webfonttailor'],
-    ['tachyfont.FontsInfo']);
+    ['tachyfont.FontInfo',
+     'tachyfont.FontsInfo'
+    ]);
+goog.addDependency('../../../tachyfont/webfonttailoralternate.js',
+    ['webfonttailor.alternate'],
+    ['tachyfont.FontInfo',
+     'tachyfont.FontsInfo'
+    ]);
