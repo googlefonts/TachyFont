@@ -240,9 +240,10 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
             then(function(arrayBaseData) {
               var allCssSet = [];
               for (var i = 0; i < tachyFonts.length; i++) {
-                var incrfont = tachyFonts[i].incrfont;
                 var loadedBase = arrayBaseData[i];
                 var fileInfo = loadedBase[0];
+                var incrfont = tachyFonts[i].incrfont;
+                incrfont.determineIfOneCharPerSeg(fileInfo);
                 incrfont.cmapMapping_ = 
                   tachyfont.IncrementalFontUtils.getCmapMapping(fileInfo);
                 // If not persisted then need to wait for DOMContentLoaded to

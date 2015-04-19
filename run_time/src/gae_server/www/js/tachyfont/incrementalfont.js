@@ -246,6 +246,12 @@ tachyfont.IncrementalFont.obj_ = function(fontInfo, params, backendService) {
   this.fontName = fontInfo.getName();
   
   this.fileInfo_;
+  
+  /**
+   * Indicates if the cmap may be easily kept accurate.
+   * @type {boolean}
+   */
+  this.oneCharPerSeg = false;
 
   /** 
    * The character to format 4 / format 12 mapping.
@@ -443,6 +449,40 @@ tachyfont.IncrementalFont.obj_.prototype.setFont = function(fontData, isTtf) {
         }.bind(this));
         return this.finishPrecedingSetFont_;
       }.bind(this));
+};
+
+
+/**
+ * Determine if the font was preprocessed to have only one character per 
+ * segment. Fonts with this arrangement easily support keeping the cmap
+ * accurate as character data is added.
+ * 
+ * @param {Object} headerInfo The font header information.
+ */
+tachyfont.IncrementalFont.obj_.prototype.determineIfOneCharPerSeg = 
+  function(headerInfo) {
+  if (headerInfo.cmap4) {
+    var segments = headerInfo.compact_gos.cmap4.segments;
+    for (var i = 0; i < segments.length; i++) {
+      var segStartCode = segments[i][0];
+      var segEndCode = segments[i][1];
+      if (segStartCode != segEndCode) {
+        return;
+      }
+    }
+  }
+
+  if (headerInfo.cmap12) {
+    var segments = headerInfo.compact_gos.cmap12.segments;
+    for (var i = 0; i < segments.length; i++) {
+      var length = segments[i][1];
+      if (length != 1) {
+        return;
+      }
+    }
+  }
+
+  this.oneCharPerSeg = true;
 };
 
 
