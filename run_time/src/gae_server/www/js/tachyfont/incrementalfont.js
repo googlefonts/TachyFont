@@ -434,14 +434,12 @@ tachyfont.IncrementalFont.obj_.prototype.writeCmap12 = function(baseFont, header
  * @param {Object} headerInfo The font header information.
  * @param {DataView} baseFont Current base font
  * @param {tachyfont.GlyphBundleResponse} bundleResponse New glyph data
- * @param {Object.<string, !tachyfont.CharCmapInfo>} cmapMapping the code point
- *     to cmap info mapping.
  * @param {Object.<number, !number>} glyphToCodeMap  The glyph Id to code point
  *     mapping;
  * @return {DataView} Updated base font
  */
 tachyfont.IncrementalFont.obj_.prototype.injectCharacters = function(headerInfo, baseFont,
-    bundleResponse, cmapMapping, glyphToCodeMap) {
+    bundleResponse, glyphToCodeMap) {
   // time_start('inject')
   headerInfo.dirty = true;
   var bundleBinEd = bundleResponse.getFontEditor();
@@ -554,13 +552,13 @@ tachyfont.IncrementalFont.obj_.prototype.injectCharacters = function(headerInfo,
     baseBinEd.seek(headerInfo.glyphOffset + offset);
     baseBinEd.setArrayOf(baseBinEd.setUint8, bytes);
   }
-  // Set the glyph Ids in the cmap format 12 subtable;
-  this.setFormat12GlyphIds_(headerInfo, baseFont, 
-    glyphIds, glyphToCodeMap, cmapMapping);
-
-  // Set the glyph Ids in the cmap format 4 subtable;
-  this.setFormat4GlyphIds_(headerInfo, baseFont, 
-    glyphIds, glyphToCodeMap, cmapMapping);
+  if (this.hasOneCharPerSeg) {
+    // Set the glyph Ids in the cmap format 12 subtable;
+    this.setFormat12GlyphIds_(headerInfo, baseFont, glyphIds, glyphToCodeMap);
+  
+    // Set the glyph Ids in the cmap format 4 subtable;
+    this.setFormat4GlyphIds_(headerInfo, baseFont, glyphIds, glyphToCodeMap);
+  }
 
   // time_end('inject')
 
@@ -578,12 +576,10 @@ tachyfont.IncrementalFont.obj_.prototype.injectCharacters = function(headerInfo,
  * @param {Array.<number>} glyphIds The glyph Ids to set.
  * @param {Object.<number, Array.<!number>>} glyphToCodeMap The glyph Id to code
  *     point mapping;
- * @param {Object.<string, !tachyfont.CharCmapInfo>} cmapMapping the code point
- *     to cmap info mapping.
  * @private
  */
 tachyfont.IncrementalFont.obj_.prototype.setFormat4GlyphIds_ =
-  function(headerInfo, baseFont, glyphIds, glyphToCodeMap, cmapMapping) {
+  function(headerInfo, baseFont, glyphIds, glyphToCodeMap) {
   if (!headerInfo.cmap4) {
     return;
   }
@@ -671,7 +667,7 @@ tachyfont.IncrementalFont.obj_.prototype.setFormat4GlyphIds_ =
     if (goog.DEBUG) {
       goog.log.info(tachyfont.logger, 'format 4: code = ' + code);
     }
-    var charCmapInfo = cmapMapping[code];
+    var charCmapInfo = this.cmapMapping_[code];
     if (!charCmapInfo) {
       if (goog.DEBUG) {
         goog.log.error(tachyfont.logger, 'format 4, code ' + code +
@@ -707,12 +703,10 @@ tachyfont.IncrementalFont.obj_.prototype.setFormat4GlyphIds_ =
  * @param {Array.<number>} glyphIds The glyph Ids to set.
  * @param {Object.<number, Array.<!number>>} glyphToCodeMap The glyph Id to code
  *     point mapping;
- * @param {Object.<string, !tachyfont.CharCmapInfo>} cmapMapping the code point
- *     to cmap info mapping.
  * @private
  */
 tachyfont.IncrementalFont.obj_.prototype.setFormat12GlyphIds_ =
-  function(headerInfo, baseFont, glyphIds, glyphToCodeMap, cmapMapping) {
+  function(headerInfo, baseFont, glyphIds, glyphToCodeMap) {
   if (!headerInfo.cmap12) {
     return;
   }
@@ -725,7 +719,7 @@ tachyfont.IncrementalFont.obj_.prototype.setFormat12GlyphIds_ =
     if (goog.DEBUG) {
       goog.log.info(tachyfont.logger, 'format 12: code = ' + code);
     }
-    var charCmapInfo = cmapMapping[code];
+    var charCmapInfo = this.cmapMapping_[code];
     if (!charCmapInfo) {
       if (goog.DEBUG) {
         goog.log.error(tachyfont.logger, 'format 12, code ' + code +
@@ -1126,9 +1120,8 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars = function() {
                       }
                     }
                     // TODO(bstell): injectCharacters should be a object function (not static)
-                    fontData = that.injectCharacters(
-                      fileInfo, fontData, bundleResponse, that.cmapMapping_,
-                      glyphToCodeMap);
+                    fontData = that.injectCharacters(fileInfo, fontData,
+                      bundleResponse, glyphToCodeMap);
                     var msg;
                     if (remaining.length) {
                       msg = 'display ' + Object.keys(charlist).length +
