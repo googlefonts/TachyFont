@@ -444,6 +444,58 @@ tachyfont.IncrementalFont.obj_.prototype.writeCmap12 = function(baseFont) {
 
 
 /**
+ * Parses base font header, set properties.
+ * @param {!DataView} baseFontView Base font with header.
+ */
+tachyfont.IncrementalFont.obj_.prototype.writeCmap4 = function(baseFont) {
+  if (!this.fileInfo_.compact_gos.cmap4)
+    return;
+  var segments = this.fileInfo_.compact_gos.cmap4.segments;
+  var glyphIdArray = this.fileInfo_.compact_gos.cmap4.glyphIdArray;
+  var binEd = new tachyfont.BinaryFontEditor(baseFont,
+      this.fileInfo_.cmap4.offset + 6);
+  var segCount = binEd.getUint16() / 2;
+  if (segCount != segments.length) {
+    if (goog.DEBUG) {
+      alert('segCount=' + segCount + ', segments.length=' + segments.length);
+      debugger;
+    }
+  }
+  var glyphIdArrayLen = (this.fileInfo_.cmap4.length - 16 - segCount * 8) / 2;
+  this.fileInfo_.cmap4.segCount = segCount;
+  this.fileInfo_.cmap4.glyphIdArrayLen = glyphIdArrayLen;
+  binEd.skip(6); //skip searchRange,entrySelector,rangeShift
+  // Write endCode values.
+  for (var i = 0; i < segCount; i++) {
+    binEd.setUint16(segments[i][1]);
+  }
+  binEd.skip(2);//skip reservePad
+  // Write startCode values.
+  for (var i = 0; i < segCount; i++) {
+    binEd.setUint16(segments[i][0]);
+  }
+  // Write idDelta values.
+  for (var i = 0; i < segCount; i++) {
+    if (this.hasOneCharPerSeg) {
+      // Make the single code point in this segment point to .notdef 
+      var startCode = segments[i][0];
+      binEd.setUint16(0x10000 - startCode);
+    } else {
+      // Use the normal starting glyphId
+      binEd.setUint16(segments[i][2]);
+    }
+  }
+  // Write idRangeOffset vValues.
+  for (var i = 0; i < segCount; i++) {
+    binEd.setUint16(segments[i][3]);
+  }
+  // Write glyphIdArray values.
+  if (glyphIdArrayLen > 0)
+    binEd.setArrayOf(binEd.setUint16, glyphIdArray);
+};
+
+
+/**
  * Inject glyphs in the glyphData to the baseFont
  * @param {DataView} baseFont Current base font
  * @param {tachyfont.GlyphBundleResponse} bundleResponse New glyph data
@@ -798,60 +850,6 @@ tachyfont.IncrementalFont.obj_.prototype.setFormat12GlyphIds_ =
     }
   }
 };
-
-
-/**
- * Parses base font header, set properties.
- * @param {DataView} baseFont Base font with header.
- */
-tachyfont.IncrementalFont.obj_.prototype.writeCmap4 = function(baseFont) {
-  if (!this.fileInfo_.compact_gos.cmap4)
-    return;
-  var segments = this.fileInfo_.compact_gos.cmap4.segments;
-  var glyphIdArray = this.fileInfo_.compact_gos.cmap4.glyphIdArray;
-  var binEd = new tachyfont.BinaryFontEditor(baseFont,
-      this.fileInfo_.cmap4.offset + 6);
-  var segCount = binEd.getUint16() / 2;
-  if (segCount != segments.length) {
-    if (goog.DEBUG) {
-      alert('segCount=' + segCount + ', segments.length=' + segments.length);
-      debugger;
-    }
-  }
-  var glyphIdArrayLen = (this.fileInfo_.cmap4.length - 16 - segCount * 8) / 2;
-  this.fileInfo_.cmap4.segCount = segCount;
-  this.fileInfo_.cmap4.glyphIdArrayLen = glyphIdArrayLen;
-  binEd.skip(6); //skip searchRange,entrySelector,rangeShift
-  // Write endCode values.
-  for (var i = 0; i < segCount; i++) {
-    binEd.setUint16(segments[i][1]);
-  }
-  binEd.skip(2);//skip reservePad
-  // Write startCode values.
-  for (var i = 0; i < segCount; i++) {
-    binEd.setUint16(segments[i][0]);
-  }
-  // Write idDelta values.
-  for (var i = 0; i < segCount; i++) {
-    if (this.hasOneCharPerSeg) {
-      // Make the single code point in this segment point to .notdef 
-      var startCode = segments[i][0];
-      binEd.setUint16(0x10000 - startCode);
-    } else {
-      // Use the normal starting glyphId
-      binEd.setUint16(segments[i][2]);
-    }
-  }
-  // Write idRangeOffset vValues.
-  for (var i = 0; i < segCount; i++) {
-    binEd.setUint16(segments[i][3]);
-  }
-  // Write glyphIdArray values.
-  if (glyphIdArrayLen > 0)
-    binEd.setArrayOf(binEd.setUint16, glyphIdArray);
-};
-
-
 /**
  * Set the \@font-face rule.
  * @param {DataView} fontData The font dataview.
