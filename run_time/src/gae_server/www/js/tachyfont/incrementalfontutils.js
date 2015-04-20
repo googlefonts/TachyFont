@@ -69,7 +69,7 @@ tachyfont.IncrementalFontUtils.getCmapMapping = function(headerInfo) {
   var cmapMapping = {};
   var charCmapInfo;
   // Parse format 4.
-  if (headerInfo.cmap4) {
+  if (headerInfo.compact_gos.cmap4) {
     var segments = headerInfo.compact_gos.cmap4.segments;
     var glyphIdArray = headerInfo.compact_gos.cmap4.glyphIdArray;
     var glyphIdIndex = 0;
@@ -106,8 +106,10 @@ tachyfont.IncrementalFontUtils.getCmapMapping = function(headerInfo) {
   }
 
 
-  if (!headerInfo.cmap12) {
-    debugger; // TODO(bstell): need to handle this.
+  if (!headerInfo.compact_gos.cmap12) {
+    if (goog.Debug) {
+      debugger; // TODO(bstell): need to handle this.
+    }
     return cmapMapping;
   }
   var n12Groups = headerInfo.cmap12.nGroups;
@@ -159,22 +161,6 @@ tachyfont.IncrementalFontUtils.writeCharsetFormat2 =
     else
       binEd.setUint8(segments[i][1]);
   }
-};
-
-
-/**
- * Parses base font header, set properties.
- * @param {DataView} baseFont Base font with header.
- * @return {Object} The header information.
- */
-tachyfont.IncrementalFontUtils.parseBaseHeader = function(baseFont) {
-
-  var binEd = new tachyfont.BinaryFontEditor(baseFont, 0);
-  var results = binEd.parseBaseHeader();
-  if (!results.headSize) {
-    throw 'missing header info';
-  }
-  return results;
 };
 
 
