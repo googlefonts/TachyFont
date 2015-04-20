@@ -24,6 +24,7 @@ goog.require('goog.Promise');
 goog.require('goog.log');
 goog.require('goog.log.Level');
 goog.require('goog.math');
+goog.require('tachyfont.BinaryFontEditor');
 goog.require('tachyfont.CharCmapInfo');
 goog.require('tachyfont.DemoBackendService');
 goog.require('tachyfont.FontInfo');
@@ -849,8 +850,6 @@ tachyfont.IncrementalFont.obj_.prototype.writeCmap4 = function(baseFont) {
   if (glyphIdArrayLen > 0)
     binEd.setArrayOf(binEd.setUint16, glyphIdArray);
 };
-
-
 
 
 /**
