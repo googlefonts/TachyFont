@@ -959,26 +959,30 @@ class cmap_format_12_or_13(CmapSubtable):
 		list(map(operator.setitem, [cmap]*len(charCodes), charCodes, gids))
 
 		charCodes.sort()
-		index = 0
-		startCharCode = charCodes[0]
-		startGlyphID = cmap[startCharCode]
-		lastGlyphID = startGlyphID - self._format_step
-		lastCharCode = startCharCode - 1
+# 		index = 0
+# 		startCharCode = charCodes[0]
+# 		startGlyphID = cmap[startCharCode]
+# 		lastGlyphID = startGlyphID - self._format_step
+# 		lastCharCode = startCharCode - 1
 		nGroups = 0
 		dataList =  []
 		maxIndex = len(charCodes)
 		for index in range(maxIndex):
 			charCode = charCodes[index]
 			glyphID = cmap[charCode]
-			if not self._IsInSameRun(glyphID, lastGlyphID, charCode, lastCharCode):
-				dataList.append(struct.pack(">LLL", startCharCode, lastCharCode, startGlyphID))
-				startCharCode = charCode
-				startGlyphID = glyphID
-				nGroups = nGroups + 1
-			lastGlyphID = glyphID
-			lastCharCode = charCode
-		dataList.append(struct.pack(">LLL", startCharCode, lastCharCode, startGlyphID))
-		nGroups = nGroups + 1
+			dataList.append(struct.pack(">LLL", charCode, charCode, glyphID))
+			nGroups = nGroups + 1
+# 			charCode = charCodes[index]
+# 			glyphID = cmap[charCode]
+# 			if not self._IsInSameRun(glyphID, lastGlyphID, charCode, lastCharCode):
+# 				dataList.append(struct.pack(">LLL", startCharCode, lastCharCode, startGlyphID))
+# 				startCharCode = charCode
+# 				startGlyphID = glyphID
+# 				nGroups = nGroups + 1
+# 			lastGlyphID = glyphID
+# 			lastCharCode = charCode
+# 		dataList.append(struct.pack(">LLL", startCharCode, lastCharCode, startGlyphID))
+# 		nGroups = nGroups + 1
 		data = bytesjoin(dataList)
 		lengthSubtable = len(data) +16
 		assert len(data) == (nGroups*12) == (lengthSubtable-16) 
@@ -1028,7 +1032,7 @@ class cmap_format_12(cmap_format_12_or_13):
 		return list(range(startingGlyph, startingGlyph + numberOfGlyphs))
 
 	def _IsInSameRun(self, glyphID, lastGlyphID, charCode, lastCharCode):
-		return (glyphID == 1 + lastGlyphID) and (charCode == 1 + lastCharCode)
+		return False #(glyphID == 1 + lastGlyphID) and (charCode == 1 + lastCharCode)
 
 
 class cmap_format_13(cmap_format_12_or_13):
