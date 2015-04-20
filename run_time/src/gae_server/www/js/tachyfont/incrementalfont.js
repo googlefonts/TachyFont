@@ -371,6 +371,7 @@ tachyfont.IncrementalFont.obj_.prototype.parseBaseHeader = function(baseFont) {
   }
   this.fileInfo_ = fileInfo;
   this.determineIfOneCharPerSeg();
+  this.cmapMapping_ = tachyfont.IncrementalFontUtils.getCmapMapping(fileInfo);
 };
 
 
