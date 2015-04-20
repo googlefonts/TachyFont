@@ -362,10 +362,10 @@ tachyfont.IncrementalFont.obj_.prototype.getPersistedBase = function() {
 
 /**
  * Parses base font header, set properties.
- * @param {DataView} baseFont Base font with header.
+ * @param {DataView} baseFontView Base font with header.
  */
-tachyfont.IncrementalFont.obj_.prototype.parseBaseHeader = function(baseFont) {
-  var binEd = new tachyfont.BinaryFontEditor(baseFont, 0);
+tachyfont.IncrementalFont.obj_.prototype.parseBaseHeader = function(baseFontView) {
+  var binEd = new tachyfont.BinaryFontEditor(baseFontView, 0);
   var fileInfo = binEd.parseBaseHeader();
   if (!fileInfo.headSize) {
     throw 'missing header info';
@@ -422,12 +422,13 @@ tachyfont.IncrementalFont.obj_.prototype.processUrlBase_ =
 
 /**
  * Parses base font header, set properties.
- * @param {DataView} baseFont Base font with header.
+ * @param {DataView} baseFontView Base font with header.
  */
-tachyfont.IncrementalFont.obj_.prototype.writeCmap12 = function(baseFont) {
-  if (!this.fileInfo_.compact_gos.cmap12)
+tachyfont.IncrementalFont.obj_.prototype.writeCmap12 = function(baseFontView) {
+  if (!this.fileInfo_.compact_gos.cmap12) {
     return;
-  var binEd = new tachyfont.BinaryFontEditor(baseFont,
+  }
+  var binEd = new tachyfont.BinaryFontEditor(baseFontView,
       this.fileInfo_.cmap12.offset + 16);
   var nGroups = this.fileInfo_.cmap12.nGroups;
   var segments = this.fileInfo_.compact_gos.cmap12.segments;
@@ -447,16 +448,17 @@ tachyfont.IncrementalFont.obj_.prototype.writeCmap12 = function(baseFont) {
  * Parses base font header, set properties.
  * @param {!DataView} baseFontView Base font with header.
  */
-tachyfont.IncrementalFont.obj_.prototype.writeCmap4 = function(baseFont) {
-  if (!this.fileInfo_.compact_gos.cmap4)
+tachyfont.IncrementalFont.obj_.prototype.writeCmap4 = function(baseFontView) {
+  if (!this.fileInfo_.compact_gos.cmap4) {
     return;
+  }
   var segments = this.fileInfo_.compact_gos.cmap4.segments;
   var glyphIdArray = this.fileInfo_.compact_gos.cmap4.glyphIdArray;
-  var binEd = new tachyfont.BinaryFontEditor(baseFont,
+  var binEd = new tachyfont.BinaryFontEditor(baseFontView,
       this.fileInfo_.cmap4.offset + 6);
   var segCount = binEd.getUint16() / 2;
-  if (segCount != segments.length) {
-    if (goog.DEBUG) {
+  if (goog.DEBUG) {
+    if (segCount != segments.length) {
       alert('segCount=' + segCount + ', segments.length=' + segments.length);
       debugger;
     }
@@ -490,25 +492,26 @@ tachyfont.IncrementalFont.obj_.prototype.writeCmap4 = function(baseFont) {
     binEd.setUint16(segments[i][3]);
   }
   // Write glyphIdArray values.
-  if (glyphIdArrayLen > 0)
+  if (glyphIdArrayLen > 0) {
     binEd.setArrayOf(binEd.setUint16, glyphIdArray);
+  }
 };
 
 
 /**
- * Inject glyphs in the glyphData to the baseFont
- * @param {DataView} baseFont Current base font
+ * Inject glyphs in the glyphData to the baseFontView
+ * @param {DataView} baseFontView Current base font
  * @param {tachyfont.GlyphBundleResponse} bundleResponse New glyph data
  * @param {Object.<number, !number>} glyphToCodeMap  The glyph Id to code point
  *     mapping;
  * @return {DataView} Updated base font
  */
-tachyfont.IncrementalFont.obj_.prototype.injectCharacters = function(baseFont,
+tachyfont.IncrementalFont.obj_.prototype.injectCharacters = function(baseFontView,
     bundleResponse, glyphToCodeMap) {
   // time_start('inject')
   this.fileInfo_.dirty = true;
   var bundleBinEd = bundleResponse.getFontEditor();
-  var baseBinEd = new tachyfont.BinaryFontEditor(baseFont, 0);
+  var baseBinEd = new tachyfont.BinaryFontEditor(baseFontView, 0);
 
   var count = bundleResponse.getGlyphCount();
   var flags = bundleResponse.getFlags();
@@ -620,15 +623,15 @@ tachyfont.IncrementalFont.obj_.prototype.injectCharacters = function(baseFont,
   }
   if (this.hasOneCharPerSeg) {
     // Set the glyph Ids in the cmap format 12 subtable;
-    this.setFormat12GlyphIds_(baseFont, glyphIds, glyphToCodeMap);
+    this.setFormat12GlyphIds_(baseFontView, glyphIds, glyphToCodeMap);
   
     // Set the glyph Ids in the cmap format 4 subtable;
-    this.setFormat4GlyphIds_(baseFont, glyphIds, glyphToCodeMap);
+    this.setFormat4GlyphIds_(baseFontView, glyphIds, glyphToCodeMap);
   }
 
   // time_end('inject')
 
-  return baseFont;
+  return baseFontView;
 };
 
 
@@ -637,19 +640,19 @@ tachyfont.IncrementalFont.obj_.prototype.injectCharacters = function(baseFont,
  * 
  * Note: this is not well tested.
  *
- * @param {DataView} baseFont Current base font
+ * @param {DataView} baseFontView Current base font
  * @param {Array.<number>} glyphIds The glyph Ids to set.
  * @param {Object.<number, Array.<!number>>} glyphToCodeMap The glyph Id to code
  *     point mapping;
  * @private
  */
 tachyfont.IncrementalFont.obj_.prototype.setFormat4GlyphIds_ =
-  function(baseFont, glyphIds, glyphToCodeMap) {
+  function(baseFontView, glyphIds, glyphToCodeMap) {
   if (!this.fileInfo_.compact_gos.cmap4) {
     return;
   }
   var segments = this.fileInfo_.compact_gos.cmap4.segments;
-  var binEd = new tachyfont.BinaryFontEditor(baseFont,
+  var binEd = new tachyfont.BinaryFontEditor(baseFontView,
       this.fileInfo_.cmap4.offset + 6);
   var segCount = binEd.getUint16() / 2;
   if (segCount != segments.length) {
@@ -768,18 +771,18 @@ tachyfont.IncrementalFont.obj_.prototype.setFormat4GlyphIds_ =
 /**
  * Set the format 12 glyph Ids.
  * 
- * @param {DataView} baseFont Current base font
+ * @param {DataView} baseFontView Current base font
  * @param {Array.<number>} glyphIds The glyph Ids to set.
  * @param {Object.<number, Array.<!number>>} glyphToCodeMap The glyph Id to code
  *     point mapping;
  * @private
  */
 tachyfont.IncrementalFont.obj_.prototype.setFormat12GlyphIds_ =
-  function(baseFont, glyphIds, glyphToCodeMap) {
+  function(baseFontView, glyphIds, glyphToCodeMap) {
   if (!this.fileInfo_.cmap12) {
     return;
   }
-  var segEd = new tachyfont.BinaryFontEditor(baseFont,
+  var segEd = new tachyfont.BinaryFontEditor(baseFontView,
     this.fileInfo_.cmap12.offset + 16);
   var segments = this.fileInfo_.compact_gos.cmap12.segments;
   for (var i = 0; i < glyphIds.length; i += 1) {
