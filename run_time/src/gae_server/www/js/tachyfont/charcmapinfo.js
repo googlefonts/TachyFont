@@ -25,8 +25,8 @@ goog.provide('tachyfont.CharCmapInfo');
  * The cmap information for a character.
  *
  * @param {number} glyphId The glyph Id.
- * @param {number|null} format4Seg The format 4 segment index.
- * @param {number|null} format12Seg The format 12 segment index.
+ * @param {?number} format4Seg The format 4 segment index.
+ * @param {?number} format12Seg The format 12 segment index.
  * @constructor
  */
 tachyfont.CharCmapInfo = function(glyphId, format4Seg, format12Seg) {
@@ -34,10 +34,10 @@ tachyfont.CharCmapInfo = function(glyphId, format4Seg, format12Seg) {
   /** @type {number} */
   this.glyphId = glyphId;
 
-  /** @type {number|null} */
+  /** @type {?number} */
   this.format4Seg = format4Seg;
 
-  /** @type {number|null} */
+  /** @type {?number} */
   this.format12Seg = format12Seg;
 };
 
