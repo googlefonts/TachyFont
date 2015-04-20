@@ -343,12 +343,11 @@ tachyfont.IncrementalFont.obj_.prototype.getPersistedBase = function() {
       then(function(arr) {
         var idb = arr[0];
         var filedata = new DataView(arr[1]);
-        var fileInfo = tachyfont.IncrementalFontUtils.parseBaseHeader(filedata);
-        this.fileInfo_ = fileInfo;
-        var fontData = new DataView(arr[1], fileInfo.headSize);
-        return goog.Promise.all([goog.Promise.resolve(fileInfo),
+        this.parseBaseHeader(filedata);
+        var fontData = new DataView(arr[1], this.fileInfo_.headSize);
+        return goog.Promise.all([goog.Promise.resolve(this.fileInfo_),
               goog.Promise.resolve(fontData)]);
-      }).
+      }.bind(this)).
       thenCatch(function(e) {
         if (goog.DEBUG) {
           goog.log.log(tachyfont.logger, goog.log.Level.FINER,
@@ -357,6 +356,21 @@ tachyfont.IncrementalFont.obj_.prototype.getPersistedBase = function() {
         return goog.Promise.resolve(null);
       }.bind(this));
   return persistedBase;
+};
+
+
+/**
+ * Parses base font header, set properties.
+ * @param {DataView} baseFont Base font with header.
+ */
+tachyfont.IncrementalFont.obj_.prototype.parseBaseHeader = function(baseFont) {
+  var binEd = new tachyfont.BinaryFontEditor(baseFont, 0);
+  var fileInfo = binEd.parseBaseHeader();
+  if (!fileInfo.headSize) {
+    throw 'missing header info';
+  }
+  this.fileInfo_ = fileInfo;
+  this.determineIfOneCharPerSeg();
 };
 
 
@@ -389,19 +403,18 @@ tachyfont.IncrementalFont.obj_.prototype.processUrlBase_ =
     function(fetchedBytes) {
   //tachyfont.timer1.start('uncompact base');
   var fetchedData = new DataView(fetchedBytes);
-  var fileInfo = tachyfont.IncrementalFontUtils.parseBaseHeader(fetchedData);
-  this.fileInfo_ = fileInfo;
-  var headerData = new DataView(fetchedBytes, 0, fileInfo.headSize);
-  var rleFontData = new DataView(fetchedBytes, fileInfo.headSize);
+  this.parseBaseHeader(fetchedData);
+  var headerData = new DataView(fetchedBytes, 0, this.fileInfo_.headSize);
+  var rleFontData = new DataView(fetchedBytes, this.fileInfo_.headSize);
   var raw_base = tachyfont.RLEDecoder.rleDecode([headerData, rleFontData]);
   var raw_basefont = new DataView(raw_base.buffer, headerData.byteLength);
   this.writeCmap12(raw_basefont);
   this.writeCmap4(raw_basefont);
-  tachyfont.IncrementalFontUtils.writeCharsetFormat2(raw_basefont, fileInfo);
-  var basefont = tachyfont.IncrementalFontUtils.sanitizeBaseFont(fileInfo,
+  tachyfont.IncrementalFontUtils.writeCharsetFormat2(raw_basefont, this.fileInfo_);
+  var basefont = tachyfont.IncrementalFontUtils.sanitizeBaseFont(this.fileInfo_,
       raw_basefont);
   //tachyfont.timer1.end('uncompact base');
-  return [fileInfo, basefont];
+  return [this.fileInfo_, basefont];
 };
 
 
@@ -410,7 +423,7 @@ tachyfont.IncrementalFont.obj_.prototype.processUrlBase_ =
  * @param {DataView} baseFont Base font with header.
  */
 tachyfont.IncrementalFont.obj_.prototype.writeCmap12 = function(baseFont) {
-  if (!this.fileInfo_.cmap12)
+  if (!this.fileInfo_.compact_gos.cmap12)
     return;
   var binEd = new tachyfont.BinaryFontEditor(baseFont,
       this.fileInfo_.cmap12.offset + 16);
@@ -578,7 +591,7 @@ tachyfont.IncrementalFont.obj_.prototype.injectCharacters = function(baseFont,
  */
 tachyfont.IncrementalFont.obj_.prototype.setFormat4GlyphIds_ =
   function(baseFont, glyphIds, glyphToCodeMap) {
-  if (!this.fileInfo_.cmap4) {
+  if (!this.fileInfo_.compact_gos.cmap4) {
     return;
   }
   var segments = this.fileInfo_.compact_gos.cmap4.segments;
@@ -662,6 +675,9 @@ tachyfont.IncrementalFont.obj_.prototype.setFormat4GlyphIds_ =
     // Set the glyph Id
     var glyphId = glyphIds[i];
     var codes = glyphToCodeMap[glyphId];
+    if (codes == undefined) {
+      continue;
+    }
     for (var j = 0; j < codes.length; j++) {
       var code = codes[0];
       if (goog.DEBUG) {
@@ -715,15 +731,19 @@ tachyfont.IncrementalFont.obj_.prototype.setFormat12GlyphIds_ =
   for (var i = 0; i < glyphIds.length; i += 1) {
     var id = glyphIds[i];
     var codes = glyphToCodeMap[id];
+    if (codes == undefined) {
+      continue;
+    }
     for (var j = 0; j < codes.length; j++) {
       var code = codes[0];
       if (goog.DEBUG) {
-        goog.log.info(tachyfont.logger, 'format 12: code = ' + code);
+        goog.log.log(tachyfont.logger, goog.log.Level.FINER,
+          'format 12: code = ' + code);
       }
       var charCmapInfo = this.cmapMapping_[code];
       if (!charCmapInfo) {
         if (goog.DEBUG) {
-          goog.log.error(tachyfont.logger, 'format 12, code ' + code +
+          goog.log.warning(tachyfont.logger, 'format 12, code ' + code +
             ': no CharCmapInfo');
           debugger;
         }
@@ -760,7 +780,7 @@ tachyfont.IncrementalFont.obj_.prototype.setFormat12GlyphIds_ =
         }
         if (inMemoryGlyphId != 0) {
           if (inMemoryGlyphId == segStartGlyphId) {
-            goog.log.error(tachyfont.logger, 'format 12 code ' + code +
+            goog.log.warning(tachyfont.logger, 'format 12 code ' + code +
               ', seg ' + format12Seg + ' glyphId already set');
           } else {
             goog.log.error(tachyfont.logger, 'format 12 code ' + code +
@@ -783,7 +803,7 @@ tachyfont.IncrementalFont.obj_.prototype.setFormat12GlyphIds_ =
  * @param {DataView} baseFont Base font with header.
  */
 tachyfont.IncrementalFont.obj_.prototype.writeCmap4 = function(baseFont) {
-  if (!this.fileInfo_.cmap4)
+  if (!this.fileInfo_.compact_gos.cmap4)
     return;
   var segments = this.fileInfo_.compact_gos.cmap4.segments;
   var glyphIdArray = this.fileInfo_.compact_gos.cmap4.glyphIdArray;
@@ -884,9 +904,8 @@ tachyfont.IncrementalFont.obj_.prototype.setFont = function(fontData, isTtf) {
  * segment. Fonts with this arrangement easily support keeping the cmap
  * accurate as character data is added.
  */
-tachyfont.IncrementalFont.obj_.prototype.determineIfOneCharPerSeg = 
-  function() {
-  if (this.fileInfo_.cmap4) {
+tachyfont.IncrementalFont.obj_.prototype.determineIfOneCharPerSeg = function() {
+  if (this.fileInfo_.compact_gos.cmap4) {
     var segments = this.fileInfo_.compact_gos.cmap4.segments;
     for (var i = 0; i < segments.length; i++) {
       var segStartCode = segments[i][0];
@@ -902,7 +921,7 @@ tachyfont.IncrementalFont.obj_.prototype.determineIfOneCharPerSeg =
     }
   }
 
-  if (this.fileInfo_.cmap12) {
+  if (this.fileInfo_.compact_gos.cmap12) {
     var segments = this.fileInfo_.compact_gos.cmap12.segments;
     for (var i = 0; i < segments.length; i++) {
       var length = segments[i][1];
@@ -917,7 +936,7 @@ tachyfont.IncrementalFont.obj_.prototype.determineIfOneCharPerSeg =
   }
 
   if (goog.DEBUG) {
-    goog.log.info(tachyfont.logger, this.fontName +
+    goog.log.fine(tachyfont.logger, this.fontName +
       ' has one char per segment');
   }
 
