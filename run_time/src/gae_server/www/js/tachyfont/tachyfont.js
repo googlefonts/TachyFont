@@ -241,7 +241,6 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
               var allCssSet = [];
               for (var i = 0; i < tachyFonts.length; i++) {
                 var loadedBase = arrayBaseData[i];
-                var fileInfo = loadedBase[0];
                 var incrfont = tachyFonts[i].incrfont;
                 // If not persisted then need to wait for DOMContentLoaded to
                 // set the font.
