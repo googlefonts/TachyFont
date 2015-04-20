@@ -121,8 +121,8 @@ class BaseFonter(object):
     ranges_to_zero = []
     if cmap12:
       ranges_to_zero.append((cmap_offset+cmap12.offset+16,cmap12.length-16))
-    if cmap4:
-      ranges_to_zero.append((cmap_offset+cmap4.offset+14,cmap4.length-14))
+    #if cmap4:
+    #  ranges_to_zero.append((cmap_offset+cmap4.offset+14,cmap4.length-14))
       
     change_method(_c_m_a_p.cmap_format_12_or_13,old_12_method,'decompile')
     change_method(_c_m_a_p.cmap_format_4,old_4_method,'decompile')
@@ -130,8 +130,8 @@ class BaseFonter(object):
     
     font.close()
     
-    if len(ranges_to_zero)<2: #return if both doesn't exist
-      return
+    #if len(ranges_to_zero)<2: #return if both doesn't exist
+    #  return
      
     for block in ranges_to_zero:
       filler = Filler(output)

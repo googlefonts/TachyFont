@@ -119,7 +119,8 @@ class InfoOps(object):
     cmap4 = cmapTables.getcmap(3, 1) #format 4
     if cmap4 and cmap12:
       compacter = CmapCompacter(font)
-      data = compacter.generateGOSTypes([2,4])
+      #data = compacter.generateGOSTypes([2,4])
+      data = compacter.generateGOSTypes([2])
       return data
     else:
       return None

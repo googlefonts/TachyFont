@@ -182,7 +182,9 @@ class _GOSGenerators(object):
     
     fmt12SegCount = len(cmap12_startCodes)
     fmt4SegCount = len(cmap4_startCodes)
-    assert fmt12SegCount >= fmt4SegCount, ''
+    # TODO(bstell): the code in this section seems to only work if there number
+    # of fmt4 segments is smaller than the number of fmt12 segments.
+    assert fmt12SegCount >= (fmt4SegCount-1), ''
 
     #finds segment mappings
     fmt4Seg = 0
@@ -205,7 +207,7 @@ class _GOSGenerators(object):
         print cmap12SegStart,cmap12SegEnd,cmap4_startCodes[fmt4Seg],cmap4_endCodes[fmt4Seg]
         raise('unexpected tables')
     # Handle format 4's special 0xFFFF segment
-    assert fmt4Seg == fmt4SegCount, 'only the 0xFFFF segment left'
+    #assert fmt4Seg == fmt4SegCount, 'only the 0xFFFF segment left'
     mapping[fmt4Seg] # Make an empty segment
     gos_data = bitarray.bitarray(endian='big')
     escaped_data = bitarray.bitarray(endian='big')

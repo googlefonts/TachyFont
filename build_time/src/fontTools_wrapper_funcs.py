@@ -116,6 +116,10 @@ def _override_method(*clazzes):
 #TODO(bstell): move to fontTools_wrapper_funcs
 #@_override_method(ttLib.tables._c_m_a_p)
 def splitRange(startCode, endCode, cmap):
+  startCodes = range(startCode + 1, endCode + 1)
+  endCodes = range(startCode, endCode + 1)
+  return startCodes, endCodes
+  
   # This code flattens cmap format 4 subtable by not using idRangeOffset / 
   # glyphIdArray. This came from 
   # fonttools-master/Lib/fontTools/ttLib/tables/_c_m_a_p.py and was modified to
@@ -208,6 +212,8 @@ def _cmap_format_4_compile(self, ttFont):
     return struct.pack(">HHH", self.format, self.length, self.language) + self.data
   
   charCodes = list(self.cmap.keys())
+  charCodes.sort()
+  charCodes = charCodes[:256]
   lenCharCodes = len(charCodes)
   if lenCharCodes == 0:
     startCode = [0xffff]
@@ -263,10 +269,10 @@ def _cmap_format_4_compile(self, ttFont):
     startCode.append(0xffff)
     endCode.append(0xffff)
   
-  debug_len = len(endCode)
-  debug_pos = 10
-  debug_start = min(debug_pos, debug_len)
-  debug_end = min(debug_pos+10, debug_len)
+  #debug_len = len(endCode)
+  #debug_pos = 10
+  #debug_start = min(debug_pos, debug_len)
+  #debug_end = min(debug_pos+10, debug_len)
 #   for i in range(debug_start, debug_end):
 #     print('a: start/end {0}/{1}'.format(startCode[i], endCode[i] + 1))
   # build up rest of cruft
