@@ -25,13 +25,13 @@ goog.require('goog.log');
 goog.require('goog.log.Level');
 goog.require('goog.math');
 goog.require('tachyfont.BinaryFontEditor');
-goog.require('tachyfont.chainedPromises');
 goog.require('tachyfont.CharCmapInfo');
 goog.require('tachyfont.DemoBackendService');
 goog.require('tachyfont.FontInfo');
 goog.require('tachyfont.GoogleBackendService');
 goog.require('tachyfont.IncrementalFontUtils');
 goog.require('tachyfont.RLEDecoder');
+goog.require('tachyfont.chainedPromises');
 goog.require('tachyfont.promise');
 
 
@@ -1213,7 +1213,7 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars = function() {
       }).
       then(function() {
         // All done getting the char data so release the lock.
-        finishPrecedingCharsRequest.resolve()
+        finishPrecedingCharsRequest.resolve();
         if (goog.DEBUG) {
           goog.log.log(tachyfont.logger, goog.log.Level.FINER,
               'finished loadChars for ' + that.fontName);
@@ -1221,7 +1221,7 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars = function() {
       }).
       thenCatch(function(e) {
         // Failed to get the char data so release the lock.
-        finishPrecedingCharsRequest.reject()
+        finishPrecedingCharsRequest.reject();
         if (goog.DEBUG) {
           debugger;
           goog.log.error(tachyfont.logger, e.stack);
