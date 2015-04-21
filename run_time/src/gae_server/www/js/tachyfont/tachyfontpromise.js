@@ -86,6 +86,38 @@ tachyfont.promise.prototype.getPrecedingPromise = function() {
 
 
 /**
+ * Reject the promise.
+ *
+ * @param {*=} opt_value An optional value to pass to the reject function.
+ */
+tachyfont.promise.prototype.reject = function(opt_value) {
+  if (goog.DEBUG) {
+    debugger;
+  }
+  // TODO(bstell): reject means all subsequent uses to fail; is this desired?
+  this.rejecter_(opt_value);
+  if (this.container_) {
+    if (goog.DEBUG) {
+      if (this.container_.promises.length <= 1) {
+        // We unshift all except the very first manually added promise.
+        if (this.container_.chainedCount_ != 0) {
+          debugger;
+        }
+      }
+    }
+    if (this.container_.promises.length > 1) {
+      this.container_.promises.shift();
+      if (goog.DEBUG) {
+        this.container_.pendingCount_--;
+        goog.log.log(tachyfont.logger, goog.log.Level.FINER,
+            this.msg_ + 'dropped count to ' + this.container_.pendingCount_);
+      }
+    }
+  }
+};
+
+
+/**
  * Resolve the promise.
  *
  * @param {*=} opt_value An optional value to pass to the resolve function.

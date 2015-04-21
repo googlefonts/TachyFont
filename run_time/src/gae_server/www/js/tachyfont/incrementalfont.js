@@ -25,6 +25,7 @@ goog.require('goog.log');
 goog.require('goog.log.Level');
 goog.require('goog.math');
 goog.require('tachyfont.BinaryFontEditor');
+goog.require('tachyfont.chainedPromises');
 goog.require('tachyfont.CharCmapInfo');
 goog.require('tachyfont.DemoBackendService');
 goog.require('tachyfont.FontInfo');
@@ -300,8 +301,15 @@ tachyfont.IncrementalFont.obj_ = function(fontInfo, params, backendService) {
   this.getBase = this.base.getPromise();
   this.getCharList = null;
 
-  // TODO(bstell): Use ChainedPromise to properly serialize the promises.
-  this.finishPersistingData = goog.Promise.resolve();
+  /**
+   * The persist operation takes time so serialize them.
+   *
+   * @private {tachyfont.chainedPromises}
+   */
+  this.finishPersistingData_ = new tachyfont.chainedPromises();
+  if (goog.DEBUG) {
+    this.finishPersistingData_.setDebugMessage('finishPersistingData_');
+  }
 
   /**
    * The character request operation takes time so serialize them.
@@ -1245,13 +1253,23 @@ tachyfont.IncrementalFont.obj_.prototype.persistDelayed_ = function(name) {
 tachyfont.IncrementalFont.obj_.prototype.persist_ = function(name) {
   var that = this;
   // Wait for any preceding persist operation to finish.
-  this.finishPersistingData.then(function() {
+  var msg;
+  if (goog.DEBUG) {
+    goog.log.log(tachyfont.logger, goog.log.Level.FINER,
+        'updateFonts: wait for preceding persist');
+    msg = 'persist_';
+  }
+  var finishedPersisting = this.finishPersistingData_.getChainedPromise(msg);
+  finishedPersisting.getPrecedingPromise().
+  then(function() {
     // Previous persists may have already saved the data so see if there is
     // anything still to persist.
     var base_dirty = that.persistInfo[tachyfont.IncrementalFont.BASE_DIRTY];
     var charlist_dirty =
         that.persistInfo[tachyfont.IncrementalFont.CHARLIST_DIRTY];
     if (!base_dirty && !charlist_dirty) {
+      // Nothing to persist so release the lock.
+      finishedPersisting.resolve();
       return;
     }
 
@@ -1259,8 +1277,8 @@ tachyfont.IncrementalFont.obj_.prototype.persist_ = function(name) {
     that.persistInfo[tachyfont.IncrementalFont.BASE_DIRTY] = false;
     that.persistInfo[tachyfont.IncrementalFont.CHARLIST_DIRTY] = false;
 
-    // Note that there is now a persist operation running.
-    that.finishPersistingData = goog.Promise.resolve().
+    // Do the persisting.
+    goog.Promise.resolve().
         then(function() {
           if (base_dirty) {
             return that.getBase.
@@ -1300,11 +1318,15 @@ tachyfont.IncrementalFont.obj_.prototype.persist_ = function(name) {
           }
         }).
         then(function() {
-          // if (goog.DEBUG) {
-          //   goog.log.fine(tachyfont.logger, 'persisted ' + name);
-          // }
+          // Done persisting so release the lock.
+          finishedPersisting.resolve();
+          if (goog.DEBUG) {
+            goog.log.fine(tachyfont.logger, 'persisted ' + name);
+          }
         });
   }).thenCatch(function(e) {
+    // Release the lock.
+    finishedPersisting.reject();
     if (goog.DEBUG) {
       goog.log.error(tachyfont.logger, e.stack);
       debugger;
