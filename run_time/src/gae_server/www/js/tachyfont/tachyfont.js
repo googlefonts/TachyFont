@@ -90,10 +90,13 @@ if (goog.DEBUG) {
      */
     tachyfont.buildDemo = false;
 
-    var persistDataStr = tachyfont.uri.getParameterValue('TachyFontPersistData') || '';
-    if (persistDataStr.toLowerCase() == "false") {
-      tachyfont.persistData = false;
-    }
+    var persistDataStr =
+        tachyfont.uri.getParameterValue('TachyFontPersistData') || '';
+    // The following code implements this logic:
+    // if (persistDataStr.toLowerCase() == 'false') {
+    //   tachyfont.persistData = false;
+    // }
+    tachyfont.persistData = persistDataStr.toLowerCase() != 'false';
   };
 }
 
@@ -240,8 +243,8 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
             then(function(arrayBaseData) {
               var allCssSet = [];
               for (var i = 0; i < tachyFonts.length; i++) {
-                var loadedBase = arrayBaseData[i];
                 var incrfont = tachyFonts[i].incrfont;
+                var loadedBase = arrayBaseData[i];
                 // If not persisted then need to wait for DOMContentLoaded to
                 // set the font.
                 if (!incrfont.alreadyPersisted) {
