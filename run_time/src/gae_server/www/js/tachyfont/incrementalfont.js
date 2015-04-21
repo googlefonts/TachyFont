@@ -259,7 +259,7 @@ tachyfont.IncrementalFont.obj_ = function(fontInfo, params, backendService) {
   /**
    * The character to format 4 / format 12 mapping.
    *
-   * @private {Object.<string, !tachyfont.CharCmapInfo>}
+   * @private {Object.<number, !tachyfont.CharCmapInfo>}
    */
   this.cmapMapping_;
 
@@ -314,11 +314,12 @@ tachyfont.IncrementalFont.obj_ = function(fontInfo, params, backendService) {
   /**
    * The character request operation takes time so serialize them.
    *
-   * TODO(bstell): Use ChainedPromise to properly serialize the promises.
-   *
-   * @private {goog.Promise}
+   * @private {tachyfont.chainedPromises}
    */
-  this.finishPrecedingCharsRequest_ = goog.Promise.resolve();
+  this.finishPrecedingCharsRequest_ = new tachyfont.chainedPromises();
+  if (goog.DEBUG) {
+    this.finishPrecedingCharsRequest_.setDebugMessage('finishPersistingData_');
+  }
 
   /**
    * The setFont operation takes time so serialize them.
@@ -513,8 +514,8 @@ tachyfont.IncrementalFont.obj_.prototype.writeCmap4 = function(baseFontView) {
  * Inject glyphs in the glyphData to the baseFontView
  * @param {DataView} baseFontView Current base font
  * @param {tachyfont.GlyphBundleResponse} bundleResponse New glyph data
- * @param {Object.<number, !number>} glyphToCodeMap  The glyph Id to code point
- *     mapping;
+ * @param {Object.<number, Array.<!number>>} glyphToCodeMap  The glyph Id to
+ *     code point mapping;
  * @return {DataView} Updated base font
  */
 tachyfont.IncrementalFont.obj_.prototype.injectCharacters =
@@ -1038,17 +1039,16 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars = function() {
   var charlist;
   var neededCodes = [];
   var remaining = [];
-  // TODO(bstell): this method of serializing the requests seems like it could
-  // allow multiple requests to wait on a single promise. When that promise
-  // resolved all the waiting requests would be unblocked.
-  //
-  // This probably needs to be replaced with a queue of requests that works as
-  // follows:
-  //
-  //   An initial resolved promise is added to the front of the queue. As a new
-  //   request comes it addes itself to the end of the queue and waits on the
-  //   previous request to resolve.
-  this.finishPrecedingCharsRequest_ = this.finishPrecedingCharsRequest_.
+
+  var msg;
+  if (goog.DEBUG) {
+    goog.log.log(tachyfont.logger, goog.log.Level.FINER,
+        'updateFonts: wait for preceding char data request');
+    msg = 'loadChars';
+  }
+  var finishPrecedingCharsRequest =
+      this.finishPrecedingCharsRequest_.getChainedPromise(msg);
+  finishPrecedingCharsRequest.getPrecedingPromise().
       then(function() {
         // TODO(bstell): use charCmapInfo to only request chars in the font.
         var charArray = Object.keys(that.charsToLoad);
@@ -1056,6 +1056,7 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars = function() {
         // TODO(bstell): until the serializing is fixed this stops multiple
         // requests running on the same resolved promise.
         if (charArray.length == 0) {
+          // Lock will be released below.
           return null;
         }
         var pendingResolveFn, pendingRejectFn;
@@ -1200,19 +1201,23 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars = function() {
             });
       }).
       then(function() {
+        // All done getting the char data so release the lock.
+        finishPrecedingCharsRequest.resolve()
         if (goog.DEBUG) {
           goog.log.log(tachyfont.logger, goog.log.Level.FINER,
               'finished loadChars for ' + that.fontName);
         }
       }).
       thenCatch(function(e) {
+        // Failed to get the char data so release the lock.
+        finishPrecedingCharsRequest.reject()
         if (goog.DEBUG) {
           debugger;
           goog.log.error(tachyfont.logger, e.stack);
           return goog.Promise.resolve(false);
         }
       });
-  return this.finishPrecedingCharsRequest_;
+  return finishPrecedingCharsRequest.getPromise();
 };
 
 
