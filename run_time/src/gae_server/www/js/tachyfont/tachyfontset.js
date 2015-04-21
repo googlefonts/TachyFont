@@ -453,6 +453,8 @@ tachyfont.TachyFontSet.prototype.updateFonts = function(allowEarlyUse) {
         allUpdated.resolve();
       }.bind(this)).
       thenCatch(function(e) {
+        debugger;
+        allUpdated.reject();
         if (goog.DEBUG) {
           goog.log.error(tachyfont.logger, 'failed to load all fonts' +
               e.stack);

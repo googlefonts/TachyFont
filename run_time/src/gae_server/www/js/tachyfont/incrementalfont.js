@@ -25,6 +25,7 @@ goog.require('goog.log');
 goog.require('goog.log.Level');
 goog.require('goog.math');
 goog.require('tachyfont.BinaryFontEditor');
+goog.require('tachyfont.chainedPromises');
 goog.require('tachyfont.CharCmapInfo');
 goog.require('tachyfont.DemoBackendService');
 goog.require('tachyfont.FontInfo');
@@ -300,26 +301,35 @@ tachyfont.IncrementalFont.obj_ = function(fontInfo, params, backendService) {
   this.getBase = this.base.getPromise();
   this.getCharList = null;
 
-  // TODO(bstell): Use ChainedPromise to properly serialize the promises.
-  this.finishPersistingData = goog.Promise.resolve();
+  /**
+   * The persist operation takes time so serialize them.
+   *
+   * @private {tachyfont.chainedPromises}
+   */
+  this.finishPersistingData_ = new tachyfont.chainedPromises();
+  if (goog.DEBUG) {
+    this.finishPersistingData_.setDebugMessage('finishPersistingData_');
+  }
 
   /**
    * The character request operation takes time so serialize them.
    *
-   * TODO(bstell): Use ChainedPromise to properly serialize the promises.
-   *
-   * @private {goog.Promise}
+   * @private {tachyfont.chainedPromises}
    */
-  this.finishPrecedingCharsRequest_ = goog.Promise.resolve();
+  this.finishPrecedingCharsRequest_ = new tachyfont.chainedPromises();
+  if (goog.DEBUG) {
+    this.finishPrecedingCharsRequest_.setDebugMessage('finishPrecedingCharsRequest_');
+  }
 
   /**
    * The setFont operation takes time so serialize them.
    *
-   * TODO(bstell): Use ChainedPromise to properly serialize the promises.
-   *
-   * @private {goog.Promise}
+   * @private {tachyfont.chainedPromises}
    */
-  this.finishPrecedingSetFont_ = goog.Promise.resolve();
+  this.finishPrecedingSetFont_ = new tachyfont.chainedPromises();
+  if (goog.DEBUG) {
+    this.finishPrecedingSetFont_.setDebugMessage('finishPrecedingSetFont_');
+  }
 };
 
 
@@ -870,14 +880,22 @@ tachyfont.IncrementalFont.obj_.prototype.setFont = function(fontData, isTtf) {
     goog.log.log(tachyfont.logger, goog.log.Level.FINER,
         'setFont: wait for preceding');
   }
-  return this.finishPrecedingSetFont_
-      .then(function() {
+  var msg;
+  if (goog.DEBUG) {
+    goog.log.log(tachyfont.logger, goog.log.Level.FINER,
+        'updateFonts: wait for preceding setFont');
+    msg = 'setFont';
+  }
+  var finishPrecedingSetFont = this.finishPrecedingSetFont_.getChainedPromise(msg);
+  finishPrecedingSetFont.getPrecedingPromise().
+      then(function() {
         if (goog.DEBUG) {
           goog.log.log(tachyfont.logger, goog.log.Level.FINER,
              'setFont: done waiting for preceding');
         }
         this.needToSetFont = false;
-        this.finishPrecedingSetFont_ = new goog.Promise(function(resolve) {
+        return goog.Promise.resolve().
+        then(function() {
           if (goog.DEBUG) {
             goog.log.fine(tachyfont.logger, 'setFont ' +
                 this.fontInfo.getName());
@@ -898,11 +916,13 @@ tachyfont.IncrementalFont.obj_.prototype.setFont = function(fontData, isTtf) {
                if (goog.DEBUG) {
                  goog.log.fine(tachyfont.logger, 'setFont: setFont done');
                }
-               resolve();
              });
-        }.bind(this));
-        return this.finishPrecedingSetFont_;
+        }.bind(this)).
+        then(function() {
+          finishPrecedingSetFont.resolve();
+        });
       }.bind(this));
+  return finishPrecedingSetFont.getPromise();
 };
 
 
@@ -1030,17 +1050,16 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars = function() {
   var charlist;
   var neededCodes = [];
   var remaining = [];
-  // TODO(bstell): this method of serializing the requests seems like it could
-  // allow multiple requests to wait on a single promise. When that promise
-  // resolved all the waiting requests would be unblocked.
-  //
-  // This probably needs to be replaced with a queue of requests that works as
-  // follows:
-  //
-  //   An initial resolved promise is added to the front of the queue. As a new
-  //   request comes it addes itself to the end of the queue and waits on the
-  //   previous request to resolve.
-  this.finishPrecedingCharsRequest_ = this.finishPrecedingCharsRequest_.
+
+  var msg;
+  if (goog.DEBUG) {
+    goog.log.log(tachyfont.logger, goog.log.Level.FINER,
+        'updateFonts: wait for preceding char data request');
+    msg = 'loadChars';
+  }
+  var finishPrecedingCharsRequest =
+      this.finishPrecedingCharsRequest_.getChainedPromise(msg);
+  finishPrecedingCharsRequest.getPrecedingPromise().
       then(function() {
         // TODO(bstell): use charCmapInfo to only request chars in the font.
         var charArray = Object.keys(that.charsToLoad);
@@ -1048,6 +1067,7 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars = function() {
         // TODO(bstell): until the serializing is fixed this stops multiple
         // requests running on the same resolved promise.
         if (charArray.length == 0) {
+          // Lock will be released below.
           return null;
         }
         var pendingResolveFn, pendingRejectFn;
@@ -1192,19 +1212,23 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars = function() {
             });
       }).
       then(function() {
+        // All done getting the char data so release the lock.
+        finishPrecedingCharsRequest.resolve()
         if (goog.DEBUG) {
           goog.log.log(tachyfont.logger, goog.log.Level.FINER,
               'finished loadChars for ' + that.fontName);
         }
       }).
       thenCatch(function(e) {
+        // Failed to get the char data so release the lock.
+        finishPrecedingCharsRequest.reject()
         if (goog.DEBUG) {
           debugger;
           goog.log.error(tachyfont.logger, e.stack);
           return goog.Promise.resolve(false);
         }
       });
-  return this.finishPrecedingCharsRequest_;
+  return finishPrecedingCharsRequest.getPromise();
 };
 
 
@@ -1245,13 +1269,23 @@ tachyfont.IncrementalFont.obj_.prototype.persistDelayed_ = function(name) {
 tachyfont.IncrementalFont.obj_.prototype.persist_ = function(name) {
   var that = this;
   // Wait for any preceding persist operation to finish.
-  this.finishPersistingData.then(function() {
+  var msg;
+  if (goog.DEBUG) {
+    goog.log.log(tachyfont.logger, goog.log.Level.FINER,
+        'updateFonts: wait for preceding persist');
+    msg = 'persist_';
+  }
+  var finishedPersisting = this.finishPersistingData_.getChainedPromise(msg);
+  finishedPersisting.getPrecedingPromise().
+  then(function() {
     // Previous persists may have already saved the data so see if there is
     // anything still to persist.
     var base_dirty = that.persistInfo[tachyfont.IncrementalFont.BASE_DIRTY];
     var charlist_dirty =
         that.persistInfo[tachyfont.IncrementalFont.CHARLIST_DIRTY];
     if (!base_dirty && !charlist_dirty) {
+      // Nothing to persist so release the lock.
+      finishedPersisting.resolve();
       return;
     }
 
@@ -1259,8 +1293,8 @@ tachyfont.IncrementalFont.obj_.prototype.persist_ = function(name) {
     that.persistInfo[tachyfont.IncrementalFont.BASE_DIRTY] = false;
     that.persistInfo[tachyfont.IncrementalFont.CHARLIST_DIRTY] = false;
 
-    // Note that there is now a persist operation running.
-    that.finishPersistingData = goog.Promise.resolve().
+    // Do the persisting.
+    return goog.Promise.resolve().
         then(function() {
           if (base_dirty) {
             return that.getBase.
@@ -1300,11 +1334,15 @@ tachyfont.IncrementalFont.obj_.prototype.persist_ = function(name) {
           }
         }).
         then(function() {
-          // if (goog.DEBUG) {
-          //   goog.log.fine(tachyfont.logger, 'persisted ' + name);
-          // }
+          // Done persisting so release the lock.
+          finishedPersisting.resolve();
+          if (goog.DEBUG) {
+            goog.log.fine(tachyfont.logger, 'persisted ' + name);
+          }
         });
   }).thenCatch(function(e) {
+    // Release the lock.
+    finishedPersisting.reject();
     if (goog.DEBUG) {
       goog.log.error(tachyfont.logger, e.stack);
       debugger;

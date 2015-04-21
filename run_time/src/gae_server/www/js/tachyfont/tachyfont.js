@@ -288,6 +288,7 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
 
             }).
             thenCatch(function(e) {
+              allLoaded.reject();
               if (goog.DEBUG) {
                 goog.log.error(tachyfont.logger, 'failed to get the font: ' +
                 e.stack);
@@ -296,6 +297,7 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
             });
       }).
       thenCatch(function(e) {
+        allLoaded.reject();
         if (goog.DEBUG) {
           goog.log.error(tachyfont.logger, 'failed to get the font: ' +
               e.message);
