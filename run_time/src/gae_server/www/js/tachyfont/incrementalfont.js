@@ -245,9 +245,10 @@ tachyfont.IncrementalFont.obj_ = function(fontInfo, params, backendService) {
   this.fontInfo = fontInfo;
 
   this.fontName = fontInfo.getName();
-  
+
+  /** @private {Object} Information about the font file */
   this.fileInfo_;
-  
+
   /**
    * Indicates if the cmap may be easily kept accurate.
    * @type {boolean}
@@ -422,7 +423,7 @@ tachyfont.IncrementalFont.obj_.prototype.processUrlBase_ =
 
 /**
  * Parses base font header, set properties.
- * @param {DataView} baseFontView Base font with header.
+ * @param {!DataView} baseFontView Base font with header.
  */
 tachyfont.IncrementalFont.obj_.prototype.writeCmap12 = function(baseFontView) {
   if (!this.fileInfo_.compact_gos.cmap12) {
@@ -1126,14 +1127,12 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars = function() {
                       ' injectCharacters: glyph count / data length = ' +
                       bundleResponse.getGlyphCount() + ' / ' + dataLength);
                     }
-                    //debugger;
                     var glyphToCodeMap = {};
                     for (var i = 0; i < neededCodes.length; i++) {
                       var code = neededCodes[i];
                       var charCmapInfo = that.cmapMapping_[code];
                       if (charCmapInfo) {
-                        // TODO(bstell): need to handle multipe codes sharing a
-                        // glyphId
+                        // Handle multipe codes sharing a glyphId.
                         if (glyphToCodeMap[charCmapInfo.glyphId] == undefined) {
                           glyphToCodeMap[charCmapInfo.glyphId] = [];
                         }
