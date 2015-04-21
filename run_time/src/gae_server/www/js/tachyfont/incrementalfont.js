@@ -318,17 +318,18 @@ tachyfont.IncrementalFont.obj_ = function(fontInfo, params, backendService) {
    */
   this.finishPrecedingCharsRequest_ = new tachyfont.chainedPromises();
   if (goog.DEBUG) {
-    this.finishPrecedingCharsRequest_.setDebugMessage('finishPersistingData_');
+    this.finishPrecedingCharsRequest_.setDebugMessage('finishPrecedingCharsRequest_');
   }
 
   /**
    * The setFont operation takes time so serialize them.
    *
-   * TODO(bstell): Use ChainedPromise to properly serialize the promises.
-   *
-   * @private {goog.Promise}
+   * @private {tachyfont.chainedPromises}
    */
-  this.finishPrecedingSetFont_ = goog.Promise.resolve();
+  this.finishPrecedingSetFont_ = new tachyfont.chainedPromises();
+  if (goog.DEBUG) {
+    this.finishPrecedingSetFont_.setDebugMessage('finishPrecedingSetFont_');
+  }
 };
 
 
@@ -879,14 +880,22 @@ tachyfont.IncrementalFont.obj_.prototype.setFont = function(fontData, isTtf) {
     goog.log.log(tachyfont.logger, goog.log.Level.FINER,
         'setFont: wait for preceding');
   }
-  return this.finishPrecedingSetFont_
-      .then(function() {
+  var msg;
+  if (goog.DEBUG) {
+    goog.log.log(tachyfont.logger, goog.log.Level.FINER,
+        'updateFonts: wait for preceding setFont');
+    msg = 'setFont';
+  }
+  var finishPrecedingSetFont = this.finishPrecedingSetFont_.getChainedPromise(msg);
+  finishPrecedingSetFont.getPrecedingPromise().
+      then(function() {
         if (goog.DEBUG) {
           goog.log.log(tachyfont.logger, goog.log.Level.FINER,
              'setFont: done waiting for preceding');
         }
         this.needToSetFont = false;
-        this.finishPrecedingSetFont_ = new goog.Promise(function(resolve) {
+        return goog.Promise.resolve().
+        then(function() {
           if (goog.DEBUG) {
             goog.log.fine(tachyfont.logger, 'setFont ' +
                 this.fontInfo.getName());
@@ -907,11 +916,13 @@ tachyfont.IncrementalFont.obj_.prototype.setFont = function(fontData, isTtf) {
                if (goog.DEBUG) {
                  goog.log.fine(tachyfont.logger, 'setFont: setFont done');
                }
-               resolve();
              });
-        }.bind(this));
-        return this.finishPrecedingSetFont_;
+        }.bind(this)).
+        then(function() {
+          finishPrecedingSetFont.resolve();
+        });
       }.bind(this));
+  return finishPrecedingSetFont.getPromise();
 };
 
 
@@ -1283,7 +1294,7 @@ tachyfont.IncrementalFont.obj_.prototype.persist_ = function(name) {
     that.persistInfo[tachyfont.IncrementalFont.CHARLIST_DIRTY] = false;
 
     // Do the persisting.
-    goog.Promise.resolve().
+    return goog.Promise.resolve().
         then(function() {
           if (base_dirty) {
             return that.getBase.
