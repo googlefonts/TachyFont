@@ -458,6 +458,7 @@ tachyfont.TachyFontSet.prototype.updateFonts = function(allowEarlyUse) {
               e.stack);
           debugger;
         }
+        allUpdated.reject();
       });
   return allUpdated.getPromise();
 };
