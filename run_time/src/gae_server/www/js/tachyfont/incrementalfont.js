@@ -258,7 +258,7 @@ tachyfont.IncrementalFont.obj_ = function(fontInfo, params, backendService) {
   /**
    * The character to format 4 / format 12 mapping.
    *
-   * @private {Object.<string, !tachyfont.CharCmapInfo>}
+   * @private {Object.<number, !tachyfont.CharCmapInfo>}
    */
   this.cmapMapping_;
 
@@ -505,8 +505,8 @@ tachyfont.IncrementalFont.obj_.prototype.writeCmap4 = function(baseFontView) {
  * Inject glyphs in the glyphData to the baseFontView
  * @param {DataView} baseFontView Current base font
  * @param {tachyfont.GlyphBundleResponse} bundleResponse New glyph data
- * @param {Object.<number, !number>} glyphToCodeMap  The glyph Id to code point
- *     mapping;
+ * @param {Object.<number, Array.<!number>>} glyphToCodeMap  The glyph Id to
+ *     code point mapping;
  * @return {DataView} Updated base font
  */
 tachyfont.IncrementalFont.obj_.prototype.injectCharacters =

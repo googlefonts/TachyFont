@@ -323,7 +323,7 @@ tachyfont.IncrementalFontUtils.setCssFontRule =
 /**
  * Get the character to glyphId mapping.
  * @param {Object} headerInfo Header information.
- * @return {Object.<string, tachyfont.CharCmapInfo>} Map of chars to glyphId,
+ * @return {Object.<number, tachyfont.CharCmapInfo>} Map of chars to glyphId,
  *     format4Seg, format12Seg.
  */
 tachyfont.IncrementalFontUtils.getCmapMapping = function(headerInfo) {
@@ -368,7 +368,7 @@ tachyfont.IncrementalFontUtils.getCmapMapping = function(headerInfo) {
 
 
   if (!headerInfo.compact_gos.cmap12) {
-    if (goog.Debug) {
+    if (goog.DEBUG) {
       debugger; // TODO(bstell): need to handle this.
     }
     return cmapMapping;
