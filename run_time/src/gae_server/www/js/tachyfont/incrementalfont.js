@@ -33,6 +33,7 @@ goog.require('tachyfont.IncrementalFontUtils');
 goog.require('tachyfont.RLEDecoder');
 goog.require('tachyfont.chainedPromises');
 goog.require('tachyfont.promise');
+goog.require('tachyfont.utils');
 
 
 /**
@@ -897,7 +898,23 @@ tachyfont.IncrementalFont.obj_.prototype.setFont = function(fontData, isTtf) {
         }
         this.needToSetFont = false;
         return goog.Promise.resolve().
-            then(function() {
+          then(function() {
+            if (goog.DEBUG) {
+              return this.getCharList.
+              then(function(charList) {
+                if (tachyfont.reportCharList) {
+                  tachyfont.utils.reportCharList('setFont charList', charList);
+                }
+                if (tachyfont.checkCmap) {
+                  tachyfont.utils.checkCmap(charList, this.fileInfo, fontData);
+                }
+                if (tachyfont.reportChecksums) {
+                  tachyfont.utils.reportChecksums(charList, this.fileInfo, fontData);
+                }
+              }.bind(this));
+            }
+          }.bind(this)).
+          then(function() {
               if (goog.DEBUG) {
                 goog.log.fine(tachyfont.logger, 'setFont ' +
                 this.fontInfo.getName());
@@ -1005,7 +1022,7 @@ tachyfont.possibly_obfuscate = function(codes, charlist) {
     var new_code = Math.floor(goog.math.uniformRandom(bottom, top + 1));
     if (charlist[new_code] == undefined) {
       code_map[new_code] = new_code;
-      var new_char = String.fromCharCode(new_code);
+      var new_char = String.fromCodePoint(new_code);
       charlist[new_char] = 1;
     }
     if (goog.DEBUG) {
@@ -1065,6 +1082,9 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars = function() {
       then(function() {
         // TODO(bstell): use charCmapInfo to only request chars in the font.
         var charArray = Object.keys(that.charsToLoad);
+        if (tachyfont.reportNeededChars) {
+          tachyfont.utils.reportCharList('chars on page', that.charsToLoad);
+        }
         // Check if there are any new characters.
         // TODO(bstell): until the serializing is fixed this stops multiple
         // requests running on the same resolved promise.
@@ -1081,6 +1101,9 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars = function() {
           return that.getCharList.
               then(function(charlist_) {
                 charlist = charlist_;
+                if (tachyfont.reportCharList) {
+                  tachyfont.utils.reportCharList('loadChars charlist', charlist);
+                }
                 // Make a tmp copy in case we are chunking the requests.
                 var tmp_charlist = {};
                 for (var key in charlist) {
@@ -1097,6 +1120,12 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars = function() {
                 }
 
                 if (neededCodes.length) {
+                  if (goog.DEBUG) {
+                    // This is debug only: report the chars before obfuscation.
+                    if (tachyfont.reportNeededChars) {
+                      tachyfont.utils.reportCodes('neededCodes', neededCodes);
+                    }
+                  }
                   neededCodes = tachyfont.possibly_obfuscate(neededCodes,
                   tmp_charlist);
                   if (goog.DEBUG) {
@@ -1118,7 +1147,7 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars = function() {
                   neededCodes = neededCodes.slice(0, that.req_size);
                 }
                 for (var i = 0; i < neededCodes.length; i++) {
-                  var c = String.fromCharCode(neededCodes[i]);
+                  var c = String.fromCodePoint(neededCodes[i]);
                   charlist[c] = 1;
                   delete that.charsToLoad[c];
                 }
