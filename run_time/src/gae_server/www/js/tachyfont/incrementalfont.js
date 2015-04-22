@@ -1022,7 +1022,6 @@ tachyfont.possibly_obfuscate = function(codes, charlist) {
     var new_code = Math.floor(goog.math.uniformRandom(bottom, top + 1));
     if (charlist[new_code] == undefined) {
       code_map[new_code] = new_code;
-      debugger;
       var new_char = tachyfont.utils.stringFromCodePoint(new_code);
       charlist[new_char] = 1;
     }
