@@ -90,13 +90,52 @@ if (goog.DEBUG) {
      */
     tachyfont.buildDemo = false;
 
+    /**
+     * Disable using persistent store. This is useful for forcing the base and
+     * char data to be fetched regardless on what is in persistent store.
+     */
     var persistDataStr =
         tachyfont.uri.getParameterValue('TachyFontPersistData') || '';
     // The following code implements this logic:
     // if (persistDataStr.toLowerCase() == 'false') {
     //   tachyfont.persistData = false;
     // }
+    /** @type {boolean} */
     tachyfont.persistData = persistDataStr.toLowerCase() != 'false';
+
+
+    /**
+     * Enable reporting the needed characters. There are the chars on the page
+     * that are not yet in the charList.
+     */
+    var reportNeededCharsStr =
+        tachyfont.uri.getParameterValue('TachyFontReportNeededChars') || '';
+    /** @type {boolean} */
+    tachyfont.reportNeededChars = reportNeededCharsStr.toLowerCase() == 'true';
+
+    /**
+     * Enable reporting the list of loaded characters.
+     */
+    var reportCharListStr =
+        tachyfont.uri.getParameterValue('TachyFontReportCharList') || '';
+    /** @type {boolean} */
+    tachyfont.reportCharList = reportCharListStr.toLowerCase() == 'true';
+
+    /**
+     * Enable reporting font table checksums.
+     */
+    var reportChecksumsStr =
+        tachyfont.uri.getParameterValue('TachyFontReportChecksums') || '';
+    /** @type {boolean} */
+    tachyfont.reportChecksums = reportChecksumsStr.toLowerCase() == 'true';
+
+    /**
+     * Enable checking cmap against fileInfo and charList.
+     */
+    var checkCmapStr =
+        tachyfont.uri.getParameterValue('TachyFontCheckCmap') || '';
+    /** @type {boolean} */
+    tachyfont.checkCmap = checkCmapStr.toLowerCase() == 'true';
   };
 }
 
