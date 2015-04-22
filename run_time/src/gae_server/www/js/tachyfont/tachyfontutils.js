@@ -48,8 +48,6 @@ tachyfont.utils.stringFromCodePoint = function(codePoint) {
 /**
  * Report the chars in the charList.
  *
-
-
  * @param {!Object.<!string, !number>} charList The list of loaded chars.
  */
 tachyfont.utils.reportCharList = function(title, charList) {
