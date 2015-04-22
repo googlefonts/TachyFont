@@ -23,8 +23,33 @@ goog.require('goog.crypt.Md5');
 
 
 /**
+ * Convert a codepoint to a string.
+ *
+ * This duplicates the String.fromCodePoint function in ES6.
+ *
+ * Chrome supports this function but the Closure compiler does not recognize
+ * this.
+ *
+ * @param {!number} codePoint The codepoint.
+ * @return {string}
+ */
+tachyfont.utils.stringFromCodePoint = function(codePoint) {
+  if (codePoint <= 0xFFFF) {
+    return String.fromCharCode(codePoint);
+  } else {
+    debugger;
+    codePoint -= 0x10000;
+    var highSurrogate = (codePoint >> 10) + 0xD800;
+    var lowSurrogate = (codePoint & 0x3FF) + 0xDC00;
+    return String.fromCharCode(highSurrogate, lowSurrogate);
+  }
+};
+
+/**
  * Report the chars in the charList.
  *
+
+
  * @param {!Object.<!string, !number>} charList The list of loaded chars.
  */
 tachyfont.utils.reportCharList = function(title, charList) {
