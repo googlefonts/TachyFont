@@ -23,6 +23,7 @@ goog.require('goog.Promise');
 goog.require('tachyfont.BackendService');
 goog.require('tachyfont.FontInfo');
 goog.require('tachyfont.GlyphBundleResponse');
+goog.require('tachyfont.utils');
 
 
 goog.scope(function() {
