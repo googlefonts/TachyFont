@@ -102,7 +102,7 @@ tachyfont.utils.reportCodes = function(title, codesIn) {
         return;
       }
       formattedOutput += ' 0x' + ('00000' + code.toString(16)).substr(-5) + ',';
-      str += String.fromCodePoint(code);
+      str += tachyfont.utils.stringFromCodePoint(code);
       if (i % 8 == 7) {
         formattedOutput += '   "' + str + '"';
         console.log(formattedOutput);
@@ -165,7 +165,7 @@ tachyfont.utils.checkCmap = function(charList, fileInfo, fontView) {
  * @param {!DataView} fontView The font data.
  * @return {boolean} True if the charlist and cmap agree.
  */
-tachyfont.utils.reportChecksums = function(fileInfo, fontView) {
+tachyfont.utils.reportChecksums = function(charList, fileInfo, fontView) {
   if (goog.DEBUG) {
     console.log('need to code tachyfont.utils.reportChecksums');
     // debugger;
@@ -176,6 +176,7 @@ tachyfont.utils.reportChecksums = function(fileInfo, fontView) {
     //   calculate the MD5 hash
     //   report the table name and MD5 hash
   }
+  return true;
 };
 
 
