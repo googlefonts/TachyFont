@@ -2,7 +2,7 @@
 
 /**
  * @license
- * Copyright 2014-2015 Google Inc. All rights reserved.
+ * Copyright 2015 Google Inc. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -193,15 +193,16 @@ tachyfont.utils.caclulateMd5 = function(offset, length, dataView) {
 };
 
 
-///**
-// * Check the fileInfo against the font's table of contents.
-// *
-// * @param {!Object} fileInfo Information about the font data.
-// * @param {!DataView} fontView The font data.
-// * @return {boolean} True if the charlist and cmap agree.
-// */
-//tachyfont.utils.checkFileInfo = function(fileInfo, fontView) {
-//  // Not sure if this would be really valuable
-//};
+/**
+ * Check the fileInfo against the font's table of contents.
+ *
+ * @param {!Object} fileInfo Information about the font data.
+ * @param {!DataView} fontView The font data.
+ * @return {boolean} True if the charlist and cmap agree.
+ */
+tachyfont.utils.checkFileInfo = function(fileInfo, fontView) {
+  // Not sure if this would be really valuable.
+  return false;
+};
 
 
