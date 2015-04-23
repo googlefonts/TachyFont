@@ -284,10 +284,10 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
               for (var i = 0; i < tachyFonts.length; i++) {
                 var incrfont = tachyFonts[i].incrfont;
                 var loadedBase = arrayBaseData[i];
+                incrfont.base.resolve(loadedBase);
                 // If not persisted then need to wait for DOMContentLoaded to
                 // set the font.
                 if (!incrfont.alreadyPersisted) {
-                  incrfont.base.resolve(loadedBase);
                   if (goog.DEBUG) {
                     goog.log.fine(tachyfont.logger,
                         'loadFonts: not persisted');
