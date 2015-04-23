@@ -248,7 +248,7 @@ tachyfont.IncrementalFont.obj_ = function(fontInfo, params, backendService) {
 
   this.fontName = fontInfo.getName();
 
-  /** @private {Object} Information about the font file */
+  /** @private {!Object} Information about the font file */
   this.fileInfo_;
 
   /**
@@ -873,7 +873,7 @@ tachyfont.IncrementalFont.obj_.prototype.setFormat12GlyphIds_ =
 
 /**
  * Set the \@font-face rule.
- * @param {DataView} fontData The font dataview.
+ * @param {!DataView} fontData The font dataview.
  * @param {boolean} isTtf True if the font is a TrueType font.
  * @return {goog.Promise} The promise resolves when the glyphs are displaying.
  */
@@ -907,10 +907,11 @@ tachyfont.IncrementalFont.obj_.prototype.setFont = function(fontData, isTtf) {
                     ' setFont charList', charList);
                 }
                 if (tachyfont.checkCmap) {
-                  tachyfont.utils.checkCmap(charList, this.fileInfo, fontData);
+                  tachyfont.utils.checkCmap(charList, this.fileInfo_, fontData);
                 }
                 if (tachyfont.reportChecksums) {
-                  tachyfont.utils.reportChecksums(charList, this.fileInfo, fontData);
+                  tachyfont.utils.reportChecksums(charList, this.fileInfo_,
+                      fontData);
                 }
               }.bind(this));
             }
@@ -994,9 +995,9 @@ tachyfont.IncrementalFont.obj_.prototype.determineIfOneCharPerSeg = function() {
 /**
  * Obfuscate small requests to make it harder for a TachyFont server to
  * determine the content on a page.
- * @param {Array<number>} codes The codepoints to add obusfuscation to.
- * @param {Object} charlist The chars that have already been requested.
- * @return {Array<number>} The codepoints with obusfuscation.
+ * @param {!Array.<!number>} codes The codepoints to add obusfuscation to.
+ * @param {!Object} charlist The chars that have already been requested.
+ * @return {!Array.<!number>} The codepoints with obusfuscation.
  */
 tachyfont.possibly_obfuscate = function(codes, charlist) {
   // Check if we need to obfuscate the request.
