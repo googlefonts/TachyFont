@@ -37,7 +37,6 @@ tachyfont.utils.stringFromCodePoint = function(codePoint) {
   if (codePoint <= 0xFFFF) {
     return String.fromCharCode(codePoint);
   } else {
-    debugger;
     codePoint -= 0x10000;
     var highSurrogate = (codePoint >> 10) + 0xD800;
     var lowSurrogate = (codePoint & 0x3FF) + 0xDC00;
