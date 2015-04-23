@@ -305,7 +305,7 @@ tachyfont.IncrementalFont.obj_ = function(fontInfo, params, backendService) {
   /**
    * The persist operation takes time so serialize them.
    *
-   * @private {tachyfont.chainedPromises}
+   * @private {!tachyfont.chainedPromises}
    */
   this.finishPersistingData_ = new tachyfont.chainedPromises();
   if (goog.DEBUG) {
@@ -315,7 +315,7 @@ tachyfont.IncrementalFont.obj_ = function(fontInfo, params, backendService) {
   /**
    * The character request operation takes time so serialize them.
    *
-   * @private {tachyfont.chainedPromises}
+   * @private {!tachyfont.chainedPromises}
    */
   this.finishPrecedingCharsRequest_ = new tachyfont.chainedPromises();
   if (goog.DEBUG) {
@@ -326,7 +326,7 @@ tachyfont.IncrementalFont.obj_ = function(fontInfo, params, backendService) {
   /**
    * The setFont operation takes time so serialize them.
    *
-   * @private {tachyfont.chainedPromises}
+   * @private {!tachyfont.chainedPromises}
    */
   this.finishPrecedingSetFont_ = new tachyfont.chainedPromises();
   if (goog.DEBUG) {
