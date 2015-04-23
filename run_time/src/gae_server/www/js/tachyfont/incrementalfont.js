@@ -886,7 +886,7 @@ tachyfont.IncrementalFont.obj_.prototype.setFont = function(fontData, isTtf) {
   if (goog.DEBUG) {
     goog.log.log(tachyfont.logger, goog.log.Level.FINER,
         'updateFonts: wait for preceding setFont');
-    msg = 'setFont';
+    msg = this.fontInfo.getName() + ' setFont';
   }
   var finishPrecedingSetFont =
       this.finishPrecedingSetFont_.getChainedPromise(msg);
@@ -903,7 +903,8 @@ tachyfont.IncrementalFont.obj_.prototype.setFont = function(fontData, isTtf) {
               return this.getCharList.
               then(function(charList) {
                 if (tachyfont.reportCharList) {
-                  tachyfont.utils.reportCharList('setFont charList', charList);
+                  tachyfont.utils.reportCharList(this.fontInfo.getName() +
+                    ' setFont charList', charList);
                 }
                 if (tachyfont.checkCmap) {
                   tachyfont.utils.checkCmap(charList, this.fileInfo, fontData);
@@ -1073,8 +1074,9 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars = function() {
   var msg;
   if (goog.DEBUG) {
     goog.log.log(tachyfont.logger, goog.log.Level.FINER,
-        'updateFonts: wait for preceding char data request');
-    msg = 'loadChars';
+        this.fontInfo.getName() +
+        ' updateFonts: wait for preceding char data request');
+    msg = this.fontInfo.getName() + ' loadChars';
   }
   var finishPrecedingCharsRequest =
       this.finishPrecedingCharsRequest_.getChainedPromise(msg);
@@ -1083,7 +1085,8 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars = function() {
         // TODO(bstell): use charCmapInfo to only request chars in the font.
         var charArray = Object.keys(that.charsToLoad);
         if (tachyfont.reportNeededChars) {
-          tachyfont.utils.reportCharList('chars on page', that.charsToLoad);
+          tachyfont.utils.reportCharList(that.fontInfo.getName() +
+            ' chars on page', that.charsToLoad);
         }
         // Check if there are any new characters.
         // TODO(bstell): until the serializing is fixed this stops multiple
@@ -1102,7 +1105,8 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars = function() {
               then(function(charlist_) {
                 charlist = charlist_;
                 if (tachyfont.reportCharList) {
-                  tachyfont.utils.reportCharList('loadChars charlist', charlist);
+                  tachyfont.utils.reportCharList(that.fontInfo.getName() +
+                    'loadChars charlist', charlist);
                 }
                 // Make a tmp copy in case we are chunking the requests.
                 var tmp_charlist = {};
@@ -1123,7 +1127,8 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars = function() {
                   if (goog.DEBUG) {
                     // This is debug only: report the chars before obfuscation.
                     if (tachyfont.reportNeededChars) {
-                      tachyfont.utils.reportCodes('neededCodes', neededCodes);
+                      tachyfont.utils.reportCodes(that.fontInfo.getName() +
+                        'neededCodes', neededCodes);
                     }
                   }
                   neededCodes = tachyfont.possibly_obfuscate(neededCodes,
@@ -1304,7 +1309,7 @@ tachyfont.IncrementalFont.obj_.prototype.persist_ = function(name) {
   if (goog.DEBUG) {
     goog.log.log(tachyfont.logger, goog.log.Level.FINER,
         'updateFonts: wait for preceding persist');
-    msg = 'persist_';
+    msg = this.fontInfo.getName() + ' persist_';
   }
   var finishedPersisting = this.finishPersistingData_.getChainedPromise(msg);
   finishedPersisting.getPrecedingPromise().
