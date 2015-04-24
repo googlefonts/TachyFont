@@ -98,7 +98,7 @@ tachyfont.TachyFontSet = function(familyName) {
 
   /**
    * Timeout to report lingering needed char data.
-   * 
+   *
    * @private {?number} The timerID from setTimeout.
    */
   // TODO (bstell): need to make this work.
@@ -447,7 +447,7 @@ tachyfont.TachyFontSet.prototype.updateFonts = function(allowEarlyUse) {
           }
           var cssSetResult = fontObj.setFont(fontData, fileInfo).
               then(function() {
-                var name = 'sf' + this.fontInfo.weight_;
+                var name = 'sf' + this.fontInfo.getWeight();
                 tachyfont.reporter.addItemTime(name, true);
                 tachyfont.IncrementalFontUtils.setVisibility(this.style,
                 this.fontInfo, true);
