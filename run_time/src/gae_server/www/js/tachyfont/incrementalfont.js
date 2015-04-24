@@ -291,11 +291,6 @@ tachyfont.IncrementalFont.obj_ = function(fontInfo, params, backendService) {
     this.persistData = false;
   }
 
-  if (!this.url) {
-    this.url = window.location.protocol + '//' + window.location.hostname +
-        (window.location.port ? ':' + window.location.port : '');
-  }
-
   // Promises
   this.getIDB_ = null;
   this.base = new tachyfont.promise();
@@ -1129,7 +1124,7 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars = function() {
                     // This is debug only: report the chars before obfuscation.
                     if (tachyfont.reportNeededChars) {
                       tachyfont.utils.reportCodes(that.fontInfo.getName() +
-                        'neededCodes', neededCodes);
+                        ' neededCodes', neededCodes);
                     }
                   }
                   neededCodes = tachyfont.possibly_obfuscate(neededCodes,

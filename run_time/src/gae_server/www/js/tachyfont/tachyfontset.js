@@ -90,11 +90,19 @@ tachyfont.TachyFontSet = function(familyName) {
   }
 
   /**
-   * The timerID from setTimeout.
+   * Timeout to report a lingering update request.
    *
    * @private {?number} The timerID from setTimeout.
    */
   this.pendingUpdateRequest_ = null;
+
+  /**
+   * Timeout to report lingering needed char data.
+   * 
+   * @private {?number} The timerID from setTimeout.
+   */
+  // TODO (bstell): need to make this work.
+  this.pendingCharDataRequest_ = null;
 };
 
 
@@ -396,7 +404,7 @@ tachyfont.TachyFontSet.prototype.updateFonts = function(allowEarlyUse) {
           var needToSetFont = fontObj.needToSetFont;
           // It takes significant time to pass the font data from Javascript to
           // the browser. So unless specifically told to do so, do not update
-          // the font before the page loads.
+          // the font before the page finishes loading.
           if (!this.domContentLoaded) {
             if (!allowEarlyUse) {
               needToSetFont = false;
@@ -438,18 +446,23 @@ tachyfont.TachyFontSet.prototype.updateFonts = function(allowEarlyUse) {
             goog.log.fine(tachyfont.logger, 'updateFonts: setFont: ');
           }
           var cssSetResult = fontObj.setFont(fontData, fileInfo).
-              then(function(cssSetResult) {
-                tachyfont.IncrementalFontUtils.setVisibility(fontObj.style,
-                fontObj.fontInfo, true);
-              });
+              then(function() {
+                var name = 'sf' + this.fontInfo.weight_;
+                tachyfont.reporter.addItemTime(name, true);
+                tachyfont.IncrementalFontUtils.setVisibility(this.style,
+                this.fontInfo, true);
+              }.bind(fontObj));
           allCssSet.push(cssSetResult);
         }
         return goog.Promise.all(allCssSet);
       }.bind(this)).
       then(function(setResults) {
+        var okIfNoItems;
         if (goog.DEBUG) {
+          okIfNoItems = true;
           goog.log.fine(tachyfont.logger, 'updateFonts: updated all fonts');
         }
+        tachyfont.reporter.sendReport(okIfNoItems);
         allUpdated.resolve();
       }.bind(this)).
       thenCatch(function(e) {
