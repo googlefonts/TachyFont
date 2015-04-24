@@ -33,6 +33,7 @@ goog.require('tachyfont.FontsInfo');
 goog.require('tachyfont.IncrementalFontUtils');
 goog.require('tachyfont.TachyFont');
 goog.require('tachyfont.TachyFontSet');
+goog.require('tachyfont.reporter');
 
 
 if (goog.DEBUG) {
@@ -227,6 +228,11 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
   // constructor or and init function.
   var params = opt_params || {};
   var url = fontsInfo.getUrl();
+  if (!url) {
+    url = window.location.protocol + '//' + window.location.hostname +
+        (window.location.port ? ':' + window.location.port : '');
+  }
+  tachyfont.reporter.url = url;
   var fonts = fontsInfo.getFonts();
   for (var i = 0; i < fonts.length; i++) {
     var fontInfo = fonts[i];
@@ -282,12 +288,12 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
             then(function(arrayBaseData) {
               var allCssSet = [];
               for (var i = 0; i < tachyFonts.length; i++) {
-                var incrfont = tachyFonts[i].incrfont;
+                var incrFont = tachyFonts[i].incrfont;
                 var loadedBase = arrayBaseData[i];
-                incrfont.base.resolve(loadedBase);
+                incrFont.base.resolve(loadedBase);
                 // If not persisted then need to wait for DOMContentLoaded to
                 // set the font.
-                if (!incrfont.alreadyPersisted) {
+                if (!incrFont.alreadyPersisted) {
                   if (goog.DEBUG) {
                     goog.log.fine(tachyfont.logger,
                         'loadFonts: not persisted');
@@ -302,18 +308,20 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
                   goog.log.fine(tachyfont.logger, 'loadFonts: setFont_');
                 }
                 // TODO(bstell): only set the font if there are characters.
-                var cssSet = incrfont.setFont(loadedBase[1],
+                var cssSet = incrFont.setFont(loadedBase[1],
                     loadedBase[0].isTtf).
-                then(function(cssSetResult) {
+                then(function() {
+                  // Report Set Font Early.
+                  var name = 'sfe' + this.fontInfo.weight_;
+                  tachyfont.reporter.addItemTime(name, false);
                   if (goog.DEBUG) {
-                    goog.log.fine(tachyfont.logger,
-                        'loadFonts: setFont_ done');
+                    goog.log.fine(tachyfont.logger, 'loadFonts: setFont_ done');
                   }
-                  tachyfont.IncrementalFontUtils.setVisibility(incrfont.style,
-                  incrfont.fontInfo, true);
+                  tachyfont.IncrementalFontUtils.setVisibility(this.style,
+                      this.fontInfo, true);
                   // Release other operations to proceed.
-                  incrfont.base.resolve(loadedBase);
-                });
+                  this.base.resolve(loadedBase);
+                }.bind(incrFont));
                 allCssSet.push(cssSet);
               }
               return goog.Promise.all(allCssSet);
