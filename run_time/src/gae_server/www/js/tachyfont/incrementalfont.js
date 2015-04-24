@@ -512,7 +512,7 @@ tachyfont.IncrementalFont.obj_.prototype.writeCmap4 = function(baseFontView) {
  * Inject glyphs in the glyphData to the baseFontView
  * @param {DataView} baseFontView Current base font
  * @param {tachyfont.GlyphBundleResponse} bundleResponse New glyph data
- * @param {Object.<number, Array.<!number>>} glyphToCodeMap  The glyph Id to
+ * @param {Object.<number, Array.<number>>} glyphToCodeMap  The glyph Id to
  *     code point mapping;
  * @return {DataView} Updated base font
  */
@@ -652,7 +652,7 @@ tachyfont.IncrementalFont.obj_.prototype.injectCharacters =
  *
  * @param {DataView} baseFontView Current base font
  * @param {Array.<number>} glyphIds The glyph Ids to set.
- * @param {Object.<number, Array.<!number>>} glyphToCodeMap The glyph Id to code
+ * @param {Object.<number, Array.<number>>} glyphToCodeMap The glyph Id to code
  *     point mapping;
  * @private
  */
@@ -784,7 +784,7 @@ tachyfont.IncrementalFont.obj_.prototype.setFormat4GlyphIds_ =
  *
  * @param {DataView} baseFontView Current base font
  * @param {Array.<number>} glyphIds The glyph Ids to set.
- * @param {Object.<number, Array.<!number>>} glyphToCodeMap The glyph Id to code
+ * @param {Object.<number, Array.<number>>} glyphToCodeMap The glyph Id to code
  *     point mapping;
  * @private
  */
@@ -893,25 +893,26 @@ tachyfont.IncrementalFont.obj_.prototype.setFont = function(fontData, isTtf) {
         }
         this.needToSetFont = false;
         return goog.Promise.resolve().
-          then(function() {
-            if (goog.DEBUG) {
-              return this.getCharList.
-              then(function(charList) {
-                if (tachyfont.reportCharList) {
-                  tachyfont.utils.reportCharList(this.fontInfo.getName() +
+            then(function() {
+              if (goog.DEBUG) {
+                return this.getCharList.
+                then(function(charList) {
+                  if (tachyfont.reportCharList) {
+                    tachyfont.utils.reportCharList(this.fontInfo.getName() +
                     ' setFont charList', charList);
-                }
-                if (tachyfont.checkCmap) {
-                  tachyfont.utils.checkCmap(charList, this.fileInfo_, fontData);
-                }
-                if (tachyfont.reportChecksums) {
-                  tachyfont.utils.reportChecksums(charList, this.fileInfo_,
-                      fontData);
-                }
-              }.bind(this));
-            }
-          }.bind(this)).
-          then(function() {
+                  }
+                  if (tachyfont.checkCmap) {
+                    tachyfont.utils.checkCmap(charList, this.fileInfo_,
+                        fontData);
+                  }
+                  if (tachyfont.reportChecksums) {
+                    tachyfont.utils.reportChecksums(charList, this.fileInfo_,
+                        fontData);
+                  }
+                }.bind(this));
+              }
+            }.bind(this)).
+            then(function() {
               if (goog.DEBUG) {
                 goog.log.fine(tachyfont.logger, 'setFont ' +
                 this.fontInfo.getName());
@@ -990,9 +991,9 @@ tachyfont.IncrementalFont.obj_.prototype.determineIfOneCharPerSeg = function() {
 /**
  * Obfuscate small requests to make it harder for a TachyFont server to
  * determine the content on a page.
- * @param {!Array.<!number>} codes The codepoints to add obusfuscation to.
+ * @param {!Array.<number>} codes The codepoints to add obusfuscation to.
  * @param {!Object} charlist The chars that have already been requested.
- * @return {!Array.<!number>} The codepoints with obusfuscation.
+ * @return {!Array.<number>} The codepoints with obusfuscation.
  */
 tachyfont.possibly_obfuscate = function(codes, charlist) {
   // Check if we need to obfuscate the request.
@@ -1082,7 +1083,7 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars = function() {
         var charArray = Object.keys(that.charsToLoad);
         if (tachyfont.reportNeededChars) {
           tachyfont.utils.reportCharList(that.fontInfo.getName() +
-            ' chars on page', that.charsToLoad);
+              ' chars on page', that.charsToLoad);
         }
         // Check if there are any new characters.
         // TODO(bstell): until the serializing is fixed this stops multiple
@@ -1102,7 +1103,7 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars = function() {
                 charlist = charlist_;
                 if (tachyfont.reportCharList) {
                   tachyfont.utils.reportCharList(that.fontInfo.getName() +
-                    'loadChars charlist', charlist);
+                  'loadChars charlist', charlist);
                 }
                 // Make a tmp copy in case we are chunking the requests.
                 var tmp_charlist = {};
@@ -1124,7 +1125,7 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars = function() {
                     // This is debug only: report the chars before obfuscation.
                     if (tachyfont.reportNeededChars) {
                       tachyfont.utils.reportCodes(that.fontInfo.getName() +
-                        ' neededCodes', neededCodes);
+                      ' neededCodes', neededCodes);
                     }
                   }
                   neededCodes = tachyfont.possibly_obfuscate(neededCodes,
