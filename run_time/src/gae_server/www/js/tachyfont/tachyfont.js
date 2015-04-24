@@ -312,7 +312,7 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
                     loadedBase[0].isTtf).
                 then(function() {
                   // Report Set Font Early.
-                  var name = 'sfe' + this.fontInfo.weight_;
+                  var name = 'sfe' + this.fontInfo.getWeight();
                   tachyfont.reporter.addItemTime(name, false);
                   if (goog.DEBUG) {
                     goog.log.fine(tachyfont.logger, 'loadFonts: setFont_ done');
