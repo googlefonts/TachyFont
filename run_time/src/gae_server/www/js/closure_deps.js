@@ -58,11 +58,17 @@ goog.addDependency('../../../tachyfont/rledecoder.js',
 goog.addDependency('../../../tachyfont/tachyfontpromise.js',
     ['tachyfont.promise', 'tachyfont.chainedPromises'],
     ['goog.Promise']);
+goog.addDependency('../../../tachyfont/tachyfontreporter.js',
+    ['tachyfont.reporter'],
+    ['goog.log']);
 goog.addDependency('../../../tachyfont/tachyfontset.js',
     ['tachyfont.TachyFontSet'],
     ['goog.array', 'goog.Promise', 'goog.log', 'goog.style',
      'tachyfont.IncrementalFontUtils', 'tachyfont.chainedPromises'
     ]);
+goog.addDependency('../../../tachyfont/tachyfontutils.js',
+    ['tachyfont.utils'],
+    ['goog.crypt.Md5']);
 goog.addDependency('../../../tachyfont/webfonttailor.js',
     ['webfonttailor'],
     ['tachyfont.FontInfo',
