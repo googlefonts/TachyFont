@@ -30,7 +30,7 @@ goog.require('goog.crypt.Md5');
  * Chrome supports this function but the Closure compiler does not recognize
  * this.
  *
- * @param {!number} codePoint The codepoint.
+ * @param {number} codePoint The codepoint.
  * @return {string}
  */
 tachyfont.utils.stringFromCodePoint = function(codePoint) {
@@ -44,16 +44,18 @@ tachyfont.utils.stringFromCodePoint = function(codePoint) {
   }
 };
 
+
 /**
  * Report the chars in the charList.
  *
- * @param {!Object.<!string, !number>} charList The list of loaded chars.
+ * @param {string} title The title of the report.
+ * @param {!Object.<string, number>} charList The list of loaded chars.
  */
 tachyfont.utils.reportCharList = function(title, charList) {
   if (goog.DEBUG) {
     if (charList.constructor != Object) {
       console.log('tachyfont.utils.reportCharList: expected Object but got ' +
-        charList.constructor);
+          charList.constructor);
       debugger;
       return;
     }
@@ -63,7 +65,7 @@ tachyfont.utils.reportCharList = function(title, charList) {
     for (var i = 0; i < charListArray.length; i++) {
       if (typeof charListArray[i] != 'string') {
         console.log(title + '[' + i + '] not a character: ' +
-          typeof charListArray[i]);
+            typeof charListArray[i]);
         debugger;
       }
       var code = tachyfont.charToCode(charListArray[i]);
@@ -73,22 +75,23 @@ tachyfont.utils.reportCharList = function(title, charList) {
   }
 };
 
+
 /**
  * Report the list of codepoints.
  *
  * @param {string} title The title of the codepoint list.
- * @param {!Array.<!number>} codesIn The array of codepoints.
+ * @param {!Array.<number>} codesIn The array of codepoints.
  */
 tachyfont.utils.reportCodes = function(title, codesIn) {
   if (goog.DEBUG) {
     if (codesIn.constructor != Array) {
       console.log('tachyfont.utils.codesIn: expected Array but got ' +
-        codesIn.constructor);
+          codesIn.constructor);
       debugger;
       return;
     }
     var codes = codesIn.slice();
-    codes.sort(function(a, b){ return a - b });
+    codes.sort(function(a, b) { return a - b });
 
     console.log('----------');
     console.log(title + ':');
@@ -120,6 +123,7 @@ tachyfont.utils.reportCodes = function(title, codesIn) {
     console.log('----------');
   }
 };
+
 
 /**
  * Check that the cmap matches the charList.
@@ -154,7 +158,6 @@ tachyfont.utils.checkCmap = function(charList, fileInfo, fontView) {
   }
   return true;
 };
-
 
 
 /**
