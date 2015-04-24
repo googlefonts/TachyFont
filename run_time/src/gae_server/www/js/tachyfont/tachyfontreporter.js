@@ -22,10 +22,9 @@ goog.provide('tachyfont.reporter');
 goog.require('goog.log');
 
 
-
 /**
  * TachyFont start time.
- * 
+ *
  * This is as close to the user start time as possible. This is useful for
  * reporting how long after start time activities happened.
  *
@@ -36,7 +35,7 @@ tachyfont.reporter.startTime_ = goog.now();
 
 /**
  * The URL to send the report to.
- * 
+ *
  * @type {string} The list of helper objects.
  */
 tachyfont.reporter.url = '';
@@ -44,45 +43,43 @@ tachyfont.reporter.url = '';
 
 /**
  * The items to report.
- * 
+ *
  * @private {!Object.<string, string>}
  */
 tachyfont.reporter.items_ = {};
 
 
-
 /**
  * The duplicate items count;
- * 
+ *
  * Useful when keeping duplicates separately.
- * 
+ *
  * @private {!Object.<string, number>}
  */
 tachyfont.reporter.dupCnts_ = {};
 
 
-
 /**
  * Add the time an item happened.
- * 
+ *
  * @param {string} name The name of the item.
- * @param {boolean=} recordDups If true record duplicates separately.
+ * @param {boolean=} opt_recordDups If true record duplicates separately.
  */
-tachyfont.reporter.addItemTime = function(name, recordDups) {
+tachyfont.reporter.addItemTime = function(name, opt_recordDups) {
   var deltaTime = goog.now() - tachyfont.reporter.startTime_;
-  tachyfont.reporter.addItem(name, '' + deltaTime, recordDups);
+  tachyfont.reporter.addItem(name, '' + deltaTime, opt_recordDups);
 };
 
 
 /**
  * Add an item to report.
- * 
+ *
  * @param {string} name The name of the item.
  * @param {string} value The value of the item.
- * @param {boolean=} recordDups If true record duplicates separately.
+ * @param {boolean=} opt_recordDups If true record duplicates separately.
  */
-tachyfont.reporter.addItem = function(name, value, recordDups) {
-  if (recordDups) {
+tachyfont.reporter.addItem = function(name, value, opt_recordDups) {
+  if (opt_recordDups) {
     if (name in tachyfont.reporter.dupCnts_) {
       var dupCnt = tachyfont.reporter.dupCnts_[name] + 1;
       tachyfont.reporter.dupCnts_[name] = dupCnt;
@@ -97,15 +94,15 @@ tachyfont.reporter.addItem = function(name, value, recordDups) {
 
 /**
  * Send the report.
- * 
- * @param {boolean=} okIfNoItems Do not complain if not items.
+ *
+ * @param {boolean=} opt_okIfNoItems Do not complain if not items.
  */
-tachyfont.reporter.sendReport = function(okIfNoItems) {
+tachyfont.reporter.sendReport = function(opt_okIfNoItems) {
   var names = Object.keys(tachyfont.reporter.items_);
   names.sort();
   if (names.length == 0) {
     if (goog.DEBUG) {
-      if (!okIfNoItems) {
+      if (!opt_okIfNoItems) {
         goog.log.warning(tachyfont.logger, 'sendReport: no items');
         debugger;
       }
