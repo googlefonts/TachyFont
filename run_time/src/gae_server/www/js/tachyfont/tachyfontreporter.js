@@ -17,9 +17,35 @@
  * the License.
  */
 
-goog.provide('tachyfont.reporter');
+goog.provide('tachyfont.Reporter');
 
 goog.require('goog.log');
+
+
+/**
+ * Singleton reporter.
+ *
+ * @type {string} url The URL to send the report to.
+
+ * @constructor
+ */
+tachyfont.Reporter = function(url) {
+
+  /** @private {string} */
+  this.url_ = url;
+
+  /** @private {!Object.<string, string>} */
+  this.items_ = {};
+
+  /**
+   * The duplicate items count;
+   *
+   * Useful when keeping duplicates separately.
+   *
+   * @private {!Object.<string, number>}
+   */
+  this.dupCnts_ = {};
+};
 
 
 /**
@@ -30,33 +56,33 @@ goog.require('goog.log');
  *
  * @private {number} The milliseconds since midnight, January 1, 1970
  */
-tachyfont.reporter.startTime_ = goog.now();
+tachyfont.Reporter.startTime_ = goog.now();
 
 
 /**
- * The URL to send the report to.
+ * TachyFont singleton object.
  *
- * @type {string} The list of helper objects.
+ * @private {!tachyfont.Reporter=}
  */
-tachyfont.reporter.url = '';
+tachyfont.Reporter.object_;
 
 
 /**
- * The items to report.
+ * Get the reporter singleton.
  *
- * @private {!Object.<string, string>}
+ * @return {tachyfont.Reporter} The reporter singleton.
  */
-tachyfont.reporter.items_ = {};
-
-
-/**
- * The duplicate items count;
- *
- * Useful when keeping duplicates separately.
- *
- * @private {!Object.<string, number>}
- */
-tachyfont.reporter.dupCnts_ = {};
+tachyfont.Reporter.getReporter = function(url) {
+  if (goog.DEBUG) {
+    if (tachyfont.Reporter.object_ && tachyfont.Reporter.object_.url_ != url) {
+      debugger;
+    }
+  }
+  if (!tachyfont.Reporter.object_) {
+    tachyfont.Reporter.object_ = new tachyfont.Reporter(url);
+  }
+  return tachyfont.Reporter.object_;
+};
 
 
 /**
@@ -65,9 +91,9 @@ tachyfont.reporter.dupCnts_ = {};
  * @param {string} name The name of the item.
  * @param {boolean=} opt_recordDups If true record duplicates separately.
  */
-tachyfont.reporter.addItemTime = function(name, opt_recordDups) {
-  var deltaTime = goog.now() - tachyfont.reporter.startTime_;
-  tachyfont.reporter.addItem(name, '' + deltaTime, opt_recordDups);
+tachyfont.Reporter.prototype.addItemTime = function(name, opt_recordDups) {
+  var deltaTime = goog.now() - tachyfont.Reporter.startTime_;
+  this.addItem(name, '' + deltaTime, opt_recordDups);
 };
 
 
@@ -78,17 +104,17 @@ tachyfont.reporter.addItemTime = function(name, opt_recordDups) {
  * @param {string} value The value of the item.
  * @param {boolean=} opt_recordDups If true record duplicates separately.
  */
-tachyfont.reporter.addItem = function(name, value, opt_recordDups) {
+tachyfont.Reporter.prototype.addItem = function(name, value, opt_recordDups) {
   if (opt_recordDups) {
-    if (name in tachyfont.reporter.dupCnts_) {
-      var dupCnt = tachyfont.reporter.dupCnts_[name] + 1;
-      tachyfont.reporter.dupCnts_[name] = dupCnt;
+    if (name in this.dupCnts_) {
+      var dupCnt = this.dupCnts_[name] + 1;
+      this.dupCnts_[name] = dupCnt;
       name += '.' + dupCnt;
     } else {
-      tachyfont.reporter.dupCnts_[name] = 0;
+      this.dupCnts_[name] = 0;
     }
   }
-  tachyfont.reporter.items_[name] = value;
+  this.items_[name] = value;
 };
 
 
@@ -97,8 +123,8 @@ tachyfont.reporter.addItem = function(name, value, opt_recordDups) {
  *
  * @param {boolean=} opt_okIfNoItems Do not complain if not items.
  */
-tachyfont.reporter.sendReport = function(opt_okIfNoItems) {
-  var names = Object.keys(tachyfont.reporter.items_);
+tachyfont.Reporter.prototype.sendReport = function(opt_okIfNoItems) {
+  var names = Object.keys(this.items_);
   names.sort();
   if (names.length == 0) {
     if (goog.DEBUG) {
@@ -110,7 +136,7 @@ tachyfont.reporter.sendReport = function(opt_okIfNoItems) {
     return;
   }
   if (goog.DEBUG) {
-    if (!tachyfont.reporter.url) {
+    if (!this.url_) {
       goog.log.error(tachyfont.logger, 'sendReport: URL not set');
       debugger;
       return;
@@ -118,18 +144,24 @@ tachyfont.reporter.sendReport = function(opt_okIfNoItems) {
   }
 
   var items = [];
+  if (goog.DEBUG) {
+    goog.log.info(tachyfont.logger, 'report items:');
+  }
   for (var i = 0; i < names.length; i++) {
     var name = names[i];
-    var item = name + '=' + tachyfont.reporter.items_[name];
+    var item = name + '=' + this.items_[name];
     items.push(item);
+    if (goog.DEBUG) {
+      goog.log.info(tachyfont.logger, '    ' + item);
+    }
   }
-  var reportUrl = tachyfont.reporter.url + '/gen_204?id=tf&' + items.join('&');
+  var reportUrl = this.url_ + '/gen_204?id=tf&' + items.join('&');
   var image = new Image();
-  image.onload = image.onerror = tachyfont.reporter.cleanUp_(image);
+  image.onload = image.onerror = tachyfont.Reporter.cleanUpFunc_(image);
   image.src = reportUrl;
 
   // Clean out the old items.
-  tachyfont.reporter.items_ = {};
+  this.items_ = {};
 };
 
 
@@ -139,7 +171,7 @@ tachyfont.reporter.sendReport = function(opt_okIfNoItems) {
  * @param {!Image} image The image to clean up.
  * @return {!function()} Function that cleans up the image.
  */
-tachyfont.reporter.cleanUp_ = function(image) {
+tachyfont.Reporter.cleanUpFunc_ = function(image) {
   return function() {
     image.onload = image.onerror = null;
   };

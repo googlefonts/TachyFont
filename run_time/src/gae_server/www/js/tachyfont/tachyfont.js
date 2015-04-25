@@ -33,8 +33,19 @@ goog.require('tachyfont.FontsInfo');
 goog.require('tachyfont.IncrementalFontUtils');
 goog.require('tachyfont.TachyFont');
 goog.require('tachyfont.TachyFontSet');
-goog.require('tachyfont.reporter');
+goog.require('tachyfont.Reporter');
 
+/**
+ * Catch all uncaught errors.
+ */
+window.onerror = function (errorMsg, url, lineNumber, column, errorObj) {
+  if (goog.DEBUG) {
+    debugger;
+    // TODO(bstell): need to send a report about this.
+    console.log('Error: ' + errorMsg + ' Script: ' + url + ' Line: ' +
+        lineNumber + ' Column: ' + column + ' StackTrace: ' +  errorObj);
+  }
+}
 
 if (goog.DEBUG) {
   /**
@@ -193,7 +204,26 @@ tachyfont.IncrementalFontLoader;
 
 
 /**
- * Create a font identifing string.
+ * Logging and error reporter.
+ * 
+ * @type {!tachyfont.Reporter}
+ */
+tachyfont.reporter;
+
+
+/**
+ * Initialize the tachyfont reporter.
+ * 
+ * @param {string} url The base url to send reports to.
+ */
+tachyfont.initializeReporter = function(url) {
+  if (!tachyfont.reporter) {
+    tachyfont.reporter = tachyfont.Reporter.getReporter(url);
+  }
+};
+
+/**
+ * Create a font identifying string.
  *
  * @param {string} family The font family name;
  * @param {string} weight The font weight;
@@ -222,17 +252,18 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
     goog.log.fine(tachyfont.logger, 'loadFonts');
   }
 
-  var tachyFontSet = new tachyfont.TachyFontSet(familyName);
-  var tachyFonts = tachyFontSet.fonts;
-  // TODO(bstell): this initialization of TachyFontSet should be in the
-  // constructor or and init function.
-  var params = opt_params || {};
   var url = fontsInfo.getUrl();
   if (!url) {
     url = window.location.protocol + '//' + window.location.hostname +
         (window.location.port ? ':' + window.location.port : '');
   }
-  tachyfont.reporter.url = url;
+  tachyfont.initializeReporter(url);
+
+  // TODO(bstell): this initialization of TachyFontSet should be in the
+  // constructor or and init function.
+  var tachyFontSet = new tachyfont.TachyFontSet(familyName);
+  var tachyFonts = tachyFontSet.fonts;
+  var params = opt_params || {};
   var fonts = fontsInfo.getFonts();
   for (var i = 0; i < fonts.length; i++) {
     var fontInfo = fonts[i];
