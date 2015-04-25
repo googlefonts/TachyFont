@@ -22,11 +22,11 @@ goog.provide('tachyfont.Reporter');
 goog.require('goog.log');
 
 
+
 /**
  * Singleton reporter.
  *
- * @type {string} url The URL to send the report to.
-
+ * @param {string} url The base URL to send reports to.
  * @constructor
  */
 tachyfont.Reporter = function(url) {
@@ -62,7 +62,7 @@ tachyfont.Reporter.startTime_ = goog.now();
 /**
  * TachyFont singleton object.
  *
- * @private {!tachyfont.Reporter=}
+ * @private {!tachyfont.Reporter}
  */
 tachyfont.Reporter.object_;
 
@@ -70,7 +70,8 @@ tachyfont.Reporter.object_;
 /**
  * Get the reporter singleton.
  *
- * @return {tachyfont.Reporter} The reporter singleton.
+ * @param {string} url The base URL to send reports to.
+ * @return {!tachyfont.Reporter} The reporter singleton.
  */
 tachyfont.Reporter.getReporter = function(url) {
   if (goog.DEBUG) {

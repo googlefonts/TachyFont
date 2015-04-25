@@ -31,9 +31,9 @@ goog.require('tachyfont.BinaryFontEditor');
 goog.require('tachyfont.FontInfo');
 goog.require('tachyfont.FontsInfo');
 goog.require('tachyfont.IncrementalFontUtils');
+goog.require('tachyfont.Reporter');
 goog.require('tachyfont.TachyFont');
 goog.require('tachyfont.TachyFontSet');
-goog.require('tachyfont.Reporter');
 
 /**
  * Catch all uncaught errors.
@@ -205,7 +205,7 @@ tachyfont.IncrementalFontLoader;
 
 /**
  * Logging and error reporter.
- * 
+ *
  * @type {!tachyfont.Reporter}
  */
 tachyfont.reporter;
@@ -213,7 +213,7 @@ tachyfont.reporter;
 
 /**
  * Initialize the tachyfont reporter.
- * 
+ *
  * @param {string} url The base url to send reports to.
  */
 tachyfont.initializeReporter = function(url) {
@@ -221,6 +221,7 @@ tachyfont.initializeReporter = function(url) {
     tachyfont.reporter = tachyfont.Reporter.getReporter(url);
   }
 };
+
 
 /**
  * Create a font identifying string.
