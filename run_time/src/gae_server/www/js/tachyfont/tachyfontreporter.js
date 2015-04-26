@@ -122,6 +122,53 @@ tachyfont.Reporter.prototype.addItem = function(name, value, opt_recordDups) {
 /**
  * Send the report.
  *
+ * @param {string} name The error name.
+ * @param {Object} errObj The error object.
+ */
+tachyfont.Reporter.prototype.reportError = function(name, errObj) {
+  // Move any pre-existing items aside.
+  var preexistingItems = this.items_;
+  this.items_ = {};
+  name = 'e.' + name;
+  this.addItem(name, '', true);
+  
+  // Get the error message out of the error object.
+  var value = '';
+  if (errObj) {
+    if (errObj['stack']) {
+      value = errObj['stack'];
+      this.addItem(name + '.' + 'stack', value, true);
+    } else if (errObj['message']) {
+      value = errObj['message'];
+      this.addItem(name + '.' + 'message', value, true);
+    } else if (errObj['name']) {
+      value = errObj['name'];
+      this.addItem(name + '.' + 'name', value, true);
+    }
+    if (errObj['url']) {
+      value = errObj['url'];
+      this.addItem(name + '.' + 'url', value, true);
+    }
+    if (errObj['lineNumber']) {
+      value = errObj['lineNumber'];
+      this.addItem(name + '.' + 'lineNumber', value, true);
+    }
+    if (errObj['column']) {
+      value = errObj['column'];
+      this.addItem(name + '.' + 'column', value, true);
+    }
+  }
+  this.sendReport();
+  
+  // Restore any pre-existing items.
+  this.items_ = preexistingItems;
+
+
+};
+
+/**
+ * Send the report.
+ *
  * @param {boolean=} opt_okIfNoItems Do not complain if not items.
  */
 tachyfont.Reporter.prototype.sendReport = function(opt_okIfNoItems) {
@@ -144,19 +191,27 @@ tachyfont.Reporter.prototype.sendReport = function(opt_okIfNoItems) {
     }
   }
 
+  var baseUrl = this.url_ + '/gen_204?id=tf&';
+  var length = baseUrl.length;
   var items = [];
   if (goog.DEBUG) {
     goog.log.info(tachyfont.logger, 'report items:');
   }
   for (var i = 0; i < names.length; i++) {
     var name = names[i];
-    var item = name + '=' + this.items_[name];
+    var value = encodeURIComponent(this.items_[name]);
+    var item = name + '=' + value;
+    if (length + item.length > 2000) {
+      items.push('truncated=true');
+      break;
+    }
+    length += item.length;
     items.push(item);
     if (goog.DEBUG) {
       goog.log.info(tachyfont.logger, '    ' + item);
     }
   }
-  var reportUrl = this.url_ + '/gen_204?id=tf&' + items.join('&');
+  var reportUrl = + items.join('&');
   var image = new Image();
   image.onload = image.onerror = tachyfont.Reporter.cleanUpFunc_(image);
   image.src = reportUrl;
