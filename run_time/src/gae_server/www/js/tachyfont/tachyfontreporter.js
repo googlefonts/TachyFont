@@ -123,7 +123,7 @@ tachyfont.Reporter.prototype.addItem = function(name, value, opt_recordDups) {
  * Send the report.
  *
  * @param {string} name The error name.
- * @param {Object} errObj The error object.
+ * @param {*} errObj The error object.
  */
 tachyfont.Reporter.prototype.reportError = function(name, errObj) {
   // Move any pre-existing items aside.
@@ -153,13 +153,9 @@ tachyfont.Reporter.prototype.reportError = function(name, errObj) {
       value = errObj['lineNumber'];
       this.addItem(name + '.' + 'lineNumber', value, true);
     }
-    if (errObj['column']) {
-      value = errObj['column'];
-      this.addItem(name + '.' + 'column', value, true);
-    }
   }
   this.sendReport();
-  
+
   // Restore any pre-existing items.
   this.items_ = preexistingItems;
 

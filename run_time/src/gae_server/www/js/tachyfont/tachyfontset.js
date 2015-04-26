@@ -106,6 +106,34 @@ tachyfont.TachyFontSet = function(familyName) {
 };
 
 
+/**
+ * File identifier for this file.
+ *
+ * @type {string}
+ */
+tachyfont.TachyFontSet.fileId = 'tfs';
+
+
+/**
+ * The error reporter for this file.
+ *
+ * @param {number} errNum The error number;
+ * @param {*} errObj The error object;
+ */
+tachyfont.TachyFontSet.reportError = function(errNum, errObj) {
+  if (goog.DEBUG) {
+    if (!tachyfont.reporter) {
+      debugger;
+      goog.log.error(tachyfont.logger, 'failed to report error');
+    }
+  }
+  if (tachyfont.reporter) {
+    tachyfont.reporter.reportError(tachyfont.TachyFontSet.fileId + errNum,
+      errObj);
+  }
+};
+
+
 /*
  * There are multiple issues for the 'character detection', 'character data
  * fetching', and 'CSS update' logic to manage:
@@ -393,6 +421,7 @@ tachyfont.TachyFontSet.prototype.updateFonts = function(allowEarlyUse) {
         return goog.Promise.all(updatingFonts);
       }.bind(this)).
       thenCatch(function(err) {
+        tachyfont.TachyFontSet.reportError(40, err);
         if (goog.DEBUG) {
           debugger;
         }
@@ -466,6 +495,7 @@ tachyfont.TachyFontSet.prototype.updateFonts = function(allowEarlyUse) {
         allUpdated.resolve();
       }.bind(this)).
       thenCatch(function(e) {
+        tachyfont.TachyFontSet.reportError(50, e);
         if (goog.DEBUG) {
           goog.log.error(tachyfont.logger, 'failed to load all fonts' +
               e.stack);

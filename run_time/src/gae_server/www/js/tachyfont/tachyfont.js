@@ -38,19 +38,26 @@ goog.require('tachyfont.TachyFontSet');
 /**
  * Catch all uncaught errors.
  */
-window.onerror = function (errorMsg, url, lineNumber, column, errorObj) {
+window.onerror =
+/**
+ * @param {string} errorMsg
+ * @param {string} url
+ * @param {number} lineNumber
+ * @return {?|null}
+ */
+function (errorMsg, url, lineNumber) {
   if (tachyfont.reportError) {
+    var errorObj = {};
+    errorObj['message'] = errorMsg;
     errorObj['url'] = url;
     errorObj['lineNumber'] = lineNumber;
-    errorObj['column'] = column;
     tachyfont.reportError(10, errorObj);
   }
 
   if (goog.DEBUG) {
     debugger;
-    // TODO(bstell): need to send a report about this.
     console.log('Error: ' + errorMsg + ' Script: ' + url + ' Line: ' +
-        lineNumber + ' Column: ' + column + ' StackTrace: ' +  errorObj);
+        lineNumber);
   }
 }
 
@@ -231,18 +238,6 @@ tachyfont.initializeReporter = function(url) {
 
 
 /**
- * Initialize the tachyfont reporter.
- *
- * @param {string} url The base url to send reports to.
- */
-tachyfont.initializeReporter = function(url) {
-  if (!tachyfont.reporter) {
-    tachyfont.reporter = tachyfont.Reporter.getReporter(url);
-  }
-};
-
-
-/**
  * File identifier for this file.
  *
  * @type {string}
@@ -254,7 +249,7 @@ tachyfont.fileId = 'tf';
  * The error reporter for this file.
  *
  * @param {number} errNum The error number;
- * @param {Object} errObj The error object;
+ * @param {*} errObj The error object;
  */
 tachyfont.reportError = function(errNum, errObj) {
   if (goog.DEBUG) {
