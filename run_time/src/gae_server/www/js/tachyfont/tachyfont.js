@@ -35,31 +35,33 @@ goog.require('tachyfont.Reporter');
 goog.require('tachyfont.TachyFont');
 goog.require('tachyfont.TachyFontSet');
 
+
 /**
  * Catch all uncaught errors.
  */
 window.onerror =
-/**
- * @param {string} errorMsg
- * @param {string} url
- * @param {number} lineNumber
- * @return {?|null}
- */
-function (errorMsg, url, lineNumber) {
+
+
+    /**
+     * @param {string} errorMsg
+     * @param {string} url
+     * @param {number} lineNumber
+     */
+    function(errorMsg, url, lineNumber) {
   if (tachyfont.reportError) {
     var errorObj = {};
     errorObj['message'] = errorMsg;
     errorObj['url'] = url;
     errorObj['lineNumber'] = lineNumber;
-    tachyfont.reportError(10, errorObj);
+    tachyfont.reportError(10, 'window.onerror', errorObj);
   }
 
   if (goog.DEBUG) {
     debugger;
     console.log('Error: ' + errorMsg + ' Script: ' + url + ' Line: ' +
-        lineNumber);
+            lineNumber);
   }
-}
+};
 
 if (goog.DEBUG) {
   /**
@@ -240,27 +242,43 @@ tachyfont.initializeReporter = function(url) {
 /**
  * File identifier for this file.
  *
- * @type {string}
+ * @private {string}
  */
-tachyfont.fileId = 'tf';
+tachyfont.fileId_ = 'tf';
 
 
 /**
  * The error reporter for this file.
  *
  * @param {number} errNum The error number;
- * @param {*} errObj The error object;
+ * @param {string} errId The error identifier;
+ * @param {*} errInfo The error object;
  */
-tachyfont.reportError = function(errNum, errObj) {
-  if (goog.DEBUG) {
-    if (!tachyfont.reporter) {
-      debugger;
-      goog.log.error(tachyfont.logger, 'failed to report error');
-    }
-  }
+tachyfont.reportError = function(errNum, errId, errInfo) {
   if (tachyfont.reporter) {
-    tachyfont.reporter.reportError(tachyfont.fileId + errNum, errObj);
+    tachyfont.reporter.reportError(tachyfont.fileId_ + errNum, errId, errInfo);
+  } else {
+    var obj = {};
+    obj.errNum = errNum;
+    obj.errId = errId;
+    obj.errInfo = errInfo;
+    setTimeout(function() {
+      tachyfont.delayedReportError_(obj);
+    }.bind(obj), 1000);
   }
+};
+
+
+/**
+ * Re-run the error report.
+ *
+ * @param {Object} obj An object holding the parameters for the error report.
+ * @private
+ */
+tachyfont.delayedReportError_ = function(obj) {
+  goog.log.error(tachyfont.logger, 'delayedReportError_');
+  debugger;
+  tachyfont.reportError(obj.errNum, obj.errId, obj.errInfo);
 };
 
 
@@ -380,12 +398,15 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
                   goog.log.fine(tachyfont.logger, 'loadFonts: setFont_');
                 }
                 // TODO(bstell): only set the font if there are characters.
+                incrFont.sfeStart_ = goog.now();
                 var cssSet = incrFont.setFont(loadedBase[1],
                     loadedBase[0].isTtf).
                 then(function() {
                   // Report Set Font Early.
-                  var name = 'sfe' + this.fontInfo.getWeight();
-                  tachyfont.reporter.addItemTime(name, false);
+                  var weight = this.fontInfo.getWeight();
+                  tachyfont.reporter.addItemTime('sfe' + weight);
+                  var deltaTime = goog.now() - this.sfeStart_;
+                  tachyfont.reporter.addItem('sfe.d' + weight, deltaTime);
                   if (goog.DEBUG) {
                     goog.log.fine(tachyfont.logger, 'loadFonts: setFont_ done');
                   }
@@ -407,7 +428,7 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
             }).
             thenCatch(function(e) {
               allLoaded.reject();
-              tachyfont.reportError(40, e);
+              tachyfont.reportError(40, 'all', e);
               if (goog.DEBUG) {
                 goog.log.error(tachyfont.logger, 'failed to get the font: ' +
                 e.stack);
@@ -416,7 +437,7 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
             });
       }).
       thenCatch(function(e) {
-        tachyfont.reportError(41, e);
+        tachyfont.reportError(41, 'all', e);
         allLoaded.reject();
         if (goog.DEBUG) {
           goog.log.error(tachyfont.logger, 'failed to get the font: ' +
