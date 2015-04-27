@@ -111,18 +111,19 @@ tachyfont.IncrementalFont.CHARLIST_DIRTY = 'charlist_dirty';
 /**
  * File identifier for this file.
  *
- * @type {string}
+ * @private {string}
  */
-tachyfont.IncrementalFont.fileId = 'if';
+tachyfont.IncrementalFont.fileId_ = 'if';
 
 
 /**
  * The error reporter for this file.
  *
  * @param {number} errNum The error number;
- * @param {*} errObj The error object;
+ * @param {string} errId Identifies the error.
+ * @param {*} errInfo The error object;
  */
-tachyfont.IncrementalFont.reportError = function(errNum, errObj) {
+tachyfont.IncrementalFont.reportError = function(errNum, errId, errInfo) {
   if (goog.DEBUG) {
     if (!tachyfont.reporter) {
       debugger;
@@ -130,8 +131,8 @@ tachyfont.IncrementalFont.reportError = function(errNum, errObj) {
     }
   }
   if (tachyfont.reporter) {
-    tachyfont.reporter.reportError(tachyfont.IncrementalFont.fileId + errNum,
-      errObj);
+    tachyfont.reporter.reportError(tachyfont.IncrementalFont.fileId_ + errNum,
+        errId, errInfo);
   }
 };
 
@@ -153,6 +154,7 @@ tachyfont.IncrementalFont.reportError = function(errNum, errObj) {
  */
 tachyfont.IncrementalFont.createManager = function(fontInfo, params) {
   var fontName = fontInfo.getName();
+  var weight = fontInfo.getWeight();
   var backendService =
       fontInfo.getFontKit() ?
       new tachyfont.GoogleBackendService(fontInfo.getUrl()) :
@@ -203,6 +205,9 @@ tachyfont.IncrementalFont.createManager = function(fontInfo, params) {
   }
   */
   incrFontMgr.getIDB_ = incrFontMgr.openIndexedDB(fontName);
+  incrFontMgr.getIDB_.then(function() {
+        tachyfont.reporter.addItemTime('oi' + weight);
+      });
   //tachyfont.timer1.end('openIndexedDB.open ' + fontName);
 
   // Create a class with initial visibility.
@@ -232,13 +237,10 @@ tachyfont.IncrementalFont.createManager = function(fontInfo, params) {
         return {};
       }).
       then(function(charlist_data) {
+        tachyfont.reporter.addItemTime('ic' + weight);
         return charlist_data;
       }).thenCatch(function(e) {
-        tachyfont.IncrementalFont.reportError(20, e);
-        if (goog.DEBUG) {
-          goog.log.error(tachyfont.logger, e.stack);
-          debugger;
-        }
+        tachyfont.IncrementalFont.reportError(24, weight, e);
       });
 
   if (tachyfont.buildDemo) {
@@ -379,6 +381,7 @@ tachyfont.IncrementalFont.obj_.prototype.getPersistedBase = function() {
         return goog.Promise.all([goog.Promise.resolve(idb), filedata]);
       }.bind(this)).
       then(function(arr) {
+        tachyfont.reporter.addItemTime('ib' + this.fontInfo.getWeight());
         var idb = arr[0];
         var filedata = new DataView(arr[1]);
         this.parseBaseHeader(filedata);
@@ -387,7 +390,6 @@ tachyfont.IncrementalFont.obj_.prototype.getPersistedBase = function() {
               goog.Promise.resolve(fontData)]);
       }.bind(this)).
       thenCatch(function(e) {
-        tachyfont.IncrementalFont.reportError(30, e);
         if (goog.DEBUG) {
           goog.log.log(tachyfont.logger, goog.log.Level.FINER,
               'font not persisted: ' + this.fontName);
@@ -407,6 +409,7 @@ tachyfont.IncrementalFont.obj_.prototype.parseBaseHeader =
   var binEd = new tachyfont.BinaryFontEditor(baseFontView, 0);
   var fileInfo = binEd.parseBaseHeader();
   if (!fileInfo.headSize) {
+    tachyfont.reporter.addItemTime('ph' + this.fontInfo.getWeight());
     throw 'missing header info';
   }
   this.fileInfo_ = fileInfo;
@@ -425,6 +428,7 @@ tachyfont.IncrementalFont.obj_.prototype.getUrlBase =
     function(backendService, fontInfo) {
   var rslt = backendService.requestFontBase(fontInfo).
       then(function(fetchedBytes) {
+        tachyfont.reporter.addItemTime('ub' + this.fontInfo.getWeight());
         var results = this.processUrlBase_(fetchedBytes);
         this.persistDelayed_(tachyfont.IncrementalFont.BASE);
         return results;
@@ -497,11 +501,9 @@ tachyfont.IncrementalFont.obj_.prototype.writeCmap4 = function(baseFontView) {
   var binEd = new tachyfont.BinaryFontEditor(baseFontView,
       this.fileInfo_.cmap4.offset + 6);
   var segCount = binEd.getUint16() / 2;
-  if (goog.DEBUG) {
-    if (segCount != segments.length) {
-      alert('segCount=' + segCount + ', segments.length=' + segments.length);
-      debugger;
-    }
+  if (segCount != segments.length) {
+    tachyfont.IncrementalFont.reportError(50, this.fontInfo.getWeight(),
+        'segCount=' + segCount + ', segments.length=' + segments.length);
   }
   var glyphIdArrayLen = (this.fileInfo_.cmap4.length - 16 - segCount * 8) / 2;
   this.fileInfo_.cmap4.segCount = segCount;
@@ -691,16 +693,14 @@ tachyfont.IncrementalFont.obj_.prototype.setFormat4GlyphIds_ =
   if (!this.fileInfo_.compact_gos.cmap4) {
     return;
   }
+  var weight = this.fontInfo.getWeight();
   var segments = this.fileInfo_.compact_gos.cmap4.segments;
   var binEd = new tachyfont.BinaryFontEditor(baseFontView,
       this.fileInfo_.cmap4.offset + 6);
   var segCount = binEd.getUint16() / 2;
   if (segCount != segments.length) {
-    if (goog.DEBUG) {
-      goog.log.error(tachyfont.logger, 'segCount=' + segCount +
-          ', segments.length=' + segments.length);
-      debugger;
-    }
+    tachyfont.IncrementalFont.reportError(70, weight, 'segCount=' + segCount +
+        ', segments.length=' + segments.length);
     return;
   }
   binEd.seek(8);
@@ -708,21 +708,15 @@ tachyfont.IncrementalFont.obj_.prototype.setFormat4GlyphIds_ =
     // Check the end code.
     var segEndCode = binEd.getUint16();
     if (segEndCode != segments[i][1]) {
-      if (goog.DEBUG) {
-        goog.log.error(tachyfont.logger, 'segment ' + i + ': segEndCode (' +
-            segEndCode + ') != segments[' + i + '][1] (' + segments[i][1] +
-            ')');
-        debugger;
-      }
+      tachyfont.IncrementalFont.reportError(50, weight, 'segment ' + i +
+          ': segEndCode (' + segEndCode + ') != segments[' + i + '][1] (' +
+          segments[i][1] + ')');
       return;
     }
     // Check the segment is one char long
     if (segEndCode != segments[i][0]) {
-      if (goog.DEBUG) {
-        goog.log.error(tachyfont.logger, 'segment ' + i + ' is ' +
-            (segments[i][1] - segments[i][0] + 1) + ' chars long');
-        debugger;
-      }
+      tachyfont.IncrementalFont.reportError(50, weight, 'segment ' + i +
+          ' is ' + (segments[i][1] - segments[i][0] + 1) + ' chars long');
       return;
     }
   }
@@ -730,12 +724,9 @@ tachyfont.IncrementalFont.obj_.prototype.setFormat4GlyphIds_ =
   for (var i = 0; i < segCount; i++) {
     var segStartCode = binEd.getUint16();
     if (segStartCode != segments[i][0]) {
-      if (goog.DEBUG) {
-        goog.log.error(tachyfont.logger, 'segment ' + i + ': segStartCode (' +
-            segStartCode + ') != segments[' + i + '][1] (' + segments[i][0] +
-            ')');
-        debugger;
-      }
+      tachyfont.IncrementalFont.reportError(50, weight, 'segment ' + i +
+          ': segStartCode (' + segStartCode + ') != segments[' + i + '][1] (' +
+          segments[i][0] + ')');
       return;
     }
   }
@@ -748,24 +739,20 @@ tachyfont.IncrementalFont.obj_.prototype.setFormat4GlyphIds_ =
         if (segIdDelta == segments[i][2]) {
           goog.log.info(tachyfont.logger, 'format 4 segment ' + i +
               ': segIdDelta already set');
-        } else {
-          goog.log.error(tachyfont.logger, 'format 4 segment ' + i +
-              ': segIdDelta (' + segIdDelta + ') != segments[' + i + '][1] (' +
-              segments[i][2] + ')');
-          debugger;
-          return;
         }
+        tachyfont.IncrementalFont.reportError(50, weight,
+            'format 4 segment ' + i + ': segIdDelta (' + segIdDelta +
+            ') != segments[' + i + '][1] (' + segments[i][2] + ')');
+        return;
       }
     }
   }
   for (var i = 0; i < segCount; i++) {
     var segIdRangeOffset = binEd.getUint16();
     if (segIdRangeOffset != 0) {
-      if (goog.DEBUG) {
-        goog.log.error(tachyfont.logger, 'format 4 segment ' + i +
-            ': segIdRangeOffset (' + segIdRangeOffset + ') != 0');
-        debugger;
-      }
+      tachyfont.IncrementalFont.reportError(50, weight,
+          'format 4 segment ' + i + ': segIdRangeOffset (' +
+          segIdRangeOffset + ') != 0');
       return;
     }
   }
@@ -783,21 +770,15 @@ tachyfont.IncrementalFont.obj_.prototype.setFormat4GlyphIds_ =
       }
       var charCmapInfo = this.cmapMapping_[code];
       if (!charCmapInfo) {
-        if (goog.DEBUG) {
-          goog.log.error(tachyfont.logger, 'format 4, code ' + code +
-              ': no CharCmapInfo');
-          debugger;
-        }
+        tachyfont.IncrementalFont.reportError(50, weight, 'format 4, code ' +
+            code + ': no CharCmapInfo');
         continue;
       }
       var format4Seg = charCmapInfo.format4Seg;
       if (format4Seg == null) {
-        if (goog.DEBUG) {
-          if (code <= 0xFFFF) {
-            goog.log.error(tachyfont.logger,
-                'format 4, missing segment for code ' + code);
-            debugger;
-          }
+        if (code <= 0xFFFF) {
+          tachyfont.IncrementalFont.reportError(78, weight,
+              'format 4, missing segment for code ' + code);
         }
         // Character is not in the format 4 segment.
         continue;
@@ -823,6 +804,7 @@ tachyfont.IncrementalFont.obj_.prototype.setFormat12GlyphIds_ =
   if (!this.fileInfo_.cmap12) {
     return;
   }
+  var weight = this.fontInfo.getWeight();
   var segEd = new tachyfont.BinaryFontEditor(baseFontView,
       this.fileInfo_.cmap12.offset + 16);
   var segments = this.fileInfo_.compact_gos.cmap12.segments;
@@ -840,11 +822,8 @@ tachyfont.IncrementalFont.obj_.prototype.setFormat12GlyphIds_ =
       }
       var charCmapInfo = this.cmapMapping_[code];
       if (!charCmapInfo) {
-        if (goog.DEBUG) {
-          goog.log.warning(tachyfont.logger, 'format 12, code ' + code +
-              ': no CharCmapInfo');
-          debugger;
-        }
+        tachyfont.IncrementalFont.reportError(82, weight, 'format 12, code ' +
+            code + ': no CharCmapInfo');
         continue;
       }
 
@@ -859,32 +838,28 @@ tachyfont.IncrementalFont.obj_.prototype.setFormat12GlyphIds_ =
       var inMemoryStartCode = segEd.getUint32();
       var inMemoryEndCode = segEd.getUint32();
       var inMemoryGlyphId = segEd.getUint32();
-      if (goog.DEBUG) {
-        // Check the code point.
-        if (inMemoryStartCode != segStartCode) {
-          goog.log.error(tachyfont.logger, 'format 12, code ' + code +
-              ', seg ' + format12Seg + ': startCode mismatch');
-          debugger;
-        }
-        if (inMemoryEndCode != segEndCode) {
-          goog.log.error(tachyfont.logger, 'format 12 code ' + code +
-              ', seg ' + format12Seg + ': endCode mismatch');
-          debugger;
-        }
-        if (segStartCode != segEndCode) { // TODO(bstell): check length
-          goog.log.error(tachyfont.logger, 'format 12 code ' + code + ', seg ' +
-              format12Seg + ': length != 1');
-          debugger;
-        }
-        if (inMemoryGlyphId != 0) {
-          if (inMemoryGlyphId == segStartGlyphId) {
-            goog.log.warning(tachyfont.logger, 'format 12 code ' + code +
-                ', seg ' + format12Seg + ' glyphId already set');
-          } else {
-            goog.log.error(tachyfont.logger, 'format 12 code ' + code +
-                ', seg ' + format12Seg + ' glyphId mismatch');
-            debugger;
-          }
+      // Check the code point.
+      if (inMemoryStartCode != segStartCode) {
+        tachyfont.IncrementalFont.reportError(84, weight, 'format 12, code ' +
+            code + ', seg ' + format12Seg + ': startCode mismatch');
+      }
+      if (inMemoryEndCode != segEndCode) {
+        tachyfont.IncrementalFont.reportError(85, weight, 'format 12 code ' +
+            code + ', seg ' + format12Seg + ': endCode mismatch');
+      }
+      if (segStartCode != segEndCode) { // TODO(bstell): check length
+        tachyfont.IncrementalFont.reportError(85.1, weight,
+            'format 12 code ' + code + ', seg ' + format12Seg +
+            ': length != 1');
+      }
+      if (inMemoryGlyphId != 0) {
+        if (inMemoryGlyphId == segStartGlyphId) {
+          goog.log.warning(tachyfont.logger, 'format 12 code ' + code +
+              ', seg ' + format12Seg + ' glyphId already set');
+        } else {
+          tachyfont.IncrementalFont.reportError(85.6, weight,
+              'format 12 code ' + code + ', seg ' + format12Seg +
+              ' glyphId mismatch');
         }
       }
       // Seek to the glyphId.
@@ -1257,22 +1232,15 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars = function() {
                   pendingResolveFn(true);
                 }).
                 thenCatch(function(e) {
-                  tachyfont.IncrementalFont.reportError(120, e);
-                  if (goog.DEBUG) {
-                    debugger;
-                    goog.log.error(tachyfont.logger, 'failed to getBase: ' +
-                    e.stack);
-                  }
+                  tachyfont.IncrementalFont.reportError(120,
+                  that.fontInfo.getWeight(), e);
                   pendingRejectFn(false);
                 });
               });
         }).
             thenCatch(function(e) {
-              tachyfont.IncrementalFont.reportError(121, e);
-              if (goog.DEBUG) {
-                debugger;
-                goog.log.error(tachyfont.logger, 'loadChars: ' + e.stack);
-              }
+              tachyfont.IncrementalFont.reportError(121,
+              that.fontInfo.getWeight(), e);
               pendingRejectFn(false);
             });
       }).
@@ -1287,12 +1255,9 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars = function() {
       thenCatch(function(e) {
         // Failed to get the char data so release the lock.
         finishPrecedingCharsRequest.reject();
-        tachyfont.IncrementalFont.reportError(122, e);
-        if (goog.DEBUG) {
-          debugger;
-          goog.log.error(tachyfont.logger, e.stack);
-          return goog.Promise.resolve(false);
-        }
+        tachyfont.IncrementalFont.reportError(122, that.fontInfo.getWeight(),
+            e);
+        return goog.Promise.resolve(false);
       });
   return finishPrecedingCharsRequest.getPromise();
 };
@@ -1396,11 +1361,8 @@ tachyfont.IncrementalFont.obj_.prototype.persist_ = function(name) {
               }
             }).
             thenCatch(function(e) {
-              tachyfont.IncrementalFont.reportError(140, e);
-              if (goog.DEBUG) {
-                goog.log.error(tachyfont.logger, 'persistDelayed_: ' + e.stack);
-                debugger;
-              }
+              tachyfont.IncrementalFont.reportError(140,
+              that.fontInfo.getWeight(), e);
             }).
             then(function() {
               // Done persisting so release the lock.
@@ -1410,13 +1372,10 @@ tachyfont.IncrementalFont.obj_.prototype.persist_ = function(name) {
               }
             });
       }).thenCatch(function(e) {
-        tachyfont.IncrementalFont.reportError(141, e);
+        tachyfont.IncrementalFont.reportError(141, that.fontInfo.getWeight(),
+            e);
         // Release the lock.
         finishedPersisting.reject();
-        if (goog.DEBUG) {
-          goog.log.error(tachyfont.logger, e.stack);
-          debugger;
-        }
       });
 };
 
@@ -1444,26 +1403,18 @@ tachyfont.IncrementalFont.obj_.prototype.saveData_ = function(idb, name, data) {
             resolve();
           };
           request.onerror = function(e) {
-            if (goog.DEBUG) {
-              debugger;
-            }
+            tachyfont.IncrementalFont.reportError(140,
+               that.fontInfo.getWeight(), e);
             reject(null);
           };
         }).
            thenCatch(function(e) {
-             tachyfont.IncrementalFont.reportError(145, e);
-             if (goog.DEBUG) {
-               goog.log.error(tachyfont.logger, 'saveData ' + db.name + ' ' +
-                   name + ': ' + e.stack);
-               debugger;
-             }
+             tachyfont.IncrementalFont.reportError(145,
+             that.fontInfo.getWeight(), e);
            });
       }).thenCatch(function(e) {
-        tachyfont.IncrementalFont.reportError(146, e);
-        if (goog.DEBUG) {
-          goog.log.error(tachyfont.logger, e.stack);
-          debugger;
-        }
+        tachyfont.IncrementalFont.reportError(146, that.fontInfo.getWeight(),
+            e);
       });
 };
 
@@ -1488,11 +1439,8 @@ tachyfont.IncrementalFont.obj_.prototype.openIndexedDB = function(fontName) {
       resolve(db);
     };
     dbOpen.onerror = function(e) {
-      if (goog.DEBUG) {
-        goog.log.error(tachyfont.logger, '!!! IncrFontIDB.obj_ "' + db_name +
-            '": ' + e.value);
-        debugger;
-      }
+      tachyfont.IncrementalFont.reportError(144, that.fontInfo.getWeight(),
+          '!!! IncrFontIDB.obj_ "' + db_name + '": ' + e.value);
       reject(e);
     };
 
@@ -1500,11 +1448,8 @@ tachyfont.IncrementalFont.obj_.prototype.openIndexedDB = function(fontName) {
     dbOpen.onupgradeneeded = function(e) {
       var db = e.target.result;
       e.target.transaction.onerror = function(e) {
-        if (goog.DEBUG) {
-          goog.log.error(tachyfont.logger, 'onupgradeneeded error: ' +
-              e.value);
-          debugger;
-        }
+        tachyfont.IncrementalFont.reportError(144, that.fontInfo.getWeight(),
+            'onupgradeneeded error: ' + e.value);
         reject(e);
       };
       if (db.objectStoreNames.contains(tachyfont.IncrementalFont.BASE)) {
@@ -1545,15 +1490,14 @@ tachyfont.IncrementalFont.obj_.prototype.getData_ = function(idb, name) {
     };
 
     request.onerror = function(e) {
-      if (goog.DEBUG) {
-        goog.log.error(tachyfont.logger, 'e = ' + e);
-        debugger;
-      }
+      tachyfont.IncrementalFont.reportError(150, that.fontInfo.getWeight(),
+          e);
       reject(e);
     };
   }).
       thenCatch(function(e) {
-        tachyfont.IncrementalFont.reportError(150, e);
+        tachyfont.IncrementalFont.reportError(150, that.fontInfo.getWeight(),
+            e);
         return goog.Promise.reject(e);
       });
   return getData;

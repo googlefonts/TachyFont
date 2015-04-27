@@ -19,8 +19,6 @@
 
 goog.provide('tachyfont.utils');
 
-goog.require('goog.crypt.Md5');
-
 
 /**
  * Convert a codepoint to a string.

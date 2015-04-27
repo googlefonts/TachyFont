@@ -34,7 +34,7 @@ tachyfont.Reporter = function(url) {
   /** @private {string} */
   this.url_ = url;
 
-  /** @private {!Object.<string, string>} */
+  /** @private {!Object.<string, (number|string)>} */
   this.items_ = {};
 
   /**
@@ -64,7 +64,7 @@ tachyfont.Reporter.startTime_ = goog.now();
  *
  * @private {!tachyfont.Reporter}
  */
-tachyfont.Reporter.object_;
+tachyfont.Reporter.instance_;
 
 
 /**
@@ -87,14 +87,15 @@ tachyfont.Reporter.clusterUnit_ = 50;
  */
 tachyfont.Reporter.getReporter = function(url) {
   if (goog.DEBUG) {
-    if (tachyfont.Reporter.object_ && tachyfont.Reporter.object_.url_ != url) {
+    if (tachyfont.Reporter.instance_ &&
+        tachyfont.Reporter.instance_.url_ != url) {
       debugger;
     }
   }
-  if (!tachyfont.Reporter.object_) {
-    tachyfont.Reporter.object_ = new tachyfont.Reporter(url);
+  if (!tachyfont.Reporter.instance_) {
+    tachyfont.Reporter.instance_ = new tachyfont.Reporter(url);
   }
-  return tachyfont.Reporter.object_;
+  return tachyfont.Reporter.instance_;
 };
 
 
@@ -102,14 +103,13 @@ tachyfont.Reporter.getReporter = function(url) {
  * Add the time an item happened.
  *
  * @param {string} name The name of the item.
- * @param {boolean=} opt_recordDups If true record duplicates separately.
  */
-tachyfont.Reporter.prototype.addItemTime = function(name, opt_recordDups) {
+tachyfont.Reporter.prototype.addItemTime = function(name) {
   var deltaTime = goog.now() - tachyfont.Reporter.startTime_;
   // Round to the time to groups to make the graph more useful.
   deltaTime = Math.round(deltaTime / tachyfont.Reporter.clusterUnit_) *
       tachyfont.Reporter.clusterUnit_;
-  this.addItem(name, deltaTime, opt_recordDups);
+  this.addItem(name, deltaTime);
 };
 
 
@@ -118,18 +118,16 @@ tachyfont.Reporter.prototype.addItemTime = function(name, opt_recordDups) {
  *
  * @param {string} name The name of the item.
  * @param {string|number} value The value of the item.
- * @param {boolean=} opt_recordDups If true record duplicates separately.
  */
-tachyfont.Reporter.prototype.addItem = function(name, value, opt_recordDups) {
-  if (opt_recordDups) {
-    if (name in this.dupCnts_) {
-      var dupCnt = this.dupCnts_[name] + 1;
-      this.dupCnts_[name] = dupCnt;
-      name += '.' + dupCnt;
-    } else {
-      this.dupCnts_[name] = 0;
-    }
+tachyfont.Reporter.prototype.addItem = function(name, value) {
+  if (name in this.dupCnts_) {
+    var dupCnt = this.dupCnts_[name] + 1;
+    this.dupCnts_[name] = dupCnt;
+    name += '.' + dupCnt;
+  } else {
+    this.dupCnts_[name] = 0;
   }
+
   if (typeof value == 'number') {
     value = Math.round(value);
   }
@@ -138,41 +136,50 @@ tachyfont.Reporter.prototype.addItem = function(name, value, opt_recordDups) {
 
 
 /**
- * Send the report.
+ * Send an error report.
  *
- * @param {string} name The error name.
- * @param {*} errObj The error object.
+ * @param {string} errNum The error number.
+ * @param {string} id Identifying information.
+ * @param {*} errInfo The error information.
  */
-tachyfont.Reporter.prototype.reportError = function(name, errObj) {
+tachyfont.Reporter.prototype.reportError = function(errNum, id, errInfo) {
   // Move any pre-existing items aside.
   var preexistingItems = this.items_;
   this.items_ = {};
-  name = 'e.' + name;
-  this.addItem(name, '', true);
-  
+  var name = 'e.' + errNum;
+  this.addItem(name, '');
+  this.addItem(name + '.id', id);
+
   // Get the error message out of the error object.
   var value = '';
-  if (errObj) {
-    if (errObj['stack']) {
-      value = errObj['stack'];
-      this.addItem(name + '.' + 'stack', value, true);
-    } else if (errObj['message']) {
-      value = errObj['message'];
-      this.addItem(name + '.' + 'message', value, true);
-    } else if (errObj['name']) {
-      value = errObj['name'];
-      this.addItem(name + '.' + 'name', value, true);
+  if (typeof errInfo == 'string') {
+    this.addItem(name + '.' + 'msg', errInfo);
+  } else if (typeof errInfo == 'object') {
+    if (errInfo['stack']) {
+      this.addItem(name + '.' + 'stack', errInfo['stack']);
+    } else if (errInfo['message']) {
+      this.addItem(name + '.' + 'message', errInfo['message']);
+    } else if (errInfo['name']) {
+      this.addItem(name + '.' + 'name', errInfo['name']);
     }
-    if (errObj['url']) {
-      value = errObj['url'];
-      this.addItem(name + '.' + 'url', value, true);
+    if (errInfo['url']) {
+      this.addItem(name + '.' + 'url', errInfo['url']);
     }
-    if (errObj['lineNumber']) {
-      value = errObj['lineNumber'];
-      this.addItem(name + '.' + 'lineNumber', value, true);
+    if (errInfo['lineNumber']) {
+      value = errInfo['lineNumber'];
+      this.addItem(name + '.' + 'lineNumber', value);
     }
   }
   this.sendReport();
+  if (goog.DEBUG) {
+    var keys = Object.keys(this.items_);
+    keys.sort();
+    for (var i = 0; i < keys.length; i++) {
+      name = keys[i];
+      goog.log.error(tachyfont.logger, '    ' + name + ': ' +
+          this.items_[name]);
+    }
+  }
 
   // Restore any pre-existing items.
   this.items_ = preexistingItems;
@@ -180,15 +187,16 @@ tachyfont.Reporter.prototype.reportError = function(name, errObj) {
 
 };
 
+
 /**
  * Send the report.
  *
  * @param {boolean=} opt_okIfNoItems Do not complain if not items.
  */
 tachyfont.Reporter.prototype.sendReport = function(opt_okIfNoItems) {
-  var names = Object.keys(this.items_);
-  names.sort();
-  if (names.length == 0) {
+  var keys = Object.keys(this.items_);
+  keys.sort();
+  if (keys.length == 0) {
     if (goog.DEBUG) {
       if (!opt_okIfNoItems) {
         goog.log.warning(tachyfont.logger, 'sendReport: no items');
@@ -211,9 +219,9 @@ tachyfont.Reporter.prototype.sendReport = function(opt_okIfNoItems) {
   if (goog.DEBUG) {
     goog.log.info(tachyfont.logger, 'report items:');
   }
-  for (var i = 0; i < names.length; i++) {
-    var name = names[i];
-    var value = encodeURIComponent(this.items_[name]);
+  for (var i = 0; i < keys.length; i++) {
+    var name = keys[i];
+    var value = encodeURIComponent((this.items_[name]).toString());
     var item = name + '=' + value;
     if (length + item.length > 2000) {
       items.push('truncated=true');
