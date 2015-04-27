@@ -109,6 +109,34 @@ tachyfont.IncrementalFont.CHARLIST_DIRTY = 'charlist_dirty';
 
 
 /**
+ * File identifier for this file.
+ *
+ * @type {string}
+ */
+tachyfont.IncrementalFont.fileId = 'if';
+
+
+/**
+ * The error reporter for this file.
+ *
+ * @param {number} errNum The error number;
+ * @param {*} errObj The error object;
+ */
+tachyfont.IncrementalFont.reportError = function(errNum, errObj) {
+  if (goog.DEBUG) {
+    if (!tachyfont.reporter) {
+      debugger;
+      goog.log.error(tachyfont.logger, 'failed to report error');
+    }
+  }
+  if (tachyfont.reporter) {
+    tachyfont.reporter.reportError(tachyfont.IncrementalFont.fileId + errNum,
+      errObj);
+  }
+};
+
+
+/**
  * Get the incremental font object.
  * This class does the following:
  * 1. Create a class using the "@font-face" rule and with visibility=hidden
@@ -206,6 +234,7 @@ tachyfont.IncrementalFont.createManager = function(fontInfo, params) {
       then(function(charlist_data) {
         return charlist_data;
       }).thenCatch(function(e) {
+        tachyfont.IncrementalFont.reportError(20, e);
         if (goog.DEBUG) {
           goog.log.error(tachyfont.logger, e.stack);
           debugger;
@@ -358,6 +387,7 @@ tachyfont.IncrementalFont.obj_.prototype.getPersistedBase = function() {
               goog.Promise.resolve(fontData)]);
       }.bind(this)).
       thenCatch(function(e) {
+        tachyfont.IncrementalFont.reportError(30, e);
         if (goog.DEBUG) {
           goog.log.log(tachyfont.logger, goog.log.Level.FINER,
               'font not persisted: ' + this.fontName);
@@ -1227,6 +1257,7 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars = function() {
                   pendingResolveFn(true);
                 }).
                 thenCatch(function(e) {
+                  tachyfont.IncrementalFont.reportError(120, e);
                   if (goog.DEBUG) {
                     debugger;
                     goog.log.error(tachyfont.logger, 'failed to getBase: ' +
@@ -1237,6 +1268,7 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars = function() {
               });
         }).
             thenCatch(function(e) {
+              tachyfont.IncrementalFont.reportError(121, e);
               if (goog.DEBUG) {
                 debugger;
                 goog.log.error(tachyfont.logger, 'loadChars: ' + e.stack);
@@ -1255,6 +1287,7 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars = function() {
       thenCatch(function(e) {
         // Failed to get the char data so release the lock.
         finishPrecedingCharsRequest.reject();
+        tachyfont.IncrementalFont.reportError(122, e);
         if (goog.DEBUG) {
           debugger;
           goog.log.error(tachyfont.logger, e.stack);
@@ -1363,6 +1396,7 @@ tachyfont.IncrementalFont.obj_.prototype.persist_ = function(name) {
               }
             }).
             thenCatch(function(e) {
+              tachyfont.IncrementalFont.reportError(140, e);
               if (goog.DEBUG) {
                 goog.log.error(tachyfont.logger, 'persistDelayed_: ' + e.stack);
                 debugger;
@@ -1376,6 +1410,7 @@ tachyfont.IncrementalFont.obj_.prototype.persist_ = function(name) {
               }
             });
       }).thenCatch(function(e) {
+        tachyfont.IncrementalFont.reportError(141, e);
         // Release the lock.
         finishedPersisting.reject();
         if (goog.DEBUG) {
@@ -1416,6 +1451,7 @@ tachyfont.IncrementalFont.obj_.prototype.saveData_ = function(idb, name, data) {
           };
         }).
            thenCatch(function(e) {
+             tachyfont.IncrementalFont.reportError(145, e);
              if (goog.DEBUG) {
                goog.log.error(tachyfont.logger, 'saveData ' + db.name + ' ' +
                    name + ': ' + e.stack);
@@ -1423,6 +1459,7 @@ tachyfont.IncrementalFont.obj_.prototype.saveData_ = function(idb, name, data) {
              }
            });
       }).thenCatch(function(e) {
+        tachyfont.IncrementalFont.reportError(146, e);
         if (goog.DEBUG) {
           goog.log.error(tachyfont.logger, e.stack);
           debugger;
@@ -1516,6 +1553,7 @@ tachyfont.IncrementalFont.obj_.prototype.getData_ = function(idb, name) {
     };
   }).
       thenCatch(function(e) {
+        tachyfont.IncrementalFont.reportError(150, e);
         return goog.Promise.reject(e);
       });
   return getData;

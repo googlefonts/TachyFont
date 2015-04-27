@@ -38,12 +38,26 @@ goog.require('tachyfont.TachyFontSet');
 /**
  * Catch all uncaught errors.
  */
-window.onerror = function (errorMsg, url, lineNumber, column, errorObj) {
+window.onerror =
+/**
+ * @param {string} errorMsg
+ * @param {string} url
+ * @param {number} lineNumber
+ * @return {?|null}
+ */
+function (errorMsg, url, lineNumber) {
+  if (tachyfont.reportError) {
+    var errorObj = {};
+    errorObj['message'] = errorMsg;
+    errorObj['url'] = url;
+    errorObj['lineNumber'] = lineNumber;
+    tachyfont.reportError(10, errorObj);
+  }
+
   if (goog.DEBUG) {
     debugger;
-    // TODO(bstell): need to send a report about this.
     console.log('Error: ' + errorMsg + ' Script: ' + url + ' Line: ' +
-        lineNumber + ' Column: ' + column + ' StackTrace: ' +  errorObj);
+        lineNumber);
   }
 }
 
@@ -224,6 +238,33 @@ tachyfont.initializeReporter = function(url) {
 
 
 /**
+ * File identifier for this file.
+ *
+ * @type {string}
+ */
+tachyfont.fileId = 'tf';
+
+
+/**
+ * The error reporter for this file.
+ *
+ * @param {number} errNum The error number;
+ * @param {*} errObj The error object;
+ */
+tachyfont.reportError = function(errNum, errObj) {
+  if (goog.DEBUG) {
+    if (!tachyfont.reporter) {
+      debugger;
+      goog.log.error(tachyfont.logger, 'failed to report error');
+    }
+  }
+  if (tachyfont.reporter) {
+    tachyfont.reporter.reportError(tachyfont.fileId + errNum, errObj);
+  }
+};
+
+
+/**
  * Create a font identifying string.
  *
  * @param {string} family The font family name;
@@ -327,8 +368,7 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
                 // set the font.
                 if (!incrFont.alreadyPersisted) {
                   if (goog.DEBUG) {
-                    goog.log.fine(tachyfont.logger,
-                        'loadFonts: not persisted');
+                    goog.log.fine(tachyfont.logger, 'loadFonts: not persisted');
                   }
                   allCssSet.push(goog.Promise.resolve(null));
                   continue;
@@ -364,10 +404,10 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
               }
               // Allow any pending updates to happen.
               allLoaded.resolve();
-
             }).
             thenCatch(function(e) {
               allLoaded.reject();
+              tachyfont.reportError(40, e);
               if (goog.DEBUG) {
                 goog.log.error(tachyfont.logger, 'failed to get the font: ' +
                 e.stack);
@@ -376,6 +416,7 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
             });
       }).
       thenCatch(function(e) {
+        tachyfont.reportError(41, e);
         allLoaded.reject();
         if (goog.DEBUG) {
           goog.log.error(tachyfont.logger, 'failed to get the font: ' +

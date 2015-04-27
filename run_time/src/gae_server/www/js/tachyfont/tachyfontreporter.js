@@ -68,6 +68,18 @@ tachyfont.Reporter.object_;
 
 
 /**
+ * TachyFont report time chunking.
+ *
+ * Cluster the report timing into fewer columns. The report timing is to the
+ * millisecond. Using millisecons means a graph covering 3 seconds would have
+ * 3000 columns. Instead, round the times to this unit.
+ *
+ * @private {number}
+ */
+tachyfont.Reporter.clusterUnit_ = 50;
+
+
+/**
  * Get the reporter singleton.
  *
  * @param {string} url The base URL to send reports to.
@@ -94,7 +106,10 @@ tachyfont.Reporter.getReporter = function(url) {
  */
 tachyfont.Reporter.prototype.addItemTime = function(name, opt_recordDups) {
   var deltaTime = goog.now() - tachyfont.Reporter.startTime_;
-  this.addItem(name, '' + deltaTime, opt_recordDups);
+  // Round to the time to groups to make the graph more useful.
+  deltaTime = Math.round(deltaTime / tachyfont.Reporter.clusterUnit_) *
+      tachyfont.Reporter.clusterUnit_;
+  this.addItem(name, deltaTime, opt_recordDups);
 };
 
 
@@ -102,7 +117,7 @@ tachyfont.Reporter.prototype.addItemTime = function(name, opt_recordDups) {
  * Add an item to report.
  *
  * @param {string} name The name of the item.
- * @param {string} value The value of the item.
+ * @param {string|number} value The value of the item.
  * @param {boolean=} opt_recordDups If true record duplicates separately.
  */
 tachyfont.Reporter.prototype.addItem = function(name, value, opt_recordDups) {
@@ -115,9 +130,55 @@ tachyfont.Reporter.prototype.addItem = function(name, value, opt_recordDups) {
       this.dupCnts_[name] = 0;
     }
   }
+  if (typeof value == 'number') {
+    value = Math.round(value);
+  }
   this.items_[name] = value;
 };
 
+
+/**
+ * Send the report.
+ *
+ * @param {string} name The error name.
+ * @param {*} errObj The error object.
+ */
+tachyfont.Reporter.prototype.reportError = function(name, errObj) {
+  // Move any pre-existing items aside.
+  var preexistingItems = this.items_;
+  this.items_ = {};
+  name = 'e.' + name;
+  this.addItem(name, '', true);
+  
+  // Get the error message out of the error object.
+  var value = '';
+  if (errObj) {
+    if (errObj['stack']) {
+      value = errObj['stack'];
+      this.addItem(name + '.' + 'stack', value, true);
+    } else if (errObj['message']) {
+      value = errObj['message'];
+      this.addItem(name + '.' + 'message', value, true);
+    } else if (errObj['name']) {
+      value = errObj['name'];
+      this.addItem(name + '.' + 'name', value, true);
+    }
+    if (errObj['url']) {
+      value = errObj['url'];
+      this.addItem(name + '.' + 'url', value, true);
+    }
+    if (errObj['lineNumber']) {
+      value = errObj['lineNumber'];
+      this.addItem(name + '.' + 'lineNumber', value, true);
+    }
+  }
+  this.sendReport();
+
+  // Restore any pre-existing items.
+  this.items_ = preexistingItems;
+
+
+};
 
 /**
  * Send the report.
@@ -144,19 +205,27 @@ tachyfont.Reporter.prototype.sendReport = function(opt_okIfNoItems) {
     }
   }
 
+  var baseUrl = this.url_ + '/gen_204?id=tf&';
+  var length = baseUrl.length;
   var items = [];
   if (goog.DEBUG) {
     goog.log.info(tachyfont.logger, 'report items:');
   }
   for (var i = 0; i < names.length; i++) {
     var name = names[i];
-    var item = name + '=' + this.items_[name];
+    var value = encodeURIComponent(this.items_[name]);
+    var item = name + '=' + value;
+    if (length + item.length > 2000) {
+      items.push('truncated=true');
+      break;
+    }
+    length += item.length;
     items.push(item);
     if (goog.DEBUG) {
       goog.log.info(tachyfont.logger, '    ' + item);
     }
   }
-  var reportUrl = this.url_ + '/gen_204?id=tf&' + items.join('&');
+  var reportUrl = baseUrl + items.join('&');
   var image = new Image();
   image.onload = image.onerror = tachyfont.Reporter.cleanUpFunc_(image);
   image.src = reportUrl;
