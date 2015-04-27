@@ -68,6 +68,18 @@ tachyfont.Reporter.object_;
 
 
 /**
+ * TachyFont report time chunking.
+ *
+ * Cluster the report timing into fewer columns. The report timing is to the
+ * millisecond. Using millisecons means a graph covering 3 seconds would have
+ * 3000 columns. Instead, round the times to this unit.
+ *
+ * @private {number}
+ */
+tachyfont.Reporter.clusterUnit_ = 50;
+
+
+/**
  * Get the reporter singleton.
  *
  * @param {string} url The base URL to send reports to.
@@ -94,7 +106,10 @@ tachyfont.Reporter.getReporter = function(url) {
  */
 tachyfont.Reporter.prototype.addItemTime = function(name, opt_recordDups) {
   var deltaTime = goog.now() - tachyfont.Reporter.startTime_;
-  this.addItem(name, '' + deltaTime, opt_recordDups);
+  // Round to the time to groups to make the graph more useful.
+  deltaTime = Math.round(deltaTime / tachyfont.Reporter.clusterUnit_) *
+      tachyfont.Reporter.clusterUnit_;
+  this.addItem(name, deltaTime, opt_recordDups);
 };
 
 
@@ -102,7 +117,7 @@ tachyfont.Reporter.prototype.addItemTime = function(name, opt_recordDups) {
  * Add an item to report.
  *
  * @param {string} name The name of the item.
- * @param {string} value The value of the item.
+ * @param {string|number} value The value of the item.
  * @param {boolean=} opt_recordDups If true record duplicates separately.
  */
 tachyfont.Reporter.prototype.addItem = function(name, value, opt_recordDups) {
@@ -114,6 +129,9 @@ tachyfont.Reporter.prototype.addItem = function(name, value, opt_recordDups) {
     } else {
       this.dupCnts_[name] = 0;
     }
+  }
+  if (typeof value == 'number') {
+    value = Math.round(value);
   }
   this.items_[name] = value;
 };
@@ -207,7 +225,7 @@ tachyfont.Reporter.prototype.sendReport = function(opt_okIfNoItems) {
       goog.log.info(tachyfont.logger, '    ' + item);
     }
   }
-  var reportUrl = + items.join('&');
+  var reportUrl = baseUrl + items.join('&');
   var image = new Image();
   image.onload = image.onerror = tachyfont.Reporter.cleanUpFunc_(image);
   image.src = reportUrl;
