@@ -61,6 +61,36 @@ tachyfont.promise = function(opt_container, opt_msg) {
 
 
 /**
+ * File identifier for this file.
+ *
+ * @private {string}
+ */
+tachyfont.promise.fileId_ = 'p';
+
+
+/**
+ * The error reporter for this file.
+ *
+ * @param {number} errNum The error number;
+ * @param {string} errId Identifies the error.
+ * @param {*} errInfo The error object;
+ * @private
+ */
+tachyfont.promise.reportError_ = function(errNum, errId, errInfo) {
+  if (goog.DEBUG) {
+    if (!tachyfont.reporter) {
+      debugger; // Failed to report error.
+      goog.log.error(tachyfont.logger, 'failed to report error');
+    }
+  }
+  if (tachyfont.reporter) {
+    tachyfont.reporter.reportError(tachyfont.promise.fileId_ + errNum,
+        errId, errInfo);
+  }
+};
+
+
+/**
  * Get the actual goog.Promise.
  *
  * @return {goog.Promise}
@@ -76,10 +106,8 @@ tachyfont.promise.prototype.getPromise = function() {
  * @return {goog.Promise|undefined}
  */
 tachyfont.promise.prototype.getPrecedingPromise = function() {
-  if (goog.DEBUG) {
-    if (!this.precedingPromise_) {
-      debugger;
-    }
+  if (!this.precedingPromise_) {
+    tachyfont.promise.reportError_(11, '', this.msg_)
   }
   return this.precedingPromise_;
 };
@@ -91,18 +119,13 @@ tachyfont.promise.prototype.getPrecedingPromise = function() {
  * @param {*=} opt_value An optional value to pass to the reject function.
  */
 tachyfont.promise.prototype.reject = function(opt_value) {
-  if (goog.DEBUG) {
-    debugger;
-  }
   // TODO(bstell): reject means all subsequent uses to fail; is this desired?
   this.rejecter_(opt_value);
   if (this.container_) {
-    if (goog.DEBUG) {
-      if (this.container_.promises.length <= 1) {
-        // We unshift all except the very first manually added promise.
-        if (this.container_.chainedCount_ != 0) {
-          debugger;
-        }
+    if (this.container_.promises.length <= 1) {
+      // We unshift all except the very first manually added promise.
+      if (this.container_.chainedCount_ != 0) {
+        tachyfont.promise.reportError_(13, '', this.msg_)
       }
     }
     if (this.container_.promises.length > 1) {
@@ -125,12 +148,10 @@ tachyfont.promise.prototype.reject = function(opt_value) {
 tachyfont.promise.prototype.resolve = function(opt_value) {
   this.resolver_(opt_value);
   if (this.container_) {
-    if (goog.DEBUG) {
-      if (this.container_.promises.length <= 1) {
-        // We unshift all except the very first manually added promise.
-        if (this.container_.chainedCount_ != 0) {
-          debugger;
-        }
+    if (this.container_.promises.length <= 1) {
+      // We unshift all except the very first manually added promise.
+      if (this.container_.chainedCount_ != 0) {
+        tachyfont.promise.reportError_(15, '', this.msg_)
       }
     }
     if (this.container_.promises.length > 1) {
