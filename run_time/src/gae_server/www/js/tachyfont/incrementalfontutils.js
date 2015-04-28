@@ -347,15 +347,13 @@ tachyfont.IncrementalFontUtils.getCmapMapping = function(headerInfo) {
           glyphId = (code + idDelta) % 65536;
         } else {
           if (goog.DEBUG) {
-            // TODO(bstell): verify this code.
-            debugger;
+            debugger; // TODO(bstell): verify this code.
           }
           glyphId = glyphIdArray[glyphIdIndex++];
           if (glyphId == 0) {
             // This code is not mapped in the font.
             if (goog.DEBUG) {
-              // TODO(bstell): verify this code.
-              debugger;
+              debugger; // TODO(bstell): verify this code.
             }
             continue;
           }
