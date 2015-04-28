@@ -1131,7 +1131,7 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars = function() {
                 tachyfont.reporter.addItem('mc' + weight, missCnt);
                 var missRate = (neededCodes.length * 100) / charArray.length;
                 tachyfont.reporter.addItem('mr' + weight, missRate);
-                  
+
 
                 if (neededCodes.length) {
                   if (goog.DEBUG) {

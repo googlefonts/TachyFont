@@ -107,7 +107,7 @@ tachyfont.promise.prototype.getPromise = function() {
  */
 tachyfont.promise.prototype.getPrecedingPromise = function() {
   if (!this.precedingPromise_) {
-    tachyfont.promise.reportError_(11, '', this.msg_)
+    tachyfont.promise.reportError_(11, '', this.msg_);
   }
   return this.precedingPromise_;
 };
@@ -125,7 +125,7 @@ tachyfont.promise.prototype.reject = function(opt_value) {
     if (this.container_.promises.length <= 1) {
       // We unshift all except the very first manually added promise.
       if (this.container_.chainedCount_ != 0) {
-        tachyfont.promise.reportError_(13, '', this.msg_)
+        tachyfont.promise.reportError_(13, '', this.msg_);
       }
     }
     if (this.container_.promises.length > 1) {
@@ -151,7 +151,7 @@ tachyfont.promise.prototype.resolve = function(opt_value) {
     if (this.container_.promises.length <= 1) {
       // We unshift all except the very first manually added promise.
       if (this.container_.chainedCount_ != 0) {
-        tachyfont.promise.reportError_(15, '', this.msg_)
+        tachyfont.promise.reportError_(15, '', this.msg_);
       }
     }
     if (this.container_.promises.length > 1) {
