@@ -68,30 +68,12 @@ tachyfont.Reporter.instance_;
 
 
 /**
- * TachyFont report time chunking.
- *
- * Cluster the report timing into fewer columns. The report timing is to the
- * millisecond. Using millisecons means a graph covering 3 seconds would have
- * 3000 columns. Instead, round the times to this unit.
- *
- * @private {number}
- */
-tachyfont.Reporter.clusterUnit_ = 50;
-
-
-/**
  * Get the reporter singleton.
  *
  * @param {string} url The base URL to send reports to.
  * @return {!tachyfont.Reporter} The reporter singleton.
  */
 tachyfont.Reporter.getReporter = function(url) {
-  if (goog.DEBUG) {
-    if (tachyfont.Reporter.instance_ &&
-        tachyfont.Reporter.instance_.url_ != url) {
-      debugger;
-    }
-  }
   if (!tachyfont.Reporter.instance_) {
     tachyfont.Reporter.instance_ = new tachyfont.Reporter(url);
   }
@@ -103,12 +85,14 @@ tachyfont.Reporter.getReporter = function(url) {
  * Add the time an item happened.
  *
  * @param {string} name The name of the item.
+ * @param {number=} opt_roundTo Optionally round to this number.
  */
-tachyfont.Reporter.prototype.addItemTime = function(name) {
+tachyfont.Reporter.prototype.addItemTime = function(name, opt_roundTo) {
   var deltaTime = goog.now() - tachyfont.Reporter.startTime_;
   // Round to the time to groups to make the graph more useful.
-  deltaTime = Math.round(deltaTime / tachyfont.Reporter.clusterUnit_) *
-      tachyfont.Reporter.clusterUnit_;
+  if (typeof opt_roundTo == 'number' && opt_roundTo > 1) {
+    deltaTime = Math.round(deltaTime / opt_roundTo) * opt_roundTo;
+  }
   this.addItem(name, deltaTime);
 };
 
@@ -155,11 +139,10 @@ tachyfont.Reporter.prototype.reportError = function(errNum, id, errInfo) {
   if (typeof errInfo == 'string') {
     this.addItem(name + '.' + 'msg', errInfo);
   } else if (typeof errInfo == 'object') {
-    if (errInfo['stack']) {
-      this.addItem(name + '.' + 'stack', errInfo['stack']);
-    } else if (errInfo['message']) {
+    if (errInfo['message']) {
       this.addItem(name + '.' + 'message', errInfo['message']);
-    } else if (errInfo['name']) {
+    }
+    if (errInfo['name']) {
       this.addItem(name + '.' + 'name', errInfo['name']);
     }
     if (errInfo['url']) {
@@ -179,6 +162,7 @@ tachyfont.Reporter.prototype.reportError = function(errNum, id, errInfo) {
       goog.log.error(tachyfont.logger, '    ' + name + ': ' +
           this.items_[name]);
     }
+    // debugger; // Enable this when debugging the reporter.
   }
 
   // Restore any pre-existing items.
@@ -200,17 +184,9 @@ tachyfont.Reporter.prototype.sendReport = function(opt_okIfNoItems) {
     if (goog.DEBUG) {
       if (!opt_okIfNoItems) {
         goog.log.warning(tachyfont.logger, 'sendReport: no items');
-        debugger;
       }
     }
     return;
-  }
-  if (goog.DEBUG) {
-    if (!this.url_) {
-      goog.log.error(tachyfont.logger, 'sendReport: URL not set');
-      debugger;
-      return;
-    }
   }
 
   var baseUrl = this.url_ + '/gen_204?id=tf&';
@@ -222,10 +198,12 @@ tachyfont.Reporter.prototype.sendReport = function(opt_okIfNoItems) {
   for (var i = 0; i < keys.length; i++) {
     var name = keys[i];
     var value = encodeURIComponent((this.items_[name]).toString());
+    delete this.items_[name];
     var item = name + '=' + value;
     if (length + item.length > 2000) {
-      items.push('truncated=true');
-      break;
+      this.sendGen204_(baseUrl, items);
+      length = baseUrl.length;
+      items = [];
     }
     length += item.length;
     items.push(item);
@@ -233,13 +211,22 @@ tachyfont.Reporter.prototype.sendReport = function(opt_okIfNoItems) {
       goog.log.info(tachyfont.logger, '    ' + item);
     }
   }
-  var reportUrl = baseUrl + items.join('&');
+  this.sendGen204_(baseUrl, items);
+};
+
+
+/**
+ * Send the gen_204.
+ *
+ * @param {string} baseUrl The url to send the GET to.
+ * @param {Array.<string>} params The URL parameters.
+ * @private
+ */
+tachyfont.Reporter.prototype.sendGen204_ = function(baseUrl, params) {
+  var reportUrl = baseUrl + params.join('&');
   var image = new Image();
   image.onload = image.onerror = tachyfont.Reporter.cleanUpFunc_(image);
   image.src = reportUrl;
-
-  // Clean out the old items.
-  this.items_ = {};
 };
 
 
