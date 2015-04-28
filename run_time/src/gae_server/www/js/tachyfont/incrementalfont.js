@@ -1125,6 +1125,13 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars = function() {
                     tmp_charlist[c] = 1;
                   }
                 }
+                // Report the miss rate.
+                var weight = that.fontInfo.getWeight();
+                var missCnt = neededCodes.length;
+                tachyfont.reporter.addItem('mc' + weight, missCnt);
+                var missRate = (neededCodes.length * 100) / charArray.length;
+                tachyfont.reporter.addItem('mr' + weight, missRate);
+                  
 
                 if (neededCodes.length) {
                   if (goog.DEBUG) {
