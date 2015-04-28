@@ -1490,14 +1490,13 @@ tachyfont.IncrementalFont.obj_.prototype.getData_ = function(idb, name) {
     };
 
     request.onerror = function(e) {
-      tachyfont.IncrementalFont.reportError(150, that.fontInfo.getWeight(),
+      tachyfont.IncrementalFont.reportError(149, that.fontInfo.getWeight(),
           e);
       reject(e);
     };
   }).
       thenCatch(function(e) {
-        tachyfont.IncrementalFont.reportError(150, that.fontInfo.getWeight(),
-            e);
+        // No data has been persisted.
         return goog.Promise.reject(e);
       });
   return getData;
