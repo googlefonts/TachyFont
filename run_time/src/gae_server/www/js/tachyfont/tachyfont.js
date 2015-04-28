@@ -48,16 +48,16 @@ window.onerror =
      * @param {number} lineNumber
      */
     function(errorMsg, url, lineNumber) {
-  if (tachyfont.reportError) {
+  if (tachyfont.reportError_) {
     var errorObj = {};
     errorObj['message'] = errorMsg;
     errorObj['url'] = url;
     errorObj['lineNumber'] = lineNumber;
-    tachyfont.reportError(10, 'window.onerror', errorObj);
+    tachyfont.reportError_(10, 'window.onerror', errorObj);
   }
 
   if (goog.DEBUG) {
-    debugger;
+    debugger; // window.onerror
     console.log('Error: ' + errorMsg + ' Script: ' + url + ' Line: ' +
             lineNumber);
   }
@@ -253,8 +253,9 @@ tachyfont.fileId_ = 'tf';
  * @param {number} errNum The error number;
  * @param {string} errId The error identifier;
  * @param {*} errInfo The error object;
+ * @private
  */
-tachyfont.reportError = function(errNum, errId, errInfo) {
+tachyfont.reportError_ = function(errNum, errId, errInfo) {
   if (tachyfont.reporter) {
     tachyfont.reporter.reportError(tachyfont.fileId_ + errNum, errId, errInfo);
   } else {
@@ -277,8 +278,7 @@ tachyfont.reportError = function(errNum, errId, errInfo) {
  */
 tachyfont.delayedReportError_ = function(obj) {
   goog.log.error(tachyfont.logger, 'delayedReportError_');
-  debugger;
-  tachyfont.reportError(obj.errNum, obj.errId, obj.errInfo);
+  tachyfont.reportError_(obj.errNum, obj.errId, obj.errInfo);
 };
 
 
@@ -318,6 +318,7 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
         (window.location.port ? ':' + window.location.port : '');
   }
   tachyfont.initializeReporter(url);
+  tachyfont.reporter.addItemTime('lf');
 
   // TODO(bstell): this initialization of TachyFontSet should be in the
   // constructor or and init function.
@@ -341,11 +342,13 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
         'loadFonts: wait for preceding update');
     msg = 'loadFonts';
   }
+  tachyfont.reporter.addItemTime('ufb');
   var allLoaded = tachyFontSet.finishPrecedingUpdateFont.getChainedPromise(msg);
   // TODO(bstell): this call 'getPrecedingPromise' should be the return from the
   // getChainedPromise. getChainedPromise should be waitForPrecedingPromise.
   allLoaded.getPrecedingPromise().
       then(function() {
+        tachyfont.reporter.addItemTime('ufa');
         if (goog.DEBUG) {
           goog.log.log(tachyfont.logger, goog.log.Level.FINER,
               'loadFonts: done waiting for preceding update');
@@ -404,7 +407,7 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
                 then(function() {
                   // Report Set Font Early.
                   var weight = this.fontInfo.getWeight();
-                  tachyfont.reporter.addItemTime('sfe' + weight);
+                  tachyfont.reporter.addItemTime('sfe' + weight, 50);
                   var deltaTime = goog.now() - this.sfeStart_;
                   tachyfont.reporter.addItem('sfe.d' + weight, deltaTime);
                   if (goog.DEBUG) {
@@ -428,22 +431,12 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
             }).
             thenCatch(function(e) {
               allLoaded.reject();
-              tachyfont.reportError(40, 'all', e);
-              if (goog.DEBUG) {
-                goog.log.error(tachyfont.logger, 'failed to get the font: ' +
-                e.stack);
-                debugger;
-              }
+              tachyfont.reportError_(40, 'all', e);
             });
       }).
       thenCatch(function(e) {
-        tachyfont.reportError(41, 'all', e);
+        tachyfont.reportError_(41, 'all', e);
         allLoaded.reject();
-        if (goog.DEBUG) {
-          goog.log.error(tachyfont.logger, 'failed to get the font: ' +
-              e.message);
-          debugger;
-        }
       });
 
 
