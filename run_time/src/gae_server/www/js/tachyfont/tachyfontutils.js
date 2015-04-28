@@ -54,7 +54,7 @@ tachyfont.utils.reportCharList = function(title, charList) {
     if (charList.constructor != Object) {
       console.log('tachyfont.utils.reportCharList: expected Object but got ' +
           charList.constructor);
-      debugger;
+      debugger; // For debugging a utility function.
       return;
     }
     var charListArray = Object.keys(charList);
@@ -64,7 +64,7 @@ tachyfont.utils.reportCharList = function(title, charList) {
       if (typeof charListArray[i] != 'string') {
         console.log(title + '[' + i + '] not a character: ' +
             typeof charListArray[i]);
-        debugger;
+        debugger; // For debugging a utility function.
       }
       var code = tachyfont.charToCode(charListArray[i]);
       codes.push(code);
@@ -85,7 +85,7 @@ tachyfont.utils.reportCodes = function(title, codesIn) {
     if (codesIn.constructor != Array) {
       console.log('tachyfont.utils.codesIn: expected Array but got ' +
           codesIn.constructor);
-      debugger;
+      debugger; // For debugging a utility function.
       return;
     }
     var codes = codesIn.slice();
@@ -99,7 +99,7 @@ tachyfont.utils.reportCodes = function(title, codesIn) {
       var code = codes[i];
       if (typeof codes[i] != 'number') {
         console.log(title + '[' + i + '] not a number: ' + typeof codes[0]);
-        debugger;
+        debugger; // For debugging a utility function.
         return;
       }
       formattedOutput += ' 0x' + ('00000' + code.toString(16)).substr(-5) + ',';
