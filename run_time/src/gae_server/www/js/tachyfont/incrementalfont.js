@@ -109,6 +109,41 @@ tachyfont.IncrementalFont.CHARLIST_DIRTY = 'charlist_dirty';
 
 
 /**
+ * The addItem/addItemTime constants.
+ */
+/** @private {string} */
+tachyfont.IncrementalFont.LOG_OPEN_IDB_ = 'oi';
+
+
+/** @private {string} */
+tachyfont.IncrementalFont.LOG_IDB_GET_CHARLIST_ = 'ic';
+
+
+/** @private {string} */
+tachyfont.IncrementalFont.LOG_IDB_GET_BASE_ = 'ib';
+
+
+/** @private {string} */
+tachyfont.IncrementalFont.LOG_PARSE_HEADER_ = 'ph';
+
+
+/** @private {string} */
+tachyfont.IncrementalFont.LOG_URL_GET_BASE_ = 'ub';
+
+
+/** @private {string} */
+tachyfont.IncrementalFont.LOG_MISS_COUNT_ = 'mc';
+
+
+/** @private {string} */
+tachyfont.IncrementalFont.LOG_MISS_RATE_ = 'mr';
+
+
+/** @private {number} */
+tachyfont.IncrementalFont.LOG_TIME_BUCKET_SIZE_ = 50;
+
+
+/**
  * The reportError constants.
  */
 /** @private {string} */
@@ -218,6 +253,14 @@ tachyfont.IncrementalFont.ERROR_IDB_ON_UPGRAGE_NEEDED_ = 26;
 tachyfont.IncrementalFont.ERROR_GET_DATA_ = 27;
 
 
+/** @private {number} */
+tachyfont.IncrementalFont.ERROR_CMAP4_CHARS_PER_SEGMENT_ = 28;
+
+
+/** @private {number} */
+tachyfont.IncrementalFont.ERROR_CMAP12_CHARS_PER_SEGMENT_ = 29;
+
+
 /**
  * The error reporter for this file.
  *
@@ -309,7 +352,9 @@ tachyfont.IncrementalFont.createManager = function(fontInfo, params) {
   */
   incrFontMgr.getIDB_ = incrFontMgr.openIndexedDB(fontName);
   incrFontMgr.getIDB_.then(function() {
-        tachyfont.reporter.addItemTime('oi' + weight, 50);
+        tachyfont.reporter.addItemTime(
+            tachyfont.IncrementalFont.LOG_OPEN_IDB_ + weight,
+            tachyfont.IncrementalFont.LOG_TIME_BUCKET_SIZE_);
       });
   //tachyfont.timer1.end('openIndexedDB.open ' + fontName);
 
@@ -340,10 +385,12 @@ tachyfont.IncrementalFont.createManager = function(fontInfo, params) {
         return {};
       }).
       then(function(charlist_data) {
-        tachyfont.reporter.addItemTime('ic' + weight, 50);
+        tachyfont.reporter.addItemTime(
+            tachyfont.IncrementalFont.LOG_IDB_GET_CHARLIST_ + weight,
+            tachyfont.IncrementalFont.LOG_TIME_BUCKET_SIZE_);
         return charlist_data;
         // }).thenCatch(function(e) {
-        //   tachyfont.IncrementalFont.reportError_( 24, weight, e);
+        //   tachyfont.IncrementalFont.reportError_( 20, weight, e);
       });
 
   if (tachyfont.buildDemo) {
@@ -484,7 +531,10 @@ tachyfont.IncrementalFont.obj_.prototype.getPersistedBase = function() {
         return goog.Promise.all([goog.Promise.resolve(idb), filedata]);
       }.bind(this)).
       then(function(arr) {
-        tachyfont.reporter.addItemTime('ib' + this.fontInfo.getWeight(), 50);
+        tachyfont.reporter.addItemTime(
+            tachyfont.IncrementalFont.LOG_IDB_GET_BASE_ +
+            this.fontInfo.getWeight(),
+            tachyfont.IncrementalFont.LOG_TIME_BUCKET_SIZE_);
         var idb = arr[0];
         var filedata = new DataView(arr[1]);
         this.parseBaseHeader(filedata);
@@ -512,7 +562,9 @@ tachyfont.IncrementalFont.obj_.prototype.parseBaseHeader =
   var binEd = new tachyfont.BinaryFontEditor(baseFontView, 0);
   var fileInfo = binEd.parseBaseHeader();
   if (!fileInfo.headSize) {
-    tachyfont.reporter.addItemTime('ph' + this.fontInfo.getWeight(), 50);
+    tachyfont.reporter.addItemTime(
+        tachyfont.IncrementalFont.LOG_PARSE_HEADER_ + this.fontInfo.getWeight(),
+        tachyfont.IncrementalFont.LOG_TIME_BUCKET_SIZE_);
     throw 'missing header info';
   }
   this.fileInfo_ = fileInfo;
@@ -531,7 +583,10 @@ tachyfont.IncrementalFont.obj_.prototype.getUrlBase =
     function(backendService, fontInfo) {
   var rslt = backendService.requestFontBase(fontInfo).
       then(function(fetchedBytes) {
-        tachyfont.reporter.addItemTime('ub' + this.fontInfo.getWeight(), 50);
+        tachyfont.reporter.addItemTime(
+            tachyfont.IncrementalFont.LOG_URL_GET_BASE_ +
+            this.fontInfo.getWeight(),
+            tachyfont.IncrementalFont.LOG_TIME_BUCKET_SIZE_);
         var results = this.processUrlBase_(fetchedBytes);
         this.persistDelayed_(tachyfont.IncrementalFont.BASE);
         return results;
@@ -1086,10 +1141,10 @@ tachyfont.IncrementalFont.obj_.prototype.determineIfOneCharPerSeg = function() {
       var segEndCode = segments[i][1];
       var idRangeOffset = segments[i][3];
       if (segStartCode != segEndCode || idRangeOffset != 0) {
-        if (goog.DEBUG) {
-          goog.log.warning(tachyfont.logger, this.fontName +
-              ' format4 has more than one char per segment');
-        }
+        tachyfont.IncrementalFont.reportError_(
+            tachyfont.IncrementalFont.ERROR_CMAP4_CHARS_PER_SEGMENT_,
+            this.fontInfo.getWeight(), this.fontName +
+            ' format4 has more than one char per segment');
         return;
       }
     }
@@ -1100,10 +1155,10 @@ tachyfont.IncrementalFont.obj_.prototype.determineIfOneCharPerSeg = function() {
     for (var i = 0; i < segments.length; i++) {
       var length = segments[i][1];
       if (length != 1) {
-        if (goog.DEBUG) {
-          goog.log.warning(tachyfont.logger, this.fontName +
-              ' format12 has more than one char per segment');
-        }
+        tachyfont.IncrementalFont.reportError_(
+            tachyfont.IncrementalFont.ERROR_CMAP12_CHARS_PER_SEGMENT_,
+            this.fontInfo.getWeight(), this.fontName +
+            ' format12 has more than one char per segment');
         return;
       }
     }
@@ -1252,10 +1307,13 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars = function() {
                 // Report the miss rate.
                 var weight = that.fontInfo.getWeight();
                 var missCnt = neededCodes.length;
-                tachyfont.reporter.addItem('mc' + weight, missCnt);
+                tachyfont.reporter.addItem(
+                    tachyfont.IncrementalFont.LOG_MISS_COUNT_ + weight,
+                    missCnt);
                 var missRate = (neededCodes.length * 100) / charArray.length;
-                tachyfont.reporter.addItem('mr' + weight, missRate);
-
+                tachyfont.reporter.addItem(
+                    tachyfont.IncrementalFont.LOG_MISS_RATE_ + weight,
+                    missRate);
 
                 if (neededCodes.length) {
                   if (goog.DEBUG) {

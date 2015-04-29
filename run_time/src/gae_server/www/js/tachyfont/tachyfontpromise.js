@@ -79,6 +79,10 @@ tachyfont.promise.ERROR_RESOLVE_CHAINED_COUNT_ = 2;
 tachyfont.promise.ERROR_REJECT_CHAINED_COUNT_ = 3;
 
 
+/** @private {number} */
+tachyfont.promise.ERROR_LINGERING_PROMISE_ = 4;
+
+
 /**
  * The error reporter for this file.
  *
@@ -223,7 +227,8 @@ tachyfont.chainedPromises = function() {
             'lingering pending count: ' + this.pendingCount_);
         this.timerReportCount_++;
         if (this.timerReportCount_ >= 10) {
-          goog.log.log(tachyfont.logger, goog.log.Level.SEVERE, this.debugMsg_ +
+          tachyfont.promise.reportError_(
+              tachyfont.promise.ERROR_LINGERING_PROMISE_, '', this.debugMsg_ +
               'gave up checking for pending count');
           clearInterval(this.intervalId_);
         }
