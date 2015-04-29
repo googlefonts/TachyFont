@@ -53,7 +53,8 @@ window.onerror =
     errorObj['message'] = errorMsg;
     errorObj['url'] = url;
     errorObj['lineNumber'] = lineNumber;
-    tachyfont.reportError_(10, 'window.onerror', errorObj);
+    tachyfont.reportError_(tachyfont.ERROR_WINDOW_ON_ERROR_, 'window.onerror',
+        errorObj);
   }
 
   if (goog.DEBUG) {
@@ -240,11 +241,22 @@ tachyfont.initializeReporter = function(url) {
 
 
 /**
- * File identifier for this file.
- *
- * @private {string}
+ * The reportError constants.
  */
-tachyfont.fileId_ = 'tf';
+/** @private {string} */
+tachyfont.ERROR_FILE_ID_ = 'tf';
+
+
+/** @private {number} */
+tachyfont.ERROR_WINDOW_ON_ERROR_ = 1;
+
+
+/** @private {number} */
+tachyfont.ERROR_SET_FONT_ = 2;
+
+
+/** @private {number} */
+tachyfont.ERROR_GET_BASE_ = 3;
 
 
 /**
@@ -257,7 +269,8 @@ tachyfont.fileId_ = 'tf';
  */
 tachyfont.reportError_ = function(errNum, errId, errInfo) {
   if (tachyfont.reporter) {
-    tachyfont.reporter.reportError(tachyfont.fileId_ + errNum, errId, errInfo);
+    tachyfont.reporter.reportError(tachyfont.ERROR_FILE_ID_ + errNum, errId,
+        errInfo);
   } else {
     var obj = {};
     obj.errNum = errNum;
@@ -431,11 +444,11 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
             }).
             thenCatch(function(e) {
               allLoaded.reject();
-              tachyfont.reportError_(40, 'all', e);
+              tachyfont.reportError_(tachyfont.ERROR_SET_FONT_, 'all', e);
             });
       }).
       thenCatch(function(e) {
-        tachyfont.reportError_(41, 'all', e);
+        tachyfont.reportError_(tachyfont.ERROR_GET_BASE_, 'all', e);
         allLoaded.reject();
       });
 

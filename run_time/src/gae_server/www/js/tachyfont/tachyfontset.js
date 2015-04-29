@@ -108,11 +108,18 @@ tachyfont.TachyFontSet = function(familyName) {
 
 
 /**
- * File identifier for this file.
- *
- * @private {string}
+ * The reportError constants.
  */
-tachyfont.TachyFontSet.fileId_ = 'tfs';
+/** @private {string} */
+tachyfont.TachyFontSet.ERROR_FILE_ID_ = 'tfs';
+
+
+/** @private {number} */
+tachyfont.TachyFontSet.ERROR_UPDATE_FONT_LOAD_CHARS_ = 1;
+
+
+/** @private {number} */
+tachyfont.TachyFontSet.ERROR_UPDATE_FONT_SET_FONT_ = 2;
 
 
 /**
@@ -131,8 +138,8 @@ tachyfont.TachyFontSet.reportError_ = function(errNum, errId, errObj) {
     }
   }
   if (tachyfont.reporter) {
-    tachyfont.reporter.reportError(tachyfont.TachyFontSet.fileId_ + errNum,
-        errId, errObj);
+    tachyfont.reporter.reportError(
+        tachyfont.TachyFontSet.ERROR_FILE_ID_ + errNum, errId, errObj);
   }
 };
 
@@ -424,7 +431,9 @@ tachyfont.TachyFontSet.prototype.updateFonts = function(allowEarlyUse) {
         return goog.Promise.all(updatingFonts);
       }.bind(this)).
       thenCatch(function(err) {
-        tachyfont.TachyFontSet.reportError_(40, 'all', err);
+        tachyfont.TachyFontSet.reportError_(
+            tachyfont.TachyFontSet.ERROR_UPDATE_FONT_LOAD_CHARS_,
+            'all', err);
       }).
       then(function(/*loadResults*/) {
         var fontsData = [];
@@ -495,8 +504,9 @@ tachyfont.TachyFontSet.prototype.updateFonts = function(allowEarlyUse) {
         allUpdated.resolve();
       }.bind(this)).
       thenCatch(function(e) {
-        tachyfont.TachyFontSet.reportError_(50, 'all',
-            'failed to load all fonts' + e.stack);
+        tachyfont.TachyFontSet.reportError_(
+            tachyfont.TachyFontSet.ERROR_UPDATE_FONT_SET_FONT_,
+            'all', 'failed to load all fonts' + e.stack);
         allUpdated.reject();
       });
   return allUpdated.getPromise();
