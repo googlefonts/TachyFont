@@ -61,11 +61,22 @@ tachyfont.promise = function(opt_container, opt_msg) {
 
 
 /**
- * File identifier for this file.
- *
- * @private {string}
+ * The reportError constants.
  */
-tachyfont.promise.fileId_ = 'p';
+/** @private {string} */
+tachyfont.promise.ERROR_FILE_ID_ = 'p';
+
+
+/** @private {number} */
+tachyfont.promise.ERROR_PRECEDING_PROMISE_ = 1;
+
+
+/** @private {number} */
+tachyfont.promise.ERROR_RESOLVE_CHAINED_COUNT_ = 2;
+
+
+/** @private {number} */
+tachyfont.promise.ERROR_REJECT_CHAINED_COUNT_ = 3;
 
 
 /**
@@ -84,7 +95,7 @@ tachyfont.promise.reportError_ = function(errNum, errId, errInfo) {
     }
   }
   if (tachyfont.reporter) {
-    tachyfont.reporter.reportError(tachyfont.promise.fileId_ + errNum,
+    tachyfont.reporter.reportError(tachyfont.promise.ERROR_FILE_ID_ + errNum,
         errId, errInfo);
   }
 };
@@ -107,7 +118,8 @@ tachyfont.promise.prototype.getPromise = function() {
  */
 tachyfont.promise.prototype.getPrecedingPromise = function() {
   if (!this.precedingPromise_) {
-    tachyfont.promise.reportError_(11, '', this.msg_)
+    tachyfont.promise.reportError_(tachyfont.promise.ERROR_PRECEDING_PROMISE_,
+        '', this.msg_);
   }
   return this.precedingPromise_;
 };
@@ -125,7 +137,8 @@ tachyfont.promise.prototype.reject = function(opt_value) {
     if (this.container_.promises.length <= 1) {
       // We unshift all except the very first manually added promise.
       if (this.container_.chainedCount_ != 0) {
-        tachyfont.promise.reportError_(13, '', this.msg_)
+        tachyfont.promise.reportError_(
+            tachyfont.promise.ERROR_REJECT_CHAINED_COUNT_, '', this.msg_);
       }
     }
     if (this.container_.promises.length > 1) {
@@ -151,7 +164,8 @@ tachyfont.promise.prototype.resolve = function(opt_value) {
     if (this.container_.promises.length <= 1) {
       // We unshift all except the very first manually added promise.
       if (this.container_.chainedCount_ != 0) {
-        tachyfont.promise.reportError_(15, '', this.msg_)
+        tachyfont.promise.reportError_(
+            tachyfont.promise.ERROR_RESOLVE_CHAINED_COUNT_, '', this.msg_);
       }
     }
     if (this.container_.promises.length > 1) {
