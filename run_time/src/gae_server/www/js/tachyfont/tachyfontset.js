@@ -108,6 +108,17 @@ tachyfont.TachyFontSet = function(familyName) {
 
 
 /**
+ * The addItem/addItemTime constants.
+ */
+/** @private {string} */
+tachyfont.TachyFontSet.LOG_SET_FONT_ = 'sf';
+
+
+/** @private {number} */
+tachyfont.TachyFontSet.LOG_TIME_BUCKET_SIZE_ = 50;
+
+
+/**
  * The reportError constants.
  */
 /** @private {string} */
@@ -485,8 +496,10 @@ tachyfont.TachyFontSet.prototype.updateFonts = function(allowEarlyUse) {
           }
           var cssSetResult = fontObj.setFont(fontData, fileInfo).
               then(function() {
-                var name = 'sf' + this.fontInfo.getWeight();
-                tachyfont.reporter.addItemTime(name, 50);
+                tachyfont.reporter.addItemTime(
+                    tachyfont.TachyFontSet.LOG_SET_FONT_ +
+                    this.fontInfo.getWeight(),
+                    tachyfont.TachyFontSet.LOG_TIME_BUCKET_SIZE_);
                 tachyfont.IncrementalFontUtils.setVisibility(this.style,
                 this.fontInfo, true);
               }.bind(fontObj));

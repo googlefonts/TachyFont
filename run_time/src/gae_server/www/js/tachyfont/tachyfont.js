@@ -241,6 +241,33 @@ tachyfont.initializeReporter = function(url) {
 
 
 /**
+ * The addItem/addItemTime constants.
+ */
+/** @private {string} */
+tachyfont.LOG_LOAD_FONTS_ = 'lf';
+
+
+/** @private {string} */
+tachyfont.LOG_LOAD_FONTS_WAIT_PREVIOUS_ = 'lfw';
+
+
+/** @private {string} */
+tachyfont.LOG_LOAD_FONTS_BEGIN_ = 'lfb';
+
+
+/** @private {string} */
+tachyfont.LOG_SWITCH_FONT_ = 'sfe';
+
+
+/** @private {number} */
+tachyfont.LOG_TIME_BUCKET_SIZE_ = 50;
+
+
+/** @private {string} */
+tachyfont.LOG_SWITCH_FONT_DELTA_TIME_ = 'sfe.d';
+
+
+/**
  * The reportError constants.
  */
 /** @private {string} */
@@ -331,7 +358,7 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
         (window.location.port ? ':' + window.location.port : '');
   }
   tachyfont.initializeReporter(url);
-  tachyfont.reporter.addItemTime('lf');
+  tachyfont.reporter.addItemTime(tachyfont.LOG_LOAD_FONTS_);
 
   // TODO(bstell): this initialization of TachyFontSet should be in the
   // constructor or and init function.
@@ -355,13 +382,13 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
         'loadFonts: wait for preceding update');
     msg = 'loadFonts';
   }
-  tachyfont.reporter.addItemTime('ufb');
+  tachyfont.reporter.addItemTime(tachyfont.LOG_LOAD_FONTS_WAIT_PREVIOUS_);
   var allLoaded = tachyFontSet.finishPrecedingUpdateFont.getChainedPromise(msg);
   // TODO(bstell): this call 'getPrecedingPromise' should be the return from the
   // getChainedPromise. getChainedPromise should be waitForPrecedingPromise.
   allLoaded.getPrecedingPromise().
       then(function() {
-        tachyfont.reporter.addItemTime('ufa');
+        tachyfont.reporter.addItemTime(tachyfont.LOG_LOAD_FONTS_BEGIN_);
         if (goog.DEBUG) {
           goog.log.log(tachyfont.logger, goog.log.Level.FINER,
               'loadFonts: done waiting for preceding update');
@@ -420,9 +447,13 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
                 then(function() {
                   // Report Set Font Early.
                   var weight = this.fontInfo.getWeight();
-                  tachyfont.reporter.addItemTime('sfe' + weight, 50);
+                  tachyfont.reporter.addItemTime(
+                      tachyfont.LOG_SWITCH_FONT_ + weight,
+                      tachyfont.LOG_TIME_BUCKET_SIZE_);
                   var deltaTime = goog.now() - this.sfeStart_;
-                  tachyfont.reporter.addItem('sfe.d' + weight, deltaTime);
+                  tachyfont.reporter.addItem(
+                      tachyfont.LOG_SWITCH_FONT_DELTA_TIME_ + weight,
+                      deltaTime);
                   if (goog.DEBUG) {
                     goog.log.fine(tachyfont.logger, 'loadFonts: setFont_ done');
                   }
