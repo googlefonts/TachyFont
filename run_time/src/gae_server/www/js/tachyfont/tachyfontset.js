@@ -456,7 +456,7 @@ tachyfont.TachyFontSet.prototype.updateFonts = function(allowEarlyUse) {
           // the font before the page finishes loading.
           if (!this.domContentLoaded) {
             if (!allowEarlyUse) {
-              needToSetFont = false;
+              // needToSetFont = false;
             }
           }
           // TODO(bstell): check the font has loaded char data. If no char data
