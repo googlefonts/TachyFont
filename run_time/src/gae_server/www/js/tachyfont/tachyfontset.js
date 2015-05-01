@@ -90,11 +90,18 @@ tachyfont.TachyFontSet = function(familyName) {
   }
 
   /**
-   * Timeout to report a lingering update request.
+   * Timeout indicating there is a pending update fonts request.
    *
    * @private {?number} The timerID from setTimeout.
    */
   this.pendingUpdateRequest_ = null;
+
+  /**
+   * Time of the last request update fonts.
+   *
+   * @private {number} The timerID from setTimeout.
+   */
+  this.lastRequestUpdateTime_ = 0;
 
   /**
    * Timeout to report lingering needed char data.
@@ -388,15 +395,27 @@ tachyfont.TachyFontSet.prototype.addTextToFontGroups = function(node) {
  * Request an update of a group of TachyFonts
  */
 tachyfont.TachyFontSet.prototype.requestUpdateFonts = function() {
-  // Set a pending request.
-  if (this.pendingUpdateRequest_ == null) {
-    this.pendingUpdateRequest_ = setTimeout(function() {
-      if (goog.DEBUG) {
-        goog.log.info(tachyfont.logger, 'requestUpdateFonts: updateFonts');
-      }
-      this.updateFonts(false);
-    }.bind(this), tachyfont.TachyFontSet.TIMEOUT);
+
+  // There is already a pending update.
+  if (this.pendingUpdateRequest_ != null) {
+    return;
   }
+
+  // If the last update font was long ago then do one now.
+  var now = goog.now();
+  var timeSinceLastRequestUpdate = now - this.lastRequestUpdateTime_;
+  if (timeSinceLastRequestUpdate > tachyfont.TachyFontSet.TIMEOUT) {
+    this.updateFonts(false);
+    return;
+  }
+
+  // There was a recent update so delay this one.
+  this.pendingUpdateRequest_ = setTimeout(function() {
+    if (goog.DEBUG) {
+      goog.log.info(tachyfont.logger, 'requestUpdateFonts: updateFonts');
+    }
+    this.updateFonts(false);
+  }.bind(this), tachyfont.TachyFontSet.TIMEOUT);
 };
 
 
@@ -409,6 +428,7 @@ tachyfont.TachyFontSet.prototype.requestUpdateFonts = function() {
  *
  */
 tachyfont.TachyFontSet.prototype.updateFonts = function(allowEarlyUse) {
+  this.lastRequestUpdateTime_ = goog.now();
   if (goog.DEBUG) {
     goog.log.fine(tachyfont.logger, 'updateFonts');
   }
@@ -454,11 +474,11 @@ tachyfont.TachyFontSet.prototype.updateFonts = function(allowEarlyUse) {
           // It takes significant time to pass the font data from Javascript to
           // the browser. So unless specifically told to do so, do not update
           // the font before the page finishes loading.
-          if (!this.domContentLoaded) {
-            if (!allowEarlyUse) {
-              // needToSetFont = false;
-            }
-          }
+          // if (!this.domContentLoaded) {
+          //   if (!allowEarlyUse) {
+          //     needToSetFont = false;
+          //   }
+          // }
           // TODO(bstell): check the font has loaded char data. If no char data
           // was ever loaded then don't waste CPU and time loading a useless
           // font.
