@@ -1304,16 +1304,6 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars = function() {
                     tmp_charlist[c] = 1;
                   }
                 }
-                // Report the miss rate.
-                var weight = that.fontInfo.getWeight();
-                var missCnt = neededCodes.length;
-                tachyfont.reporter.addItem(
-                    tachyfont.IncrementalFont.LOG_MISS_COUNT_ + weight,
-                    missCnt);
-                var missRate = (neededCodes.length * 100) / charArray.length;
-                tachyfont.reporter.addItem(
-                    tachyfont.IncrementalFont.LOG_MISS_RATE_ + weight,
-                    missRate);
 
                 if (neededCodes.length) {
                   if (goog.DEBUG) {
@@ -1331,6 +1321,16 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars = function() {
                     goog.log.log(tachyfont.logger, goog.log.Level.FINER,
                     '' + neededCodes);
                   }
+                  // Report the miss rate.
+                  var weight = that.fontInfo.getWeight();
+                  var missCnt = neededCodes.length;
+                  tachyfont.reporter.addItem(
+                      tachyfont.IncrementalFont.LOG_MISS_COUNT_ + weight,
+                      missCnt);
+                  var missRate = (neededCodes.length * 100) / charArray.length;
+                  tachyfont.reporter.addItem(
+                      tachyfont.IncrementalFont.LOG_MISS_RATE_ + weight,
+                      missRate);
                 } else {
                   if (goog.DEBUG) {
                     goog.log.fine(tachyfont.logger, 'no new characters');
