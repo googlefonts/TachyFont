@@ -130,29 +130,28 @@ tachyfont.Reporter.prototype.reportError = function(errNum, id, errInfo) {
   // Move any pre-existing items aside.
   var preexistingItems = this.items_;
   this.items_ = {};
-  var name = 'e.' + errNum;
-  this.addItem(name, '');
-  this.addItem(name + '.id', id);
+  var name = 'e.' + errNum + '.' + id;
+  var msg = '';
 
   // Get the error message out of the error object.
   var value = '';
   if (typeof errInfo == 'string') {
-    this.addItem(name + '.' + 'msg', errInfo);
+    msg += errInfo + ', ';
   } else if (typeof errInfo == 'object') {
     if (errInfo['message']) {
-      this.addItem(name + '.' + 'message', errInfo['message']);
+      msg += errInfo['message'] + ', ';
     }
     if (errInfo['name']) {
-      this.addItem(name + '.' + 'name', errInfo['name']);
+      msg += errInfo['name'] + ', ';
     }
     if (errInfo['url']) {
-      this.addItem(name + '.' + 'url', errInfo['url']);
+      msg += errInfo['url'] + ', ';
     }
     if (errInfo['lineNumber']) {
-      value = errInfo['lineNumber'];
-      this.addItem(name + '.' + 'lineNumber', value);
+      msg += errInfo['lineNumber'] + ', ';
     }
   }
+  this.addItem(name, msg);
   this.sendReport();
   if (goog.DEBUG) {
     var keys = Object.keys(this.items_);
@@ -199,7 +198,7 @@ tachyfont.Reporter.prototype.sendReport = function(opt_okIfNoItems) {
     var name = keys[i];
     var value = encodeURIComponent((this.items_[name]).toString());
     delete this.items_[name];
-    var item = name + '=' + value;
+    var item = encodeURIComponent(name) + '=' + value;
     if (length + item.length > 2000) {
       this.sendGen204_(baseUrl, items);
       length = baseUrl.length;
