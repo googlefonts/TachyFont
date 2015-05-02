@@ -463,8 +463,7 @@ tachyfont.TachyFontSet.prototype.updateFonts = function(allowEarlyUse) {
       }.bind(this)).
       thenCatch(function(err) {
         tachyfont.TachyFontSet.reportError_(
-            tachyfont.TachyFontSet.ERROR_UPDATE_FONT_LOAD_CHARS_,
-            'all', err);
+            tachyfont.TachyFontSet.ERROR_UPDATE_FONT_LOAD_CHARS_, '000', err);
       }).
       then(function(/*loadResults*/) {
         var fontsData = [];
@@ -538,8 +537,8 @@ tachyfont.TachyFontSet.prototype.updateFonts = function(allowEarlyUse) {
       }.bind(this)).
       thenCatch(function(e) {
         tachyfont.TachyFontSet.reportError_(
-            tachyfont.TachyFontSet.ERROR_UPDATE_FONT_SET_FONT_,
-            'all', 'failed to load all fonts' + e.stack);
+            tachyfont.TachyFontSet.ERROR_UPDATE_FONT_SET_FONT_, '000',
+            'failed to load all fonts' + e.stack);
         allUpdated.reject();
       });
   return allUpdated.getPromise();
