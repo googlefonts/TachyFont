@@ -475,11 +475,11 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
             }).
             thenCatch(function(e) {
               allLoaded.reject();
-              tachyfont.reportError_(tachyfont.ERROR_SET_FONT_, 'all', e);
+              tachyfont.reportError_(tachyfont.ERROR_SET_FONT_, '000', e);
             });
       }).
       thenCatch(function(e) {
-        tachyfont.reportError_(tachyfont.ERROR_GET_BASE_, 'all', e);
+        tachyfont.reportError_(tachyfont.ERROR_GET_BASE_, '000', e);
         allLoaded.reject();
       });
 

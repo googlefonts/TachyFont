@@ -123,7 +123,7 @@ tachyfont.promise.prototype.getPromise = function() {
 tachyfont.promise.prototype.getPrecedingPromise = function() {
   if (!this.precedingPromise_) {
     tachyfont.promise.reportError_(tachyfont.promise.ERROR_PRECEDING_PROMISE_,
-        '', this.msg_);
+        '000', this.msg_);
   }
   return this.precedingPromise_;
 };
@@ -142,7 +142,7 @@ tachyfont.promise.prototype.reject = function(opt_value) {
       // We unshift all except the very first manually added promise.
       if (this.container_.chainedCount_ != 0) {
         tachyfont.promise.reportError_(
-            tachyfont.promise.ERROR_REJECT_CHAINED_COUNT_, '', this.msg_);
+            tachyfont.promise.ERROR_REJECT_CHAINED_COUNT_, '000', this.msg_);
       }
     }
     if (this.container_.promises.length > 1) {
@@ -169,7 +169,7 @@ tachyfont.promise.prototype.resolve = function(opt_value) {
       // We unshift all except the very first manually added promise.
       if (this.container_.chainedCount_ != 0) {
         tachyfont.promise.reportError_(
-            tachyfont.promise.ERROR_RESOLVE_CHAINED_COUNT_, '', this.msg_);
+            tachyfont.promise.ERROR_RESOLVE_CHAINED_COUNT_, '000', this.msg_);
       }
     }
     if (this.container_.promises.length > 1) {
@@ -228,8 +228,8 @@ tachyfont.chainedPromises = function() {
         this.timerReportCount_++;
         if (this.timerReportCount_ >= 10) {
           tachyfont.promise.reportError_(
-              tachyfont.promise.ERROR_LINGERING_PROMISE_, '', this.debugMsg_ +
-              'gave up checking for pending count');
+              tachyfont.promise.ERROR_LINGERING_PROMISE_, '000',
+              this.debugMsg_ + 'gave up checking for pending count');
           clearInterval(this.intervalId_);
         }
       } else {
