@@ -85,14 +85,9 @@ tachyfont.Reporter.getReporter = function(url) {
  * Add the time an item happened.
  *
  * @param {string} name The name of the item.
- * @param {number=} opt_roundTo Optionally round to this number.
  */
-tachyfont.Reporter.prototype.addItemTime = function(name, opt_roundTo) {
+tachyfont.Reporter.prototype.addItemTime = function(name) {
   var deltaTime = goog.now() - tachyfont.Reporter.startTime_;
-  // Round to the time to groups to make the graph more useful.
-  if (typeof opt_roundTo == 'number' && opt_roundTo > 1) {
-    deltaTime = Math.round(deltaTime / opt_roundTo) * opt_roundTo;
-  }
   this.addItem(name, deltaTime);
 };
 
@@ -104,14 +99,6 @@ tachyfont.Reporter.prototype.addItemTime = function(name, opt_roundTo) {
  * @param {string|number} value The value of the item.
  */
 tachyfont.Reporter.prototype.addItem = function(name, value) {
-  if (name in this.dupCnts_) {
-    var dupCnt = this.dupCnts_[name] + 1;
-    this.dupCnts_[name] = dupCnt;
-    name += '.' + dupCnt;
-  } else {
-    this.dupCnts_[name] = 0;
-  }
-
   if (typeof value == 'number') {
     value = Math.round(value);
   }
