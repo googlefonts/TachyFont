@@ -252,15 +252,7 @@ tachyfont.LOG_LOAD_FONTS_WAIT_PREVIOUS_ = 'lfw';
 
 
 /** @private {string} */
-tachyfont.LOG_LOAD_FONTS_BEGIN_ = 'lfb';
-
-
-/** @private {string} */
 tachyfont.LOG_SWITCH_FONT_ = 'sfe';
-
-
-/** @private {number} */
-tachyfont.LOG_TIME_BUCKET_SIZE_ = 50;
 
 
 /** @private {string} */
@@ -382,13 +374,14 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
         'loadFonts: wait for preceding update');
     msg = 'loadFonts';
   }
-  tachyfont.reporter.addItemTime(tachyfont.LOG_LOAD_FONTS_WAIT_PREVIOUS_);
+  var waitPreviousTime = goog.now();
   var allLoaded = tachyFontSet.finishPrecedingUpdateFont.getChainedPromise(msg);
   // TODO(bstell): this call 'getPrecedingPromise' should be the return from the
   // getChainedPromise. getChainedPromise should be waitForPrecedingPromise.
   allLoaded.getPrecedingPromise().
       then(function() {
-        tachyfont.reporter.addItemTime(tachyfont.LOG_LOAD_FONTS_BEGIN_);
+        tachyfont.reporter.addItem(tachyfont.LOG_LOAD_FONTS_WAIT_PREVIOUS_,
+          '000', goog.now() - waitPreviousTime);
         if (goog.DEBUG) {
           goog.log.log(tachyfont.logger, goog.log.Level.FINER,
               'loadFonts: done waiting for preceding update');
@@ -447,9 +440,8 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
                 then(function() {
                   // Report Set Font Early.
                   var weight = this.fontInfo.getWeight();
-                  tachyfont.reporter.addItemTime(
-                      tachyfont.LOG_SWITCH_FONT_ + weight,
-                      tachyfont.LOG_TIME_BUCKET_SIZE_);
+                  tachyfont.reporter.addItem(tachyfont.LOG_SWITCH_FONT_ +
+                    weight, goog.now() - incrFont.startTime_);
                   var deltaTime = goog.now() - this.sfeStart_;
                   tachyfont.reporter.addItem(
                       tachyfont.LOG_SWITCH_FONT_DELTA_TIME_ + weight,
@@ -564,7 +556,7 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
       if (goog.DEBUG) {
         goog.log.info(tachyfont.logger, 'DOMContentLoaded: updateFonts');
       }
-      tachyFontSet.updateFonts(true);
+      tachyFontSet.updateFonts(0, true);
     } else {
       // The mutation event should be very soon.
       if (goog.DEBUG) {
@@ -578,30 +570,30 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
 };
 
 
-/**
- * Update a list of TachyFonts
- *
- * TODO(bstell): remove the tachyfont.TachyFont type.
- * @param {Array.<tachyfont.TachyFont>|tachyfont.TachyFontSet} tachyFonts The
- *     list of font objects.
- */
-tachyfont.updateFonts = function(tachyFonts) {
-  if (tachyFonts.constructor == Array) {
-    if (goog.DEBUG) {
-      goog.log.info(tachyfont.logger,
-          'tachyfont.updateFonts: passing in an array is deprecated');
-    }
-    for (var i = 0; i < tachyFonts.length; i++) {
-      var tachyFont = tachyFonts[i];
-      tachyFont.incrfont.loadChars();
-    }
-  } else if (tachyFonts.constructor == tachyfont.TachyFontSet) {
-    if (goog.DEBUG) {
-      goog.log.info(tachyfont.logger, 'tachyfont.updateFonts');
-    }
-    tachyFonts.updateFonts(true);
-  }
-};
+///**
+// * Update a list of TachyFonts
+// *
+// * TODO(bstell): remove the tachyfont.TachyFont type.
+// * @param {Array.<tachyfont.TachyFont>|tachyfont.TachyFontSet} tachyFonts The
+// *     list of font objects.
+// */
+//tachyfont.updateFonts = function(tachyFonts) {
+//  if (tachyFonts.constructor == Array) {
+//    if (goog.DEBUG) {
+//      goog.log.info(tachyfont.logger,
+//          'tachyfont.updateFonts: passing in an array is deprecated');
+//    }
+//    for (var i = 0; i < tachyFonts.length; i++) {
+//      var tachyFont = tachyFonts[i];
+//      tachyFont.incrfont.loadChars();
+//    }
+//  } else if (tachyFonts.constructor == tachyfont.TachyFontSet) {
+//    if (goog.DEBUG) {
+//      goog.log.info(tachyfont.logger, 'tachyfont.updateFonts');
+//    }
+//    tachyFonts.updateFonts(true);
+//  }
+//};
 
 
 /**

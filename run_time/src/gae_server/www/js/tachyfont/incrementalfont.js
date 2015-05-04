@@ -139,10 +139,6 @@ tachyfont.IncrementalFont.LOG_MISS_COUNT_ = 'mc';
 tachyfont.IncrementalFont.LOG_MISS_RATE_ = 'mr';
 
 
-/** @private {number} */
-tachyfont.IncrementalFont.LOG_TIME_BUCKET_SIZE_ = 50;
-
-
 /**
  * The reportError constants.
  */
@@ -352,9 +348,9 @@ tachyfont.IncrementalFont.createManager = function(fontInfo, params) {
   */
   incrFontMgr.getIDB_ = incrFontMgr.openIndexedDB(fontName);
   incrFontMgr.getIDB_.then(function() {
-        tachyfont.reporter.addItemTime(
+        tachyfont.reporter.addItem(
             tachyfont.IncrementalFont.LOG_OPEN_IDB_ + weight,
-            tachyfont.IncrementalFont.LOG_TIME_BUCKET_SIZE_);
+            goog.now() - incrFontMgr.startTime_);
       });
   //tachyfont.timer1.end('openIndexedDB.open ' + fontName);
 
@@ -385,9 +381,9 @@ tachyfont.IncrementalFont.createManager = function(fontInfo, params) {
         return {};
       }).
       then(function(charlist_data) {
-        tachyfont.reporter.addItemTime(
+        tachyfont.reporter.addItem(
             tachyfont.IncrementalFont.LOG_IDB_GET_CHARLIST_ + weight,
-            tachyfont.IncrementalFont.LOG_TIME_BUCKET_SIZE_);
+            goog.now() - incrFontMgr.startTime_);
         return charlist_data;
         // }).thenCatch(function(e) {
         //   tachyfont.IncrementalFont.reportError_( 20, weight, e);
@@ -420,6 +416,13 @@ tachyfont.IncrementalFont.createManager = function(fontInfo, params) {
  * @private
  */
 tachyfont.IncrementalFont.obj_ = function(fontInfo, params, backendService) {
+  /**
+   * The creation time for this TachyFont.
+   *
+   * @private {number}
+   */
+  this.startTime_ = goog.now();
+
   /**
    * Information about the fonts
    *
@@ -531,10 +534,8 @@ tachyfont.IncrementalFont.obj_.prototype.getPersistedBase = function() {
         return goog.Promise.all([goog.Promise.resolve(idb), filedata]);
       }.bind(this)).
       then(function(arr) {
-        tachyfont.reporter.addItemTime(
-            tachyfont.IncrementalFont.LOG_IDB_GET_BASE_ +
-            this.fontInfo.getWeight(),
-            tachyfont.IncrementalFont.LOG_TIME_BUCKET_SIZE_);
+        tachyfont.reporter.addItem(tachyfont.IncrementalFont.LOG_IDB_GET_BASE_ +
+            this.fontInfo.getWeight(), goog.now() - this.startTime_);
         var idb = arr[0];
         var filedata = new DataView(arr[1]);
         this.parseBaseHeader(filedata);
@@ -562,9 +563,8 @@ tachyfont.IncrementalFont.obj_.prototype.parseBaseHeader =
   var binEd = new tachyfont.BinaryFontEditor(baseFontView, 0);
   var fileInfo = binEd.parseBaseHeader();
   if (!fileInfo.headSize) {
-    tachyfont.reporter.addItemTime(
-        tachyfont.IncrementalFont.LOG_PARSE_HEADER_ + this.fontInfo.getWeight(),
-        tachyfont.IncrementalFont.LOG_TIME_BUCKET_SIZE_);
+    tachyfont.reporter.addItem(tachyfont.IncrementalFont.LOG_PARSE_HEADER_ +
+      this.fontInfo.getWeight(), goog.now() - incrFontMgr.startTime_);
     throw 'missing header info';
   }
   this.fileInfo_ = fileInfo;
@@ -583,10 +583,8 @@ tachyfont.IncrementalFont.obj_.prototype.getUrlBase =
     function(backendService, fontInfo) {
   var rslt = backendService.requestFontBase(fontInfo).
       then(function(fetchedBytes) {
-        tachyfont.reporter.addItemTime(
-            tachyfont.IncrementalFont.LOG_URL_GET_BASE_ +
-            this.fontInfo.getWeight(),
-            tachyfont.IncrementalFont.LOG_TIME_BUCKET_SIZE_);
+        tachyfont.reporter.addItem(tachyfont.IncrementalFont.LOG_URL_GET_BASE_ +
+            this.fontInfo.getWeight(), goog.now() - incrFontMgr.startTime_);
         var results = this.processUrlBase_(fetchedBytes);
         this.persistDelayed_(tachyfont.IncrementalFont.BASE);
         return results;
