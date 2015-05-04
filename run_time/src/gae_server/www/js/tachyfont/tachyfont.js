@@ -53,7 +53,7 @@ window.onerror =
     errorObj['message'] = errorMsg;
     errorObj['url'] = url;
     errorObj['lineNumber'] = lineNumber;
-    tachyfont.reportError_(tachyfont.ERROR_WINDOW_ON_ERROR_, 'window.onerror',
+    tachyfont.reportError_(tachyfont.ERROR_WINDOW_ON_ERROR_, '000',
         errorObj);
   }
 
@@ -498,6 +498,7 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
     if (goog.DEBUG) {
       goog.log.fine(tachyfont.logger, 'MutationObserver');
     }
+    var mutationTime = goog.now();
     mutations.forEach(function(mutation) {
       if (mutation.type == 'childList') {
         for (var i = 0; i < mutation.addedNodes.length; i++) {
@@ -533,14 +534,14 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
       if (goog.DEBUG) {
         goog.log.info(tachyfont.logger, 'mutation observer: updateFont');
       }
-      tachyFontSet.updateFonts(true);
+      tachyFontSet.updateFonts(mutationTime, true);
     } else {
       // For pages that load new data slowly: request the fonts be updated soon.
       // This attempts to minimize expensive operations:
       //     1. The round trip delays to fetch data.
       //     2. The set @font-family time (it takes significant time to pass the
       //        blobUrl data from Javascript to C++).
-      tachyFontSet.requestUpdateFonts();
+      tachyFontSet.requestUpdateFonts(mutationTime);
     }
   });
 
