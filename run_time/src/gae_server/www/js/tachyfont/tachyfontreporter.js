@@ -117,7 +117,7 @@ tachyfont.Reporter.prototype.reportError = function(errNum, id, errInfo) {
   // Move any pre-existing items aside.
   var preexistingItems = this.items_;
   this.items_ = {};
-  var name = 'e.' + errNum + '.' + id;
+  var name = errNum + '.' + id;
   var msg = '';
 
   // Get the error message out of the error object.
