@@ -250,15 +250,15 @@ tachyfont.ERROR_FILE_ID_ = 'ETF';
 
 
 /** @private {string} */
-tachyfont.ERROR_WINDOW_ON_ERROR_ = '01.';
+tachyfont.ERROR_WINDOW_ON_ERROR_ = '01';
 
 
 /** @private {string} */
-tachyfont.ERROR_SET_FONT_ = '02.';
+tachyfont.ERROR_SET_FONT_ = '02';
 
 
 /** @private {string} */
-tachyfont.ERROR_GET_BASE_ = '03.';
+tachyfont.ERROR_GET_BASE_ = '03';
 
 
 /**
@@ -333,6 +333,11 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
   tachyfont.initializeReporter(url);
   tachyfont.reporter.addItemTime(tachyfont.LOG_LOAD_FONTS_ + '000');
 
+  // Check if the persistent stores should be dropped.
+  var uri = goog.Uri.parse(window.location.href);
+  var dropDataStr = uri.getParameterValue('TachyFontDropData') || '';
+  var dropData = dropDataStr == 'true';
+
   // TODO(bstell): this initialization of TachyFontSet should be in the
   // constructor or and init function.
   var tachyFontSet = new tachyfont.TachyFontSet(familyName);
@@ -343,7 +348,7 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
     var fontInfo = fonts[i];
     fontInfo.setFamilyName(familyName);
     fontInfo.setUrl(url);
-    var tachyFont = new tachyfont.TachyFont(fontInfo, params);
+    var tachyFont = new tachyfont.TachyFont(fontInfo, dropData, params);
     tachyFontSet.addFont(tachyFont);
     // TODO(bstell): need to support slant/width/etc.
     var fontId = tachyfont.fontId(familyName, fontInfo.getWeight());

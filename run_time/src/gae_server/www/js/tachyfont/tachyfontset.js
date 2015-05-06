@@ -137,11 +137,11 @@ tachyfont.TachyFontSet.ERROR_FILE_ID_ = 'ETS';
 
 
 /** @private {string} */
-tachyfont.TachyFontSet.ERROR_UPDATE_FONT_LOAD_CHARS_ = '01.';
+tachyfont.TachyFontSet.ERROR_UPDATE_FONT_LOAD_CHARS_ = '01';
 
 
 /** @private {string} */
-tachyfont.TachyFontSet.ERROR_UPDATE_FONT_SET_FONT_ = '02.';
+tachyfont.TachyFontSet.ERROR_UPDATE_FONT_SET_FONT_ = '02';
 
 
 /**

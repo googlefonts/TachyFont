@@ -68,19 +68,19 @@ tachyfont.promise.ERROR_FILE_ID_ = 'ETP';
 
 
 /** @private {string} */
-tachyfont.promise.ERROR_PRECEDING_PROMISE_ = '01.';
+tachyfont.promise.ERROR_PRECEDING_PROMISE_ = '01';
 
 
 /** @private {string} */
-tachyfont.promise.ERROR_RESOLVE_CHAINED_COUNT_ = '02.';
+tachyfont.promise.ERROR_RESOLVE_CHAINED_COUNT_ = '02';
 
 
 /** @private {string} */
-tachyfont.promise.ERROR_REJECT_CHAINED_COUNT_ = '03.';
+tachyfont.promise.ERROR_REJECT_CHAINED_COUNT_ = '03';
 
 
 /** @private {string} */
-tachyfont.promise.ERROR_LINGERING_PROMISE_ = '04.';
+tachyfont.promise.ERROR_LINGERING_PROMISE_ = '04';
 
 
 /**
