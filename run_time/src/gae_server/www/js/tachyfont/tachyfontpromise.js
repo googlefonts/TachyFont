@@ -64,34 +64,33 @@ tachyfont.promise = function(opt_container, opt_msg) {
  * The reportError constants.
  */
 /** @private {string} */
-tachyfont.promise.ERROR_FILE_ID_ = 'p';
+tachyfont.promise.ERROR_FILE_ID_ = 'ETP';
 
 
-/** @private {number} */
-tachyfont.promise.ERROR_PRECEDING_PROMISE_ = 1;
+/** @private {string} */
+tachyfont.promise.ERROR_PRECEDING_PROMISE_ = '01.';
 
 
-/** @private {number} */
-tachyfont.promise.ERROR_RESOLVE_CHAINED_COUNT_ = 2;
+/** @private {string} */
+tachyfont.promise.ERROR_RESOLVE_CHAINED_COUNT_ = '02.';
 
 
-/** @private {number} */
-tachyfont.promise.ERROR_REJECT_CHAINED_COUNT_ = 3;
+/** @private {string} */
+tachyfont.promise.ERROR_REJECT_CHAINED_COUNT_ = '03.';
 
 
-/** @private {number} */
-tachyfont.promise.ERROR_LINGERING_PROMISE_ = 4;
+/** @private {string} */
+tachyfont.promise.ERROR_LINGERING_PROMISE_ = '04.';
 
 
 /**
  * The error reporter for this file.
  *
- * @param {number} errNum The error number;
- * @param {string} errId Identifies the error.
+ * @param {string} errNum The error number;
  * @param {*} errInfo The error object;
  * @private
  */
-tachyfont.promise.reportError_ = function(errNum, errId, errInfo) {
+tachyfont.promise.reportError_ = function(errNum, errInfo) {
   if (goog.DEBUG) {
     if (!tachyfont.reporter) {
       debugger; // Failed to report error.
@@ -100,7 +99,7 @@ tachyfont.promise.reportError_ = function(errNum, errId, errInfo) {
   }
   if (tachyfont.reporter) {
     tachyfont.reporter.reportError(tachyfont.promise.ERROR_FILE_ID_ + errNum,
-        errId, errInfo);
+        '000', errInfo);
   }
 };
 
@@ -123,7 +122,7 @@ tachyfont.promise.prototype.getPromise = function() {
 tachyfont.promise.prototype.getPrecedingPromise = function() {
   if (!this.precedingPromise_) {
     tachyfont.promise.reportError_(tachyfont.promise.ERROR_PRECEDING_PROMISE_,
-        '000', this.msg_);
+        this.msg_);
   }
   return this.precedingPromise_;
 };
@@ -142,7 +141,7 @@ tachyfont.promise.prototype.reject = function(opt_value) {
       // We unshift all except the very first manually added promise.
       if (this.container_.chainedCount_ != 0) {
         tachyfont.promise.reportError_(
-            tachyfont.promise.ERROR_REJECT_CHAINED_COUNT_, '000', this.msg_);
+            tachyfont.promise.ERROR_REJECT_CHAINED_COUNT_, this.msg_);
       }
     }
     if (this.container_.promises.length > 1) {
@@ -169,7 +168,7 @@ tachyfont.promise.prototype.resolve = function(opt_value) {
       // We unshift all except the very first manually added promise.
       if (this.container_.chainedCount_ != 0) {
         tachyfont.promise.reportError_(
-            tachyfont.promise.ERROR_RESOLVE_CHAINED_COUNT_, '000', this.msg_);
+            tachyfont.promise.ERROR_RESOLVE_CHAINED_COUNT_, this.msg_);
       }
     }
     if (this.container_.promises.length > 1) {
@@ -228,7 +227,7 @@ tachyfont.chainedPromises = function() {
         this.timerReportCount_++;
         if (this.timerReportCount_ >= 10) {
           tachyfont.promise.reportError_(
-              tachyfont.promise.ERROR_LINGERING_PROMISE_, '000',
+              tachyfont.promise.ERROR_LINGERING_PROMISE_,
               this.debugMsg_ + 'gave up checking for pending count');
           clearInterval(this.intervalId_);
         }
