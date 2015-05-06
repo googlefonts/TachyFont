@@ -53,8 +53,7 @@ window.onerror =
     errorObj['message'] = errorMsg;
     errorObj['url'] = url;
     errorObj['lineNumber'] = lineNumber;
-    tachyfont.reportError_(tachyfont.ERROR_WINDOW_ON_ERROR_, '000',
-        errorObj);
+    tachyfont.reportError_(tachyfont.ERROR_WINDOW_ON_ERROR_, errorObj);
   }
 
   if (goog.DEBUG) {
@@ -244,56 +243,54 @@ tachyfont.initializeReporter = function(url) {
  * The addItem/addItemTime constants.
  */
 /** @private {string} */
-tachyfont.LOG_LOAD_FONTS_ = 'lf';
+tachyfont.LOG_LOAD_FONTS_ = 'LTFLF.';
 
 
 /** @private {string} */
-tachyfont.LOG_LOAD_FONTS_WAIT_PREVIOUS_ = 'lfw';
+tachyfont.LOG_LOAD_FONTS_WAIT_PREVIOUS_ = 'LTFLW.';
 
 
 /** @private {string} */
-tachyfont.LOG_SWITCH_FONT_ = 'sfe';
+tachyfont.LOG_SWITCH_FONT_ = 'LTFSE.';
 
 
 /** @private {string} */
-tachyfont.LOG_SWITCH_FONT_DELTA_TIME_ = 'sfe.d';
+tachyfont.LOG_SWITCH_FONT_DELTA_TIME_ = 'LTFSD.';
 
 
 /**
  * The reportError constants.
  */
 /** @private {string} */
-tachyfont.ERROR_FILE_ID_ = 'tf';
+tachyfont.ERROR_FILE_ID_ = 'ETF';
 
 
-/** @private {number} */
-tachyfont.ERROR_WINDOW_ON_ERROR_ = 1;
+/** @private {string} */
+tachyfont.ERROR_WINDOW_ON_ERROR_ = '01.';
 
 
-/** @private {number} */
-tachyfont.ERROR_SET_FONT_ = 2;
+/** @private {string} */
+tachyfont.ERROR_SET_FONT_ = '02.';
 
 
-/** @private {number} */
-tachyfont.ERROR_GET_BASE_ = 3;
+/** @private {string} */
+tachyfont.ERROR_GET_BASE_ = '03.';
 
 
 /**
  * The error reporter for this file.
  *
- * @param {number} errNum The error number;
- * @param {string} errId The error identifier;
+ * @param {string} errNum The error number;
  * @param {*} errInfo The error object;
  * @private
  */
-tachyfont.reportError_ = function(errNum, errId, errInfo) {
+tachyfont.reportError_ = function(errNum, errInfo) {
   if (tachyfont.reporter) {
-    tachyfont.reporter.reportError(tachyfont.ERROR_FILE_ID_ + errNum, errId,
+    tachyfont.reporter.reportError(tachyfont.ERROR_FILE_ID_ + errNum, '000',
         errInfo);
   } else {
     var obj = {};
     obj.errNum = errNum;
-    obj.errId = errId;
     obj.errInfo = errInfo;
     setTimeout(function() {
       tachyfont.delayedReportError_(obj);
@@ -310,7 +307,7 @@ tachyfont.reportError_ = function(errNum, errId, errInfo) {
  */
 tachyfont.delayedReportError_ = function(obj) {
   goog.log.error(tachyfont.logger, 'delayedReportError_');
-  tachyfont.reportError_(obj.errNum, obj.errId, obj.errInfo);
+  tachyfont.reportError_(obj.errNum, obj.errInfo);
 };
 
 
@@ -350,7 +347,7 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
         (window.location.port ? ':' + window.location.port : '');
   }
   tachyfont.initializeReporter(url);
-  tachyfont.reporter.addItemTime(tachyfont.LOG_LOAD_FONTS_);
+  tachyfont.reporter.addItemTime(tachyfont.LOG_LOAD_FONTS_ + '000');
 
   // TODO(bstell): this initialization of TachyFontSet should be in the
   // constructor or and init function.
@@ -380,8 +377,8 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
   // getChainedPromise. getChainedPromise should be waitForPrecedingPromise.
   allLoaded.getPrecedingPromise().
       then(function() {
-        tachyfont.reporter.addItem(tachyfont.LOG_LOAD_FONTS_WAIT_PREVIOUS_,
-          '000', goog.now() - waitPreviousTime);
+        tachyfont.reporter.addItem(tachyfont.LOG_LOAD_FONTS_WAIT_PREVIOUS_ +
+            '000', goog.now() - waitPreviousTime);
         if (goog.DEBUG) {
           goog.log.log(tachyfont.logger, goog.log.Level.FINER,
               'loadFonts: done waiting for preceding update');
@@ -441,7 +438,7 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
                   // Report Set Font Early.
                   var weight = this.fontInfo.getWeight();
                   tachyfont.reporter.addItem(tachyfont.LOG_SWITCH_FONT_ +
-                    weight, goog.now() - incrFont.startTime_);
+                  weight, goog.now() - incrFont.startTime);
                   var deltaTime = goog.now() - this.sfeStart_;
                   tachyfont.reporter.addItem(
                       tachyfont.LOG_SWITCH_FONT_DELTA_TIME_ + weight,
@@ -467,11 +464,11 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
             }).
             thenCatch(function(e) {
               allLoaded.reject();
-              tachyfont.reportError_(tachyfont.ERROR_SET_FONT_, '000', e);
+              tachyfont.reportError_(tachyfont.ERROR_SET_FONT_, e);
             });
       }).
       thenCatch(function(e) {
-        tachyfont.reportError_(tachyfont.ERROR_GET_BASE_, '000', e);
+        tachyfont.reportError_(tachyfont.ERROR_GET_BASE_, e);
         allLoaded.reject();
       });
 
@@ -570,30 +567,30 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
 };
 
 
-///**
-// * Update a list of TachyFonts
-// *
-// * TODO(bstell): remove the tachyfont.TachyFont type.
-// * @param {Array.<tachyfont.TachyFont>|tachyfont.TachyFontSet} tachyFonts The
-// *     list of font objects.
-// */
-//tachyfont.updateFonts = function(tachyFonts) {
-//  if (tachyFonts.constructor == Array) {
-//    if (goog.DEBUG) {
-//      goog.log.info(tachyfont.logger,
-//          'tachyfont.updateFonts: passing in an array is deprecated');
-//    }
-//    for (var i = 0; i < tachyFonts.length; i++) {
-//      var tachyFont = tachyFonts[i];
-//      tachyFont.incrfont.loadChars();
-//    }
-//  } else if (tachyFonts.constructor == tachyfont.TachyFontSet) {
-//    if (goog.DEBUG) {
-//      goog.log.info(tachyfont.logger, 'tachyfont.updateFonts');
-//    }
-//    tachyFonts.updateFonts(true);
-//  }
-//};
+/**
+ * Update a list of TachyFonts
+ *
+ * TODO(bstell): remove the tachyfont.TachyFont type.
+ * @param {Array.<tachyfont.TachyFont>|tachyfont.TachyFontSet} tachyFonts The
+ *     list of font objects.
+ */
+tachyfont.updateFonts = function(tachyFonts) {
+  //  if (tachyFonts.constructor == Array) {
+  //    if (goog.DEBUG) {
+  //      goog.log.info(tachyfont.logger,
+  //          'tachyfont.updateFonts: passing in an array is deprecated');
+  //    }
+  //    for (var i = 0; i < tachyFonts.length; i++) {
+  //      var tachyFont = tachyFonts[i];
+  //      tachyFont.incrfont.loadChars();
+  //    }
+  //  } else if (tachyFonts.constructor == tachyfont.TachyFontSet) {
+  //    if (goog.DEBUG) {
+  //      goog.log.info(tachyfont.logger, 'tachyfont.updateFonts');
+  //    }
+  //    tachyFonts.updateFonts(true);
+  //  }
+};
 
 
 /**
