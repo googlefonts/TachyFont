@@ -83,34 +83,20 @@ if (goog.DEBUG) {
 
     tachyfont.hasInitializedDebug_ = true;
 
-    /** @type {goog.Uri} */
-    tachyfont.uri = goog.Uri.parse(window.location.href);
-
-
-    /** @type {goog.debug.Logger.Level} */
-    tachyfont.debugLevel;
-
-
-    /** @type {string} */
-    tachyfont.debugLevel_str =
-        tachyfont.uri.getParameterValue('TachyFontDebugLevel') || '';
-    if (tachyfont.debugLevel_str) {
-      tachyfont.debugLevel =
-          goog.debug.Logger.Level.getPredefinedLevel(tachyfont.debugLevel_str);
+    var uri = goog.Uri.parse(window.location.href);
+    var debugLevel;
+    var debugLevelStr = uri.getParameterValue('TachyFontDebugLevel') || '';
+    if (debugLevelStr) {
+      debugLevel = goog.debug.Logger.Level.getPredefinedLevel(debugLevelStr);
     }
-
-    /**
-     * @type {!goog.debug.Console}
-     * @private
-     */
-    tachyfont.debugConsole_ = new goog.debug.Console();
-    tachyfont.debugConsole_.setCapturing(true);
+    var debugConsole = new goog.debug.Console();
+    debugConsole.setCapturing(true);
 
 
     /**
      * @type {goog.debug.Logger}
      */
-    tachyfont.logger = goog.log.getLogger('debug', tachyfont.debugLevel);
+    tachyfont.logger = goog.log.getLogger('debug', debugLevel);
 
 
     /**
@@ -122,8 +108,7 @@ if (goog.DEBUG) {
      * Disable using persistent store. This is useful for forcing the base and
      * char data to be fetched regardless on what is in persistent store.
      */
-    var persistDataStr =
-        tachyfont.uri.getParameterValue('TachyFontPersistData') || '';
+    var persistDataStr = uri.getParameterValue('TachyFontPersistData') || '';
     // The following code implements this logic:
     // if (persistDataStr.toLowerCase() == 'false') {
     //   tachyfont.persistData = false;
@@ -137,7 +122,7 @@ if (goog.DEBUG) {
      * that are not yet in the charList.
      */
     var reportNeededCharsStr =
-        tachyfont.uri.getParameterValue('TachyFontReportNeededChars') || '';
+        uri.getParameterValue('TachyFontReportNeededChars') || '';
     /** @type {boolean} */
     tachyfont.reportNeededChars = reportNeededCharsStr.toLowerCase() == 'true';
 
@@ -145,7 +130,7 @@ if (goog.DEBUG) {
      * Enable reporting the list of loaded characters.
      */
     var reportCharListStr =
-        tachyfont.uri.getParameterValue('TachyFontReportCharList') || '';
+        uri.getParameterValue('TachyFontReportCharList') || '';
     /** @type {boolean} */
     tachyfont.reportCharList = reportCharListStr.toLowerCase() == 'true';
 
@@ -153,15 +138,14 @@ if (goog.DEBUG) {
      * Enable reporting font table checksums.
      */
     var reportChecksumsStr =
-        tachyfont.uri.getParameterValue('TachyFontReportChecksums') || '';
+        uri.getParameterValue('TachyFontReportChecksums') || '';
     /** @type {boolean} */
     tachyfont.reportChecksums = reportChecksumsStr.toLowerCase() == 'true';
 
     /**
      * Enable checking cmap against fileInfo and charList.
      */
-    var checkCmapStr =
-        tachyfont.uri.getParameterValue('TachyFontCheckCmap') || '';
+    var checkCmapStr = uri.getParameterValue('TachyFontCheckCmap') || '';
     /** @type {boolean} */
     tachyfont.checkCmap = checkCmapStr.toLowerCase() == 'true';
   };
