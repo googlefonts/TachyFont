@@ -123,18 +123,27 @@ tachyfont.Reporter.prototype.reportError = function(errNum, id, errInfo) {
   // Get the error message out of the error object.
   var value = '';
   if (typeof errInfo == 'string') {
-    msg += errInfo + ', ';
+    msg += errInfo;
   } else if (typeof errInfo == 'object') {
     if (errInfo['message']) {
-      msg += errInfo['message'] + ', ';
+      msg += errInfo['message'];
     }
     if (errInfo['name']) {
+      if (msg) {
+        msg += ', ';
+      }
       msg += errInfo['name'] + ', ';
     }
     if (errInfo['url']) {
+      if (msg) {
+        msg += ', ';
+      }
       msg += errInfo['url'] + ', ';
     }
     if (errInfo['lineNumber']) {
+      if (msg) {
+        msg += ', ';
+      }
       msg += errInfo['lineNumber'] + ', ';
     }
   }
