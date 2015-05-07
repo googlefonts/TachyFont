@@ -66,8 +66,9 @@ tachyfont.promise = function(opt_container, opt_msg) {
 /**
  * Enum for logging values.
  * @enum {string}
+ * @private
  */
-tachyfont.promise.Error = {
+tachyfont.promise.Error_ = {
   FILE_ID: 'ETP',
   PRECEDING_PROMISE: '01',
   RESOLVE_CHAINED_COUNT: '02',
@@ -91,7 +92,7 @@ tachyfont.promise.reportError_ = function(errNum, errInfo) {
     }
   }
   if (tachyfont.reporter) {
-    tachyfont.reporter.reportError(tachyfont.promise.Error.FILE_ID + errNum,
+    tachyfont.reporter.reportError(tachyfont.promise.Error_.FILE_ID + errNum,
         '000', errInfo);
   }
 };
@@ -114,7 +115,7 @@ tachyfont.promise.prototype.getPromise = function() {
  */
 tachyfont.promise.prototype.getPrecedingPromise = function() {
   if (!this.precedingPromise_) {
-    tachyfont.promise.reportError_(tachyfont.promise.Error.PRECEDING_PROMISE,
+    tachyfont.promise.reportError_(tachyfont.promise.Error_.PRECEDING_PROMISE,
         this.msg_);
   }
   return this.precedingPromise_;
@@ -134,7 +135,7 @@ tachyfont.promise.prototype.reject = function(opt_value) {
       // We unshift all except the very first manually added promise.
       if (this.container_.chainedCount_ != 0) {
         tachyfont.promise.reportError_(
-            tachyfont.promise.Error.REJECT_CHAINED_COUNT, this.msg_);
+            tachyfont.promise.Error_.REJECT_CHAINED_COUNT, this.msg_);
       }
     }
     if (this.container_.promises.length > 1) {
@@ -161,7 +162,7 @@ tachyfont.promise.prototype.resolve = function(opt_value) {
       // We unshift all except the very first manually added promise.
       if (this.container_.chainedCount_ != 0) {
         tachyfont.promise.reportError_(
-            tachyfont.promise.Error.RESOLVE_CHAINED_COUNT, this.msg_);
+            tachyfont.promise.Error_.RESOLVE_CHAINED_COUNT, this.msg_);
       }
     }
     if (this.container_.promises.length > 1) {
@@ -220,7 +221,7 @@ tachyfont.chainedPromises = function() {
         this.timerReportCount_++;
         if (this.timerReportCount_ >= 10) {
           tachyfont.promise.reportError_(
-              tachyfont.promise.Error.LINGERING_PROMISE,
+              tachyfont.promise.Error_.LINGERING_PROMISE,
               this.debugMsg_ + 'gave up checking for pending count');
           clearInterval(this.intervalId_);
         }

@@ -53,7 +53,7 @@ window.onerror =
     errorObj['message'] = errorMsg;
     errorObj['url'] = url;
     errorObj['lineNumber'] = lineNumber;
-    tachyfont.reportError_(tachyfont.Error.WINDOW_ON_ERROR, errorObj);
+    tachyfont.reportError_(tachyfont.Error_.WINDOW_ON_ERROR, errorObj);
   }
 
   if (goog.DEBUG) {
@@ -226,8 +226,9 @@ tachyfont.initializeReporter = function(url) {
 /**
  * Enum for logging values.
  * @enum {string}
+ * @private
  */
-tachyfont.Log = {
+tachyfont.Log_ = {
   LOAD_FONTS: 'LTFLF.',
   LOAD_FONTS_WAIT_PREVIOUS: 'LTFLW.',
   SWITCH_FONT: 'LTFSE.',
@@ -238,8 +239,9 @@ tachyfont.Log = {
 /**
  * Enum for error values.
  * @enum {string}
+ * @private
  */
-tachyfont.Error = {
+tachyfont.Error_ = {
   FILE_ID: 'ETF',
   WINDOW_ON_ERROR: '01',
   SET_FONT: '02',
@@ -256,7 +258,7 @@ tachyfont.Error = {
  */
 tachyfont.reportError_ = function(errNum, errInfo) {
   if (tachyfont.reporter) {
-    tachyfont.reporter.reportError(tachyfont.Error.FILE_ID + errNum, '000',
+    tachyfont.reporter.reportError(tachyfont.Error_.FILE_ID + errNum, '000',
         errInfo);
   } else {
     var obj = {};
@@ -317,7 +319,7 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
         (window.location.port ? ':' + window.location.port : '');
   }
   tachyfont.initializeReporter(url);
-  tachyfont.reporter.addItemTime(tachyfont.Log.LOAD_FONTS + '000');
+  tachyfont.reporter.addItemTime(tachyfont.Log_.LOAD_FONTS + '000');
 
   // Check if the persistent stores should be dropped.
   var uri = goog.Uri.parse(window.location.href);
@@ -352,7 +354,7 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
   // getChainedPromise. getChainedPromise should be waitForPrecedingPromise.
   allLoaded.getPrecedingPromise().
       then(function() {
-        tachyfont.reporter.addItem(tachyfont.Log.LOAD_FONTS_WAIT_PREVIOUS +
+        tachyfont.reporter.addItem(tachyfont.Log_.LOAD_FONTS_WAIT_PREVIOUS +
             '000', goog.now() - waitPreviousTime);
         if (goog.DEBUG) {
           goog.log.log(tachyfont.logger, goog.log.Level.FINER,
@@ -412,11 +414,11 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
                 then(function() {
                   // Report Set Font Early.
                   var weight = this.fontInfo.getWeight();
-                  tachyfont.reporter.addItem(tachyfont.Log.SWITCH_FONT +
+                  tachyfont.reporter.addItem(tachyfont.Log_.SWITCH_FONT +
                   weight, goog.now() - incrFont.startTime);
                   var deltaTime = goog.now() - this.sfeStart_;
                   tachyfont.reporter.addItem(
-                      tachyfont.Log.SWITCH_FONT_DELTA_TIME + weight,
+                      tachyfont.Log_.SWITCH_FONT_DELTA_TIME + weight,
                       deltaTime);
                   if (goog.DEBUG) {
                     goog.log.fine(tachyfont.logger, 'loadFonts: setFont_ done');
@@ -439,11 +441,11 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
             }).
             thenCatch(function(e) {
               allLoaded.reject();
-              tachyfont.reportError_(tachyfont.Error.SET_FONT, e);
+              tachyfont.reportError_(tachyfont.Error_.SET_FONT, e);
             });
       }).
       thenCatch(function(e) {
-        tachyfont.reportError_(tachyfont.Error.GET_BASE, e);
+        tachyfont.reportError_(tachyfont.Error_.GET_BASE, e);
         allLoaded.reject();
       });
 

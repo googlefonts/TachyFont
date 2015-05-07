@@ -117,8 +117,9 @@ tachyfont.TachyFontSet = function(familyName) {
 /**
  * Enum for logging values.
  * @enum {string}
+ * @private
  */
-tachyfont.TachyFontSet.Log = {
+tachyfont.TachyFontSet.Log_ = {
   SET_FONT: 'LTSSF.',
   SET_FONT_DELAYED: 'LTSSD.',
   SET_FONT_DOM_LOADED: 'LTSSL.'
@@ -128,8 +129,9 @@ tachyfont.TachyFontSet.Log = {
 /**
  * Enum for error values.
  * @enum {string}
+ * @private
  */
-tachyfont.TachyFontSet.Error = {
+tachyfont.TachyFontSet.Error_ = {
   FILE_ID: 'ETS',
   UPDATE_FONT_LOAD_CHARS: '01',
   UPDATE_FONT_SET_FONT: '02'
@@ -152,7 +154,7 @@ tachyfont.TachyFontSet.reportError_ = function(errNum, errObj) {
   }
   if (tachyfont.reporter) {
     tachyfont.reporter.reportError(
-        tachyfont.TachyFontSet.Error.FILE_ID + errNum, '000', errObj);
+        tachyfont.TachyFontSet.Error_.FILE_ID + errNum, '000', errObj);
   }
 };
 
@@ -463,7 +465,7 @@ tachyfont.TachyFontSet.prototype.updateFonts =
       }.bind(this)).
       thenCatch(function(err) {
         tachyfont.TachyFontSet.reportError_(
-            tachyfont.TachyFontSet.Error.UPDATE_FONT_LOAD_CHARS, err);
+            tachyfont.TachyFontSet.Error_.UPDATE_FONT_LOAD_CHARS, err);
       }).
       then(function(/*loadResults*/) {
         var fontsData = [];
@@ -517,16 +519,16 @@ tachyfont.TachyFontSet.prototype.updateFonts =
               then(function() {
                 if (startTime == 0) {
                   tachyfont.reporter.addItemTime(
-                  tachyfont.TachyFontSet.Log.SET_FONT_DOM_LOADED +
+                  tachyfont.TachyFontSet.Log_.SET_FONT_DOM_LOADED +
                   this.fontInfo.getWeight());
                 } else if (startTime >= 0) {
                   tachyfont.reporter.addItem(
-                  tachyfont.TachyFontSet.Log.SET_FONT +
+                  tachyfont.TachyFontSet.Log_.SET_FONT +
                   this.fontInfo.getWeight(),
                   goog.now() - startTime);
                 } else {
                   tachyfont.reporter.addItem(
-                  tachyfont.TachyFontSet.Log.SET_FONT_DELAYED +
+                  tachyfont.TachyFontSet.Log_.SET_FONT_DELAYED +
                   this.fontInfo.getWeight(),
                   goog.now() + startTime);
                 }
@@ -548,7 +550,7 @@ tachyfont.TachyFontSet.prototype.updateFonts =
       }.bind(this)).
       thenCatch(function(e) {
         tachyfont.TachyFontSet.reportError_(
-            tachyfont.TachyFontSet.Error.UPDATE_FONT_SET_FONT,
+            tachyfont.TachyFontSet.Error_.UPDATE_FONT_SET_FONT,
             'failed to load all fonts' + e.stack);
         allUpdated.reject();
       });
