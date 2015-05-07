@@ -63,24 +63,17 @@ tachyfont.promise = function(opt_container, opt_msg) {
 /**
  * The reportError constants.
  */
-/** @private {string} */
-tachyfont.promise.ERROR_FILE_ID_ = 'ETP';
-
-
-/** @private {string} */
-tachyfont.promise.ERROR_PRECEDING_PROMISE_ = '01';
-
-
-/** @private {string} */
-tachyfont.promise.ERROR_RESOLVE_CHAINED_COUNT_ = '02';
-
-
-/** @private {string} */
-tachyfont.promise.ERROR_REJECT_CHAINED_COUNT_ = '03';
-
-
-/** @private {string} */
-tachyfont.promise.ERROR_LINGERING_PROMISE_ = '04';
+/**
+ * Enum for logging values.
+ * @enum {string}
+ */
+tachyfont.promise.Error = {
+  FILE_ID: 'ETP',
+  PRECEDING_PROMISE: '01',
+  RESOLVE_CHAINED_COUNT: '02',
+  REJECT_CHAINED_COUNT: '03',
+  LINGERING_PROMISE: '04'
+};
 
 
 /**
@@ -98,7 +91,7 @@ tachyfont.promise.reportError_ = function(errNum, errInfo) {
     }
   }
   if (tachyfont.reporter) {
-    tachyfont.reporter.reportError(tachyfont.promise.ERROR_FILE_ID_ + errNum,
+    tachyfont.reporter.reportError(tachyfont.promise.Error.FILE_ID + errNum,
         '000', errInfo);
   }
 };
@@ -121,7 +114,7 @@ tachyfont.promise.prototype.getPromise = function() {
  */
 tachyfont.promise.prototype.getPrecedingPromise = function() {
   if (!this.precedingPromise_) {
-    tachyfont.promise.reportError_(tachyfont.promise.ERROR_PRECEDING_PROMISE_,
+    tachyfont.promise.reportError_(tachyfont.promise.Error.PRECEDING_PROMISE,
         this.msg_);
   }
   return this.precedingPromise_;
@@ -141,7 +134,7 @@ tachyfont.promise.prototype.reject = function(opt_value) {
       // We unshift all except the very first manually added promise.
       if (this.container_.chainedCount_ != 0) {
         tachyfont.promise.reportError_(
-            tachyfont.promise.ERROR_REJECT_CHAINED_COUNT_, this.msg_);
+            tachyfont.promise.Error.REJECT_CHAINED_COUNT, this.msg_);
       }
     }
     if (this.container_.promises.length > 1) {
@@ -168,7 +161,7 @@ tachyfont.promise.prototype.resolve = function(opt_value) {
       // We unshift all except the very first manually added promise.
       if (this.container_.chainedCount_ != 0) {
         tachyfont.promise.reportError_(
-            tachyfont.promise.ERROR_RESOLVE_CHAINED_COUNT_, this.msg_);
+            tachyfont.promise.Error.RESOLVE_CHAINED_COUNT, this.msg_);
       }
     }
     if (this.container_.promises.length > 1) {
@@ -227,7 +220,7 @@ tachyfont.chainedPromises = function() {
         this.timerReportCount_++;
         if (this.timerReportCount_ >= 10) {
           tachyfont.promise.reportError_(
-              tachyfont.promise.ERROR_LINGERING_PROMISE_,
+              tachyfont.promise.Error.LINGERING_PROMISE,
               this.debugMsg_ + 'gave up checking for pending count');
           clearInterval(this.intervalId_);
         }

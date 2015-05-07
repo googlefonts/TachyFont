@@ -115,33 +115,25 @@ tachyfont.TachyFontSet = function(familyName) {
 
 
 /**
- * The addItem constants.
+ * Enum for logging values.
+ * @enum {string}
  */
-/** @private {string} */
-tachyfont.TachyFontSet.LOG_SET_FONT_ = 'LTSSF.';
-
-
-/** @private {string} */
-tachyfont.TachyFontSet.LOG_SET_FONT_DELAYED_ = 'LTSSD.';
-
-
-/** @private {string} */
-tachyfont.TachyFontSet.LOG_SET_FONT_DOM_LOADED_ = 'LTSSL.';
+tachyfont.TachyFontSet.Log = {
+  SET_FONT: 'LTSSF.',
+  SET_FONT_DELAYED: 'LTSSD.',
+  SET_FONT_DOM_LOADED: 'LTSSL.'
+};
 
 
 /**
- * The reportError constants.
+ * Enum for error values.
+ * @enum {string}
  */
-/** @private {string} */
-tachyfont.TachyFontSet.ERROR_FILE_ID_ = 'ETS';
-
-
-/** @private {string} */
-tachyfont.TachyFontSet.ERROR_UPDATE_FONT_LOAD_CHARS_ = '01';
-
-
-/** @private {string} */
-tachyfont.TachyFontSet.ERROR_UPDATE_FONT_SET_FONT_ = '02';
+tachyfont.TachyFontSet.Error = {
+  FILE_ID: 'ETS',
+  UPDATE_FONT_LOAD_CHARS: '01',
+  UPDATE_FONT_SET_FONT: '02'
+};
 
 
 /**
@@ -160,7 +152,7 @@ tachyfont.TachyFontSet.reportError_ = function(errNum, errObj) {
   }
   if (tachyfont.reporter) {
     tachyfont.reporter.reportError(
-        tachyfont.TachyFontSet.ERROR_FILE_ID_ + errNum, '000', errObj);
+        tachyfont.TachyFontSet.Error.FILE_ID + errNum, '000', errObj);
   }
 };
 
@@ -471,7 +463,7 @@ tachyfont.TachyFontSet.prototype.updateFonts =
       }.bind(this)).
       thenCatch(function(err) {
         tachyfont.TachyFontSet.reportError_(
-            tachyfont.TachyFontSet.ERROR_UPDATE_FONT_LOAD_CHARS_, err);
+            tachyfont.TachyFontSet.Error.UPDATE_FONT_LOAD_CHARS, err);
       }).
       then(function(/*loadResults*/) {
         var fontsData = [];
@@ -525,16 +517,16 @@ tachyfont.TachyFontSet.prototype.updateFonts =
               then(function() {
                 if (startTime == 0) {
                   tachyfont.reporter.addItemTime(
-                  tachyfont.TachyFontSet.LOG_SET_FONT_DOM_LOADED_ +
+                  tachyfont.TachyFontSet.Log.SET_FONT_DOM_LOADED +
                   this.fontInfo.getWeight());
                 } else if (startTime >= 0) {
                   tachyfont.reporter.addItem(
-                  tachyfont.TachyFontSet.LOG_SET_FONT_ +
+                  tachyfont.TachyFontSet.Log.SET_FONT +
                   this.fontInfo.getWeight(),
                   goog.now() - startTime);
                 } else {
                   tachyfont.reporter.addItem(
-                  tachyfont.TachyFontSet.LOG_SET_FONT_DELAYED_ +
+                  tachyfont.TachyFontSet.Log.SET_FONT_DELAYED +
                   this.fontInfo.getWeight(),
                   goog.now() + startTime);
                 }
@@ -556,7 +548,7 @@ tachyfont.TachyFontSet.prototype.updateFonts =
       }.bind(this)).
       thenCatch(function(e) {
         tachyfont.TachyFontSet.reportError_(
-            tachyfont.TachyFontSet.ERROR_UPDATE_FONT_SET_FONT_,
+            tachyfont.TachyFontSet.Error.UPDATE_FONT_SET_FONT,
             'failed to load all fonts' + e.stack);
         allUpdated.reject();
       });

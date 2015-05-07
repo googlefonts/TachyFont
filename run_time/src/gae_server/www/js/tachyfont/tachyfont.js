@@ -53,7 +53,7 @@ window.onerror =
     errorObj['message'] = errorMsg;
     errorObj['url'] = url;
     errorObj['lineNumber'] = lineNumber;
-    tachyfont.reportError_(tachyfont.ERROR_WINDOW_ON_ERROR_, errorObj);
+    tachyfont.reportError_(tachyfont.Error.WINDOW_ON_ERROR, errorObj);
   }
 
   if (goog.DEBUG) {
@@ -224,41 +224,27 @@ tachyfont.initializeReporter = function(url) {
 
 
 /**
- * The addItem/addItemTime constants.
+ * Enum for logging values.
+ * @enum {string}
  */
-/** @private {string} */
-tachyfont.LOG_LOAD_FONTS_ = 'LTFLF.';
-
-
-/** @private {string} */
-tachyfont.LOG_LOAD_FONTS_WAIT_PREVIOUS_ = 'LTFLW.';
-
-
-/** @private {string} */
-tachyfont.LOG_SWITCH_FONT_ = 'LTFSE.';
-
-
-/** @private {string} */
-tachyfont.LOG_SWITCH_FONT_DELTA_TIME_ = 'LTFSD.';
+tachyfont.Log = {
+  LOAD_FONTS: 'LTFLF.',
+  LOAD_FONTS_WAIT_PREVIOUS: 'LTFLW.',
+  SWITCH_FONT: 'LTFSE.',
+  SWITCH_FONT_DELTA_TIME: 'LTFSD.'
+};
 
 
 /**
- * The reportError constants.
+ * Enum for error values.
+ * @enum {string}
  */
-/** @private {string} */
-tachyfont.ERROR_FILE_ID_ = 'ETF';
-
-
-/** @private {string} */
-tachyfont.ERROR_WINDOW_ON_ERROR_ = '01';
-
-
-/** @private {string} */
-tachyfont.ERROR_SET_FONT_ = '02';
-
-
-/** @private {string} */
-tachyfont.ERROR_GET_BASE_ = '03';
+tachyfont.Error = {
+  FILE_ID: 'ETF',
+  WINDOW_ON_ERROR: '01',
+  SET_FONT: '02',
+  GET_BASE: '03'
+};
 
 
 /**
@@ -270,7 +256,7 @@ tachyfont.ERROR_GET_BASE_ = '03';
  */
 tachyfont.reportError_ = function(errNum, errInfo) {
   if (tachyfont.reporter) {
-    tachyfont.reporter.reportError(tachyfont.ERROR_FILE_ID_ + errNum, '000',
+    tachyfont.reporter.reportError(tachyfont.Error.FILE_ID + errNum, '000',
         errInfo);
   } else {
     var obj = {};
@@ -331,7 +317,7 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
         (window.location.port ? ':' + window.location.port : '');
   }
   tachyfont.initializeReporter(url);
-  tachyfont.reporter.addItemTime(tachyfont.LOG_LOAD_FONTS_ + '000');
+  tachyfont.reporter.addItemTime(tachyfont.Log.LOAD_FONTS + '000');
 
   // Check if the persistent stores should be dropped.
   var uri = goog.Uri.parse(window.location.href);
@@ -366,7 +352,7 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
   // getChainedPromise. getChainedPromise should be waitForPrecedingPromise.
   allLoaded.getPrecedingPromise().
       then(function() {
-        tachyfont.reporter.addItem(tachyfont.LOG_LOAD_FONTS_WAIT_PREVIOUS_ +
+        tachyfont.reporter.addItem(tachyfont.Log.LOAD_FONTS_WAIT_PREVIOUS +
             '000', goog.now() - waitPreviousTime);
         if (goog.DEBUG) {
           goog.log.log(tachyfont.logger, goog.log.Level.FINER,
@@ -426,11 +412,11 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
                 then(function() {
                   // Report Set Font Early.
                   var weight = this.fontInfo.getWeight();
-                  tachyfont.reporter.addItem(tachyfont.LOG_SWITCH_FONT_ +
+                  tachyfont.reporter.addItem(tachyfont.Log.SWITCH_FONT +
                   weight, goog.now() - incrFont.startTime);
                   var deltaTime = goog.now() - this.sfeStart_;
                   tachyfont.reporter.addItem(
-                      tachyfont.LOG_SWITCH_FONT_DELTA_TIME_ + weight,
+                      tachyfont.Log.SWITCH_FONT_DELTA_TIME + weight,
                       deltaTime);
                   if (goog.DEBUG) {
                     goog.log.fine(tachyfont.logger, 'loadFonts: setFont_ done');
@@ -453,11 +439,11 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
             }).
             thenCatch(function(e) {
               allLoaded.reject();
-              tachyfont.reportError_(tachyfont.ERROR_SET_FONT_, e);
+              tachyfont.reportError_(tachyfont.Error.SET_FONT, e);
             });
       }).
       thenCatch(function(e) {
-        tachyfont.reportError_(tachyfont.ERROR_GET_BASE_, e);
+        tachyfont.reportError_(tachyfont.Error.GET_BASE, e);
         allLoaded.reject();
       });
 
