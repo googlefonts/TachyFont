@@ -209,8 +209,8 @@ tachyfont.IncrementalFont.createManager = function(fontInfo, dropData, params) {
   var weight = fontInfo.getWeight();
   var backendService =
       fontInfo.getFontKit() ?
-      new tachyfont.GoogleBackendService(fontInfo.getUrl()) :
-      new tachyfont.DemoBackendService(fontInfo.getUrl());
+      new tachyfont.GoogleBackendService(fontInfo.getDataUrl()) :
+      new tachyfont.DemoBackendService(fontInfo.getDataUrl());
 
   var initialVisibility = false;
   var initialVisibilityStr = 'hidden';
@@ -386,7 +386,7 @@ tachyfont.IncrementalFont.obj_ = function(fontInfo, params, backendService) {
    */
   this.needToSetFont = false;
 
-  this.url = fontInfo.getUrl();
+  this.url = fontInfo.getDataUrl();
   this.charsURL = '/incremental_fonts/request';
   this.alreadyPersisted = false;
   this.persistData = true;

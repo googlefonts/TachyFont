@@ -116,7 +116,7 @@ webfonttailor.getTachyFontsInfo = function(fontFamlies, languages, faces,
       }
     }
   }
-  return new tachyfont.FontsInfo(fonts, '');
+  return new tachyfont.FontsInfo(fonts, '', '');
 };
 
 goog.exportSymbol('webfonttailor', webfonttailor);

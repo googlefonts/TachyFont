@@ -53,7 +53,7 @@ tachyfont.FontInfo =
   this.familyName_ = '';
 
   /** @private {string} */
-  this.url_ = '';
+  this.dataUrl_ = '';
 };
 
 
@@ -132,18 +132,18 @@ tachyfont.FontInfo.prototype.setFamilyName = function(familyName) {
  *
  * @return {string} The URL to the TachyFont server.
  */
-tachyfont.FontInfo.prototype.getUrl = function() {
-  return this.url_;
+tachyfont.FontInfo.prototype.getDataUrl = function() {
+  return this.dataUrl_;
 };
 
 
 /**
  * Set the URL to the TachyFont.
  *
- * @param {string} url The URL to the TachyFont server.
+ * @param {string} dataUrl The URL to the TachyFont server.
  */
-tachyfont.FontInfo.prototype.setUrl = function(url) {
-  this.url_ = url;
+tachyfont.FontInfo.prototype.setDataUrl = function(dataUrl) {
+  this.dataUrl_ = dataUrl;
 };
 
 
@@ -163,9 +163,9 @@ goog.exportProperty(tachyfont.FontInfo.prototype, 'getFamilyName',
                     tachyfont.FontInfo.prototype.getFamilyName);
 goog.exportProperty(tachyfont.FontInfo.prototype, 'setFamilyName',
                     tachyfont.FontInfo.prototype.setFamilyName);
-goog.exportProperty(tachyfont.FontInfo.prototype, 'getUrl',
-                    tachyfont.FontInfo.prototype.getUrl);
-goog.exportProperty(tachyfont.FontInfo.prototype, 'setUrl',
-                    tachyfont.FontInfo.prototype.setUrl);
+goog.exportProperty(tachyfont.FontInfo.prototype, 'getDataUrl',
+                    tachyfont.FontInfo.prototype.getDataUrl);
+goog.exportProperty(tachyfont.FontInfo.prototype, 'setDataUrl',
+                    tachyfont.FontInfo.prototype.setDataUrl);
 });  // goog.scope
 

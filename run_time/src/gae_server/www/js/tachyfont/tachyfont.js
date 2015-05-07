@@ -214,11 +214,11 @@ tachyfont.reporter;
 /**
  * Initialize the tachyfont reporter.
  *
- * @param {string} url The base url to send reports to.
+ * @param {string} reportUrl The base url to send reports to.
  */
-tachyfont.initializeReporter = function(url) {
+tachyfont.initializeReporter = function(reportUrl) {
   if (!tachyfont.reporter) {
-    tachyfont.reporter = tachyfont.Reporter.getReporter(url);
+    tachyfont.reporter = tachyfont.Reporter.getReporter(reportUrl);
   }
 };
 
@@ -313,12 +313,13 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
     goog.log.fine(tachyfont.logger, 'loadFonts');
   }
 
-  var url = fontsInfo.getUrl();
-  if (!url) {
-    url = window.location.protocol + '//' + window.location.hostname +
+  var dataUrl = fontsInfo.getDataUrl();
+  if (!dataUrl) {
+    dataUrl = window.location.protocol + '//' + window.location.hostname +
         (window.location.port ? ':' + window.location.port : '');
   }
-  tachyfont.initializeReporter(url);
+  var reportUrl = fontsInfo.getReportUrl() || dataUrl;
+  tachyfont.initializeReporter(reportUrl);
   tachyfont.reporter.addItemTime(tachyfont.Log_.LOAD_FONTS + '000');
 
   // Check if the persistent stores should be dropped.
@@ -335,7 +336,7 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
   for (var i = 0; i < fonts.length; i++) {
     var fontInfo = fonts[i];
     fontInfo.setFamilyName(familyName);
-    fontInfo.setUrl(url);
+    fontInfo.setDataUrl(dataUrl);
     var tachyFont = new tachyfont.TachyFont(fontInfo, dropData, params);
     tachyFontSet.addFont(tachyFont);
     // TODO(bstell): need to support slant/width/etc.
