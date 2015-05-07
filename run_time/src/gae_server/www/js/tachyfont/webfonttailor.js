@@ -31,8 +31,8 @@ goog.require('webfonttailor.alternate');
  */
 webfonttailor.JaNormalInfo = {
   '100': { 'name': 'NotoSansJP-Thin', 'weight': '100' },
-  '200': { 'name': 'NotoSansJP-Light', 'weight': '200' },
-  '300': { 'name': 'NotoSansJP-DemiLight', 'weight': '300' },
+  '300': { 'name': 'NotoSansJP-Light', 'weight': '300' },
+  '350': { 'name': 'NotoSansJP-DemiLight', 'weight': '350' },
   '400': { 'name': 'NotoSansJP-Regular', 'weight': '400' },
   '500': { 'name': 'NotoSansJP-Medium', 'weight': '500' },
   '700': { 'name': 'NotoSansJP-Bold', 'weight': '700' },
