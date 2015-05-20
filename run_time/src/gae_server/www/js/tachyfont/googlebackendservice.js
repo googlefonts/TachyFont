@@ -64,7 +64,7 @@ GoogleBackendService.FRAMEWORK_REQUEST_SUFFIX = 'framework';
 GoogleBackendService.prototype.requestCodepoints = function(
     fontInfo, codes) {
   var self = this;
-  return this.requestUrl(this.getUrl_(fontInfo,
+  return this.requestUrl(this.getDataUrl_(fontInfo,
       GoogleBackendService.GLYPHS_REQUEST_PREFIX,
       GoogleBackendService.GLYPHS_REQUEST_SUFFIX),
       'POST',
@@ -114,7 +114,7 @@ GoogleBackendService.prototype.parseHeader_ = function(glyphData) {
 
 /** @override */
 GoogleBackendService.prototype.requestFontBase = function(fontInfo) {
-  return this.requestUrl(this.getUrl_(fontInfo,
+  return this.requestUrl(this.getDataUrl_(fontInfo,
       GoogleBackendService.FRAMEWORK_REQUEST_PREFIX,
       GoogleBackendService.FRAMEWORK_REQUEST_SUFFIX),
       'GET', null, {});
@@ -140,7 +140,8 @@ GoogleBackendService.prototype.log = function(message) {
  * @param {string} suffix Action suffset in the URL.
  * @return {string} URL for the specified font action.
  */
-GoogleBackendService.prototype.getUrl_ = function(fontInfo, prefix, suffix) {
+GoogleBackendService.prototype.getDataUrl_ =
+    function(fontInfo, prefix, suffix) {
   var familyPath = fontInfo.getfamilyPath();
   if (!familyPath) {
     // Using familyPath is preferred over familyName.

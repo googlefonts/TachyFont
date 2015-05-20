@@ -42,11 +42,9 @@ tachyfont.promise = function(opt_container, opt_msg) {
     this.resolver_ = resolve;
     this.rejecter_ = reject;
     this.container_ = opt_container;
-    if (goog.DEBUG) {
-      if (opt_container) {
-        this.chainCount_ = opt_container.chainedCount_;
-      }
-      this.msg_ = opt_msg;
+    this.msg_ = opt_msg;
+    if (opt_container) {
+      this.chainCount_ = opt_container.chainedCount_;
     }
   }, this);
 
@@ -140,8 +138,8 @@ tachyfont.promise.prototype.reject = function(opt_value) {
     }
     if (this.container_.promises.length > 1) {
       this.container_.promises.shift();
+      this.container_.pendingCount_--;
       if (goog.DEBUG) {
-        this.container_.pendingCount_--;
         goog.log.log(tachyfont.logger, goog.log.Level.FINER,
             this.msg_ + 'dropped count to ' + this.container_.pendingCount_);
       }
@@ -167,8 +165,8 @@ tachyfont.promise.prototype.resolve = function(opt_value) {
     }
     if (this.container_.promises.length > 1) {
       this.container_.promises.shift();
+      this.container_.pendingCount_--;
       if (goog.DEBUG) {
-        this.container_.pendingCount_--;
         goog.log.log(tachyfont.logger, goog.log.Level.FINER,
             this.msg_ + 'dropped count to ' + this.container_.pendingCount_);
       }
@@ -184,59 +182,60 @@ tachyfont.promise.prototype.resolve = function(opt_value) {
  * This class maintains a queue of promises. As a new request is made it is set
  * to wait for the preceding promise to resolve.
  *
+ * @param {string} msg Indicates the caller.
  * @constructor
  */
-tachyfont.chainedPromises = function() {
-  if (goog.DEBUG) {
-    /**
+tachyfont.chainedPromises = function(msg) {
+  /**
      * For debug: count of total chained promises.
      *
      * @private {number}
      */
-    this.chainedCount_ = 0;
+  this.chainedCount_ = 0;
 
-    /**
-     * For debug: count of pending promises.
-     *
-     * @private {number}
-     */
-    this.pendingCount_ = 0;
+  /**
+   * For debug: count of pending promises.
+   *
+   * @private {number}
+   */
+  this.pendingCount_ = 0;
 
-    /**
-     * For debug: the debug message.
-     *
-     * @private {string}
-     */
-    this.debugMsg_ = '';
+  /**
+   * For debug: the debug message.
+   *
+   * @private {string}
+   */
+  this.msg_ = msg;
 
-    /**
-     * For debug: an interval timer used to detect deadlock.
-     *
-     * @private {number}
-     */
-    this.intervalId_ = setInterval(function() {
-      if (this.pendingCount_ != 0) {
-        goog.log.log(tachyfont.logger, goog.log.Level.WARNING, this.debugMsg_ +
+  /**
+   * For debug: an interval timer used to detect deadlock.
+   *
+   * @private {number}
+   */
+  this.intervalId_ = setInterval(function() {
+    if (this.pendingCount_ != 0) {
+      if (goog.DEBUG) {
+        goog.log.log(tachyfont.logger, goog.log.Level.WARNING, this.msg_ +
             'lingering pending count: ' + this.pendingCount_);
-        this.timerReportCount_++;
-        if (this.timerReportCount_ >= 10) {
-          tachyfont.promise.reportError_(
-              tachyfont.promise.Error_.LINGERING_PROMISE,
-              this.debugMsg_ + 'gave up checking for pending count');
-          clearInterval(this.intervalId_);
-        }
-      } else {
-        this.timerReportCount_ = 0;
       }
-    }.bind(this), 10000);
+      this.timerReportCount_++;
+      if (this.timerReportCount_ >= 10) {
+        tachyfont.promise.reportError_(
+            tachyfont.promise.Error_.LINGERING_PROMISE,
+            this.msg_ + 'gave up checking for pending count');
+        clearInterval(this.intervalId_);
+      }
+    } else {
+      this.timerReportCount_ = 0;
+    }
+  }.bind(this), 10000);
 
-    /**
-     * For debug: an interval timer used to detect deadlock.
-     *
-     * @private {number}
-     */
-    this.timerReportCount_ = 0;
-  }
+  /**
+   * An interval timer used to detect deadlock.
+   *
+   * @private {number}
+   */
+  this.timerReportCount_ = 0;
   this.promises = [];
   var firstPromise = new tachyfont.promise(this);
   firstPromise.precedingPromise_ = firstPromise.promise_;
@@ -248,15 +247,14 @@ tachyfont.chainedPromises = function() {
 /**
  * Get a chained promise.
  *
- * @param {string=} opt_msg A debug message;
+ * @param {string} msg Information about the caller.
  * @return {tachyfont.promise}
  */
-tachyfont.chainedPromises.prototype.getChainedPromise = function(opt_msg) {
+tachyfont.chainedPromises.prototype.getChainedPromise = function(msg) {
+  this.chainedCount_++;
+  this.pendingCount_++;
   if (goog.DEBUG) {
-    this.chainedCount_++;
-    this.pendingCount_++;
-    var msg = this.debugMsg_ + (opt_msg || '') + ': ';
-    goog.log.log(tachyfont.logger, goog.log.Level.FINER, msg +
+    goog.log.log(tachyfont.logger, goog.log.Level.FINER, this.msg_ + msg +
         ': increase pending count to ' + this.pendingCount_);
   }
   var precedingPromise = this.promises[this.promises.length - 1];
@@ -264,17 +262,5 @@ tachyfont.chainedPromises.prototype.getChainedPromise = function(opt_msg) {
   newPromise.precedingPromise_ = precedingPromise.promise_;
   this.promises.push(newPromise);
   return newPromise;
-};
-
-
-/**
- * Get a chained promise.
- *
- * @param {string} msg The debug message.
- */
-tachyfont.chainedPromises.prototype.setDebugMessage = function(msg) {
-  if (goog.DEBUG) {
-    this.debugMsg_ = msg + ': ';
-  }
 };
 

@@ -37,7 +37,10 @@ goog.require('tachyfont.FontsInfo');
 webfonttailor.alternate.getTachyFontsInfo = function(fontFamlies, languages,
     faces, options) {
   var fonts = [];
-  return new tachyfont.FontsInfo(fonts, '');
+  var dataUrl = '';
+  var reportUrl = '';
+
+  return new tachyfont.FontsInfo(fonts, dataUrl, reportUrl);
 };
 
 goog.exportSymbol('webfonttailor.alternate', webfonttailor.alternate);
