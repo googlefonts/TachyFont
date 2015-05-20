@@ -1221,7 +1221,7 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars = function() {
                 // Report the miss rate/count *before* obfuscation.
                 var missCount = neededCodes.length;
                 var missRate = (neededCodes.length * 100) / charArray.length;
-                var weight = that.fontInfo.getWeight();
+                var weight = this.fontInfo.getWeight();
                 tachyfont.reporter.addItem(
                     tachyfont.IncrementalFont.Log_.MISS_COUNT + weight,
                     missCount);
