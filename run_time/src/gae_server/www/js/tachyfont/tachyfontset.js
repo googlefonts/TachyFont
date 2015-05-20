@@ -84,10 +84,8 @@ tachyfont.TachyFontSet = function(familyName) {
    *
    * @type {tachyfont.chainedPromises}
    */
-  this.finishPrecedingUpdateFont = new tachyfont.chainedPromises();
-  if (goog.DEBUG) {
-    this.finishPrecedingUpdateFont.setDebugMessage('finishPrecedingUpdateFont');
-  }
+  this.finishPrecedingUpdateFont =
+      new tachyfont.chainedPromises('finishPrecedingUpdateFont');
 
   /**
    * Timeout indicating there is a pending update fonts request.
@@ -442,11 +440,10 @@ tachyfont.TachyFontSet.prototype.updateFonts =
     clearTimeout(this.pendingUpdateRequest_);
     this.pendingUpdateRequest_ = null;
   }
-  var msg;
+  var msg = 'updateFonts';
   if (goog.DEBUG) {
     goog.log.log(tachyfont.logger, goog.log.Level.FINER,
         'updateFonts: wait for preceding update');
-    msg = 'updateFonts';
   }
   var allUpdated = this.finishPrecedingUpdateFont.getChainedPromise(msg);
   allUpdated.getPrecedingPromise().
@@ -504,14 +501,17 @@ tachyfont.TachyFontSet.prototype.updateFonts =
         }
         var allCssSet = [];
         for (var i = 0; i < loadResults.length; i++) {
+          var fontObj = this.fonts[i].incrfont;
           var loadResult = loadResults[i];
           if (loadResult == null) {
+            // No FOUT so 0 FOUT time.
+            tachyfont.reporter.addItem(tachyfont.TachyFontSet.Log_.SET_FONT +
+                fontObj.fontInfo.getWeight(), 0);
             allCssSet.push(goog.Promise.resolve(null));
             continue;
           }
           var fileInfo = loadResult[0];
           var fontData = loadResult[1];
-          var fontObj = this.fonts[i].incrfont;
           if (goog.DEBUG) {
             goog.log.fine(tachyfont.logger, 'updateFonts: setFont: ');
           }

@@ -413,31 +413,24 @@ tachyfont.IncrementalFont.obj_ = function(fontInfo, params, backendService) {
    *
    * @private {!tachyfont.chainedPromises}
    */
-  this.finishPersistingData_ = new tachyfont.chainedPromises();
-  if (goog.DEBUG) {
-    this.finishPersistingData_.setDebugMessage('finishPersistingData_');
-  }
+  this.finishPersistingData_ =
+      new tachyfont.chainedPromises('finishPersistingData_');
 
   /**
    * The character request operation takes time so serialize them.
    *
    * @private {!tachyfont.chainedPromises}
    */
-  this.finishPrecedingCharsRequest_ = new tachyfont.chainedPromises();
-  if (goog.DEBUG) {
-    this.finishPrecedingCharsRequest_.setDebugMessage(
-        'finishPrecedingCharsRequest_');
-  }
+  this.finishPrecedingCharsRequest_ =
+      new tachyfont.chainedPromises('finishPrecedingCharsRequest_');
 
   /**
    * The setFont operation takes time so serialize them.
    *
    * @private {!tachyfont.chainedPromises}
    */
-  this.finishPrecedingSetFont_ = new tachyfont.chainedPromises();
-  if (goog.DEBUG) {
-    this.finishPrecedingSetFont_.setDebugMessage('finishPrecedingSetFont_');
-  }
+  this.finishPrecedingSetFont_ =
+      new tachyfont.chainedPromises('finishPrecedingSetFont_');
 };
 
 
@@ -987,11 +980,10 @@ tachyfont.IncrementalFont.obj_.prototype.setFont = function(fontData, isTtf) {
     goog.log.log(tachyfont.logger, goog.log.Level.FINER,
         'setFont: wait for preceding');
   }
-  var msg;
+  var msg = this.fontInfo.getName() + ' setFont';
   if (goog.DEBUG) {
     goog.log.log(tachyfont.logger, goog.log.Level.FINER,
         'updateFonts: wait for preceding setFont');
-    msg = this.fontInfo.getName() + ' setFont';
   }
   var finishPrecedingSetFont =
       this.finishPrecedingSetFont_.getChainedPromise(msg);
@@ -1178,12 +1170,11 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars = function() {
   var neededCodes = [];
   var remaining = [];
 
-  var msg;
+  var msg = this.fontInfo.getName() + ' loadChars';
   if (goog.DEBUG) {
     goog.log.log(tachyfont.logger, goog.log.Level.FINER,
         this.fontInfo.getName() +
         ' updateFonts: wait for preceding char data request');
-    msg = this.fontInfo.getName() + ' loadChars';
   }
   var finishPrecedingCharsRequest =
       this.finishPrecedingCharsRequest_.getChainedPromise(msg);
@@ -1230,6 +1221,16 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars = function() {
                   }
                 }
 
+                // Report the miss rate/count *before* obfuscation.
+                var missCount = neededCodes.length;
+                var missRate = (neededCodes.length * 100) / charArray.length;
+                var weight = that.fontInfo.getWeight();
+                tachyfont.reporter.addItem(
+                    tachyfont.IncrementalFont.Log_.MISS_COUNT + weight,
+                    missCount);
+                tachyfont.reporter.addItem(
+                    tachyfont.IncrementalFont.Log_.MISS_RATE + weight,
+                    missRate);
                 if (neededCodes.length) {
                   if (goog.DEBUG) {
                     // This is debug only: report the chars before obfuscation.
@@ -1246,16 +1247,6 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars = function() {
                     goog.log.log(tachyfont.logger, goog.log.Level.FINER,
                     '' + neededCodes);
                   }
-                  // Report the miss rate.
-                  var weight = that.fontInfo.getWeight();
-                  var missCnt = neededCodes.length;
-                  tachyfont.reporter.addItem(
-                      tachyfont.IncrementalFont.Log_.MISS_COUNT + weight,
-                      missCnt);
-                  var missRate = (neededCodes.length * 100) / charArray.length;
-                  tachyfont.reporter.addItem(
-                      tachyfont.IncrementalFont.Log_.MISS_RATE + weight,
-                      missRate);
                 } else {
                   if (goog.DEBUG) {
                     goog.log.fine(tachyfont.logger, 'no new characters');
@@ -1418,11 +1409,10 @@ tachyfont.IncrementalFont.obj_.prototype.persistDelayed_ = function(name) {
 tachyfont.IncrementalFont.obj_.prototype.persist_ = function(name) {
   var that = this;
   // Wait for any preceding persist operation to finish.
-  var msg;
+  var msg = this.fontInfo.getName() + ' persist_';
   if (goog.DEBUG) {
     goog.log.log(tachyfont.logger, goog.log.Level.FINER,
         'updateFonts: wait for preceding persist');
-    msg = this.fontInfo.getName() + ' persist_';
   }
   var finishedPersisting = this.finishPersistingData_.getChainedPromise(msg);
   finishedPersisting.getPrecedingPromise().

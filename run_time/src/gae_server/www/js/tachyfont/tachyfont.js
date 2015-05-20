@@ -343,11 +343,10 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
     var fontId = tachyfont.fontId(familyName, fontInfo.getWeight());
     tachyFontSet.fontIdToIndex[fontId] = i;
   }
-  var msg;
+  var msg = 'loadFonts';
   if (goog.DEBUG) {
     goog.log.log(tachyfont.logger, goog.log.Level.FINER,
         'loadFonts: wait for preceding update');
-    msg = 'loadFonts';
   }
   var waitPreviousTime = goog.now();
   var allLoaded = tachyFontSet.finishPrecedingUpdateFont.getChainedPromise(msg);
