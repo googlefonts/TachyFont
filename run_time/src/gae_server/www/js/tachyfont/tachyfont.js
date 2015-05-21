@@ -174,6 +174,34 @@ tachyfont.cssWeightToNumber = {
 
 
 /**
+ * A map of the codepoints that should be blank.
+ *
+ * @type {!Object.<number, number>}
+ */
+tachyfont.BLANK_CHARS = {
+  // White space characters.
+  0x0009: 1, 0x000A: 1, 0x000B: 1, 0x000C: 1, 0x000D: 1, 0x0020: 1, 0x0085: 1,
+  0x00A0: 1, 0x1680: 1, 0x2000: 1, 0x2001: 1, 0x2002: 1, 0x2003: 1, 0x2004: 1,
+  0x2005: 1, 0x2006: 1, 0x2007: 1, 0x2008: 1, 0x2009: 1, 0x200A: 1, 0x2028: 1,
+  0x2029: 1, 0x202F: 1, 0x205F: 1, 0x3000: 1,
+
+  // Default ignorable character set Source:
+  // http://www.unicode.org/L2/L2002/02368-default-ignorable.pdf
+  // "Default-ignorable code points ... have no visible glyph"
+  0x00AD: 1, 0x034F: 1, 0x061C: 1, 0x115F: 1, 0x1160: 1, 0x17B4: 1, 0x17B5: 1,
+  0x3164: 1, 0x180B: 1, 0x180C: 1, 0x180D: 1, 0x180E: 1, 0x200B: 1, 0x200C: 1,
+  0x200D: 1, 0x200E: 1, 0x200F: 1, 0x202A: 1, 0x202B: 1, 0x202C: 1, 0x202D: 1,
+  0x202E: 1, 0x2060: 1, 0x2061: 1, 0x2062: 1, 0x2063: 1, 0x2064: 1, 0x2065: 1,
+  0x2066: 1, 0x2067: 1, 0x2068: 1, 0x2069: 1, 0x206A: 1, 0x206B: 1, 0x206C: 1,
+  0x206D: 1, 0x206E: 1, 0x206F: 1, 0xFE00: 1, 0xFE01: 1, 0xFE02: 1, 0xFE03: 1,
+  0xFE04: 1, 0xFE05: 1, 0xFE06: 1, 0xFE07: 1, 0xFE08: 1, 0xFE09: 1, 0xFE0A: 1,
+  0xFE0B: 1, 0xFE0C: 1, 0xFE0D: 1, 0xFE0E: 1, 0xFE0F: 1, 0xFEFF: 1, 0xFFA0: 1,
+  0x1D173: 1, 0x1D174: 1, 0x1D175: 1, 0x1D176: 1, 0x1D177: 1, 0x1D178: 1,
+  0x1D179: 1, 0x1D17A: 1
+};
+
+
+/**
  * If the number of characters in the request is less than this count then add
  * additional characters to obfuscate the actual request.
  *
@@ -498,7 +526,7 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
     tachyFontSet.hadMutationEvents = true;
     if (immediateUpdate) {
       if (goog.DEBUG) {
-        goog.log.info(tachyfont.logger, 'mutation observer: updateFont');
+        goog.log.info(tachyfont.logger, 'mutation observer: updateFonts');
       }
       tachyFontSet.updateFonts(mutationTime, true);
     } else {
