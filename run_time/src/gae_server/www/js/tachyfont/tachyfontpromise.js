@@ -201,11 +201,11 @@ tachyfont.chainedPromises = function(msg) {
   this.pendingCount_ = 0;
 
   /**
-   * For debug: the debug message.
+   * Info about the code using the chainedPromise.
    *
    * @private {string}
    */
-  this.msg_ = msg;
+  this.msg_ = msg + ': ';
 
   /**
    * For debug: an interval timer used to detect deadlock.
