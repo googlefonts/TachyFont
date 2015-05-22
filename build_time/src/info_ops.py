@@ -19,7 +19,7 @@ from struct import pack
 from fontTools_wrapper_funcs import change_method, _decompile_in_table_cmap
 from fontTools.ttLib.tables import _c_m_a_p
 from cmap_compacter import CmapCompacter
-
+import hashlib
   
   
 class InfoOps(object):
@@ -166,7 +166,9 @@ class InfoOps(object):
       return data
     else:
       return None
-    
-    
-    
-    
+
+  @staticmethod
+  def _get_SHA1(font):
+    with open(font, 'rb') as f:
+      return hashlib.sha1(f.read()).hexdigest()
+    return None

@@ -112,3 +112,9 @@ class Preprocess(object):
     cffSerializer.serialize_cff(
         self.folder + '/glyph_table', self.folder + '/glyph_data')
     cffSerializer.close()
+
+  def sha1_fingerprint(self):
+    dumper = Dumper(self.folder + '/sha1_fingerprint')
+    fingerprint = FontInfo.getInformation(self.fontfile, ['SHA1'])['SHA1']
+    dumper.dump(fingerprint)
+    dumper.close()

@@ -31,11 +31,15 @@ if [ $status -ne 0 ]; then
 fi
 
 # Validate the cleaned font
-${OTS_VALIDATOR} ${cleanfile}
-status=$?
-if [ $status -ne 0 ]; then
-  echo "OTS validation FAILED, exiting..."
-  exit $status
+if [ ! -e ${OTS_VALIDATOR} ]; then
+  echo "OTS validator not present, skipping..."
+else
+  ${OTS_VALIDATOR} ${cleanfile}
+  status=$?
+  if [ $status -ne 0 ]; then
+    echo "OTS validation FAILED, exiting..."
+    exit $status
+  fi
 fi
 
 exit $status

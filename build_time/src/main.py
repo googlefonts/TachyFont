@@ -118,6 +118,7 @@ def main(args):
   jarfilepath = build_dir + '/' + tachyfont_file
   rebuild_jar = False
   jarfile_exists = os.path.isfile(jarfilepath)
+  log.debug('file %s exists: %s' % (jarfilepath, jarfile_exists))
   if force_preprocessing or not jarfile_exists:
     rebuild_jar = True
   else:
@@ -134,10 +135,12 @@ def main(args):
     preprocess.cmap_dump()
     log.debug('build glyph data')
     preprocess.serial_glyphs()
-  
+    log.debug('write sha-1 fingerprint')
+    preprocess.sha1_fingerprint()
+
     log.debug('create jar file')
     sub_files = ('base closure_data closure_idx codepoints gids  glyph_data '
-                 'glyph_table')
+                 'glyph_table sha1_fingerprint')
     jar_cmd = 'cd %s; jar cf %s %s' % (build_dir, tachyfont_file, sub_files)
     log.debug('jar_cmd: ' + jar_cmd)
     status = os.system(jar_cmd)
