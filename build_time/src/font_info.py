@@ -70,9 +70,13 @@ class FontInfo(object):
           'CS02': 
             {'desc':'CFF Charset format 2 in much more compacted way', 
              'fn': InfoOps._getCS02
+             },
+          'SHA1':
+            {'desc':'SHA-1 hash of fontfile',
+             'fn': InfoOps._get_SHA1
              }
         }
-  
+
   @staticmethod
   def getInformation(fontfile, tags):
     # TODO(bstell) check if font already opened
@@ -80,7 +84,10 @@ class FontInfo(object):
     dict_of_data = {}
     for tag in tags:
       assert tag in FontInfo.TAGS
-      result = FontInfo.TAGS[tag]['fn'](font)
+      if tag == 'SHA1':
+        result = FontInfo.TAGS[tag]['fn'](fontfile)
+      else:
+        result = FontInfo.TAGS[tag]['fn'](font)
       if result:
         dict_of_data[tag] = result
     font.close()
