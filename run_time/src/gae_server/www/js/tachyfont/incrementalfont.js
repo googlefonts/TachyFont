@@ -109,6 +109,14 @@ tachyfont.IncrementalFont.CHARLIST_DIRTY = 'charlist_dirty';
 
 
 /**
+ * The blobUrl.
+ *
+ * @private {?string}
+ */
+tachyfont.IncrementalFont.blobUrl_ = null;
+
+
+/**
  * Enum for logging values.
  * @enum {string}
  * @private
@@ -1150,10 +1158,13 @@ tachyfont.IncrementalFont.obj_.prototype.setFont = function(fontData, isTtf) {
                 mimeType = 'font/otf'; // 'application/font-sfnt';
                 format = 'opentype';
               }
-              var blobUrl = tachyfont.IncrementalFontUtils.getBlobUrl(
+              if (this.blobUrl_) {
+                window.URL.revokeObjectURL(this.blobUrl_);
+              }
+              this.blobUrl_ = tachyfont.IncrementalFontUtils.getBlobUrl(
               this.fontInfo, fontData, mimeType);
 
-              return this.setFontNoFlash(this.fontInfo, format, blobUrl).
+              return this.setFontNoFlash(this.fontInfo, format, this.blobUrl_).
               then(function() {
                 if (goog.DEBUG) {
                   goog.log.fine(tachyfont.logger, 'setFont: setFont done');
@@ -1866,9 +1877,9 @@ tachyfont.IncrementalFont.obj_.prototype.setFontNoFlash =
   // The desired @font-face font-family.
   var fontFamily = fontInfo.getFamilyName();
   // The temporary @font-face font-family.
-  var tmpFontFamily = 'tmp-' + fontFamily;
-  var fontName = fontInfo.getName(); // The font name.
   var weight = fontInfo.getWeight();
+  var tmpFontFamily = 'tmp-' + weight + '-' + fontFamily;
+  var fontName = fontInfo.getName(); // The font name.
   var sheet = tachyfont.IncrementalFontUtils.getStyleSheet();
 
   // Create a temporary @font-face rule to transfer the blobUrl data from
@@ -1881,13 +1892,15 @@ tachyfont.IncrementalFont.obj_.prototype.setFontNoFlash =
       blobUrl, format);
 
   var setFontPromise = new goog.Promise(function(resolve, reject) {
-    // Transfer the data.
-    // TODO(bstell): Make this cross platform.
-    var fontStr = weight + ' 20px ' + tmpFontFamily;
+    // The document.fonts.load call fails with a weight that is not a multiple
+    // of 100. So use an artifical weight to work around this problem.
+    var fontStr = '400 20px ' + tmpFontFamily;
     if (goog.DEBUG) {
       goog.log.log(tachyfont.logger, goog.log.Level.FINER,
           'setFont: fontStr = ' + fontStr);
     }
+    // Transfer the data.
+    // TODO(bstell): Make this cross platform.
     document.fonts.load(fontStr).
         then(function(value) {
           if (goog.DEBUG) {
