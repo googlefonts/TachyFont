@@ -141,20 +141,20 @@ tachyfont.IncrementalFont.Log_ = {
 tachyfont.IncrementalFont.Error_ = {
   FILE_ID: 'EIF',
   WRITE_CMAP4_SEGMENT_COUNT: '01',
-  FORMAT4_GLYPH_IDS_SEGMENT_COUNT: '02',
-  FORMAT4_GLYPH_IDS_END_CODE: '03',
-  FORMAT4_GLYPH_IDS_SEGMENT_LENGTH: '04',
-  FORMAT4_GLYPH_IDS_START_CODE: '05',
-  FORMAT4_GLYPH_IDS_ALREADY_SET: '06',
-  FORMAT4_GLYPH_IDS_ID_RANGE_OFFSET: '07',
-  FORMAT4_GLYPH_IDS_CHAR_CMAP_INFO: '08',
-  FORMAT4_GLYPH_IDS_SEGMENT: '09',
-  FORMAT12_GLYPH_IDS_CHAR_CMAP_INFO: '10',
-  FORMAT12_GLYPH_IDS_START_CODE: '11',
-  FORMAT12_GLYPH_IDS_END_CODE: '12',
-  FORMAT12_GLYPH_IDS_SEGMENT_LENGTH: '13',
-  FORMAT12_GLYPH_IDS_ALREADY_SET: '14',
-  FORMAT12_GLYPH_IDS_MISMATCH: '15',
+  FORMAT4_SEGMENT_COUNT: '02',
+  FORMAT4_END_CODE: '03',
+  FORMAT4_SEGMENT_LENGTH: '04',
+  FORMAT4_START_CODE: '05',
+  FORMAT4_GLYPH_ID_ALREADY_SET: '06',
+  FORMAT4_ID_RANGE_OFFSET: '07',
+  FORMAT4_CHAR_CMAP_INFO: '08',
+  FORMAT4_SEGMENT: '09',
+  FORMAT12_CHAR_CMAP_INFO: '10',
+  FORMAT12_START_CODE: '11',
+  FORMAT12_END_CODE: '12',
+  FORMAT12_SEGMENT_LENGTH: '13',
+  FORMAT12_GLYPH_ID_ALREADY_SET: '14',
+  FORMAT12_GLYPH_ID_MISMATCH: '15',
   LOAD_CHARS_INJECT_CHARS: '16',
   LOAD_CHARS_INJECT_CHARS_2: '17',
   LOAD_CHARS_GET_LOCK: '18',
@@ -173,7 +173,12 @@ tachyfont.IncrementalFont.Error_ = {
   DELETE_DATA_BLOCKED: '32',
   FORMAT12_CMAP_ERROR: '33',
   FORMAT12_GLYPH_LENGTH_ERROR: '34',
-  FORMAT12_GLYPH_DATA_ERROR: '35'
+  FORMAT12_GLYPH_DATA_ERROR: '35',
+  FORMAT12_START_CODE2: '36',
+  FORMAT12_END_CODE2: '37',
+  FORMAT12_SEGMENT_LENGTH2: '38',
+  FORMAT12_GLYPH_ID_NOT_SET: '39',
+  FORMAT12_CHAR_INFO: '40'
 };
 
 
@@ -795,13 +800,29 @@ tachyfont.IncrementalFont.obj_.prototype.injectCharacters =
  * @param {!Object<string, number>} charList The list of characters.
  * @param {!Object.<number, !tachyfont.CharCmapInfo>} cmapMapping Information
  *     about the cmap segments for the codepoint.
+ * @return {boolean} True if chars seem okay.
  */
 tachyfont.IncrementalFont.obj_.prototype.checkCharacters =
     function(baseFontView, charList, cmapMapping) {
+
+  if (tachyfont.reportCharList) {
+    tachyfont.utils.reportCharList(this.fontInfo.getName() +
+        ' checkCharacters charList', charList);
+  }
+
+  var charsOkay = true;
+  var weight  = this.fontInfo.getWeight();
   var baseBinEd = new tachyfont.BinaryFontEditor(baseFontView, 0);
+  var segEd = new tachyfont.BinaryFontEditor(baseFontView,
+      this.fileInfo_.cmap12.offset + 16);
   var chars = Object.keys(charList);
+  chars.sort();
   var count = chars.length;
   var isCFF = !this.fileInfo_.isTtf;
+  var charInfoErrors = [];
+  var startCodeErrors = [];
+  var endCodeErrors = [];
+  var glyphIdErrors = [];
   var cmapErrors = [];
   var glyphLengthErrors = [];
   var glyphDataErrors = [];
@@ -811,20 +832,57 @@ tachyfont.IncrementalFont.obj_.prototype.checkCharacters =
     var code = tachyfont.charToCode(aChar);
     var codeIsBlank = tachyfont.BLANK_CHARS[code] ? true : false;
     var charInfo = cmapMapping[code];
+    if (!charInfo) {
+      if (charInfoErrors.length < 5) {
+        charInfoErrors.push(code);
+      }
+      charsOkay = false;
+      continue;
+    }
 
     // Check the Format 12 cmap.
     var glyphId = charInfo.glyphId;
     var format12Segment = charInfo.format12Seg;
     var segment = segments[format12Segment];
-    var segmentCode = segment[0];
+    var segmentStartCode = segment[0];
     var segmentLength = segment[1];
     var segmentGlyphId = segment[2];
-    if (code != segmentCode || segmentLength != 1 ||
+    if (code != segmentStartCode || segmentLength != 1 ||
         glyphId != segmentGlyphId) {
       if (cmapErrors.length < 5) {
         cmapErrors.push(code);
       }
       continue;
+    }
+
+    // Get the format 12 cmap info for this char.
+    var segmentEndCode = segmentStartCode + segmentLength - 1;
+    var segOffset = format12Segment * 12;
+    segEd.seek(segOffset);
+    var inMemoryStartCode = segEd.getUint32();
+    var inMemoryEndCode = segEd.getUint32();
+    var inMemoryGlyphId = segEd.getUint32();
+
+    // Check the start code.
+    if (inMemoryStartCode != segmentStartCode) {
+      if (startCodeErrors.length < 5) {
+        startCodeErrors.push(code);
+      }
+      charsOkay = false;
+    }
+    // Check the end code.
+    if (inMemoryEndCode != segmentEndCode) {
+      if (endCodeErrors.length < 5) {
+        endCodeErrors.push(code);
+      }
+      charsOkay = false;
+    }
+    // Check the glyph Id.
+    if (inMemoryGlyphId != segmentGlyphId) {
+      if (glyphIdErrors.length < 5) {
+        glyphIdErrors.push(code);
+      }
+      charsOkay = false;
     }
 
     // Check the loca/charstring-index.
@@ -843,10 +901,11 @@ tachyfont.IncrementalFont.obj_.prototype.checkCharacters =
       // Check the glyph length.
       if (glyphLength < 0 || (!codeIsBlank && glyphLength == 1) ||
           (codeIsBlank && glyphLength != 1)) {
-        if (code == 32 || code == 160) {
+        if (code <= 32 || code == 160) {
           // Blank chars sometimes are longer than necessary.
           continue;
         }
+        charsOkay = false;
         if (glyphLengthErrors.length < 5) {
           glyphLengthErrors.push(code);
         }
@@ -856,6 +915,7 @@ tachyfont.IncrementalFont.obj_.prototype.checkCharacters =
       var glyphByte = baseBinEd.getUint8();
       if ((!codeIsBlank && glyphByte == 14) ||
           (codeIsBlank && glyphByte != 14)) {
+        charsOkay = false;
         if (glyphDataErrors.length < 5) {
           glyphDataErrors.push(code);
         }
@@ -864,25 +924,42 @@ tachyfont.IncrementalFont.obj_.prototype.checkCharacters =
     }
   }
   //  Report errors.
+  if (charInfoErrors.length != 0) {
+    tachyfont.IncrementalFont.reportError_(
+        tachyfont.IncrementalFont.Error_.FORMAT12_CHAR_INFO, weight,
+        charInfoErrors.toString());
+  }
+  if (startCodeErrors.length != 0) {
+    tachyfont.IncrementalFont.reportError_(
+        tachyfont.IncrementalFont.Error_.FORMAT12_START_CODE2, weight,
+        startCodeErrors.toString());
+  }
+  if (endCodeErrors.length != 0) {
+    tachyfont.IncrementalFont.reportError_(
+        tachyfont.IncrementalFont.Error_.FORMAT12_END_CODE2, weight,
+        endCodeErrors.toString());
+  }
+  if (glyphIdErrors.length != 0) {
+    tachyfont.IncrementalFont.reportError_(
+        tachyfont.IncrementalFont.Error_.FORMAT12_GLYPH_ID_NOT_SET, weight,
+        glyphIdErrors.toString());
+  }
   if (cmapErrors.length != 0) {
-    var weight = this.fontInfo.getWeight();
     tachyfont.IncrementalFont.reportError_(
         tachyfont.IncrementalFont.Error_.FORMAT12_CMAP_ERROR, weight,
         cmapErrors.toString());
   }
   if (glyphLengthErrors.length != 0) {
-    var weight = this.fontInfo.getWeight();
     tachyfont.IncrementalFont.reportError_(
         tachyfont.IncrementalFont.Error_.FORMAT12_GLYPH_LENGTH_ERROR, weight,
         glyphLengthErrors.toString());
   }
   if (glyphDataErrors.length != 0) {
-    var weight = this.fontInfo.getWeight();
     tachyfont.IncrementalFont.reportError_(
         tachyfont.IncrementalFont.Error_.FORMAT12_GLYPH_DATA_ERROR, weight,
         glyphDataErrors.toString());
   }
-  // TODO(bstell): fix the charList or drop the data
+  return charsOkay;
 };
 
 
@@ -909,7 +986,7 @@ tachyfont.IncrementalFont.obj_.prototype.setFormat4GlyphIds_ =
   var segCount = binEd.getUint16() / 2;
   if (segCount != segments.length) {
     tachyfont.IncrementalFont.reportError_(
-        tachyfont.IncrementalFont.Error_.FORMAT4_GLYPH_IDS_SEGMENT_COUNT,
+        tachyfont.IncrementalFont.Error_.FORMAT4_SEGMENT_COUNT,
         weight, 'segCount=' + segCount + ', segments.length=' +
         segments.length);
     return;
@@ -917,18 +994,18 @@ tachyfont.IncrementalFont.obj_.prototype.setFormat4GlyphIds_ =
   binEd.seek(8);
   for (var i = 0; i < segCount; i++) {
     // Check the end code.
-    var segEndCode = binEd.getUint16();
-    if (segEndCode != segments[i][1]) {
+    var segmentEndCode = binEd.getUint16();
+    if (segmentEndCode != segments[i][1]) {
       tachyfont.IncrementalFont.reportError_(
-          tachyfont.IncrementalFont.Error_.FORMAT4_GLYPH_IDS_END_CODE,
-          weight, 'segment ' + i + ': segEndCode (' + segEndCode +
+          tachyfont.IncrementalFont.Error_.FORMAT4_END_CODE,
+          weight, 'segment ' + i + ': segmentEndCode (' + segmentEndCode +
           ') != segments[' + i + '][1] (' + segments[i][1] + ')');
       return;
     }
     // Check the segment is one char long
-    if (segEndCode != segments[i][0]) {
+    if (segmentEndCode != segments[i][0]) {
       tachyfont.IncrementalFont.reportError_(
-          tachyfont.IncrementalFont.Error_.FORMAT4_GLYPH_IDS_SEGMENT_LENGTH,
+          tachyfont.IncrementalFont.Error_.FORMAT4_SEGMENT_LENGTH,
           weight, 'segment ' + i +
           ' is ' + (segments[i][1] - segments[i][0] + 1) + ' chars long');
       return;
@@ -939,7 +1016,7 @@ tachyfont.IncrementalFont.obj_.prototype.setFormat4GlyphIds_ =
     var segStartCode = binEd.getUint16();
     if (segStartCode != segments[i][0]) {
       tachyfont.IncrementalFont.reportError_(
-          tachyfont.IncrementalFont.Error_.FORMAT4_GLYPH_IDS_START_CODE,
+          tachyfont.IncrementalFont.Error_.FORMAT4_START_CODE,
           weight, 'segment ' + i +
           ': segStartCode (' + segStartCode + ') != segments[' + i + '][1] (' +
           segments[i][0] + ')');
@@ -952,7 +1029,7 @@ tachyfont.IncrementalFont.obj_.prototype.setFormat4GlyphIds_ =
     var segGlyphId = (segIdDelta + segments[i][0]) & 0xFFFF;
     if (segGlyphId != 0) {
       tachyfont.IncrementalFont.reportError_(
-          tachyfont.IncrementalFont.Error_.FORMAT4_GLYPH_IDS_ALREADY_SET,
+          tachyfont.IncrementalFont.Error_.FORMAT4_GLYPH_ID_ALREADY_SET,
           weight, 'format 4 segment ' + i + ': segIdDelta (' + segIdDelta +
           ') != segments[' + i + '][1] (' + segments[i][2] + ')');
       if (goog.DEBUG) {
@@ -968,7 +1045,7 @@ tachyfont.IncrementalFont.obj_.prototype.setFormat4GlyphIds_ =
     var segIdRangeOffset = binEd.getUint16();
     if (segIdRangeOffset != 0) {
       tachyfont.IncrementalFont.reportError_(
-          tachyfont.IncrementalFont.Error_.FORMAT4_GLYPH_IDS_ID_RANGE_OFFSET,
+          tachyfont.IncrementalFont.Error_.FORMAT4_ID_RANGE_OFFSET,
           weight, 'format 4 segment ' + i + ': segIdRangeOffset (' +
           segIdRangeOffset + ') != 0');
       return;
@@ -989,7 +1066,7 @@ tachyfont.IncrementalFont.obj_.prototype.setFormat4GlyphIds_ =
       var charCmapInfo = this.cmapMapping_[code];
       if (!charCmapInfo) {
         tachyfont.IncrementalFont.reportError_(
-            tachyfont.IncrementalFont.Error_.FORMAT4_GLYPH_IDS_CHAR_CMAP_INFO,
+            tachyfont.IncrementalFont.Error_.FORMAT4_CHAR_CMAP_INFO,
             weight, 'format 4, code ' + code + ': no CharCmapInfo');
         continue;
       }
@@ -997,7 +1074,7 @@ tachyfont.IncrementalFont.obj_.prototype.setFormat4GlyphIds_ =
       if (format4Seg == null) {
         if (code <= 0xFFFF) {
           tachyfont.IncrementalFont.reportError_(
-              tachyfont.IncrementalFont.Error_.FORMAT4_GLYPH_IDS_SEGMENT,
+              tachyfont.IncrementalFont.Error_.FORMAT4_SEGMENT,
               weight, 'format 4, missing segment for code ' + code);
         }
         // Character is not in the format 4 segment.
@@ -1043,7 +1120,7 @@ tachyfont.IncrementalFont.obj_.prototype.setFormat12GlyphIds_ =
       var charCmapInfo = this.cmapMapping_[code];
       if (!charCmapInfo) {
         tachyfont.IncrementalFont.reportError_(
-            tachyfont.IncrementalFont.Error_.FORMAT12_GLYPH_IDS_CHAR_CMAP_INFO,
+            tachyfont.IncrementalFont.Error_.FORMAT12_CHAR_CMAP_INFO,
             weight, 'format 12, code ' + code + ': no CharCmapInfo');
         continue;
       }
@@ -1052,7 +1129,7 @@ tachyfont.IncrementalFont.obj_.prototype.setFormat12GlyphIds_ =
       var format12Seg = charCmapInfo.format12Seg;
       var segment = segments[format12Seg];
       var segStartCode = segment[0];
-      var segEndCode = segStartCode + segment[1] - 1;
+      var segmentEndCode = segStartCode + segment[1] - 1;
       var segStartGlyphId = segment[2];
       var segOffset = format12Seg * 12;
       segEd.seek(segOffset);
@@ -1062,31 +1139,31 @@ tachyfont.IncrementalFont.obj_.prototype.setFormat12GlyphIds_ =
       // Check the code point.
       if (inMemoryStartCode != segStartCode) {
         tachyfont.IncrementalFont.reportError_(
-            tachyfont.IncrementalFont.Error_.FORMAT12_GLYPH_IDS_START_CODE,
+            tachyfont.IncrementalFont.Error_.FORMAT12_START_CODE,
             weight, 'format 12, code ' + code + ', seg ' + format12Seg +
             ': startCode mismatch');
       }
-      if (inMemoryEndCode != segEndCode) {
+      if (inMemoryEndCode != segmentEndCode) {
         tachyfont.IncrementalFont.reportError_(
-            tachyfont.IncrementalFont.Error_.FORMAT12_GLYPH_IDS_END_CODE,
+            tachyfont.IncrementalFont.Error_.FORMAT12_END_CODE,
             weight, 'format 12 code ' + code + ', seg ' + format12Seg +
             ': endCode mismatch');
       }
-      if (segStartCode != segEndCode) { // TODO(bstell): check length
+      if (segStartCode != segmentEndCode) { // TODO(bstell): check length
         tachyfont.IncrementalFont.reportError_(
-            tachyfont.IncrementalFont.Error_.FORMAT12_GLYPH_IDS_SEGMENT_LENGTH,
+            tachyfont.IncrementalFont.Error_.FORMAT12_SEGMENT_LENGTH,
             weight, 'format 12 code ' + code + ', seg ' + format12Seg +
             ': length != 1');
       }
       if (inMemoryGlyphId != 0) {
         if (inMemoryGlyphId == segStartGlyphId) {
           tachyfont.IncrementalFont.reportError_(
-              tachyfont.IncrementalFont.Error_.FORMAT12_GLYPH_IDS_ALREADY_SET,
+              tachyfont.IncrementalFont.Error_.FORMAT12_GLYPH_ID_ALREADY_SET,
               weight, 'format 12 code ' + code + ', seg ' + format12Seg +
               ' glyphId already set');
         } else {
           tachyfont.IncrementalFont.reportError_(
-              tachyfont.IncrementalFont.Error_.FORMAT12_GLYPH_IDS_MISMATCH,
+              tachyfont.IncrementalFont.Error_.FORMAT12_GLYPH_ID_MISMATCH,
               weight, 'format 12 code ' + code + ', seg ' + format12Seg +
               ' glyphId mismatch');
         }
@@ -1189,9 +1266,9 @@ tachyfont.IncrementalFont.obj_.prototype.determineIfOneCharPerSeg = function() {
     var segments = this.fileInfo_.compact_gos.cmap4.segments;
     for (var i = 0; i < segments.length; i++) {
       var segStartCode = segments[i][0];
-      var segEndCode = segments[i][1];
+      var segmentEndCode = segments[i][1];
       var idRangeOffset = segments[i][3];
-      if (segStartCode != segEndCode || idRangeOffset != 0) {
+      if (segStartCode != segmentEndCode || idRangeOffset != 0) {
         tachyfont.IncrementalFont.reportError_(
             tachyfont.IncrementalFont.Error_.CMAP4_CHARS_PER_SEGMENT,
             this.fontInfo.getWeight(), this.fontName +
@@ -1335,7 +1412,7 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars = function() {
                 charlist = charlist_;
                 if (tachyfont.reportCharList) {
                   tachyfont.utils.reportCharList(this.fontInfo.getName() +
-                  'loadChars charlist', charlist);
+                  ' loadChars charlist', charlist);
                 }
                 // Make a tmp copy in case we are chunking the requests.
                 var tmp_charlist = {};
