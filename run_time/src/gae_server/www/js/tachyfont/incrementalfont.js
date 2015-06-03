@@ -457,9 +457,9 @@ tachyfont.IncrementalFont.obj_.prototype.getPersistedBase = function() {
       then(function(arr) {
         var charList = this.getData_(arr[0], tachyfont.IncrementalFont.CHARLIST);
         return goog.Promise.all([
-            goog.Promise.resolve(arr[1]),
-            goog.Promise.resolve(arr[2]),
-            charList]);
+          goog.Promise.resolve(arr[1]),
+          goog.Promise.resolve(arr[2]),
+          charList]);
       }.bind(this)).
       then(function(arr) {
         var isOkay = this.checkCharacters(arr[1], arr[2], this.cmapMapping_);
@@ -468,8 +468,8 @@ tachyfont.IncrementalFont.obj_.prototype.getPersistedBase = function() {
           return goog.Promise.resolve([arr[0], arr[1], arr[2]]);
         } else {
           tachyfont.IncrementalFont.reportError_(
-            tachyfont.IncrementalFont.Error_.NOT_USING_PERSISTED_DATA,
-            this.fontInfo.getWeight(), '');
+              tachyfont.IncrementalFont.Error_.NOT_USING_PERSISTED_DATA,
+              this.fontInfo.getWeight(), '');
           this.charList.resolve({});
           return goog.Promise.resolve(null);
         }
@@ -795,7 +795,7 @@ tachyfont.IncrementalFont.obj_.prototype.checkCharacters =
   }
 
   var charsOkay = true;
-  var weight  = this.fontInfo.getWeight();
+  var weight = this.fontInfo.getWeight();
   var baseBinEd = new tachyfont.BinaryFontEditor(baseFontView, 0);
   var segEd = new tachyfont.BinaryFontEditor(baseFontView,
       this.fileInfo_.cmap12.offset + 16);
