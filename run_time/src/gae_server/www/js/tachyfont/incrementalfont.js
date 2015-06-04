@@ -455,7 +455,8 @@ tachyfont.IncrementalFont.obj_.prototype.getPersistedBase = function() {
         return goog.Promise.resolve([idb, this.fileInfo_, fontData]);
       }.bind(this)).
       then(function(arr) {
-        var charList = this.getData_(arr[0], tachyfont.IncrementalFont.CHARLIST);
+        var charList = this.getData_(arr[0],
+            tachyfont.IncrementalFont.CHARLIST);
         return goog.Promise.all([
           goog.Promise.resolve(arr[1]),
           goog.Promise.resolve(arr[2]),
@@ -1096,7 +1097,7 @@ tachyfont.IncrementalFont.obj_.prototype.setFormat12GlyphIds_ =
       continue;
     }
     for (var j = 0; j < codes.length; j++) {
-      var code = codes[0];
+      var code = codes[j];
       if (goog.DEBUG) {
         goog.log.log(tachyfont.logger, goog.log.Level.FINER,
             'format 12: code = ' + code);
@@ -1470,7 +1471,7 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars = function() {
                   //     chardata.byteLength);
                   // }
                   return bundleResponse;
-                });
+                }.bind(this));
               }.bind(this)).
               then(function(bundleResponse) {
                 return this.getBase.
