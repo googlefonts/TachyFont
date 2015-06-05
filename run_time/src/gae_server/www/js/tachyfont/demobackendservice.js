@@ -19,7 +19,6 @@
 
 goog.provide('tachyfont.DemoBackendService');
 
-goog.require('goog.Promise');
 goog.require('goog.events');
 goog.require('goog.net.EventType');
 goog.require('goog.net.XhrIo');
