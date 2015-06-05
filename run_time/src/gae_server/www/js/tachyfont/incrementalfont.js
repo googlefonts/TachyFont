@@ -1168,14 +1168,11 @@ tachyfont.IncrementalFont.obj_.prototype.setFormat12GlyphIds_ =
  * @return {goog.Promise} The promise resolves when the glyphs are displaying.
  */
 tachyfont.IncrementalFont.obj_.prototype.setFont = function(fontData, isTtf) {
+  var weight = this.fontInfo.getWeight();
+  var msg = this.fontInfo.getName() + ' setFont.' + weight;
   if (goog.DEBUG) {
     goog.log.log(tachyfont.logger, goog.log.Level.FINER,
-        'setFont: wait for preceding');
-  }
-  var msg = this.fontInfo.getName() + ' setFont';
-  if (goog.DEBUG) {
-    goog.log.log(tachyfont.logger, goog.log.Level.FINER,
-        'updateFonts: wait for preceding setFont');
+        'setFont.' + weight + ': wait for preceding');
   }
   var finishPrecedingSetFont =
       this.finishPrecedingSetFont_.getChainedPromise(msg);
@@ -1183,7 +1180,7 @@ tachyfont.IncrementalFont.obj_.prototype.setFont = function(fontData, isTtf) {
       then(function() {
         if (goog.DEBUG) {
           goog.log.log(tachyfont.logger, goog.log.Level.FINER,
-              'setFont: done waiting for preceding');
+              'setFont.' + weight + ': done waiting for preceding');
         }
         this.needToSetFont = false;
         return goog.Promise.resolve().
@@ -1235,7 +1232,13 @@ tachyfont.IncrementalFont.obj_.prototype.setFont = function(fontData, isTtf) {
             then(function() {
               finishPrecedingSetFont.resolve();
             });
-      }.bind(this));
+      }.bind(this)).
+      thenCatch(function(e) {
+        if (goog.DEBUG) {
+          goog.log.fine(tachyfont.logger, 'setFont.' + weight + ': failed');
+        }
+        finishPrecedingSetFont.resolve();
+      });
   return finishPrecedingSetFont.getPromise();
 };
 
