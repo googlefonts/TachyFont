@@ -480,6 +480,7 @@ tachyfont.IncrementalFont.obj_.prototype.getPersistedBase = function() {
           goog.log.log(tachyfont.logger, goog.log.Level.FINER,
               'font not persisted: ' + this.fontName);
         }
+        this.charList.resolve({});
         return goog.Promise.resolve(null);
       }.bind(this));
   return persistedBase;
@@ -884,10 +885,9 @@ tachyfont.IncrementalFont.obj_.prototype.checkCharacters =
       var glyphLength = nextGlyphOffset - glyphOffset;
 
       // Check the glyph length.
-      if (glyphLength < 0 || (!codeIsBlank && glyphLength == 1) ||
-          (codeIsBlank && glyphLength != 1)) {
-        if (code <= 32 || code == 160) {
-          // Blank chars sometimes are longer than necessary.
+      if (glyphLength < 0 || (!codeIsBlank && glyphLength == 1)) {
+        // Blank chars sometimes are longer than necessary.
+        if (code <= 32 || (code >= 0x80 && code <= 0xA0)) {
           continue;
         }
         charsOkay = false;
@@ -898,8 +898,7 @@ tachyfont.IncrementalFont.obj_.prototype.checkCharacters =
       }
       baseBinEd.seek(this.fileInfo_.glyphOffset + glyphOffset);
       var glyphByte = baseBinEd.getUint8();
-      if ((!codeIsBlank && glyphByte == 14) ||
-          (codeIsBlank && glyphByte != 14)) {
+      if (!codeIsBlank && glyphByte == 14) {
         charsOkay = false;
         if (glyphDataErrors.length < 5) {
           glyphDataErrors.push(code);
