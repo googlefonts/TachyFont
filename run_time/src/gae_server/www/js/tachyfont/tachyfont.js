@@ -37,6 +37,53 @@ goog.require('tachyfont.TachyFontSet');
 
 
 /**
+ * Enum for error values.
+ * @enum {string}
+ * @private
+ */
+tachyfont.Error_ = {
+  FILE_ID: 'ETF',
+  WINDOW_ON_ERROR: '01',
+  SET_FONT: '02',
+  GET_BASE: '03'
+};
+
+
+/**
+ * The error reporter for this file.
+ *
+ * @param {string} errNum The error number;
+ * @param {*} errInfo The error object;
+ * @private
+ */
+tachyfont.reportError_ = function(errNum, errInfo) {
+  if (tachyfont.reporter) {
+    tachyfont.reporter.reportError(tachyfont.Error_.FILE_ID + errNum, '000',
+        errInfo);
+  } else {
+    var obj = {};
+    obj.errNum = errNum;
+    obj.errInfo = errInfo;
+    setTimeout(function() {
+      tachyfont.delayedReportError_(obj);
+    }.bind(obj), 1000);
+  }
+};
+
+
+/**
+ * Re-run the error report.
+ *
+ * @param {Object} obj An object holding the parameters for the error report.
+ * @private
+ */
+tachyfont.delayedReportError_ = function(obj) {
+  goog.log.error(tachyfont.logger, 'delayedReportError_');
+  tachyfont.reportError_(obj.errNum, obj.errInfo);
+};
+
+
+/**
  * Catch all uncaught errors.
  */
 window.onerror =
@@ -261,53 +308,6 @@ tachyfont.Log_ = {
   LOAD_FONTS_WAIT_PREVIOUS: 'LTFLW.',
   SWITCH_FONT: 'LTFSE.',
   SWITCH_FONT_DELTA_TIME: 'LTFSD.'
-};
-
-
-/**
- * Enum for error values.
- * @enum {string}
- * @private
- */
-tachyfont.Error_ = {
-  FILE_ID: 'ETF',
-  WINDOW_ON_ERROR: '01',
-  SET_FONT: '02',
-  GET_BASE: '03'
-};
-
-
-/**
- * The error reporter for this file.
- *
- * @param {string} errNum The error number;
- * @param {*} errInfo The error object;
- * @private
- */
-tachyfont.reportError_ = function(errNum, errInfo) {
-  if (tachyfont.reporter) {
-    tachyfont.reporter.reportError(tachyfont.Error_.FILE_ID + errNum, '000',
-        errInfo);
-  } else {
-    var obj = {};
-    obj.errNum = errNum;
-    obj.errInfo = errInfo;
-    setTimeout(function() {
-      tachyfont.delayedReportError_(obj);
-    }.bind(obj), 1000);
-  }
-};
-
-
-/**
- * Re-run the error report.
- *
- * @param {Object} obj An object holding the parameters for the error report.
- * @private
- */
-tachyfont.delayedReportError_ = function(obj) {
-  goog.log.error(tachyfont.logger, 'delayedReportError_');
-  tachyfont.reportError_(obj.errNum, obj.errInfo);
 };
 
 
