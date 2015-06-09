@@ -52,7 +52,7 @@ tachyfont.Error_ = {
 /**
  * The error reporter for this file.
  *
- * @param {string} errNum The error number;
+ * @param {string} errNum The error number (encoded in a string);
  * @param {*} errInfo The error object;
  * @private
  */
@@ -72,9 +72,21 @@ tachyfont.reportError_ = function(errNum, errInfo) {
 
 
 /**
+ * Re-run the error report.
+ *
+ * @param {Object} obj An object holding the parameters for the error report.
+ * @private
+ */
+tachyfont.delayedReportError_ = function(obj) {
+  goog.log.error(tachyfont.logger, 'delayedReportError_');
+  tachyfont.reportError_(obj.errNum, obj.errInfo);
+};
+
+
+/**
  * Report any uncaught errors.
  *
- * @param {ErrorEvent} error The error information.
+ * @param {Event} error The error information.
  * @private
  */
 tachyfont.windowOnError_ = function(error) {
@@ -90,19 +102,6 @@ if (window.addEventListener) {
 } else if (window.attachEvent) { // for versions previous to IE9
   window.attachEvent('onerror', tachyfont.windowOnError_);
 }
-
-
-/**
- * Re-run the error report.
- *
- * @param {Object} obj An object holding the parameters for the error report.
- * @private
- */
-tachyfont.delayedReportError_ = function(obj) {
-  goog.log.error(tachyfont.logger, 'delayedReportError_');
-  tachyfont.reportError_(obj.errNum, obj.errInfo);
-};
-
 
 if (goog.DEBUG) {
   /**
