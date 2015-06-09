@@ -72,6 +72,27 @@ tachyfont.reportError_ = function(errNum, errInfo) {
 
 
 /**
+ * Report any uncaught errors.
+ *
+ * @param {ErrorEvent} error The error information.
+ * @private
+ */
+tachyfont.windowOnError_ = function(error) {
+  var errorObj = {};
+  errorObj['message'] = error.error;
+  errorObj['url'] = error.filename;
+  errorObj['lineNumber'] = error.lineno;
+  tachyfont.reportError_(tachyfont.Error_.WINDOW_ON_ERROR, errorObj);
+};
+
+if (window.addEventListener) {
+  window.addEventListener('error', tachyfont.windowOnError_, false);
+} else if (window.attachEvent) { // for versions previous to IE9
+  window.attachEvent('onerror', tachyfont.windowOnError_);
+}
+
+
+/**
  * Re-run the error report.
  *
  * @param {Object} obj An object holding the parameters for the error report.
@@ -82,33 +103,6 @@ tachyfont.delayedReportError_ = function(obj) {
   tachyfont.reportError_(obj.errNum, obj.errInfo);
 };
 
-
-/**
- * Catch all uncaught errors.
- */
-window.onerror =
-
-
-    /**
-     * @param {string} errorMsg
-     * @param {string} url
-     * @param {number} lineNumber
-     */
-    function(errorMsg, url, lineNumber) {
-  if (tachyfont.reportError_) {
-    var errorObj = {};
-    errorObj['message'] = errorMsg;
-    errorObj['url'] = url;
-    errorObj['lineNumber'] = lineNumber;
-    tachyfont.reportError_(tachyfont.Error_.WINDOW_ON_ERROR, errorObj);
-  }
-
-  if (goog.DEBUG) {
-    debugger; // window.onerror
-    console.log('Error: ' + errorMsg + ' Script: ' + url + ' Line: ' +
-            lineNumber);
-  }
-};
 
 if (goog.DEBUG) {
   /**
