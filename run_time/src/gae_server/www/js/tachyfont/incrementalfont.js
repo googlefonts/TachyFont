@@ -1293,9 +1293,11 @@ tachyfont.IncrementalFont.obj_.prototype.determineIfOneCharPerSeg = function() {
  * determine the content on a page.
  * @param {!Array.<number>} codes The codepoints to add obusfuscation to.
  * @param {!Object} charlist The chars that have already been requested.
+ * @param {!Object.<number, !tachyfont.CharCmapInfo>} cmapMapping A map of the
+ *     characters in the font.
  * @return {!Array.<number>} The codepoints with obusfuscation.
  */
-tachyfont.possibly_obfuscate = function(codes, charlist) {
+tachyfont.possibly_obfuscate = function(codes, charlist, cmapMapping) {
   // Check if we need to obfuscate the request.
   if (codes.length >= tachyfont.MINIMUM_NON_OBFUSCATION_LENGTH)
     return codes;
@@ -1317,11 +1319,15 @@ tachyfont.possibly_obfuscate = function(codes, charlist) {
       bottom = 0;
     }
     var top = code + tachyfont.OBFUSCATION_RANGE / 2;
-    var new_code = Math.floor(goog.math.uniformRandom(bottom, top + 1));
-    if (charlist[new_code] == undefined) {
-      code_map[new_code] = new_code;
-      var new_char = tachyfont.utils.stringFromCodePoint(new_code);
-      charlist[new_char] = 1;
+    var newCode = Math.floor(goog.math.uniformRandom(bottom, top + 1));
+    if (!cmapMapping[newCode]) {
+      // This code is not supported in the font.
+      continue;
+    }
+    var newChar = tachyfont.utils.stringFromCodePoint(newCode);
+    if (charlist[newChar] == undefined) {
+      code_map[newCode] = newCode;
+      charlist[newChar] = 1;
     }
     if (goog.DEBUG) {
       goog.log.log(tachyfont.logger, goog.log.Level.FINER,
@@ -1435,7 +1441,7 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars = function() {
                     }
                   }
                   neededCodes = tachyfont.possibly_obfuscate(neededCodes,
-                  tmp_charlist);
+                  tmp_charlist, this.cmapMapping_);
                   if (goog.DEBUG) {
                     goog.log.info(tachyfont.logger, this.fontInfo.getName() +
                     ': load ' + neededCodes.length + ' codes:');
