@@ -2,7 +2,7 @@
 
 /**
  * @license
- * Copyright 2014-2015 Google Inc. All rights reserved.
+ * Copyright 2015 Google Inc. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -155,32 +155,6 @@ if (goog.DEBUG) {
     // }
     /** @type {boolean} */
     tachyfont.persistData = persistDataStr.toLowerCase() != 'false';
-
-
-    /**
-     * Enable reporting the needed characters. There are the chars on the page
-     * that are not yet in the charList.
-     */
-    var reportNeededCharsStr =
-        uri.getParameterValue('TachyFontReportNeededChars') || '';
-    /** @type {boolean} */
-    tachyfont.reportNeededChars = reportNeededCharsStr.toLowerCase() == 'true';
-
-    /**
-     * Enable reporting the list of loaded characters.
-     */
-    var reportCharListStr =
-        uri.getParameterValue('TachyFontReportCharList') || '';
-    /** @type {boolean} */
-    tachyfont.reportCharList = reportCharListStr.toLowerCase() == 'true';
-
-    /**
-     * Enable reporting font table checksums.
-     */
-    var reportChecksumsStr =
-        uri.getParameterValue('TachyFontReportChecksums') || '';
-    /** @type {boolean} */
-    tachyfont.reportChecksums = reportChecksumsStr.toLowerCase() == 'true';
 
     /**
      * Enable checking cmap against fileInfo and charList.
@@ -504,10 +478,6 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
         tachyFontSet.recursivelyAddTextToFontGroups(mutation.target);
       }
     });
-    // TODO(bstell): need to figure out if pendingChars_ is helpful in
-    // determining when to update the char data and/or update the CSS.
-    //console.log('tachyFontSet.pendingChars_ = ' + tachyFontSet.pendingChars_);
-    // TODO(bstell): Should check if there were any chars.
     // If this is the 1st mutation event and it happened after DOMContentLoaded
     // then do the update now.
     var immediateUpdate;
@@ -566,32 +536,6 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
 
 
 /**
- * Update a list of TachyFonts
- *
- * TODO(bstell): remove the tachyfont.TachyFont type.
- * @param {Array.<tachyfont.TachyFont>|tachyfont.TachyFontSet} tachyFonts The
- *     list of font objects.
- */
-tachyfont.updateFonts = function(tachyFonts) {
-  //  if (tachyFonts.constructor == Array) {
-  //    if (goog.DEBUG) {
-  //      goog.log.info(tachyfont.logger,
-  //          'tachyfont.updateFonts: passing in an array is deprecated');
-  //    }
-  //    for (var i = 0; i < tachyFonts.length; i++) {
-  //      var tachyFont = tachyFonts[i];
-  //      tachyFont.incrfont.loadChars();
-  //    }
-  //  } else if (tachyFonts.constructor == tachyfont.TachyFontSet) {
-  //    if (goog.DEBUG) {
-  //      goog.log.info(tachyfont.logger, 'tachyfont.updateFonts');
-  //    }
-  //    tachyFonts.updateFonts(true);
-  //  }
-};
-
-
-/**
  * Convert a string to an array of characters.
  * This function handles surrogate pairs.
  *
@@ -632,121 +576,5 @@ tachyfont.charToCode = function(inputChar) {
   }
 };
 
-
-/**
- * Timing object for performance analysis.
- *
- * @type {Object}
- */
-window.timer1;
-
-
-/**
- * Timing object for performance analysis.
- * @type {Object}
- */
-window.timer2;
-
-
-/**
- * TachyFontEnv - A namespace.
- */
-tachyfont.TachyFontEnv = function() {
-};
-
-
-
-/**
- * Timing class for performance analysis.
- * @constructor
- */
-tachyfont.Timer = function() {
-};
-
-
-/**
- * Placeholder for recording a timer start time.
- */
-tachyfont.Timer.prototype.start = function() {
-};
-
-
-/**
- * Placeholder for recording a timer end time.
- */
-tachyfont.Timer.prototype.end = function() {
-};
-
-
-/**
- * Placeholder for recording a timer done time (which changes the color).
- */
-tachyfont.Timer.prototype.done = function() {
-};
-
-
-/**
- * Timing object for performance analysis.
- * @type {Object}
- */
-tachyfont.timer2;
-
-
-/**
- * Timing object for performance analysis.
- * @type {Object}
- */
-tachyfont.timer1;
-
-//Support running without demo features.
-if (window.Timer) {
-  tachyfont.timer1 = window.timer1;
-  tachyfont.timer2 = window.timer2;
-
-} else {
-  /** Stub out timer functions. */
-  tachyfont.timer1 = new tachyfont.Timer();
-  tachyfont.timer2 = new tachyfont.Timer();
-}
-
-
-/**
- * Debugging help
- * Stub out the debug functions.
- * @type {Object}
- */
-tachyfont.ForDebug = function() {
-};
-
-
-/**
- * Useful for debugging.
- * @type {Object}
- */
-window.ForDebug;
-
-if (window.ForDebug) {
-  tachyfont.ForDebug = window.ForDebug;
-} else {
-
-  /** Stub out the debug functions.
-   * @param {string} name The cookie name.
-   * @param {*} fallback A value to return if the cookie is not found.
-   * @return {*}
-   */
-  tachyfont.ForDebug.getCookie = function(name, fallback) {
-    return fallback;
-  };
-
-  /** Stub out the debug functions.
-   * @param {Object} incrFontMgr The incremental font manager object.
-   * @param {string} fontName The font name.
-   */
-  tachyfont.ForDebug.addDropIdbButton = function(incrFontMgr, fontName) {};
-  /** Stub out the debug functions. */
-  tachyfont.ForDebug.addBandwidthControl = function() {};
-  /** Stub out the debug functions. */
-  tachyfont.ForDebug.addTimingTextSizeControl = function() {};
-}
 
 goog.exportSymbol('tachyfont.loadFonts', tachyfont.loadFonts);

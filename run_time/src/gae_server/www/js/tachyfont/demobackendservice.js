@@ -48,7 +48,6 @@ var DemoBackendService = tachyfont.DemoBackendService;
 /** @override */
 DemoBackendService.prototype.requestCodepoints = function(fontInfo, codes) {
   var that = this;
-  var bandwidth = tachyfont.ForDebug.getCookie('bandwidth', '0');
   return this.requestUrl(
       this.baseUrl + '/incremental_fonts/request',
       'POST',
@@ -56,7 +55,7 @@ DemoBackendService.prototype.requestCodepoints = function(fontInfo, codes) {
       // Google App Engine servers do not support CORS so we cannot say
       // the 'Content-Type' is 'application/json'.
       //{'Content-Type': 'application/json'},
-      {'Content-Type': 'text/plain', 'X-TachyFont-bandwidth': bandwidth})
+      {'Content-Type': 'text/plain'})
       .then(function(glyphData) {
         return that.parseCodepointHeader_(glyphData);
       });
@@ -85,10 +84,9 @@ DemoBackendService.prototype.parseCodepointHeader_ = function(glyphData) {
 
 /** @override */
 DemoBackendService.prototype.requestFontBase = function(fontInfo) {
-  var bandwidth = tachyfont.ForDebug.getCookie('bandwidth', '0');
   return this.requestUrl(this.baseUrl +
       '/incremental_fonts/incrfonts/' + fontInfo.getName() + '/base', 'GET',
-      null, { 'X-TachyFont-bandwidth': bandwidth });
+      null, {});
 };
 
 

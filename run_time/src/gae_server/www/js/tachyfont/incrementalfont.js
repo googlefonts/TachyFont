@@ -2,7 +2,7 @@
 
 /**
  * @license
- * Copyright 2014 Google Inc. All rights reserved.
+ * Copyright 2015 Google Inc. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -250,8 +250,6 @@ tachyfont.IncrementalFont.createManager = function(fontInfo, dropData, params) {
       'visibility: ' + initialVisibilityStr + '; }';
   style.sheet.insertRule(rule, 0);
 
-  //tachyfont.timer1.start('load base');
-  tachyfont.timer1.start('load Tachyfont base+data for ' + fontName);
   // if (goog.DEBUG) {
   //   goog.log.info(tachyfont.logger,
   //     'check to see if a webfont is in cache');
@@ -261,21 +259,6 @@ tachyfont.IncrementalFont.createManager = function(fontInfo, dropData, params) {
   tachyfont.reporter.addItem(
       tachyfont.IncrementalFont.Log_.CREATE_TACHYFONT + weight,
       goog.now() - incrFontMgr.startTime);
-  //tachyfont.timer1.start('openIndexedDB.open ' + fontName);
-  //  tachyfont.IncrementalFontUtils.logger(incrFontMgr.url,
-  //    'need to report info');
-  /*
-  if (goog.DEBUG) {
-    goog.log.info(tachyfont.logger, 'It would be good to report status of:\n' +
-        '* idb\n' +
-        '* chars needed\n' +
-        '* webfont in cache\n' +
-        '* timing\n' +
-        '* way to collect the info\n' +
-        '* way to clear old info\n' +
-        '* errors');
-  }
-  */
 
   if (dropData) {
     incrFontMgr.getIDB_ = incrFontMgr.deleteDatabase(fontName, weight).
@@ -296,7 +279,6 @@ tachyfont.IncrementalFont.createManager = function(fontInfo, dropData, params) {
         tachyfont.IncrementalFont.reportError_(
             tachyfont.IncrementalFont.Error_.OPEN_IDB, weight, 'createManager');
       });
-  //tachyfont.timer1.end('openIndexedDB.open ' + fontName);
 
   // Create a class with initial visibility.
   incrFontMgr.style = tachyfont.IncrementalFontUtils.setVisibility(null,
@@ -309,14 +291,6 @@ tachyfont.IncrementalFont.createManager = function(fontInfo, dropData, params) {
 
   if (tachyfont.buildDemo) {
     tachyfont.buildDemo = false;
-    // For Debug: add a button to clear the IndexedDB.
-    tachyfont.ForDebug.addDropIdbButton(incrFontMgr, fontName);
-
-    // For Debug: add a control to set the bandwidth.
-    tachyfont.ForDebug.addBandwidthControl();
-
-    // For Debug: add a control to set the timing text size.
-    tachyfont.ForDebug.addTimingTextSizeControl();
   }
 
   return incrFontMgr;
@@ -535,7 +509,6 @@ tachyfont.IncrementalFont.obj_.prototype.getUrlBase =
  */
 tachyfont.IncrementalFont.obj_.prototype.processUrlBase_ =
     function(fetchedBytes) {
-  //tachyfont.timer1.start('uncompact base');
   var fetchedData = new DataView(fetchedBytes);
   this.parseBaseHeader(fetchedData);
   var headerData = new DataView(fetchedBytes, 0, this.fileInfo_.headSize);
@@ -548,7 +521,6 @@ tachyfont.IncrementalFont.obj_.prototype.processUrlBase_ =
       this.fileInfo_);
   var basefont = tachyfont.IncrementalFontUtils.sanitizeBaseFont(this.fileInfo_,
       raw_basefont);
-  //tachyfont.timer1.end('uncompact base');
   return [this.fileInfo_, basefont];
 };
 
@@ -790,11 +762,6 @@ tachyfont.IncrementalFont.obj_.prototype.injectCharacters =
  */
 tachyfont.IncrementalFont.obj_.prototype.checkCharacters =
     function(baseFontView, charList, cmapMapping) {
-
-  if (tachyfont.reportCharList) {
-    tachyfont.utils.reportCharList(this.fontInfo.getName() +
-        ' checkCharacters charList', charList);
-  }
 
   var charsOkay = true;
   var weight = this.fontInfo.getWeight();
@@ -1186,25 +1153,6 @@ tachyfont.IncrementalFont.obj_.prototype.setFont = function(fontData, isTtf) {
         return goog.Promise.resolve().
             then(function() {
               if (goog.DEBUG) {
-                return this.getCharList.
-                then(function(charList) {
-                  if (tachyfont.reportCharList) {
-                    tachyfont.utils.reportCharList(this.fontInfo.getName() +
-                    ' setFont charList', charList);
-                  }
-                  if (tachyfont.checkCmap) {
-                    tachyfont.utils.checkCmap(charList, this.fileInfo_,
-                        fontData);
-                  }
-                  if (tachyfont.reportChecksums) {
-                    tachyfont.utils.reportChecksums(charList, this.fileInfo_,
-                        fontData);
-                  }
-                }.bind(this));
-              }
-            }.bind(this)).
-            then(function() {
-              if (goog.DEBUG) {
                 goog.log.fine(tachyfont.logger, 'setFont ' +
                 this.fontInfo.getName());
               }
@@ -1385,10 +1333,6 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars = function() {
       then(function() {
         // TODO(bstell): use charCmapInfo to only request chars in the font.
         var charArray = Object.keys(this.charsToLoad);
-        if (tachyfont.reportNeededChars) {
-          tachyfont.utils.reportCharList(this.fontInfo.getName() +
-              ' chars on page', this.charsToLoad);
-        }
         // Check if there are any new characters.
         if (charArray.length == 0) {
           // Lock will be released below.
@@ -1403,10 +1347,6 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars = function() {
           return this.getCharList.
               then(function(charlist_) {
                 charlist = charlist_;
-                if (tachyfont.reportCharList) {
-                  tachyfont.utils.reportCharList(this.fontInfo.getName() +
-                  ' loadChars charlist', charlist);
-                }
                 // Make a tmp copy in case we are chunking the requests.
                 var tmp_charlist = {};
                 for (var key in charlist) {
@@ -1433,13 +1373,6 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars = function() {
                     tachyfont.IncrementalFont.Log_.MISS_RATE + weight,
                     missRate);
                 if (neededCodes.length) {
-                  if (goog.DEBUG) {
-                    // This is debug only: report the chars before obfuscation.
-                    if (tachyfont.reportNeededChars) {
-                      tachyfont.utils.reportCodes(this.fontInfo.getName() +
-                      ' neededCodes', neededCodes);
-                    }
-                  }
                   neededCodes = tachyfont.possibly_obfuscate(neededCodes,
                   tmp_charlist, this.cmapMapping_);
                   if (goog.DEBUG) {
@@ -1557,9 +1490,6 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars = function() {
                           ' chars';
                     } else {
                       msg = '';
-                      tachyfont.timer1.end('load Tachyfont base+data for ' +
-                      this.fontName);
-                      tachyfont.timer1.done();
                     }
 
                     // Persist the data.
@@ -1567,9 +1497,6 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars = function() {
                     this.persistDelayed_(tachyfont.IncrementalFont.CHARLIST);
                   } else {
                     var msg = '';
-                    tachyfont.timer1.end('load Tachyfont base+data for ' +
-                    this.fontName);
-                    tachyfont.timer1.done();
                   }
                   pendingResolveFn(true);
                   // }).
@@ -1778,10 +1705,8 @@ tachyfont.IncrementalFont.obj_.prototype.openIndexedDB = function(name) {
 
   var openIdb = new goog.Promise(function(resolve, reject) {
     var dbName = tachyfont.IncrementalFont.DB_NAME + '/' + name;
-    //tachyfont.timer1.start('indexedDB.open ' + dbName);
     var dbOpen = window.indexedDB.open(dbName,
         tachyfont.IncrementalFont.version);
-    //tachyfont.timer1.end('indexedDB.open ' + dbName);
 
     dbOpen.onsuccess = function(e) {
       var db = e.target.result;
@@ -1827,7 +1752,6 @@ tachyfont.IncrementalFont.obj_.prototype.openIndexedDB = function(name) {
 tachyfont.IncrementalFont.obj_.prototype.deleteDatabase = function(name, id) {
   var deleteDb = new goog.Promise(function(resolve, reject) {
     var dbName = tachyfont.IncrementalFont.DB_NAME + '/' + name;
-    //tachyfont.timer1.start('indexedDB.open ' + dbName);
     var req = window.indexedDB.deleteDatabase(dbName);
     req.onsuccess = function() {
       // If the user cleared the data something may be wrong.
