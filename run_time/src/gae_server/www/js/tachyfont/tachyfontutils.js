@@ -44,37 +44,6 @@ tachyfont.utils.stringFromCodePoint = function(codePoint) {
 
 
 /**
- * Report the chars in the charList.
- *
- * @param {string} title The title of the report.
- * @param {!Object.<string, number>} charList The list of loaded chars.
- */
-tachyfont.utils.reportCharList = function(title, charList) {
-  if (goog.DEBUG) {
-    if (charList.constructor != Object) {
-      console.log('tachyfont.utils.reportCharList: expected Object but got ' +
-          charList.constructor);
-      debugger; // For debugging a utility function.
-      return;
-    }
-    var charListArray = Object.keys(charList);
-
-    var codes = [];
-    for (var i = 0; i < charListArray.length; i++) {
-      if (typeof charListArray[i] != 'string') {
-        console.log(title + '[' + i + '] not a character: ' +
-            typeof charListArray[i]);
-        debugger; // For debugging a utility function.
-      }
-      var code = tachyfont.charToCode(charListArray[i]);
-      codes.push(code);
-    }
-    tachyfont.utils.reportCodes(title, codes);
-  }
-};
-
-
-/**
  * Report the list of codepoints.
  *
  * @param {string} title The title of the codepoint list.
@@ -120,41 +89,6 @@ tachyfont.utils.reportCodes = function(title, codesIn) {
     }
     console.log('----------');
   }
-};
-
-
-/**
- * Check that the cmap matches the charList.
- *
- * @param {!Array.<number>} charList The list of loaded chars.
- * @param {!Object} fileInfo Information about the font data.
- * @param {!DataView} fontView The font data.
- * @return {boolean} True if the charlist and cmap agree.
- */
-tachyfont.utils.checkCmap = function(charList, fileInfo, fontView) {
-  if (goog.DEBUG) {
-    console.log('need to code tachyfont.utils.checkCmap');
-    // debugger;
-    // TODO(bstell): need to code this.
-    // Copy the charList array into a charList map.
-    // Walk the cmap format 9 subtable.
-    //   for each char
-    //     if set in the font data
-    //       remove from the charList map
-    //     else
-    //       record that it is set but not in the charList
-    //     if char not in blank char list
-    //       if the glyph does not have length
-    //         record char in zero length chars list
-    //       if the glyph does not have outline data
-    //         record char in blank chars list
-    //
-    // Report any entries remaining in the charlist map
-    // Report any chars in the cmap but not in the charList
-    // Report any chars without length
-    // Report any chars without outlines
-  }
-  return true;
 };
 
 
