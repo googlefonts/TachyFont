@@ -1,6 +1,10 @@
 package com.github.googlei18n.tachyfont;
 
 import java.io.IOException;
+import java.util.Enumeration;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
+
 import javax.servlet.http.*;
 
 @SuppressWarnings("serial")
@@ -8,6 +12,27 @@ public class TachyFontServlet extends HttpServlet {
   @Override
   public void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
     resp.setContentType("text/plain");
-    resp.getWriter().println("Hello, world");
+    String jarFilename = "fonts/noto/sans/NotoSansJP-Thin_subset_smp.TachyFont.jar";
+    JarFile jarFile = new JarFile("WEB-INF/" + jarFilename);
+    resp.getWriter().println("Jar entries in " + jarFilename + ":");
+    Enumeration<JarEntry> enumEntries = jarFile.entries();
+    resp.getWriter().println("jar file:");
+    while (enumEntries.hasMoreElements()) {
+      JarEntry jarEntry = enumEntries.nextElement();
+      resp.getWriter().println("  " + jarEntry.getName());
+      String name = jarEntry.getName();
+      int x = 3;
+    }   
+
+    JarEntry base = jarFile.getJarEntry("base");
+    JarEntry closure_data = jarFile.getJarEntry("closure_data");
+    JarEntry closure_idx = jarFile.getJarEntry("closure_idx");
+    JarEntry codepoints = jarFile.getJarEntry("codepoints");
+    JarEntry gids = jarFile.getJarEntry("gids");
+    JarEntry glyph_data = jarFile.getJarEntry("glyph_data");
+    JarEntry glyph_table = jarFile.getJarEntry("glyph_table");
+    jarFile.close();
+
+    resp.getWriter().println("Hello, world from TachyFont");
   }
 }
