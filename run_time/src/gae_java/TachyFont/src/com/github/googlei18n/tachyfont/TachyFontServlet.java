@@ -20,8 +20,6 @@ public class TachyFontServlet extends HttpServlet {
     while (enumEntries.hasMoreElements()) {
       JarEntry jarEntry = enumEntries.nextElement();
       resp.getWriter().println("  " + jarEntry.getName());
-      String name = jarEntry.getName();
-      int x = 3;
     }   
 
     JarEntry base = jarFile.getJarEntry("base");
@@ -32,7 +30,5 @@ public class TachyFontServlet extends HttpServlet {
     JarEntry glyph_data = jarFile.getJarEntry("glyph_data");
     JarEntry glyph_table = jarFile.getJarEntry("glyph_table");
     jarFile.close();
-
-    resp.getWriter().println("Hello, world from TachyFont");
   }
 }
