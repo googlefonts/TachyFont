@@ -12,6 +12,14 @@ http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd" version="2.5">
 		<servlet-name>TachyFont</servlet-name>
 		<url-pattern>/tachyfont</url-pattern>
 	</servlet-mapping>
+  <servlet>
+    <servlet-name>GetBase</servlet-name>
+    <servlet-class>com.github.googlei18n.tachyfont.GetBase</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>GetBase</servlet-name>
+    <url-pattern>/tachyfont/getbase</url-pattern>
+  </servlet-mapping>
 	<welcome-file-list>
 		<welcome-file>index.html</welcome-file>
 	</welcome-file-list>
