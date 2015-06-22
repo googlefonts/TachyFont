@@ -46,7 +46,7 @@ def extend_bits_or_escape(gos_data, escaped_data, delta_code_result):
     escaped_data.extend(non_repr)
   else:
     gos_data.extend(delta_code_result)
-      
+
 class NumberEncoders(object):
 
   @staticmethod
@@ -63,7 +63,7 @@ class NumberEncoders(object):
       copy_number >>= 4
       count += 1
     return (count,bin(number)[2:].zfill(count*4))
-        
+
   @staticmethod
   def NoNString(number):
     """Encode number using nibbles.
@@ -82,10 +82,10 @@ class NumberEncoders(object):
       count += 7
     nibble_count_bin_str = NumberEncoders.NibbleBin(count)[1]
     return nibble_count_bin_str + number_bin_str
-      
+
   @staticmethod
   def BitEncodeAllOnesEscape(number, bit_count):
-    """Binary string of given number using given bit count 
+    """Binary string of given number using given bit count
       or escape it using all ones
     (12,5) -> 01100
     (12,3) -> (111,12)
@@ -100,7 +100,7 @@ class NumberEncoders(object):
 
 
 class _GOSGenerators(object):
-  
+
   @staticmethod
   def type6_7(font):
     cffTableOffset = font.reader.tables['CFF '].offset
@@ -142,12 +142,12 @@ class _GOSGenerators(object):
       extend_bits_or_escape(gos_data, escaped_data, first_enc)
       nLeft_enc = NumberEncoders.BitEncodeAllOnesEscape(deltaNLeft[idx],3)
       extend_bits_or_escape(gos_data, escaped_data, nLeft_enc)
-    
+
     whole_data = gos_data.tobytes() + escaped_data.tobytes()
     #print 'type6 size',len(whole_data)
-    return whole_data       
-    
-  
+    return whole_data
+
+
   @staticmethod
   def type5(font):
     old_12_method = change_method(_c_m_a_p.cmap_format_12_or_13,_decompile_in_cmap_format_12_13, 'decompile')
@@ -173,13 +173,13 @@ class _GOSGenerators(object):
     cmap12 = cmapTable.getcmap(3, 10).cmap #format 12
     cmap4 = cmapTable.getcmap(3, 1).cmap #format 4
     assert cmap12 and cmap4, 'Both cmap format 12 and 4 tables are needed'
-    
+
 
     cmap4_endCodes = cmap4['endCode']
     cmap4_startCodes = cmap4['startCode']
     cmap12_startCodes = cmap12['startCodes']
     cmap12_lengths = cmap12['lengths']
-    
+
     fmt12SegCount = len(cmap12_startCodes)
     fmt4SegCount = len(cmap4_startCodes)
     # TODO(bstell): the code in this section seems to only work if there number
@@ -191,12 +191,12 @@ class _GOSGenerators(object):
     fmt12Seg = 0
     mapping = defaultdict(list)
     while fmt12Seg < fmt12SegCount and fmt4Seg < fmt4SegCount:
-      
+
       cmap12SegStart = cmap12_startCodes[fmt12Seg]
       cmap12SegEnd = cmap12_startCodes[fmt12Seg] + cmap12_lengths[fmt12Seg] - 1
       cmap4SegStart =cmap4_startCodes[fmt4Seg]
       cmap4SegEnd = cmap4_endCodes[fmt4Seg]
-      
+
       if cmap12SegStart>= cmap4SegStart  and cmap12SegEnd <= cmap4SegEnd:
         mapping[fmt4Seg].append(fmt12Seg)
         fmt12Seg += 1
@@ -212,7 +212,7 @@ class _GOSGenerators(object):
     gos_data = bitarray.bitarray(endian='big')
     escaped_data = bitarray.bitarray(endian='big')
     gos_data.frombytes(struct.pack('>B',4)) #GOS type
-    gos_data.frombytes(struct.pack('>H', fmt4SegCount))    
+    gos_data.frombytes(struct.pack('>H', fmt4SegCount))
     #now checks if segments in good condition
     segLens = []
     idRangeOffsets = cmap4['idRangeOffset']
@@ -224,17 +224,17 @@ class _GOSGenerators(object):
 
       if lenFmt12Segs == 0:
         continue
-      
+
       # check the segments
       cmap12SegStart = cmap12_startCodes[fmt12SegList[0]]
       cmap12SegEnd = cmap12_startCodes[fmt12SegList[-1]] + cmap12_lengths[fmt12SegList[-1]] - 1
       cmap4SegStart = cmap4_startCodes[fmt4Seg]
       cmap4SegEnd = cmap4_endCodes[fmt4Seg]
-      assert cmap12SegStart == cmap4SegStart and cmap12SegEnd == cmap4SegEnd 
-      
-      if lenFmt12Segs == 1: 
+      assert cmap12SegStart == cmap4SegStart and cmap12SegEnd == cmap4SegEnd
+
+      if lenFmt12Segs == 1:
         assert idRangeOffsets[fmt4Seg] == 0
-      else: 
+      else:
         assert idRangeOffsets[fmt4Seg] != 0 and idDelta[fmt4Seg] == 0
 
     for segLen in segLens:
@@ -243,12 +243,12 @@ class _GOSGenerators(object):
 
     change_method(_c_m_a_p.cmap_format_12_or_13,old_12_method,'decompile')
     change_method(_c_m_a_p.cmap_format_4,old_4_method,'decompile')
-    
+
     whole_data = gos_data.tobytes() + escaped_data.tobytes()
     #print 'type4 size',len(whole_data)
     return whole_data
-  
-  
+
+
   @staticmethod
   def type3(font):
     old_12_method = change_method(_c_m_a_p.cmap_format_12_or_13,_decompile_in_cmap_format_12_13, 'decompile')
@@ -268,12 +268,12 @@ class _GOSGenerators(object):
       delta_code_result = NumberEncoders.BitEncodeAllOnesEscape(deltaCodePoints[idx],5)
       extend_bits_or_escape(gos_data, escaped_data, delta_code_result)
       len_result = NumberEncoders.BitEncodeAllOnesEscape(lengths[idx],3)
-      extend_bits_or_escape(gos_data, escaped_data, len_result)     
+      extend_bits_or_escape(gos_data, escaped_data, len_result)
       gid_result = NumberEncoders.BitEncodeAllOnesEscape(gids[idx],16)
       extend_bits_or_escape(gos_data, escaped_data, gid_result)
-      
+
     change_method(_c_m_a_p.cmap_format_12_or_13,old_12_method,'decompile')
-    
+
     whole_data = gos_data.tobytes() + escaped_data.tobytes()
     #print 'type3 size',len(whole_data)
     return whole_data
@@ -297,12 +297,12 @@ class _GOSGenerators(object):
       delta_code_result = NumberEncoders.BitEncodeAllOnesEscape(deltaCodePoints[idx],3)
       extend_bits_or_escape(gos_data, escaped_data, delta_code_result)
       len_result = NumberEncoders.BitEncodeAllOnesEscape(lengths[idx],2)
-      extend_bits_or_escape(gos_data, escaped_data, len_result)     
+      extend_bits_or_escape(gos_data, escaped_data, len_result)
       gid_result = NumberEncoders.BitEncodeAllOnesEscape(deltaGids[idx],3)
       extend_bits_or_escape(gos_data, escaped_data, gid_result)
-      
+
     change_method(_c_m_a_p.cmap_format_12_or_13,old_12_method,'decompile')
-    
+
     whole_data = gos_data.tobytes() + escaped_data.tobytes()
     #print 'type2 size',len(whole_data)
     return whole_data
@@ -347,7 +347,7 @@ class CmapCompacter(object):
 
   def __init__(self, font):
     self.font = font
-  
+
   def generateGOSTypes(self,types):
     gos_count = len(types)
     gos_whole_data = bytearray()
@@ -356,10 +356,10 @@ class CmapCompacter(object):
       gos_type_data = self.generateGOSType(type)
       gos_whole_data.extend(gos_type_data)
     return gos_whole_data
-  
-    
+
+
   def generateGOSType(self,type):
     assert type in GOS_Types
     return GOS_Types[type](self.font)
 
-    
+
