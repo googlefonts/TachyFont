@@ -73,7 +73,7 @@ def main(args):
   fonttime = os.path.getmtime(fontfile)
   # TODO(bstell) use Logger
   basename = os.path.basename(fontfile)
-  log.info('preprocess %s = %d bytes' % (cmd_args.fontfile, 
+  log.info('preprocess %s = %d bytes' % (cmd_args.fontfile,
                                          os.path.getsize(cmd_args.fontfile)))
   filename, extension = os.path.splitext(basename)
   cur_time = datetime.datetime.now()
