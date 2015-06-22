@@ -21,7 +21,7 @@ from fontTools.subset import Options, Subsetter
 class ClosureTaker(object):
   """Takes closure of given glyph names in the given font file
      Return closure list of glyph ids
-     Glyph closure: Adding a glyph might require adding other glyph due to 
+     Glyph closure: Adding a glyph might require adding other glyph due to
   several reasons:
        -Composite glyphs
        -GSUB lookup lists

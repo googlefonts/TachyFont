@@ -18,57 +18,57 @@ from info_ops import InfoOps
 import sys
 
 class FontInfo(object):
-  
-  TAGS = {'GLOF': 
-            {'desc':'Start of the glyphs data relative to font file start', 
+
+  TAGS = {'GLOF':
+            {'desc':'Start of the glyphs data relative to font file start',
              'fn': InfoOps._getGLOF
              },
-          'GLCN': 
-            {'desc': 'Number of glyphs in the font', 
+          'GLCN':
+            {'desc': 'Number of glyphs in the font',
              'fn': InfoOps._getGLCN
              },
-          'LCOF': 
-            {'desc': 'Start of the offsets to glyphs relative to font file start', 
+          'LCOF':
+            {'desc': 'Start of the offsets to glyphs relative to font file start',
              'fn': InfoOps._getLCOF
              },
-          'LCFM': 
-            {'desc': 'Offset size of the offsets in loca table', 
+          'LCFM':
+            {'desc': 'Offset size of the offsets in loca table',
              'fn': InfoOps._getLCFM
              },
-          'HMOF': 
-            {'desc':'Start of the HMTX table relative to font file start', 
+          'HMOF':
+            {'desc':'Start of the HMTX table relative to font file start',
              'fn': InfoOps._getHMOF
              },
-          'VMOF': 
-            {'desc':'Start of the VMTX table relative to font file start', 
+          'VMOF':
+            {'desc':'Start of the VMTX table relative to font file start',
              'fn': InfoOps._getVMOF
              },
-          'HMMC': 
-            {'desc': 'Number of hmetrics in hmtx table', 
+          'HMMC':
+            {'desc': 'Number of hmetrics in hmtx table',
              'fn': InfoOps._getHMMC
              },
-          'VMMC': 
-            {'desc': 'Number of vmetrics in vmtx table', 
+          'VMMC':
+            {'desc': 'Number of vmetrics in vmtx table',
              'fn': InfoOps._getVMMC
              },
-          'TYPE': 
-            {'desc':'Type of the font, either TTF or CFF', 
+          'TYPE':
+            {'desc':'Type of the font, either TTF or CFF',
              'fn': InfoOps._getTYPE
              },
-          'CCMP': 
-            {'desc':'Compact CMAP', 
+          'CCMP':
+            {'desc':'Compact CMAP',
              'fn': InfoOps._getCCMP
              },
-          'CM12': 
-            {'desc':'Start offset and number of groups in cmap format 12 table', 
+          'CM12':
+            {'desc':'Start offset and number of groups in cmap format 12 table',
              'fn': InfoOps._getCM12
              },
-          'CM04': 
-            {'desc':'Start offset of cmap format 4 table', 
+          'CM04':
+            {'desc':'Start offset of cmap format 4 table',
              'fn': InfoOps._getCM04
              },
-          'CS02': 
-            {'desc':'CFF Charset format 2 in much more compacted way', 
+          'CS02':
+            {'desc':'CFF Charset format 2 in much more compacted way',
              'fn': InfoOps._getCS02
              },
           'SHA1':

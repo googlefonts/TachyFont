@@ -72,7 +72,7 @@ class Preprocess(object):
       cmapTable = font['cmap'].getcmap(3, 1)
     assert cmapTable,'Unicode cmap table required'
     cmap = cmapTable.cmap  # unicode table
- 
+
 
     codepoints = []
     glyphs = []
@@ -92,20 +92,20 @@ class Preprocess(object):
     gid_dumper = Dumper(self.folder + '/gids')
     gid_dumper.dump_array(glyphs, 'H', '>')
     gid_dumper.close()
-    
+
   def serial_glyphs(self):
     if self.isCff:
       self._serial_Cff()
     else:
       self._serial_Glyf()
-    
+
 
   def _serial_Glyf(self):
     glyfSerializer = GlyfSerializer(self.fontfile)
     glyfSerializer.prepare_glyf()
     glyfSerializer.serialize_glyf(
         self.folder + '/glyph_table', self.folder + '/glyph_data')
-    
+
   def _serial_Cff(self):
     cffSerializer = CffSerializer(self.fontfile)
     cffSerializer.prepare_cff()
