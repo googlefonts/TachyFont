@@ -55,7 +55,7 @@ def _decompile_in_table_cmap(self, data, ttFont):
       format, reserved, length = struct.unpack(">HHL", data[offset:offset+8])
     elif format in [14]:
       format, length = struct.unpack(">HL", data[offset:offset+6])
-      
+
     if not length:
       print("Error: cmap subtable is reported as having zero length: platformID %s, platEncID %s,  format %s offset %s. Skipping table." % (platformID, platEncID,format, offset))
       continue
@@ -79,14 +79,14 @@ def _decompile_in_cmap_format_4(self, data, ttFont):
         struct.unpack(">4H", data[:8])
   data = data[8:]
   segCount = segCountX2 // 2
-  
+
   allCodes = array.array("H")
   allCodes.fromstring(data)
   self.data = data = None
 
   if sys.byteorder != "big":
     allCodes.byteswap()
-  
+
   # divide the data
   endCode = allCodes[:segCount]
   allCodes = allCodes[segCount+1:]  # the +1 is skipping the reservedPad field
@@ -119,26 +119,26 @@ def splitRange(startCode, endCode, cmap):
   startCodes = range(startCode + 1, endCode + 1)
   endCodes = range(startCode, endCode + 1)
   return startCodes, endCodes
-  
-  # This code flattens cmap format 4 subtable by not using idRangeOffset / 
-  # glyphIdArray. This came from 
+
+  # This code flattens cmap format 4 subtable by not using idRangeOffset /
+  # glyphIdArray. This came from
   # fonttools-master/Lib/fontTools/ttLib/tables/_c_m_a_p.py and was modified to
   # not try and determine where idRangeOffset would be more efficient.
   # Flattening the subtable makes the cmap its largest size which means any
   # dynamically built cmap will fit in this space.
   if startCode == endCode:
     return [], [endCode]
-  
+
   lastID = cmap[startCode]
   orderedBegin = lastCode = startCode
   inOrder = None
   # lastCode
   subRanges = []
-  
+
   # Gather subranges in which the glyph IDs are consecutive.
   for code in range(startCode + 1, endCode + 1):
     glyphID = cmap[code]
-    
+
     if glyphID != lastID + 1:
       subRanges.append((orderedBegin, lastCode))
       orderedBegin = code
@@ -152,14 +152,14 @@ def splitRange(startCode, endCode, cmap):
 #         inOrder = 0
 #         subRanges.append((orderedBegin, lastCode))
 #         orderedBegin = None
-        
+
     lastID = glyphID
     lastCode = code
-  
+
   #if inOrder:
   subRanges.append((orderedBegin, lastCode))
   assert lastCode == endCode
-  
+
   # CODE REMOVED
   #   # Now filter out those new subranges that would only make the data bigger.
   #   # A new segment cost 8 bytes, not using a new segment costs 2 bytes per
@@ -175,16 +175,16 @@ def splitRange(startCode, endCode, cmap):
   #     if (e - b + 1) > threshold:
   #       newRanges.append((b, e))
   #   subRanges = newRanges
-  #   
+  #
   if not subRanges:
     return [], [endCode]
-  
+
   # CODE REMOVED
   #   if subRanges[0][0] != startCode:
   #     subRanges.insert(0, (startCode, subRanges[0][0] - 1))
   #   if subRanges[-1][1] != endCode:
   #     subRanges.append((subRanges[-1][1] + 1, endCode))
-  #   
+  #
   #   # Fill the "holes" in the segments list -- those are the segments in which
   #   # the glyph IDs are _not_ consecutive.
   #   i = 1
@@ -193,7 +193,7 @@ def splitRange(startCode, endCode, cmap):
   #       subRanges.insert(i, (subRanges[i-1][1] + 1, subRanges[i][0] - 1))
   #       i = i + 1
   #     i = i + 1
-  
+
   # Transform the ranges into startCode/endCode lists.
   start = []
   end = []
@@ -201,7 +201,7 @@ def splitRange(startCode, endCode, cmap):
     start.append(b)
     end.append(e)
   start.pop(0)
-  
+
   assert len(start) + 1 == len(end)
   return start, end
 
@@ -210,7 +210,7 @@ def splitRange(startCode, endCode, cmap):
 def _cmap_format_4_compile(self, ttFont):
   if self.data:
     return struct.pack(">HHH", self.format, self.length, self.language) + self.data
-  
+
   charCodes = list(self.cmap.keys())
   charCodes.sort()
   charCodes = charCodes[:256]
@@ -246,7 +246,7 @@ def _cmap_format_4_compile(self, ttFont):
           gids.append(gid)
     cmap = {}  # code:glyphID mapping
     list(map(operator.setitem, [cmap]*len(charCodes), charCodes, gids))
-  
+
     # Build startCode and endCode lists.
     # Split the char codes in ranges of consecutive char codes, then split
     # each range in more ranges of consecutive/not consecutive glyph IDs.
@@ -268,7 +268,7 @@ def _cmap_format_4_compile(self, ttFont):
     endCode.extend(end)
     startCode.append(0xffff)
     endCode.append(0xffff)
-  
+
   #debug_len = len(endCode)
   #debug_pos = 10
   #debug_start = min(debug_pos, debug_len)
@@ -293,12 +293,12 @@ def _cmap_format_4_compile(self, ttFont):
       glyphIndexArray.extend(indices)
   idDelta.append(1)  # 0xffff + 1 == (tadaa!) 0. So this end code maps to .notdef
   idRangeOffset.append(0)
-  
+
   # Insane.
   segCount = len(endCode)
   segCountX2 = segCount * 2
   searchRange, entrySelector, rangeShift = getSearchRange(segCount, 2)
-  
+
   charCodeArray = array.array("H", endCode + [0] + startCode)
   idDeltaArray = array.array("H", idDelta)
   restArray = array.array("H", idRangeOffset + glyphIndexArray)
@@ -309,8 +309,8 @@ def _cmap_format_4_compile(self, ttFont):
   data = charCodeArray.tostring() + idDeltaArray.tostring() + restArray.tostring()
 
   length = struct.calcsize(_c_m_a_p.cmap_format_4_format) + len(data)
-  header = struct.pack(_c_m_a_p.cmap_format_4_format, self.format, length, self.language, 
+  header = struct.pack(_c_m_a_p.cmap_format_4_format, self.format, length, self.language,
       segCountX2, searchRange, entrySelector, rangeShift)
   return header + data
-  
+
 
