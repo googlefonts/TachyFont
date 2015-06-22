@@ -5,7 +5,7 @@ cd ${TOP_DIR}
 TOOLS_DIR=build_time/src
 #LOG_OPTIONS=--log=DEBUG
 LOG_OPTIONS=--log=INFO
-DEBUG_OPTIONS=--reuse_clean
+#DEBUG_OPTIONS=--reuse_clean
 HINTING_OPTIONS=--hinting
 FONTPATH=$1
 DEST_DIR=run_time/src/gae_server/fonts
