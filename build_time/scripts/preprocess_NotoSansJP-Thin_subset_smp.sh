@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# This is a sample script used for preprocessing fonts in the open source
+# tree.
+
 echo '****'
 
 # The preprocess.sh command needs to run in the scripts directory.
