@@ -58,12 +58,12 @@ def main(args):
   except OSError as exception:
       if exception.errno != errno.EEXIST:
           raise
-    
+
   cleanfile = output_folder+'/'+filename + '_clean' + extension
   is_clean = os.path.isfile(cleanfile)
   if not is_clean:
     cleanup(fontfile, cmd_args.hinting, cleanfile)
-  
+
   dump_tables(cleanfile, output_folder)
 
   print('done')
@@ -77,11 +77,11 @@ def dump_tables(fontfile, output):
   except OSError as exception:
     if exception.errno != errno.EEXIST:
       raise
-    
+
   header_dict = FontInfo.getInformation(fontfile, FontInfo.TAGS.keys())
   bin_header = BaseHeaderPrepare.prepare(BaseFonter.BASE_VERSION, header_dict)
   print('Base header total size=',len(bin_header))
-  
+
   base_fonter = BaseFonter(fontfile)
   base_dump =  dump_folder + '/base_dump'
   base_fonter.dump_base(base_dump)
@@ -117,32 +117,32 @@ def dumpCFFTable(font):
   cff_file = StringIO(cff_data)
   print('cff_reader.offset={0}'.format(cff_reader.offset))
   print('cff_reader.length={0}'.format(cff_reader.length))
- 
+
   cff_file.seek(4) # seek past header
   nameIndex = INDEX(cff_file)
   start, count, offSize, past_end = nameIndex.getInfo()
   print('Name INDEX: start={0}, count={1}, end={2}'.format(start, count, past_end))
   nameIndex.showItems('Name INDEX', 0, 3)
-  
+
   topDictIndex = DictINDEX(cff_file)
   start, count, offSize, past_end = topDictIndex.getInfo()
   print('Top DICT INDEX: start={0}, count={1}, end={2}'.format(start, count, past_end))
   topDictIndex.showItems('Top DICT INDEX', 0, 0, 3)
   # There is only one font in a CID font
   font_dict = topDictIndex.getDict(0)
- 
+
   stringIndex = INDEX(cff_file)
   start, count, offSize, past_end = stringIndex.getInfo()
   print('String INDEX: start={0}, count={1}, end={2}'.format(start, count, past_end))
   stringIndex.showItems('String INDEX', 0, 3)
- 
+
   globalSubrIndex = INDEX(cff_file)
   start, count, offSize, past_end = globalSubrIndex.getInfo()
   print('Global Subr INDEX: start={0}, count={1}, end={2}'.format(start, count, past_end))
   globalSubrIndex.showItems('Global Subr INDEX', 0, 3)
- 
+
   print("CIDFonts do not have an Encodings value")
- 
+
   char_strings_offset = font_dict['CharStrings']
   print('CharStrings = {0}'.format(char_strings_offset))
   cff_file.seek(char_strings_offset)
@@ -150,19 +150,19 @@ def dumpCFFTable(font):
   start, count, offSize, past_end = charStringsIndex.getInfo()
   print('CharStrings INDEX: start={0}, count={1}, end={2}'.format(start, count, past_end))
   num_glyphs = count
- 
+
   charset_offset = font_dict['charset']
   print('charset = {0}'.format(charset_offset))
   cff_file.seek(charset_offset)
   charset = CharSet(cff_file, num_glyphs)
   print('charset: size = {0}'.format(charset.get_size()))
- 
+
   fdselect_offset = font_dict['FDSelect']
   print('FDSelect = {0}'.format(fdselect_offset))
   cff_file.seek(fdselect_offset)
   fdselect = FDSelect(cff_file, num_glyphs)
   print('FDSelect: size = {0}'.format(fdselect.get_size()))
- 
+
   fdarray_offset = font_dict['FDArray']
   print('FDArray = {0}'.format(fdarray_offset))
   cff_file.seek(fdarray_offset)
