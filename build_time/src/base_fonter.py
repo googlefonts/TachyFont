@@ -34,7 +34,7 @@ import io
 
 class BaseFonter(object):
   """Create base font for the given font file"""
-  
+
   LOCA_BLOCK_SIZE = 64
   BASE_VERSION = 1
 
@@ -65,7 +65,7 @@ class BaseFonter(object):
         else:
           fontfile_handler.write(double_zero)
       fontfile_handler.close()
-          
+
 
   def __zero_glyf(self, output):
     self.font = TTFont(output)
@@ -106,13 +106,13 @@ class BaseFonter(object):
     filler = Filler(output)
     filler.fill(cffTableOffset+charsetOffset+1, record_len*size, '\x00')
     filler.close()
-  
+
   def __zero_cmaps(self,output):
     font = TTFont(output)
     old_cmap_method = change_method(_c_m_a_p.table__c_m_a_p, _decompile_in_table_cmap,'decompile')
     old_12_method = change_method(_c_m_a_p.cmap_format_12_or_13,_decompile_in_cmap_format_12_13, 'decompile')
     old_4_method = change_method(_c_m_a_p.cmap_format_4,_decompile_in_cmap_format_4, 'decompile')
-    
+
     cmap_offset = font.reader.tables['cmap'].offset
     cmapTables = font['cmap']
     cmap12 = cmapTables.getcmap(3, 10) #format 12
@@ -123,16 +123,16 @@ class BaseFonter(object):
       ranges_to_zero.append((cmap_offset+cmap12.offset+16,cmap12.length-16))
     #if cmap4:
     #  ranges_to_zero.append((cmap_offset+cmap4.offset+14,cmap4.length-14))
-      
+
     change_method(_c_m_a_p.cmap_format_12_or_13,old_12_method,'decompile')
     change_method(_c_m_a_p.cmap_format_4,old_4_method,'decompile')
     change_method(_c_m_a_p.table__c_m_a_p,old_cmap_method,'decompile')
-    
+
     font.close()
-    
+
     #if len(ranges_to_zero)<2: #return if both doesn't exist
     #  return
-     
+
     for block in ranges_to_zero:
       filler = Filler(output)
       filler.fill(block[0], block[1], '\x00')
@@ -156,7 +156,7 @@ class BaseFonter(object):
     filler = Filler(output)
     filler.fill(offset, size, '\x00')
     filler.close()
-    
+
 
   def __segment_table(self, locations, off_format, fill_with_upper):
     n = len(locations)
@@ -185,24 +185,24 @@ class BaseFonter(object):
     cffTableOffset = self.font.reader.tables['CFF '].offset
     cffTable = self.font['CFF '].cff
     assert len(cffTable.fontNames) == 1
-    
+
     charStringOffset = cffTable[cffTable.fontNames[0]].rawDict['CharStrings']
-    
+
     inner_file = self.font.reader.file
-    
+
     inner_file.seek(cffTableOffset + charStringOffset)
     count = struct.unpack('>H',inner_file.read(2))[0]
     offSize = struct.unpack('B',inner_file.read(1))[0]
-    
+
     inner_file.seek(cffTableOffset + charStringOffset )
     raw_index_file = Index(inner_file)
-    
+
     # TODO(bstell) this needs to correctly handle the offset to .notdef
     locations = raw_index_file.offsets
     assert (count+1) == len(locations)
-    
+
     self.font.close()
-    
+
     off_format = 'L'
     self.__segment_table(locations, off_format, False)
     #checking max fake CharString size
@@ -213,14 +213,14 @@ class BaseFonter(object):
       max_diff = max(max_diff,diff)
       i+=BaseFonter.LOCA_BLOCK_SIZE
     assert max_diff < 65536 , 'LOCA_BLOCK_SIZE too big'
-    
+
     new_offsets = bytearray()
     offSize = -offSize
     for offset in locations:
       bin_offset = struct.pack(">l", offset)[offSize:]
       new_offsets.extend(bin_offset)
     assert len(new_offsets) == (count+1) * -offSize
-    
+
     font_file = open(output,'r+b')
     font_file.seek(cffTableOffset + charStringOffset + 3)
     # TODO(bstell) need to deal with the notdef glyph here
@@ -257,7 +257,7 @@ class BaseFonter(object):
     rle_font = RleFont(output)
     rle_font.encode()
     rle_font.write(output)
-    
+
   def __add_header(self, output, header_data):
     base_file = open(output,'rb')
     all_base = base_file.read()
@@ -266,8 +266,8 @@ class BaseFonter(object):
     base_with_head_file.write(header_data)
     base_with_head_file.write(all_base)
     base_with_head_file.close()
-    
-    
+
+
 
   def base(self, output, header_data):
     """Call this function get base font Call only once, since given font will be closed
@@ -279,7 +279,7 @@ class BaseFonter(object):
     self.__zero_mtx('hmtx', output)
     self.__zero_mtx('vmtx', output)
     self.font.close()
-    
+
     if self.isCff:
       self.__zero_char_strings(output)
       self.__sparse_charstring_offsets(output)
@@ -287,10 +287,10 @@ class BaseFonter(object):
     else:
       self.__zero_glyf(output)
       self.__fill_loca(output)
-    
+
     self.__zero_cmaps(output)
     self.__rle(output)
-    
+
     if header_data:
       self.__add_header(output, header_data)
 
@@ -304,7 +304,7 @@ class BaseFonter(object):
     self.__zero_mtx('hmtx', output)
     self.__zero_mtx('vmtx', output)
     self.font.close()
-    
+
     if self.isCff:
       self.__zero_char_strings(output)
       self.__sparse_charstring_offsets(output)
@@ -312,10 +312,10 @@ class BaseFonter(object):
     else:
       self.__zero_glyf(output)
       self.__fill_loca(output)
-    
+
     self.__zero_cmaps(output)
     #self.__rle(output)
-    
+
     #if header_data:
     #  self.__add_header(output, header_data)
-      
+
