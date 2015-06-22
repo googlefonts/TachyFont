@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# This is a sample script used for preprocessing fonts in the open source
+# tree.
+
 declare -a fonts=(
   NotoSansJP-Thin.otf
   NotoSansJP-Light.otf

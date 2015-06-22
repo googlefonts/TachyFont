@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# This is a sample script used for preprocessing fonts in the open source
+# tree.
+
 # Get the top of the tree.
 TOPDIR="`dirname $0`/../.."
 #echo TOPDIR=\"${TOPDIR}\"
