@@ -3,12 +3,12 @@ package com.github.googlei18n.tachyfont;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
-import java.util.zip.GZIPOutputStream;
 
 import javax.servlet.http.*;
 
@@ -16,20 +16,39 @@ import javax.servlet.http.*;
 public class GetCharData extends HttpServlet {
   @Override
   public void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+    resp.setContentType("text/plain");
     // Get the codepoints.
     String jarFilename = "fonts/noto/sans/NotoSansJP-Thin_subset_smp.TachyFont.jar";
     JarFile jarFile = new JarFile("WEB-INF/" + jarFilename);
+    Map<Integer, Integer> cmapMap = getCmapMap(jarFile);
+    Iterator<Entry<Integer, Integer>> cmapIterator = cmapMap.entrySet().iterator();
+    while (cmapIterator.hasNext()) {
+      Entry<Integer, Integer> pair = cmapIterator.next();
+      resp.getWriter().println(pair.getKey() + " = " + pair.getValue());
+    }
+
+    // TODO(bstell): look in the closure file for other gids to include.
+    for (Integer value : cmapMap.values()) {
+      System.out.println("look for the closure of gid = " + value);
+    }
+    // TODO(bstell): create and return the glyph bundle.
+    jarFile.close();
+  }
+  private HashMap<Integer, Integer> getCmapMap(JarFile jarFile) throws IOException {
     JarEntry codePointsJarEntry = jarFile.getJarEntry("codepoints");
     InputStream codePointsStream = jarFile.getInputStream(codePointsJarEntry);
     DataInputStream codePointsDataStream = new DataInputStream(codePointsStream);
-    List<Integer> codePoints = new ArrayList<Integer>();
-    Integer codePoint;
-    while ((codePoint = codePointsDataStream.readInt()) != null) {
-      // TODO(bstell): get the gids and make a codepoint->gid map
-      System.out.println(codePoint);
+
+    JarEntry gidsJarEntry = jarFile.getJarEntry("gids");
+    InputStream gidsStream = jarFile.getInputStream(gidsJarEntry);
+    DataInputStream gidsDataStream = new DataInputStream(gidsStream);
+
+    HashMap<Integer, Integer> cmapMap = new HashMap<Integer, Integer>();
+    while (codePointsDataStream.available() > 0) {
+      Integer codePoint = codePointsDataStream.readInt();
+      Integer gid = gidsDataStream.readUnsignedShort();
+      cmapMap.put(codePoint, gid);
     }
-    // TODO(bstell): look in the closure file for other gids to include. 
-    // TODO(bstell): create and return the glyph bundle.
-    jarFile.close();
+    return cmapMap;
   }
 }
