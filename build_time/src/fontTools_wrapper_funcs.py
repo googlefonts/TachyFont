@@ -15,6 +15,7 @@
 """
 from fontTools.ttLib import getSearchRange
 from fontTools.ttLib.tables import _c_m_a_p
+from fontTools.misc.py23 import bytesjoin
 import array
 import operator
 import struct
@@ -314,3 +315,49 @@ def _cmap_format_4_compile(self, ttFont):
   return header + data
 
 
+def _cmap_format_12_or_13_compile(self, ttFont):
+  if self.data:
+    return struct.pack(">HHLLL", self.format, self.reserved, self.length, self.language, self.nGroups) + self.data
+  charCodes = list(self.cmap.keys())
+  lenCharCodes = len(charCodes)
+  names = list(self.cmap.values())
+  nameMap = ttFont.getReverseGlyphMap()
+  try:
+    gids = list(map(operator.getitem, [nameMap]*lenCharCodes, names))
+  except KeyError:
+    nameMap = ttFont.getReverseGlyphMap(rebuild=True)
+    try:
+      gids = list(map(operator.getitem, [nameMap]*lenCharCodes, names))
+    except KeyError:
+      # allow virtual GIDs in format 12 tables
+      gids = []
+      for name in names:
+        try:
+          gid = nameMap[name]
+        except KeyError:
+          try:
+            if (name[:3] == 'gid'):
+              gid = eval(name[3:])
+            else:
+              gid = ttFont.getGlyphID(name)
+          except:
+            raise KeyError(name)
+
+        gids.append(gid)
+
+  cmap = {}  # code:glyphID mapping
+  list(map(operator.setitem, [cmap]*len(charCodes), charCodes, gids))
+
+  charCodes.sort()
+  nGroups = 0
+  dataList =  []
+  maxIndex = len(charCodes)
+  for index in range(maxIndex):
+    charCode = charCodes[index]
+    glyphID = cmap[charCode]
+    dataList.append(struct.pack(">LLL", charCode, charCode, glyphID))
+    nGroups = nGroups + 1
+  data = bytesjoin(dataList)
+  lengthSubtable = len(data) +16
+  assert len(data) == (nGroups*12) == (lengthSubtable-16)
+  return struct.pack(">HHLLL", self.format, self.reserved , lengthSubtable, self.language, nGroups) + data

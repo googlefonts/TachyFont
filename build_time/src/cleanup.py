@@ -16,7 +16,7 @@
 
 from cleaner import Cleaner
 from fontTools.ttLib.tables import _c_m_a_p
-from fontTools_wrapper_funcs import change_method, _cmap_format_4_compile
+from fontTools_wrapper_funcs import change_method, _cmap_format_4_compile, _cmap_format_12_or_13_compile
 from glyph_sets import get_whitespace_and_ignorable_list
 
 
@@ -28,8 +28,10 @@ def clean_invalid_glyphs_and_remove_hinting(fontfile, hinting, output, verbose):
   # subset of format 12.
   # do we still what this?
   change_method(_c_m_a_p.cmap_format_4,_cmap_format_4_compile, 'compile')
+  old_12_or_13_compile = change_method(_c_m_a_p.cmap_format_12_or_13, _cmap_format_12_or_13_compile, 'compile')
   cleaner.save(output)
   cleaner.close()
+  change_method(_c_m_a_p.cmap_format_12_or_13, old_12_or_13_compile, 'compile')
 
 
 def cleanup(fontfile, hinting, output, verbose):
