@@ -1,7 +1,5 @@
 package com.github.googlei18n.tachyfont;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -115,29 +113,62 @@ public class GetCharData extends HttpServlet {
     }
     return closureMap;
   }
+  
+  class GlyphEntry {
+    int glyphId;
+    int hmtx;
+    int vmtx;
+    int offset;
+    int length;
+    GlyphEntry(int glyphId, int hmtx, int vmtx, int offset, int length) {
+      this.glyphId = glyphId;
+      this.hmtx = hmtx;
+      this.vmtx = vmtx;
+      this.offset = offset;
+      this.length = length;
+    }
+  }
+  
+  class GlyphInfo {
+    boolean hasHmtx;
+    boolean hasVmtx;
+    boolean isCff;
+    List<GlyphEntry> glyphEntries = new ArrayList<GlyphEntry>();
+    GlyphInfo(boolean hasHmtx, boolean hasVmtx, boolean isCff) {
+      this.hasHmtx = hasHmtx;
+      this.hasVmtx = hasVmtx;
+      this.isCff = isCff;
+    }
+    void addGlyphEntry(int glyphId, int hmtx, int vmtx, int offset, int length) {
+      GlyphEntry glyphEntry = new GlyphEntry(glyphId, hmtx, vmtx, offset, length);
+      this.glyphEntries.add(glyphEntry);
+    }
+  }
 
   private byte[] getGlyphBundle(JarFile jarFile, Set<Integer> gids) throws IOException {
-    byte[] bundle = new byte[1024]; // TODO(bstell): fix this. Maybe a ByteArrayOutputStream
+    // TODO(bstell): fix this. Maybe use a ByteArrayOutputStream
+    byte[] bundle = new byte[1024];
+    
+    // Get the information about the glyphs and where their data location.
     JarEntry glyphInfoJarEntry = jarFile.getJarEntry("glyph_table");
     InputStream glyphInfoStream = jarFile.getInputStream(glyphInfoJarEntry);
-    int leng = glyphInfoStream.available();
     DataInputStream glyphInfoInput = new DataInputStream(glyphInfoStream);
     int flags = glyphInfoInput.readUnsignedShort();
     int numberGlyphs = glyphInfoInput.readUnsignedShort();
     int hmtxBit = (1 << 0);
     int vmtxBit = (1 << 1);
     int cffBit = (1 << 2);
-    boolean hasHmtx = (flags & hmtxBit) != 0;
-    boolean hasVmtx = (flags & vmtxBit) != 0;
-    boolean hasCff = (flags & cffBit) != 0;
-    List<Integer> glyphInfo = new ArrayList();
+    boolean hasHmtx = (flags & hmtxBit) == hmtxBit;
+    boolean hasVmtx = (flags & vmtxBit) == vmtxBit;
+    boolean isCff = (flags & cffBit) == cffBit;
+    GlyphInfo glyphInfo = new GlyphInfo(hasHmtx, hasVmtx, isCff);
     for (int i = 0; i < numberGlyphs; i++) {
-      int something1 = glyphInfoInput.readUnsignedShort();
-      Integer something2 = hasHmtx ? (int)glyphInfoInput.readShort() : null;
-      Integer something3 = hasVmtx ? (int)glyphInfoInput.readShort() : null;
-      int something4 = (int) glyphInfoInput.readInt();
-      int something5 = glyphInfoInput.readUnsignedShort();
-      int dummy = 3;
+      int gid = glyphInfoInput.readUnsignedShort();
+      int hmtx = hasHmtx ? (int)glyphInfoInput.readShort() : 0;
+      int vmtx = hasVmtx ? (int)glyphInfoInput.readShort() : 0;
+      int offset = glyphInfoInput.readInt();
+      int length = glyphInfoInput.readUnsignedShort();
+      glyphInfo.addGlyphEntry(gid, hmtx, vmtx, offset, length);
     }
     
     
