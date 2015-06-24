@@ -1,6 +1,8 @@
 package com.github.googlei18n.tachyfont;
 
+import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.TreeMap;
@@ -17,6 +19,10 @@ import javax.servlet.http.*;
 
 @SuppressWarnings("serial")
 public class GetCharData extends HttpServlet {
+  static byte hmtxBit = (1 << 0);
+  static byte vmtxBit = (1 << 1);
+  static byte cffBit = (1 << 2);
+
   @Override
   public void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
     // Get the codepoints.
@@ -52,7 +58,7 @@ public class GetCharData extends HttpServlet {
     System.out.println("gids: " + requestedGids);
 
     // TODO(bstell): get the glyph info.
-    byte[] bundle = getGlyphBundle(jarFile, requestedGids);
+    byte[] bundle = getGlyphBundle(jarFile, glyphsInfo, requestedGids);
 
     // TODO(bstell): create the glyph bundle.
 
@@ -136,11 +142,13 @@ public class GetCharData extends HttpServlet {
     boolean hasHmtx;
     boolean hasVmtx;
     boolean isCff;
+    int numberGlyphs;
     List<GlyphEntry> glyphEntries = new ArrayList<GlyphEntry>();
-    GlyphsInfo(boolean hasHmtx, boolean hasVmtx, boolean isCff) {
+    GlyphsInfo(boolean hasHmtx, boolean hasVmtx, boolean isCff, int numberGlyphs) {
       this.hasHmtx = hasHmtx;
       this.hasVmtx = hasVmtx;
       this.isCff = isCff;
+      this.numberGlyphs = numberGlyphs;
     }
     void addGlyphEntry(int glyphId, int hmtx, int vmtx, int offset, int length) {
       GlyphEntry glyphEntry = new GlyphEntry(glyphId, hmtx, vmtx, offset, length);
@@ -155,13 +163,10 @@ public class GetCharData extends HttpServlet {
     DataInputStream glyphInfoInput = new DataInputStream(glyphInfoStream);
     int flags = glyphInfoInput.readUnsignedShort();
     int numberGlyphs = glyphInfoInput.readUnsignedShort();
-    int hmtxBit = (1 << 0);
-    int vmtxBit = (1 << 1);
-    int cffBit = (1 << 2);
     boolean hasHmtx = (flags & hmtxBit) == hmtxBit;
     boolean hasVmtx = (flags & vmtxBit) == vmtxBit;
     boolean isCff = (flags & cffBit) == cffBit;
-    GlyphsInfo glyphInfo = new GlyphsInfo(hasHmtx, hasVmtx, isCff);
+    GlyphsInfo glyphInfo = new GlyphsInfo(hasHmtx, hasVmtx, isCff, numberGlyphs);
     for (int i = 0; i < numberGlyphs; i++) {
       int gid = glyphInfoInput.readUnsignedShort();
       int hmtx = hasHmtx ? (int)glyphInfoInput.readShort() : 0;
@@ -173,13 +178,39 @@ public class GetCharData extends HttpServlet {
     return glyphInfo;
   }
 
-  private byte[] getGlyphBundle(JarFile jarFile, Set<Integer> gids) throws IOException {
+  private byte[] getGlyphBundle(JarFile jarFile, GlyphsInfo glyphsInfo, Set<Integer> gids) throws IOException {
     // TODO(bstell): fix this. Maybe use a ByteArrayOutputStream
-    byte[] bundle = new byte[1024];
+//    byte[] bundle = new byte[1024];
 
     JarEntry glyphDataJarEntry = jarFile.getJarEntry("glyph_data");
     InputStream glyphDataStream = jarFile.getInputStream(glyphDataJarEntry);
     DataInputStream dataInput = new DataInputStream(glyphDataStream);
+    int dataInputPos = 0;
+    
+    // Generate the bundle.
+    ByteArrayOutputStream bundleOutputStream = new ByteArrayOutputStream();
+    DataOutputStream bundleData = new DataOutputStream(bundleOutputStream);
+    // TODO(bstell): verify this works for numbers over 32k.
+    bundleData.writeShort(glyphsInfo.numberGlyphs);
+    byte flags = glyphsInfo.hasHmtx ? hmtxBit : 0;
+    flags |= glyphsInfo.hasVmtx ? vmtxBit : 0;
+    flags |= glyphsInfo.isCff ? cffBit : 0;
+    bundleData.writeByte(flags);
+    List<GlyphEntry> glyphEntries = glyphsInfo.glyphEntries;
+    for (int gid : gids) {
+      GlyphEntry glyphEntry = glyphEntries.get(gid);
+      int offset = glyphEntry.offset;
+      int length = glyphEntry.length;
+      dataInput.skip(offset - dataInputPos);
+      dataInput.skip(length); // TODO(bstell): Read the glyph bytes.
+      dataInputPos = offset + length;
+    }
+    
+    byte[] bundle = bundleOutputStream.toByteArray();
+
+//    flag_mtx = has_hmtx | has_vmtx  | has_cff
+//    bundle_header = struct.pack('>HB', len(gids), flag_mtx)
+
 //    Map<Integer, Set<Integer>> closureMap = new TreeMap<Integer, Set<Integer>>();
 //    Integer gid = -1;
 //    while (indexInput.available() > 0) {
