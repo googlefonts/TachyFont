@@ -45,11 +45,14 @@ public class GetCharData extends HttpServlet {
         requestedGids.addAll(closureGids);
       }
     }
+    
+    GlyphsInfo glyphsInfo = getGlyphsInto(jarFile);
+    
     System.out.println("requested chars: " + Arrays.toString(requestedChars));
     System.out.println("gids: " + requestedGids);
 
     // TODO(bstell): get the glyph info.
-    byte[] glyphInfo = getGlyphBundle(jarFile, requestedGids);
+    byte[] bundle = getGlyphBundle(jarFile, requestedGids);
 
     // TODO(bstell): create the glyph bundle.
 
@@ -129,12 +132,12 @@ public class GetCharData extends HttpServlet {
     }
   }
   
-  class GlyphInfo {
+  class GlyphsInfo {
     boolean hasHmtx;
     boolean hasVmtx;
     boolean isCff;
     List<GlyphEntry> glyphEntries = new ArrayList<GlyphEntry>();
-    GlyphInfo(boolean hasHmtx, boolean hasVmtx, boolean isCff) {
+    GlyphsInfo(boolean hasHmtx, boolean hasVmtx, boolean isCff) {
       this.hasHmtx = hasHmtx;
       this.hasVmtx = hasVmtx;
       this.isCff = isCff;
@@ -145,10 +148,7 @@ public class GetCharData extends HttpServlet {
     }
   }
 
-  private byte[] getGlyphBundle(JarFile jarFile, Set<Integer> gids) throws IOException {
-    // TODO(bstell): fix this. Maybe use a ByteArrayOutputStream
-    byte[] bundle = new byte[1024];
-    
+  private GlyphsInfo getGlyphsInto(JarFile jarFile) throws IOException {
     // Get the information about the glyphs and where their data location.
     JarEntry glyphInfoJarEntry = jarFile.getJarEntry("glyph_table");
     InputStream glyphInfoStream = jarFile.getInputStream(glyphInfoJarEntry);
@@ -161,7 +161,7 @@ public class GetCharData extends HttpServlet {
     boolean hasHmtx = (flags & hmtxBit) == hmtxBit;
     boolean hasVmtx = (flags & vmtxBit) == vmtxBit;
     boolean isCff = (flags & cffBit) == cffBit;
-    GlyphInfo glyphInfo = new GlyphInfo(hasHmtx, hasVmtx, isCff);
+    GlyphsInfo glyphInfo = new GlyphsInfo(hasHmtx, hasVmtx, isCff);
     for (int i = 0; i < numberGlyphs; i++) {
       int gid = glyphInfoInput.readUnsignedShort();
       int hmtx = hasHmtx ? (int)glyphInfoInput.readShort() : 0;
@@ -170,8 +170,12 @@ public class GetCharData extends HttpServlet {
       int length = glyphInfoInput.readUnsignedShort();
       glyphInfo.addGlyphEntry(gid, hmtx, vmtx, offset, length);
     }
-    
-    
+    return glyphInfo;
+  }
+
+  private byte[] getGlyphBundle(JarFile jarFile, Set<Integer> gids) throws IOException {
+    // TODO(bstell): fix this. Maybe use a ByteArrayOutputStream
+    byte[] bundle = new byte[1024];
 
     JarEntry glyphDataJarEntry = jarFile.getJarEntry("glyph_data");
     InputStream glyphDataStream = jarFile.getInputStream(glyphDataJarEntry);
