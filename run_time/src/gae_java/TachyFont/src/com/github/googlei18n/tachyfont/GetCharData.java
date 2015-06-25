@@ -1,5 +1,6 @@
 package com.github.googlei18n.tachyfont;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -41,26 +42,42 @@ public class GetCharData extends HttpServlet {
 
     // Determine the glyphs including the closure glyphs.
     Set<Integer> requestedGids = new TreeSet<Integer>();
+    System.out.println("codepoint: gid(s)");
     for (String requestedChar : requestedChars) {
       int codePoint = requestedChar.codePointAt(0);
       Integer gid = cmapMap.get(codePoint);
+      System.out.printf("  0x%05x: %5d", codePoint, gid);
       requestedGids.add(gid);
       Set<Integer> closureGids = closureMap.get(gid);
       if (closureGids != null) {
         // TODO(bstell: check if the closure covered other chars.
         requestedGids.addAll(closureGids);
+        for (int cgid : closureGids) {
+          System.out.printf(", %5d", cgid);
+        }
       }
+      System.out.printf("\n");
     }
     
+    // Get the glyph info.
     GlyphsInfo glyphsInfo = getGlyphsInto(jarFile);
-    
-    System.out.println("requested chars: " + Arrays.toString(requestedChars));
-    System.out.println("gids: " + requestedGids);
 
-    // TODO(bstell): get the glyph info.
+    // Create the glyph bundle.
     byte[] bundle = getGlyphBundle(jarFile, glyphsInfo, requestedGids);
 
-    // TODO(bstell): create the glyph bundle.
+    // For development: report the results.
+    System.out.println("\nbundle bytes");
+    System.out.println("length = " + bundle.length);
+    int lineCount = 8;
+    for (int i = 0; i < bundle.length; i++) {
+      if ((i % lineCount) == 0) {
+        System.out.printf("  ");
+      }
+      System.out.printf("0x%02x, ", bundle[i]);
+      if ((i != 0) && ((i % lineCount) == lineCount - 1)) {
+        System.out.printf(" /* 0x%1$04X - %1$d */\n", i - lineCount + 1);
+      }
+    }
 
     // For development: send something to the display.
     resp.setContentType("text/plain");
@@ -99,7 +116,7 @@ public class GetCharData extends HttpServlet {
     int gid = -1;
     while (indexInput.available() > 0) {
       gid++;
-      Integer offset = indexInput.readInt();
+      indexInput.readInt();
       Integer size = indexInput.readUnsignedShort();
       if (size == 0) {
         continue;
@@ -179,63 +196,68 @@ public class GetCharData extends HttpServlet {
   }
 
   private byte[] getGlyphBundle(JarFile jarFile, GlyphsInfo glyphsInfo, Set<Integer> gids) throws IOException {
-    // TODO(bstell): fix this. Maybe use a ByteArrayOutputStream
-//    byte[] bundle = new byte[1024];
-
+    // Get the glyph data
     JarEntry glyphDataJarEntry = jarFile.getJarEntry("glyph_data");
     InputStream glyphDataStream = jarFile.getInputStream(glyphDataJarEntry);
-    DataInputStream dataInput = new DataInputStream(glyphDataStream);
-    int dataInputPos = 0;
-    
-    // Generate the bundle.
+    // Put the data into a byteArrayStream to support 'seeking' to offset
+    int glyphDataSize = glyphDataStream.available();
+    byte[] buffer = new byte[glyphDataSize];
+    ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+    int readLength;
+    while ((readLength = glyphDataStream.read(buffer, 0, glyphDataSize)) != -1) {
+      byteArrayOutputStream.write(buffer, 0, readLength);
+    }
+    buffer = byteArrayOutputStream.toByteArray();
+    ByteArrayInputStream glyphDataByteArrayInputStream =
+        new ByteArrayInputStream(buffer);
+
+    // Create a holder for the bundle.
     ByteArrayOutputStream bundleOutputStream = new ByteArrayOutputStream();
     DataOutputStream bundleData = new DataOutputStream(bundleOutputStream);
-    // TODO(bstell): verify this works for numbers over 32k.
-    bundleData.writeShort(glyphsInfo.numberGlyphs);
+
+    // Write the bundle header.
+    bundleData.writeShort(gids.size());
     byte flags = glyphsInfo.hasHmtx ? hmtxBit : 0;
     flags |= glyphsInfo.hasVmtx ? vmtxBit : 0;
     flags |= glyphsInfo.isCff ? cffBit : 0;
     bundleData.writeByte(flags);
+
+    // Write the per-glyph data.
+    // The CFF data offset is off by one.
+    int delta = glyphsInfo.isCff ? -1 : 0;
+    int bytesLength = 1000;
+    byte[] bytes = new byte[bytesLength];
     List<GlyphEntry> glyphEntries = glyphsInfo.glyphEntries;
     for (int gid : gids) {
+      // Write the GlyphEntry data.
       GlyphEntry glyphEntry = glyphEntries.get(gid);
+      bundleData.writeShort(gid);
+      if (glyphsInfo.hasHmtx) {
+        bundleData.writeShort(glyphEntry.hmtx);
+      }
+      if (glyphsInfo.hasVmtx) {
+        bundleData.writeShort(glyphEntry.vmtx);
+      }
       int offset = glyphEntry.offset;
       int length = glyphEntry.length;
-      dataInput.skip(offset - dataInputPos);
-      dataInput.skip(length); // TODO(bstell): Read the glyph bytes.
-      dataInputPos = offset + length;
+      bundleData.writeInt(offset);
+      bundleData.writeShort(length);
+      if (length > bytesLength) {
+        bytesLength *= 2;
+        bytes = new byte[bytesLength];
+      }
+      glyphDataByteArrayInputStream.reset();
+      glyphDataByteArrayInputStream.skip(offset + delta);
+      glyphDataByteArrayInputStream.read(bytes, 0, length);
+      bundleData.write(bytes, 0, length);
     }
     
-    byte[] bundle = bundleOutputStream.toByteArray();
-
-//    flag_mtx = has_hmtx | has_vmtx  | has_cff
-//    bundle_header = struct.pack('>HB', len(gids), flag_mtx)
-
-//    Map<Integer, Set<Integer>> closureMap = new TreeMap<Integer, Set<Integer>>();
-//    Integer gid = -1;
-//    while (indexInput.available() > 0) {
-//      gid++;
-//      Integer offset = indexInput.readInt();
-//      Integer size = indexInput.readUnsignedShort();
-//      if (size == 0) {
-//        continue;
-//      }
-//      if (size < 0) {
-//        System.out.printf("gid %d: size = %d\n", gid, size);
-//        continue;
-//      }
-//      Set<Integer> closureGids = new TreeSet<Integer>();
-//      while (size > 0) {
-//        Integer closureGid = dataInput.readUnsignedShort();
-//        size -= 2;
-//        if (closureGid.intValue() != gid.intValue()) {
-//          closureGids.add(closureGid);
-//        }
-//      }
-//      if (!closureGids.isEmpty()) {
-//        closureMap.put(gid, closureGids);
-//      }
-//    }
-    return bundle;
+    return bundleOutputStream.toByteArray();
   }
 }
+
+
+
+
+
+
