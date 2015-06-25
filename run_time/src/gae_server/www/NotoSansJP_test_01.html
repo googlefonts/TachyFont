@@ -1,0 +1,27 @@
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+  <!-- TachyFont -->
+  <script src="js/closure-library/closure/goog/base.js"></script>
+  <script src="js/closure_deps.js"></script>
+  <script src="js/tachyfont/tachyfont.js"></script>
+  <script src="js/tachyfont/webfonttailor.js"></script>
+</head>
+
+<body>
+  <script>
+    // Because of the way Closure includes javascript file this has to be after
+    // the head section.
+    var fontsInfo = webfonttailor.getTachyFontsInfo( ['Noto Sans'], ['ja'],
+        [ { 'style': 'normal', 
+            'weights': [ '100' ],
+          },
+        ],
+        {});
+    var tachyFontSet = tachyfont.loadFonts('NotoSansJP', fontsInfo);
+  </script>
+<span style='font-family: NotoSansJP; font-weight: 100;'
+>&#x22;&#x61;&#x62;&#x63;&#x2014;&#x1f215;</span>
+</body>
+</html>
