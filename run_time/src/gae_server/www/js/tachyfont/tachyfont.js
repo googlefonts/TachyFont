@@ -132,27 +132,23 @@ if (goog.DEBUG) {
     var debugConsole = new goog.debug.Console();
     debugConsole.setCapturing(true);
 
-
     /**
      * @type {goog.debug.Logger}
      */
     tachyfont.logger = goog.log.getLogger('debug', debugLevel);
 
-
-    /**
-     * @type {boolean}
-     */
-    tachyfont.buildDemo = false;
+   /**
+    * For debugging: option to disable the obfuscation.
+    */
+    var noObfuscateStr = uri.getParameterValue('TachyFontNoObfuscate') || '';
+    /** @type {boolean} */
+    tachyfont.noObfuscate = noObfuscateStr.toLowerCase() == 'true';;
 
     /**
      * Disable using persistent store. This is useful for forcing the base and
      * char data to be fetched regardless on what is in persistent store.
      */
     var persistDataStr = uri.getParameterValue('TachyFontPersistData') || '';
-    // The following code implements this logic:
-    // if (persistDataStr.toLowerCase() == 'false') {
-    //   tachyfont.persistData = false;
-    // }
     /** @type {boolean} */
     tachyfont.persistData = persistDataStr.toLowerCase() != 'false';
 
