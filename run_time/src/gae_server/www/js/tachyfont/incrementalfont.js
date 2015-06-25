@@ -289,10 +289,6 @@ tachyfont.IncrementalFont.createManager = function(fontInfo, dropData, params) {
         true);
   }, maxVisibilityTimeout);
 
-  if (tachyfont.buildDemo) {
-    tachyfont.buildDemo = false;
-  }
-
   return incrFontMgr;
 };
 
@@ -1246,6 +1242,10 @@ tachyfont.IncrementalFont.obj_.prototype.determineIfOneCharPerSeg = function() {
  * @return {!Array.<number>} The codepoints with obusfuscation.
  */
 tachyfont.possibly_obfuscate = function(codes, charlist, cmapMapping) {
+  if (tachyfont.noObfuscate == true) {
+    return codes;
+  }
+
   // Check if we need to obfuscate the request.
   if (codes.length >= tachyfont.MINIMUM_NON_OBFUSCATION_LENGTH)
     return codes;
