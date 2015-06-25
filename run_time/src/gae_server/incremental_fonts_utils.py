@@ -159,7 +159,6 @@ def prepare_bundle(request):
   glyph_request = _parse_json(request.body)
   font = glyph_request['font']
   codepoints = glyph_request['arr']
-#  codepoints = [ 0x00022, 0x00061, 0x00062, 0x00063, 0x02014, 0x1f215, ]
   elapsed_time('prepare_bundle for {0} characters'.format(len(codepoints)),
                True)
   zf = zipfile.ZipFile(BASE_DIR + '/fonts/' + font + '.TachyFont.jar', 'r')
@@ -180,7 +179,7 @@ def prepare_bundle(request):
 #     if _code in cmap:
 #       _gid = cmap[_code]
 #       _closure_gids = closure_reader.read(cmap[_code])
-#       print "  0x%05x: %s" % (_code, tuple(_closure_gids))
+#       print "  0x%05x (%d): %s" % (_code, _code, tuple(_closure_gids))
 #     else:
 #       print "code 0x%05x not in the font" % (_code)
 
