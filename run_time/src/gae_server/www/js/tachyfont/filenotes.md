@@ -51,10 +51,3 @@ webfonttailer.js
 ================
 A class the gives a list of fonts given a font-family/language/style.
 
-
-
-ONLY FOR DEMO/DEBUG
-===================
-* for_debug.js
-* time-utils.js
-
