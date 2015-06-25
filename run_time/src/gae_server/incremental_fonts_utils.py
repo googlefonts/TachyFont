@@ -159,6 +159,7 @@ def prepare_bundle(request):
   glyph_request = _parse_json(request.body)
   font = glyph_request['font']
   codepoints = glyph_request['arr']
+#  codepoints = [ 0x00022, 0x00061, 0x00062, 0x00063, 0x02014, 0x1f215, ]
   elapsed_time('prepare_bundle for {0} characters'.format(len(codepoints)),
                True)
   zf = zipfile.ZipFile(BASE_DIR + '/fonts/' + font + '.TachyFont.jar', 'r')
@@ -174,6 +175,15 @@ def prepare_bundle(request):
   for code in codepoints:
     if code in cmap:
       gids.update(closure_reader.read(cmap[code]))
+
+#   for _code in codepoints:
+#     if _code in cmap:
+#       _gid = cmap[_code]
+#       _closure_gids = closure_reader.read(cmap[_code])
+#       print "  0x%05x: %s" % (_code, tuple(_closure_gids))
+#     else:
+#       print "code 0x%05x not in the font" % (_code)
+
   closure_reader.close()
 
   elapsed_time('gather glyph info')
@@ -212,7 +222,7 @@ def prepare_bundle(request):
   else:
     delta = 0
   # Copy in the data from glyph_info and data_bytes
-  for gid in gids:
+  for gid in sorted(gids):
     entry_offset = header_size + gid * entry_size
     bundle_bytes[bundle_pos:bundle_pos + entry_size] = (
         glyph_info[entry_offset:entry_offset + entry_size])
@@ -226,6 +236,17 @@ def prepare_bundle(request):
   elapsed_time('build bundle')
 
   zf.close()
+#   print "bundle bytes"
+#   lineCount = 8
+#   print "length =", len(bundle_bytes)
+#   for i in range(len(bundle_bytes)):
+#     if (i % lineCount == 0):
+#       print " ",
+#     print("0x%02x," % (bundle_bytes[i])),
+#     if (i and (i % lineCount == lineCount - 1)):
+#       lineStart = i - lineCount + 1
+#       print " /* 0x%04X - %d */" % (lineStart, lineStart)
+#   print ""
   elapsed_time('close files')
   return str(bundle_bytes)
 
