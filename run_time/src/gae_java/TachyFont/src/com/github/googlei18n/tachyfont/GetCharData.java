@@ -8,15 +8,24 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.TreeMap;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+import com.google.gson.Gson;
 
 import javax.servlet.http.*;
+
+class CharRequest {
+  String font;
+  ArrayList<Integer> arr;
+  @Override
+  public String toString() {
+    return "font='" + this.font + "', arr = " + arr.toString();
+  }
+}
 
 @SuppressWarnings("serial")
 public class GetCharData extends HttpServlet {
@@ -24,39 +33,49 @@ public class GetCharData extends HttpServlet {
   static byte vmtxBit = (1 << 1);
   static byte cffBit = (1 << 2);
 
+  public static JarFile fontNameToJarFile(String fontname) throws IOException {
+    // TODO(bstell): needs work.
+    String filename = "";
+    if (fontname.equals("NotoSansJP-Thin")) {
+      filename = "fonts/noto/sans/NotoSansJP-Thin.TachyFont.jar";
+    }
+    JarFile jarFile = new JarFile("WEB-INF/" + filename);
+    return jarFile;
+  }
+  
   @Override
-  public void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-    // Get the codepoints.
-    // Pretend data for these chars was requested.
-    String[] requestedChars = { "\uD83C\uDE15", "a", "b", "c", "\"",  "\u2014", };
+  public void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+    Gson gson = new Gson();
+    CharRequest charRequest = gson.fromJson(req.getReader(), CharRequest.class);
+    String xy = charRequest.toString();
+    System.out.println("charRequest = " + xy);
 
-    // Get the preprocessed font.
-    String jarFilename = "fonts/noto/sans/NotoSansJP-Thin.TachyFont.jar";
-    JarFile jarFile = new JarFile("WEB-INF/" + jarFilename);
-    
+    // TODO(bstell): the processing of the JAR file should be done somewhere 
+    // else and cached. this routine should use the cached results of the JAR 
+    // processing.
+    // Convert to the preprocessed font.
+    JarFile jarFile = fontNameToJarFile(charRequest.font);
     // Get the cmap info.
     Map<Integer, Integer> cmapMap = getCmapMap(jarFile);
-
     // Get the closure info.
     Map<Integer, Set<Integer>> closureMap = getClosureMap(jarFile);
 
     // Determine the glyphs including the closure glyphs.
     Set<Integer> requestedGids = new TreeSet<Integer>();
-    System.out.println("codepoint: gid(s)");
-    for (String requestedChar : requestedChars) {
-      int codePoint = requestedChar.codePointAt(0);
+    // System.out.println("codepoint: gid(s)");
+    for (int codePoint : charRequest.arr) {
       Integer gid = cmapMap.get(codePoint);
-      System.out.printf("  0x%05x: %5d", codePoint, gid);
+      // System.out.printf("  0x%05x: %5d", codePoint, gid);
       requestedGids.add(gid);
       Set<Integer> closureGids = closureMap.get(gid);
       if (closureGids != null) {
         // TODO(bstell: check if the closure covered other chars.
         requestedGids.addAll(closureGids);
-        for (int cgid : closureGids) {
-          System.out.printf(", %5d", cgid);
-        }
+        // for (int cgid : closureGids) {
+          // System.out.printf(", %5d", cgid);
+        // }
       }
-      System.out.printf("\n");
+      // System.out.printf("\n");
     }
     
     // Get the glyph info.
@@ -65,24 +84,23 @@ public class GetCharData extends HttpServlet {
     // Create the glyph bundle.
     byte[] bundle = getGlyphBundle(jarFile, glyphsInfo, requestedGids);
 
-    // For development: report the results.
-    System.out.println("\nbundle bytes");
-    System.out.println("length = " + bundle.length);
-    int lineCount = 8;
-    for (int i = 0; i < bundle.length; i++) {
-      if ((i % lineCount) == 0) {
-        System.out.printf("  ");
-      }
-      System.out.printf("0x%02x, ", bundle[i]);
-      if ((i != 0) && ((i % lineCount) == lineCount - 1)) {
-        System.out.printf(" /* 0x%1$04X - %1$d */\n", i - lineCount + 1);
-      }
-    }
+//    // For development: report the results.
+//    System.out.println("\nbundle bytes");
+//    System.out.println("length = " + bundle.length);
+//    int lineCount = 8;
+//    for (int i = 0; i < bundle.length; i++) {
+//      if ((i % lineCount) == 0) {
+//        System.out.printf("  ");
+//      }
+//      System.out.printf("0x%02x, ", bundle[i]);
+//      if ((i != 0) && ((i % lineCount) == lineCount - 1)) {
+//        System.out.printf(" /* 0x%1$04X - %1$d */\n", i - lineCount + 1);
+//      }
+//    }
 
-    // For development: send something to the display.
-    resp.setContentType("text/plain");
-    resp.getWriter().println("requested chars: " + Arrays.toString(requestedChars));
-    resp.getWriter().println("gids: " + requestedGids);
+    // TODO(bstell): determine the correct content type.
+    resp.setContentType("text/richtext");
+    resp.getOutputStream().write(bundle, 0, bundle.length);
     jarFile.close();
   }
 
