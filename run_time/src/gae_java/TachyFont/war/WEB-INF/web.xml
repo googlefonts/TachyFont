@@ -4,24 +4,10 @@ xmlns="http://java.sun.com/xml/ns/javaee"
 xmlns:web="http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
 xsi:schemaLocation="http://java.sun.com/xml/ns/javaee
 http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd" version="2.5">
-	<servlet>
-		<servlet-name>TachyFont</servlet-name>
-		<servlet-class>com.github.googlei18n.tachyfont.TachyFontServlet</servlet-class>
-	</servlet>
-	<servlet-mapping>
-		<servlet-name>TachyFont</servlet-name>
-		<url-pattern>/tachyfont</url-pattern>
-	</servlet-mapping>
   <servlet>
     <servlet-name>GetCharData</servlet-name>
     <servlet-class>com.github.googlei18n.tachyfont.GetCharData</servlet-class>
   </servlet>
-  <!-- 
-  <servlet-mapping>
-    <servlet-name>GetCharData</servlet-name>
-    <url-pattern>/tachyfont/getchardata</url-pattern>
-  </servlet-mapping>
-   -->
   <servlet-mapping>
     <servlet-name>GetCharData</servlet-name>
     <url-pattern>/incremental_fonts/request</url-pattern>
