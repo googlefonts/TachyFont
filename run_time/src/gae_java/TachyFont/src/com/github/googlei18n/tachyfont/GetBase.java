@@ -14,7 +14,8 @@ public class GetBase extends HttpServlet {
   @Override
   public void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
     // Get the TachyFont base.
-    String jarFilename = "fonts/noto/sans/NotoSansJP-Thin_subset_smp.TachyFont.jar";
+    System.out.println("need to get the font parameter");
+    String jarFilename = "fonts/noto/sans/NotoSansJP-Thin.TachyFont.jar";
     JarFile jarFile = new JarFile("WEB-INF/" + jarFilename);
     JarEntry base = jarFile.getJarEntry("base");
     InputStream baseStream = jarFile.getInputStream(base);
