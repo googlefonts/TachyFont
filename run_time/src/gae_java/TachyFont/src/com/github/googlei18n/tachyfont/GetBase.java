@@ -24,12 +24,12 @@ public class GetBase extends HttpServlet {
     int bytesRead = 0;
     resp.setContentType("application/x-font-otf");
     OutputStream outputStream = resp.getOutputStream();
-    GZIPOutputStream gzipOutputStream = new GZIPOutputStream(outputStream);
-    resp.setHeader("Content-Encoding", "gzip");
+//    GZIPOutputStream gzipOutputStream = new GZIPOutputStream(outputStream);
+//    resp.setHeader("Content-Encoding", "gzip");
     while ((bytesRead = baseStream.read(buffer)) != -1) {
-      gzipOutputStream.write(buffer, 0, bytesRead);
+      outputStream.write(buffer, 0, bytesRead);
     }
-    gzipOutputStream.close();
+//    gzipOutputStream.close();
     jarFile.close();
   }
 }
