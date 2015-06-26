@@ -18,15 +18,31 @@ http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd" version="2.5">
   </servlet>
   <servlet-mapping>
     <servlet-name>GetBase</servlet-name>
-    <url-pattern>/tachyfont/getbase</url-pattern>
+    <url-pattern>/incremental_fonts/incrfonts/*</url-pattern>
   </servlet-mapping>
   <servlet>
     <servlet-name>GetCharData</servlet-name>
     <servlet-class>com.github.googlei18n.tachyfont.GetCharData</servlet-class>
   </servlet>
+  <!-- 
   <servlet-mapping>
     <servlet-name>GetCharData</servlet-name>
     <url-pattern>/tachyfont/getchardata</url-pattern>
+  </servlet-mapping>
+   -->
+  <!-- 
+  <servlet-mapping>
+    <servlet-name>GetCharData</servlet-name>
+    <url-pattern>/incremental_fonts/incrfonts/*</url-pattern>
+  </servlet-mapping>
+   -->
+  <servlet>
+    <servlet-name>Gen204</servlet-name>
+    <servlet-class>com.github.googlei18n.tachyfont.Gen204</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>Gen204</servlet-name>
+    <url-pattern>/gen_204</url-pattern>
   </servlet-mapping>
 	<welcome-file-list>
 		<welcome-file>index.html</welcome-file>
