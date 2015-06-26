@@ -19,16 +19,17 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.TreeMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
-
-@SuppressWarnings("serial")
+/**
+ * A class that handle the TachyFont data in the JAR file.
+ */
 public class TachyFontData {
   static byte hmtxBit = (1 << 0);
   static byte vmtxBit = (1 << 1);
@@ -117,7 +118,8 @@ public class TachyFontData {
   }
 
   
-  public static byte[] getGlyphBundle(JarFile jarFile, GlyphsInfo glyphsInfo, Set<Integer> gids) throws IOException {
+  public static byte[] getGlyphBundle(JarFile jarFile, GlyphsInfo glyphsInfo, Set<Integer> gids) 
+      throws IOException {
     // Get the glyph data
     JarEntry glyphDataJarEntry = jarFile.getJarEntry("glyph_data");
     InputStream glyphDataStream = jarFile.getInputStream(glyphDataJarEntry);
@@ -191,8 +193,8 @@ public class TachyFontData {
     GlyphsInfo glyphInfo = new GlyphsInfo(hasHmtx, hasVmtx, isCff, numberGlyphs);
     for (int i = 0; i < numberGlyphs; i++) {
       int gid = glyphInfoInput.readUnsignedShort();
-      int hmtx = hasHmtx ? (int)glyphInfoInput.readShort() : 0;
-      int vmtx = hasVmtx ? (int)glyphInfoInput.readShort() : 0;
+      int hmtx = hasHmtx ? (int) glyphInfoInput.readShort() : 0;
+      int vmtx = hasVmtx ? (int) glyphInfoInput.readShort() : 0;
       int offset = glyphInfoInput.readInt();
       int length = glyphInfoInput.readUnsignedShort();
       glyphInfo.addGlyphEntry(gid, hmtx, vmtx, offset, length);

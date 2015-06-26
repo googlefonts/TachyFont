@@ -15,7 +15,10 @@ package com.github.googlei18n.tachyfont;
 
 import java.util.ArrayList;
 import java.util.List;
-  
+
+/**
+ * A class that holds information about a set of glyphs.
+ */
 public class GlyphsInfo {
   static byte hmtxBit = (1 << 0);
   static byte vmtxBit = (1 << 1);

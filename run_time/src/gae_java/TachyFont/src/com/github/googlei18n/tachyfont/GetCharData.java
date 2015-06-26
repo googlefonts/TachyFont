@@ -13,16 +13,19 @@
  */
 package com.github.googlei18n.tachyfont;
 
+import com.google.gson.Gson;
+
 import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.jar.JarFile;
-import com.google.gson.Gson;
 
 import javax.servlet.http.*;
 
-
+/**
+ * A servlet that handle char data requests.
+ */
 @SuppressWarnings("serial")
 public class GetCharData extends HttpServlet {
 
@@ -50,7 +53,7 @@ public class GetCharData extends HttpServlet {
       requestedGids.add(gid);
       Set<Integer> closureGids = closureMap.get(gid);
       if (closureGids != null) {
-        // TODO(bstell: check if the closure covered other chars.
+        // TODO(bstell): check if the closure covered other chars.
         requestedGids.addAll(closureGids);
         // for (int cgid : closureGids) {
           // System.out.printf(", %5d", cgid);

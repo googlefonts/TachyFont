@@ -15,6 +15,9 @@ package com.github.googlei18n.tachyfont;
 
 import java.util.ArrayList;
 
+/**
+ * A class the Gson can write the char request parameters into.
+ */
 public class CharRequest {
   String font;
   ArrayList<Integer> arr;

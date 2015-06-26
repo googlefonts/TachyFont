@@ -14,6 +14,9 @@
 package com.github.googlei18n.tachyfont;
 
 
+/**
+ * A class that holds the information about a glyph.
+ */
 public class GlyphEntry {
   int glyphId;
   int hmtx;

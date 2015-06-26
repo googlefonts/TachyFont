@@ -17,6 +17,9 @@ import java.io.IOException;
 
 import javax.servlet.http.*;
 
+/**
+ * A servlet that handles the gen_204 metrics and error reports.
+ */
 @SuppressWarnings("serial")
 public class Gen204 extends HttpServlet {
   @Override

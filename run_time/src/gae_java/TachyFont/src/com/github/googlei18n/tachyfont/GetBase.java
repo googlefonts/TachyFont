@@ -18,6 +18,9 @@ import java.io.OutputStream;
 
 import javax.servlet.http.*;
 
+/**
+ * A servlet to send the TachyFont base data.
+ */
 @SuppressWarnings("serial")
 public class GetBase extends HttpServlet {
   @Override
