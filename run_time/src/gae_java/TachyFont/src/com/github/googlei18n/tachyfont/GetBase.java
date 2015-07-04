@@ -31,10 +31,11 @@ public class GetBase extends HttpServlet {
     if (!("".equals(pathParts[0])) || !("base".equals(pathParts[2]))) {
       throw new IOException();
     }
-    byte[] buffer = TachyFontData.getBase(pathParts[1]);
+    String fontname = pathParts[1];
+    TachyFontData tachyFontData = GetTachyFontData.getTachyFontData(fontname);
+    byte[] buffer = tachyFontData.getBase();
 
     // TODO(bstell): Check that the transfer is compressed.
-    //resp.setContentType("application/x-font-otf");
     resp.setContentType("application/binary");
     OutputStream outputStream = resp.getOutputStream();
     outputStream.write(buffer);
