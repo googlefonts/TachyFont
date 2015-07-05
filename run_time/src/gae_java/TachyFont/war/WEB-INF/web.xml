@@ -6,7 +6,7 @@ xsi:schemaLocation="http://java.sun.com/xml/ns/javaee
 http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd" version="2.5">
   <servlet>
     <servlet-name>CharDataServlet</servlet-name>
-    <servlet-class>com.github.googlei18n.tachyfont.CharDataServlet</servlet-class>
+    <servlet-class>com.github.googlei18n.tachyfont.gae.server.CharDataServlet</servlet-class>
   </servlet>
   <servlet-mapping>
     <servlet-name>CharDataServlet</servlet-name>
@@ -14,7 +14,7 @@ http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd" version="2.5">
   </servlet-mapping>
   <servlet>
     <servlet-name>BaseDataServlet</servlet-name>
-    <servlet-class>com.github.googlei18n.tachyfont.BaseDataServlet</servlet-class>
+    <servlet-class>com.github.googlei18n.tachyfont.gae.server.BaseDataServlet</servlet-class>
   </servlet>
   <servlet-mapping>
     <servlet-name>BaseDataServlet</servlet-name>
@@ -22,7 +22,7 @@ http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd" version="2.5">
   </servlet-mapping>
    <servlet>
     <servlet-name>Gen204</servlet-name>
-    <servlet-class>com.github.googlei18n.tachyfont.Gen204</servlet-class>
+    <servlet-class>com.github.googlei18n.tachyfont.gae.server.Gen204</servlet-class>
   </servlet>
   <servlet-mapping>
     <servlet-name>Gen204</servlet-name>
