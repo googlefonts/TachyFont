@@ -35,7 +35,6 @@ public class TachyFontData {
   static byte vmtxBit = (1 << 1);
   static byte cffBit = (1 << 2);
   private String fontname;
-  private Class classInJar;
   private JarInputStream jarIn;
   private byte[] baseData = null;
   // The cmap info.
@@ -341,4 +340,14 @@ private GlyphsInfo buildGlyphsInfo(byte[] glyphTableBytes) throws IOException {
     return glyphInfo;
   }
 
+  @Override
+  public String toString() {
+    String filename = "";
+    try {
+      filename = FontNameMapping.toJarFileName(fontname);
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+    return fontname + " " + filename;
+  }
 }

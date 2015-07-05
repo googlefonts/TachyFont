@@ -39,7 +39,8 @@ public class GetTachyFontData {
     }
   }
 
-  public static TachyFontData getTachyFontData(String fontname, Class klass) throws IOException {
+  public static TachyFontData getTachyFontData(String fontname, Class<?> klass)
+      throws IOException {
     InputStream inputStream = null;
     try {
       // Convert the name to the JAR path.
