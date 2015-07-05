@@ -274,8 +274,9 @@ public class TachyFontData {
 
   
   /**
+   * Get the glyph data for a given list of characters.
    * 
-   * @return
+   * @return The glyph data.
    */
   public byte[] getGlyphBundleForChars(List<Integer> codepoints) 
       throws IOException {
