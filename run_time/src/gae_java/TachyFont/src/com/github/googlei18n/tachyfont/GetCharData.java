@@ -16,10 +16,6 @@ package com.github.googlei18n.tachyfont;
 import com.google.gson.Gson;
 
 import java.io.IOException;
-//import java.util.Map;
-//import java.util.Set;
-//import java.util.TreeSet;
-//import java.util.jar.JarFile;
 
 import javax.servlet.http.*;
 
@@ -37,11 +33,8 @@ public class GetCharData extends HttpServlet {
 
     String fontname = charRequest.getFontname();
     TachyFontData tachyFontData = GetTachyFontData.getTachyFontData(fontname);
-//    byte[] buffer = tachyFontData.getBase();
 
     byte[] bundle = tachyFontData.getGlyphBundleForChars(charRequest.getCodePoints());
-
-
 
     // TODO(bstell): determine the correct content type.
     resp.setContentType("text/richtext");
