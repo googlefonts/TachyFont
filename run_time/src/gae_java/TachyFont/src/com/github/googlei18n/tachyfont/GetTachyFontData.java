@@ -38,4 +38,21 @@ public class GetTachyFontData {
       }
     }
   }
+
+  public static TachyFontData getTachyFontData(String fontname, Class klass) throws IOException {
+    InputStream inputStream = null;
+    try {
+      // Convert the name to the JAR path.
+      String filename = FontNameMapping.toJarFileName(fontname);
+      inputStream = klass.getResourceAsStream(filename);
+      JarInputStream jarIn = new JarInputStream(inputStream);
+      TachyFontData tachyFontData = new TachyFontData(fontname, jarIn);
+      tachyFontData.init();
+      return tachyFontData;
+    } finally {
+      if (inputStream != null) {
+        inputStream.close();
+      }
+    }
+  }
 }
