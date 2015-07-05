@@ -11,7 +11,10 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.github.googlei18n.tachyfont;
+package com.github.googlei18n.tachyfont.gae.server;
+
+import com.github.googlei18n.tachyfont.GetTachyFontData;
+import com.github.googlei18n.tachyfont.TachyFontData;
 
 import java.io.IOException;
 import java.io.OutputStream;
