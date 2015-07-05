@@ -13,31 +13,31 @@
  */
 package com.github.googlei18n.tachyfont;
 
-import com.google.gson.Gson;
-
 import java.io.IOException;
+import java.io.OutputStream;
 
 import javax.servlet.http.*;
 
 /**
- * A servlet that handle char data requests.
+ * A servlet to send the TachyFont base data.
  */
 @SuppressWarnings("serial")
-public class GetCharData extends HttpServlet {
-
+public class BaseDataServlet extends HttpServlet {
   @Override
-  // TODO(bstell): the rename this file to indicate it is a servlet file.
-  public void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-    Gson gson = new Gson();
-    CharRequest charRequest = gson.fromJson(req.getReader(), CharRequest.class);
-
-    String fontname = charRequest.getFontname();
+  public void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+    // Get the TachyFont base.
+    String pathInfo = req.getPathInfo();
+    String[] pathParts = pathInfo.split("/");
+    if (!("".equals(pathParts[0])) || !("base".equals(pathParts[2]))) {
+      throw new IOException();
+    }
+    String fontname = pathParts[1];
     TachyFontData tachyFontData = GetTachyFontData.getTachyFontData(fontname);
+    byte[] buffer = tachyFontData.getBase();
 
-    byte[] bundle = tachyFontData.getGlyphBundleForChars(charRequest.getCodePoints());
-
-    // TODO(bstell): determine the correct content type.
-    resp.setContentType("text/richtext");
-    resp.getOutputStream().write(bundle, 0, bundle.length);
+    // TODO(bstell): Check that the transfer is compressed.
+    resp.setContentType("application/binary");
+    OutputStream outputStream = resp.getOutputStream();
+    outputStream.write(buffer);
   }
 }

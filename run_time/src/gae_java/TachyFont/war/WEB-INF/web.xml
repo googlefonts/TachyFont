@@ -5,19 +5,19 @@ xmlns:web="http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
 xsi:schemaLocation="http://java.sun.com/xml/ns/javaee
 http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd" version="2.5">
   <servlet>
-    <servlet-name>GetCharData</servlet-name>
-    <servlet-class>com.github.googlei18n.tachyfont.GetCharData</servlet-class>
+    <servlet-name>CharDataServlet</servlet-name>
+    <servlet-class>com.github.googlei18n.tachyfont.CharDataServlet</servlet-class>
   </servlet>
   <servlet-mapping>
-    <servlet-name>GetCharData</servlet-name>
+    <servlet-name>CharDataServlet</servlet-name>
     <url-pattern>/incremental_fonts/request</url-pattern>
   </servlet-mapping>
   <servlet>
-    <servlet-name>GetBase</servlet-name>
-    <servlet-class>com.github.googlei18n.tachyfont.GetBase</servlet-class>
+    <servlet-name>BaseDataServlet</servlet-name>
+    <servlet-class>com.github.googlei18n.tachyfont.BaseDataServlet</servlet-class>
   </servlet>
   <servlet-mapping>
-    <servlet-name>GetBase</servlet-name>
+    <servlet-name>BaseDataServlet</servlet-name>
     <url-pattern>/incremental_fonts/incrfonts/*</url-pattern>
   </servlet-mapping>
    <servlet>
