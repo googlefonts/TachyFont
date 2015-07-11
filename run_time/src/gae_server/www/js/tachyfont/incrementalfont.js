@@ -179,7 +179,8 @@ tachyfont.IncrementalFont.Error_ = {
   FORMAT12_SEGMENT_LENGTH2: '38',
   FORMAT12_GLYPH_ID_NOT_SET: '39',
   FORMAT12_CHAR_INFO: '40',
-  NOT_USING_PERSISTED_DATA: '41'
+  NOT_USING_PERSISTED_DATA: '41',
+  FINGERPRINT_MISMATCH: '42'
 };
 
 
@@ -194,7 +195,6 @@ tachyfont.IncrementalFont.Error_ = {
 tachyfont.IncrementalFont.reportError_ = function(errNum, errId, errInfo) {
   if (goog.DEBUG) {
     if (!tachyfont.reporter) {
-      debugger; // Failed to report error.
       goog.log.error(tachyfont.logger, 'failed to report error');
     }
   }
@@ -1006,7 +1006,7 @@ tachyfont.IncrementalFont.obj_.prototype.setFormat4GlyphIds_ =
       continue;
     }
     for (var j = 0; j < codes.length; j++) {
-      var code = codes[0];
+      var code = codes[j];
       if (goog.DEBUG) {
         goog.log.info(tachyfont.logger, 'format 4: code = ' + code);
       }
@@ -1415,6 +1415,29 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars = function() {
                 }.bind(this));
               }.bind(this)).
               then(function(bundleResponse) {
+                if (bundleResponse == null) {
+                  return null;
+                }
+                var base_signature = this.fileInfo_.sha1_fingerprint;
+                if (base_signature == bundleResponse.signature) {
+                  return bundleResponse;
+                }
+                tachyfont.IncrementalFont.reportError_(
+                  tachyfont.IncrementalFont.Error_.FINGERPRINT_MISMATCH,
+                  this.fontInfo.getWeight(), '');
+                // The char data is from different file so drop all the data.
+                return this.getIDB_
+                .then(function(db) {
+                  db.close();
+                  return this.deleteDatabase(this.fontInfo.getName(),
+                    this.fontInfo.getWeight())
+                    .then(function() {
+                      pendingRejectFn();
+                      return goog.Promise.reject();
+                    });
+                }.bind(this));
+              }.bind(this)).
+              then(function(bundleResponse) {
                 return this.getBase.
                 then(function(arr) {
                   var fileInfo = arr[0];
@@ -1507,13 +1530,15 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars = function() {
                   //       this.fontInfo.getWeight(), e);
                   //   pendingRejectFn(false);
                 }.bind(this));
-              }.bind(this));
+              }.bind(this))
+              .thenCatch(function() {
+                pendingRejectFn(false);
+              });
         }.bind(this)).
             thenCatch(function(e) {
               tachyfont.IncrementalFont.reportError_(
                   tachyfont.IncrementalFont.Error_.LOAD_CHARS_INJECT_CHARS,
                   this.fontInfo.getWeight(), e);
-              pendingRejectFn(false);
             }.bind(this));
       }.bind(this)).
       then(function() {
@@ -1763,7 +1788,7 @@ tachyfont.IncrementalFont.obj_.prototype.deleteDatabase = function(name, id) {
     req.onerror = function() {
       tachyfont.IncrementalFont.reportError_(
           tachyfont.IncrementalFont.Error_.DELETE_DATA_FAILED, id,
-          'Delete database blocked');
+          'Delete database failed');
       reject();
     };
     req.onblocked = function() {

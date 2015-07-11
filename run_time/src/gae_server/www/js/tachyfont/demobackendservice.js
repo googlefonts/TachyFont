@@ -57,7 +57,7 @@ DemoBackendService.prototype.requestCodepoints = function(fontInfo, codes) {
       //{'Content-Type': 'application/json'},
       {'Content-Type': 'text/plain'})
       .then(function(glyphData) {
-        return that.parseCodepointHeader_(glyphData);
+        return that.parseHeader_(glyphData);
       });
 };
 
@@ -71,14 +71,30 @@ DemoBackendService.prototype.requestCodepoints = function(fontInfo, codes) {
  *         fontSignature: ...}
  * @private
  */
-DemoBackendService.prototype.parseCodepointHeader_ = function(glyphData) {
+DemoBackendService.prototype.parseHeader_ = function(glyphData) {
   var dataView = new DataView(glyphData);
   var offset = 0;
+  var magicNumber = '';
+  for (var i = 0; i < 4; i++) {
+    magicNumber += String.fromCharCode(dataView.getUint8(offset++));
+  }
+
+  if (magicNumber != 'BSAC') {
+    throw new Error('Invalid code point bundle header magic number: ' +
+      magicNumber);
+  }
+  var version = dataView.getUint8(offset++) + '.' + dataView.getUint8(offset++);
+  offset += 2; // Skip reserved section.
+  var signature = '';
+  for (var i = 0; i < 20; i++) {
+    signature += dataView.getUint8(offset++).toString(16);
+  }
   var count = dataView.getUint16(offset);
   offset += 2;
-  var flags = dataView.getUint8(offset++);
+  var flags = dataView.getUint16(offset);
+  offset += 2;
   return new tachyfont.GlyphBundleResponse(
-      '1.0', '', count, flags, offset, glyphData);
+      version, signature, count, flags, offset, glyphData);
 };
 
 
