@@ -91,24 +91,22 @@ GoogleBackendService.prototype.parseHeader_ = function(glyphData) {
     magicNumber += String.fromCharCode(dataView.getUint8(offset++));
   }
 
-  if (magicNumber == 'BSAC') {
-    var version = dataView.getUint8(offset++) + '.' +
-        dataView.getUint8(offset++);
-    offset += 2; // Skip reserved section.
-    var signature = '';
-    for (var i = 0; i < 20; i++) {
-      signature += dataView.getUint8(offset++).toString(16);
-    }
-    var count = dataView.getUint16(offset);
-    offset += 2;
-    var flags = dataView.getUint16(offset);
-    offset += 2;
-    return new tachyfont.GlyphBundleResponse(
-        version, signature, count, flags, offset, glyphData);
-  } else {
+  if (magicNumber != 'BSAC') {
     throw new Error('Invalid code point bundle header magic number: ' +
-        magicNumber);
+      magicNumber);
   }
+  var version = dataView.getUint8(offset++) + '.' + dataView.getUint8(offset++);
+  offset += 2; // Skip reserved section.
+  var signature = '';
+  for (var i = 0; i < 20; i++) {
+    signature += dataView.getUint8(offset++).toString(16);
+  }
+  var count = dataView.getUint16(offset);
+  offset += 2;
+  var flags = dataView.getUint16(offset);
+  offset += 2;
+  return new tachyfont.GlyphBundleResponse(
+      version, signature, count, flags, offset, glyphData);
 };
 
 
