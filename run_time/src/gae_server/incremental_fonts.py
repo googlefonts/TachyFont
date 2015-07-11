@@ -23,6 +23,9 @@ import zipfile
 import webapp2
 from incremental_fonts_utils import prepare_bundle
 
+tachyfont_major_version = 1
+tachyfont_minor_version = 0
+
 BASE_DIR = path.dirname(__file__)
 
 
@@ -46,7 +49,8 @@ class GlyphRequest(webapp2.RequestHandler):
     # Specifically, it does not allow the application to choose to use gzip.
     # Therefore, we set mime_type for binary data as richtext.
     self.response.headers['Content-Type'] = 'text/richtext'
-    f = StringIO.StringIO(prepare_bundle(self.request))
+    f = StringIO.StringIO(prepare_bundle(self.request, tachyfont_major_version,
+                                         tachyfont_minor_version))
     bandwidth_limited_write(f, self.response.out, bandwidth, True)
 
   def options(self):
