@@ -626,6 +626,16 @@ tachyfont.BinaryFontEditor.readOps.CS02 = function(editor, font) {
 
 
 /**
+ * @param {tachyfont.BinaryFontEditor} editor Editor used to parse header
+ * @param {tachyfont.IncrementalFontLoader} font Font loader object
+ */
+tachyfont.BinaryFontEditor.readOps.SHA1 = function(editor, font) {
+  var sha1_fingerprint = editor.readString_(40);
+  font.sha1_fingerprint = sha1_fingerprint;
+};
+
+
+/**
  * Tags defined in the header of the basefont
  * @enum {Object}
  */
@@ -681,6 +691,10 @@ tachyfont.BinaryFontEditor.TAGS = {
   'CS02':
       {'desc': 'CFF Charset format 2 in compacted format',
         'fn': tachyfont.BinaryFontEditor.readOps.CS02
+      },
+      'SHA1':
+      {'desc': 'Font file fingerprint',
+        'fn': tachyfont.BinaryFontEditor.readOps.SHA1
       }
 };
 
