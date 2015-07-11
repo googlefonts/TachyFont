@@ -23,6 +23,7 @@ from StringIO import StringIO
 import struct
 import sys
 import zipfile
+from binascii import a2b_hex
 
 BASE_DIR = path.dirname(__file__)
 
@@ -148,7 +149,7 @@ def _read_region(file_obj, offset, size):
   return data
 
 
-def prepare_bundle(request):
+def prepare_bundle(request, major, minor):
   """Parse requests, then prepares response bundle for glyphs.
 
   Args:
@@ -185,6 +186,11 @@ def prepare_bundle(request):
 
   closure_reader.close()
 
+  fingerprint_str = zf.open('sha1_fingerprint').read()
+  if len(fingerprint_str) != 40:
+    raise
+  fingerprint = a2b_hex(fingerprint_str)
+
   elapsed_time('gather glyph info')
 
   glyph_info_file = zf.open('glyph_table', 'r')
@@ -202,7 +208,10 @@ def prepare_bundle(request):
   flag_mtx = has_hmtx | has_vmtx  | has_cff
   elapsed_time('open & parse glyph table')
 
-  bundle_header = struct.pack('>HB', len(gids), flag_mtx)
+  bundle_header = 'BSAC'
+  bundle_header += struct.pack('>BBBB', major, minor, 0, 0)
+  bundle_header += fingerprint
+  bundle_header += struct.pack('>HH', len(gids), flag_mtx)
   bundle_length = len(bundle_header)
   bundle_length += len(gids) * entry_size
 
