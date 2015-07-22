@@ -1568,7 +1568,7 @@ tachyfont.IncrementalFont.obj_.prototype.checkFingerprint_ = function(
  * - call the pendingRejectFn
  * - return a rejected promise
  *
- * @param {function} pendingRejectFn A function that tells TachyFont to
+ * @param {function()} pendingRejectFn A function that tells TachyFont to
  *     reject the char data.
  * @return {goog.Promise} Returns a promise which will eventually reject.
  * @private
