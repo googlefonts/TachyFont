@@ -692,7 +692,7 @@ tachyfont.BinaryFontEditor.TAGS = {
       {'desc': 'CFF Charset format 2 in compacted format',
         'fn': tachyfont.BinaryFontEditor.readOps.CS02
       },
-      'SHA1':
+  'SHA1':
       {'desc': 'Font file fingerprint',
         'fn': tachyfont.BinaryFontEditor.readOps.SHA1
       }
