@@ -11,10 +11,9 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
+package com.github.googlei18n.tachyfont;
 
 import com.google.common.io.BaseEncoding;
-
-package com.github.googlei18n.tachyfont;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -71,7 +70,6 @@ public class TachyFontData {
           String name = jarEntry.getName();
           switch(name) {
             case "base":
-              System.out.println("need to handle base data");
               this.baseData = readBytes(jarIn);
               break;
             case "closure_data":
@@ -163,21 +161,6 @@ public class TachyFontData {
     InputStream stream = TachyFontData.class.getResourceAsStream(filename);
     JarInputStream jarInput = new JarInputStream(stream);
     return jarInput;
-  }
-
-
-  /**
-   * Position the stream at the indicated entry. If not found then throw.
-   * 
-   * @param name Name of the JarEntry.
-   * @param jarInputStream The Jar.
-   * @throws IOException
-   */
-  // TODO(bstell) get rid of this function (it does not work).
-  public static void positionStreamAtEntry(JarInputStream jarInputStream, String name)
-      throws IOException {
-
-    throw new IOException();
   }
   
 
