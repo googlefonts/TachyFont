@@ -1406,38 +1406,16 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars = function() {
                       this.loadChars();
                     }.bind(this), 1);
                   }
-                  // if (goog.DEBUG) {
-                  //   goog.log.info(tachyfont.logger,
-                  //     'requested char data length = ' +
-                  //     chardata.byteLength);
-                  // }
                   return bundleResponse;
                 }.bind(this));
               }.bind(this)).
               then(function(bundleResponse) {
-                if (bundleResponse == null) {
-                  return null;
-                }
-                var base_signature = this.fileInfo_.sha1_fingerprint;
-                if (base_signature == bundleResponse.signature) {
-                  return bundleResponse;
-                }
-                tachyfont.IncrementalFont.reportError_(
-                  tachyfont.IncrementalFont.Error_.FINGERPRINT_MISMATCH,
-                  this.fontInfo.getWeight(), '');
-                // The char data is from different file so drop all the data.
-                return this.getIDB_
-                .then(function(db) {
-                  db.close();
-                  return this.deleteDatabase(this.fontInfo.getName(),
-                    this.fontInfo.getWeight())
-                    .then(function() {
-                      pendingRejectFn();
-                      return goog.Promise.reject();
-                    });
-                }.bind(this));
-              }.bind(this)).
-              then(function(bundleResponse) {
+                return this.checkFingerprint_(bundleResponse);
+              }.bind(this))
+              .thenCatch(function(bundleResponse) {
+                return this.handleFingerprintMismatch_(pendingRejectFn);
+              }.bind(this))
+              .then(function(bundleResponse) {
                 return this.getBase.
                 then(function(arr) {
                   var fileInfo = arr[0];
@@ -1459,7 +1437,7 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars = function() {
                       var code = neededCodes[i];
                       var charCmapInfo = this.cmapMapping_[code];
                       if (charCmapInfo) {
-                        // Handle multipe codes sharing a glyphId.
+                        // Handle multiple codes sharing a glyphId.
                         if (glyphToCodeMap[charCmapInfo.glyphId] ==
                         undefined) {
                           glyphToCodeMap[charCmapInfo.glyphId] = [];
@@ -1558,6 +1536,63 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars = function() {
         return goog.Promise.resolve(false);
       }.bind(this));
   return finishPrecedingCharsRequest.getPromise();
+};
+
+
+/**
+ * Check if the font file fingerprint (SHA-1) from the char request matches the
+ * fingerprint in the font base.
+ *
+ * @param {tachyfont.GlyphBundleResponse} bundleResponse The char request (glyph
+ *     bungle) data.
+ * @return {goog.Promise} The promise resolves if fingerprint ok else rejects.
+ * @private
+ */
+tachyfont.IncrementalFont.obj_.prototype.checkFingerprint_ = function(
+    bundleResponse) {
+  // If no char data then no fingerprint to possibly mismatch.
+  if (bundleResponse == null) {
+    return goog.Promise.resolve(bundleResponse);
+  }
+  var base_signature = this.fileInfo_.sha1_fingerprint;
+  if (base_signature == bundleResponse.signature) {
+    return goog.Promise.resolve(bundleResponse);
+  }
+  return goog.Promise.reject();
+};
+
+
+/**
+ * Handle the fingerprint mismatch:
+ * - close and drop the database
+ * - call the pendingRejectFn
+ * - return a rejected promise
+ *
+ * @param {function} pendingRejectFn A function that tells TachyFont to
+ *     reject the char data.
+ * @return {goog.Promise} Returns a promise which will eventually reject.
+ * @private
+ */
+tachyfont.IncrementalFont.obj_.prototype.handleFingerprintMismatch_ = function(
+    pendingRejectFn) {
+  tachyfont.IncrementalFont.reportError_(
+      tachyfont.IncrementalFont.Error_.FINGERPRINT_MISMATCH,
+      this.fontInfo.getWeight(), '');
+
+  return this.getIDB_
+      .then(function(db) {
+        db.close();
+        this.getIDB_ = goog.Promise.reject();
+        // Suppress the "Uncaught" error for rejected promises. See
+        // https://code.google.com/p/v8/issues/detail?id=3093
+        this.getIDB_.thenCatch(function () {});
+        return this.deleteDatabase(this.fontInfo.getName(),
+           this.fontInfo.getWeight())
+           .then(function() {
+             pendingRejectFn();
+             return goog.Promise.reject();
+           });
+      }.bind(this));
 };
 
 
