@@ -11,6 +11,9 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
+
+import com.google.common.io.BaseEncoding;
+
 package com.github.googlei18n.tachyfont;
 
 import java.io.ByteArrayInputStream;
@@ -19,6 +22,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -31,6 +35,11 @@ import java.util.jar.JarInputStream;
  * A class that handle the TachyFont data in the JAR file.
  */
 public class TachyFontData {
+  // The protocol version.
+  // TODO(bstell): get this in the base.
+  public static final int VERSION_MAJOR = 1;
+  public static final int VERSION_MINOR = 0;
+
   static byte hmtxBit = (1 << 0);
   static byte vmtxBit = (1 << 1);
   static byte cffBit = (1 << 2);
@@ -38,12 +47,13 @@ public class TachyFontData {
   private JarInputStream jarIn;
   private byte[] baseData = null;
   // The cmap info.
-  Map<Integer, Integer> cmapMap = null;
+  private Map<Integer, Integer> cmapMap = null;
   // The closure (related glyphs) info.
-  Map<Integer, Set<Integer>> closureMap = null;
+  private Map<Integer, Set<Integer>> closureMap = null;
   // Metadata describing the glyphs.
-  GlyphsInfo glyphsInfo = null;
-  byte[] glyphDataBytes = null;
+  private GlyphsInfo glyphsInfo = null;
+  private byte[] glyphDataBytes = null;
+  private byte[] fingerprint = null;
 
   
   public void init() throws IOException {
@@ -55,6 +65,7 @@ public class TachyFontData {
       byte[] codepointsBytes = null;
       byte[] gidsBytes = null;
       byte[] glyphTableBytes = null;
+      byte[] fingerprintBytes = null;
       while ((jarEntry = jarIn.getNextJarEntry()) != null) {
         if (!jarEntry.isDirectory()) {
           String name = jarEntry.getName();
@@ -81,6 +92,9 @@ public class TachyFontData {
             case "glyph_table":
               glyphTableBytes = readBytes(jarIn);
               break;
+            case "sha1_fingerprint":
+              fingerprintBytes = readBytes(jarIn);
+              break;
             default:
               System.out.println("do not recognize \"" + name + "\"");
               throw new IOException();
@@ -94,7 +108,8 @@ public class TachyFontData {
           codepointsBytes == null ||
           gidsBytes == null ||
           this.glyphDataBytes == null ||
-          glyphTableBytes == null
+          glyphTableBytes == null ||
+          fingerprintBytes == null
           ) {
         throw new IOException();
       }
@@ -107,7 +122,7 @@ public class TachyFontData {
           this.buildClosureMap(closureDataBytes, closureIndexBytes);
       // Metadata describing the glyphs.
       this.glyphsInfo = this.buildGlyphsInfo(glyphTableBytes);
-
+      this.fingerprint = this.buildFingerprint(fingerprintBytes);
     } finally {
     }
   }
@@ -232,11 +247,16 @@ public class TachyFontData {
     DataOutputStream bundleData = new DataOutputStream(bundleOutputStream);
 
     // Write the bundle header.
+    bundleData.writeBytes("BSAC"); // The magic number.
+    bundleData.writeByte(VERSION_MAJOR);
+    bundleData.writeByte(VERSION_MINOR);
+    bundleData.writeShort(0); // Reserved.
+    bundleData.write(this.fingerprint);
     bundleData.writeShort(gids.size());
     byte flags = glyphsInfo.hasHmtx ? hmtxBit : 0;
     flags |= glyphsInfo.hasVmtx ? vmtxBit : 0;
     flags |= glyphsInfo.isCff ? cffBit : 0;
-    bundleData.writeByte(flags);
+    bundleData.writeShort(flags);
 
     // Write the per-glyph data.
     // The CFF data offset is off by one.
@@ -318,6 +338,20 @@ public class TachyFontData {
     return bundle;
   }
 
+  
+private byte[] buildFingerprint(byte[] stringBytes) throws IOException {
+  byte[] fingerprint = null;
+
+  try {
+    String fingerprintStr = new String(stringBytes, "UTF-8");
+    fingerprint = BaseEncoding.base16().lowerCase().decode(
+        fingerprintStr.toLowerCase());
+  } catch (UnsupportedEncodingException e) {
+    throw new IOException("failed to decode fingerprint");
+  }
+
+  return fingerprint;
+}
 
 private GlyphsInfo buildGlyphsInfo(byte[] glyphTableBytes) throws IOException {
     // Get the information about the glyphs and where their data location.
