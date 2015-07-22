@@ -24,7 +24,6 @@ goog.require('goog.net.EventType');
 goog.require('goog.net.XhrIo');
 goog.require('tachyfont.BackendService');
 goog.require('tachyfont.FontInfo');
-goog.require('tachyfont.GlyphBundleResponse');
 
 
 goog.scope(function() {
@@ -57,7 +56,7 @@ DemoBackendService.prototype.requestCodepoints = function(fontInfo, codes) {
       //{'Content-Type': 'application/json'},
       {'Content-Type': 'text/plain'})
       .then(function(glyphData) {
-        return that.parseHeader_(glyphData);
+        return that.parseHeader(glyphData);
       });
 };
 
