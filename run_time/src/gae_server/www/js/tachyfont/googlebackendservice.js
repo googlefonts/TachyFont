@@ -22,7 +22,6 @@ goog.provide('tachyfont.GoogleBackendService');
 goog.require('goog.Promise');
 goog.require('tachyfont.BackendService');
 goog.require('tachyfont.FontInfo');
-goog.require('tachyfont.GlyphBundleResponse');
 goog.require('tachyfont.utils');
 
 
@@ -71,7 +70,7 @@ GoogleBackendService.prototype.requestCodepoints = function(
       'glyphs=' + encodeURIComponent(this.compressedGlyphsList_(codes)),
       {'Content-Type': 'application/x-www-form-urlencoded'})
       .then(function(glyphData) {
-        return self.parseHeader_(glyphData);
+        return self.parseHeader(glyphData);
       });
 };
 

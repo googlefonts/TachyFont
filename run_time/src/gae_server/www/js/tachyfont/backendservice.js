@@ -26,6 +26,7 @@ goog.require('goog.functions');
 goog.require('goog.net.EventType');
 goog.require('goog.net.XhrIo');
 goog.require('tachyfont.FontInfo');
+goog.require('tachyfont.GlyphBundleResponse');
 
 
 goog.scope(function() {
@@ -69,11 +70,9 @@ BackendService.prototype.requestFontBase = goog.functions.NULL;
  * Parses the header of a codepoint response and returns info on it:
  *
  * @param {ArrayBuffer} glyphData from a code point request.
- * @return Header info, {count: ..., flags: ..., version: ...,
- *         fontSignature: ...}
- * @private
+ * @return {tachyfont.GlyphBundleResponse}
  */
-BackendService.prototype.parseHeader_ = function(glyphData) {
+BackendService.prototype.parseHeader = function(glyphData) {
   var dataView = new DataView(glyphData);
   var offset = 0;
   var magicNumber = '';
