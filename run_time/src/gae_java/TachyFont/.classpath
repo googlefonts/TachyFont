@@ -4,5 +4,6 @@
 	<classpathentry kind="con" path="com.google.appengine.eclipse.core.GAE_CONTAINER"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="lib" path="/usr/local/google/home/bstell/github/bstell/incremental-fonts/run_time/src/gae_java/TachyFont/war/WEB-INF/lib/gson-2.3.1.jar"/>
+	<classpathentry kind="lib" path="/usr/local/google/home/bstell/github/bstell/incremental-fonts/run_time/src/gae_java/TachyFont/war/WEB-INF/lib/guava-18.0.jar"/>
 	<classpathentry kind="output" path="war/WEB-INF/classes"/>
 </classpath>
