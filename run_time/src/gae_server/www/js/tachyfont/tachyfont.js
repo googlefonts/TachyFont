@@ -137,12 +137,12 @@ if (goog.DEBUG) {
      */
     tachyfont.logger = goog.log.getLogger('debug', debugLevel);
 
-   /**
-    * For debugging: option to disable the obfuscation.
-    */
+    /**
+     * For debugging: option to disable the obfuscation.
+     */
     var noObfuscateStr = uri.getParameterValue('TachyFontNoObfuscate') || '';
     /** @type {boolean} */
-    tachyfont.noObfuscate = noObfuscateStr.toLowerCase() == 'true';;
+    tachyfont.noObfuscate = noObfuscateStr.toLowerCase() == 'true';
 
     /**
      * Disable using persistent store. This is useful for forcing the base and
