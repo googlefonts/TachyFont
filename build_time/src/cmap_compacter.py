@@ -21,6 +21,7 @@ import bitarray
 # TODO(bstell): need to handle missing bitarray
 from binascii import b2a_hex # TODO(bstell): get rid of this
 import pydevd # TODO(bstell): get rid of this
+from BitVector import BitVector
 
 from _collections import defaultdict
 from fontTools.cffLib import readCard8, readCard16
@@ -32,15 +33,31 @@ class Bits:
 
   def __init__(self):
     self.bit_array = bitarray.bitarray(endian='big')
+    self.bit_vector = BitVector(size = 0)
 
   def frombytes(self, bytes):
     self.bit_array.frombytes(bytes)
+    tmp_bit_vector = self.bit_vector + BitVector(rawbytes = bytes)
+    self.bit_vector.set_value(bitstring = tmp_bit_vector.__str__())
 
   def tobytes(self):
-    return self.bit_array.tobytes()
+    data_bytes = self.bit_array.tobytes()
+    data_hex = b2a_hex(data_bytes)
+    bits_hex = self.bit_vector.get_hex_string_from_bitvector()
+    bits_length = len(bits_hex)
+    if bits_length % 2:
+      bits_hex += '0'
+      
+    if bits_hex != data_hex:
+      print 'cmap_compacter:', bits_hex, '!=', data_hex
+      pydevd.settrace()
+      sys.exit(1)
+    return data_bytes
 
   def extend(self, bit_str):
-    return self.bit_array.extend(bit_str)
+    self.bit_array.extend(bit_str)
+    tmp_bit_vector = self.bit_vector + BitVector(bitstring = bit_str)
+    self.bit_vector.set_value(bitstring = tmp_bit_vector.__str__())
 
   def compare(self, data_bytes, bits_bytes):
     bits_hex = b2a_hex(bits_bytes)
