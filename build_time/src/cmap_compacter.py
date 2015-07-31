@@ -18,26 +18,10 @@ from fontTools_wrapper_funcs import change_method,_decompile_in_cmap_format_12_1
   _decompile_in_cmap_format_4
 from fontTools.ttLib.tables import _c_m_a_p
 import struct
-# Handle missing bitarray
-have_bitarray = True
-try:
-  import bitarray
-  print 'have bitarray'
-except:
-  have_bitarray = False
-  print 'do not have bitarray'
-from binascii import a2b_hex
-have_pydevd = True
-try:
-  import pydevd # Support breaking in Eclipse.
-except:
-    have_pydevd = False
-
 from _collections import defaultdict
 from fontTools.cffLib import readCard8, readCard16
-import sys
 
-# Bit handling class (much faster than BitVector) 
+# Bit handling class (much faster than BitVector)
 class Bits:
 
   def __init__(self):
@@ -53,7 +37,7 @@ class Bits:
     self.bit_strs.append(bits_str)
     self.needed_length += len(bits_str)
     return
-        
+
   def extend(self, bit_str):
     self.bit_strs.append(bit_str)
     self.needed_length += len(bit_str)
@@ -65,9 +49,9 @@ class Bits:
     if needed_len % 8 != 0:
       needed_len += 8 - (needed_len % 8)
 
+    # Make sure there it is padded to a byte boundary.
+    self.bit_strs.append('0000000')
     bits_str = ''.join(self.bit_strs)
-    # Pad the string to a byte boundary.
-    bits_str += '0000000'
     bits_str = bits_str[0:needed_len]
 
     bits_byte_array2 = array('B')
@@ -77,13 +61,6 @@ class Bits:
     bits_bytes2 = bits_byte_array2.tostring()
     return bits_bytes2
 
-  def compare(self, data_bytes, bits_bytes):
-    # TODO(bstell): compare the bytes
-    if bits_bytes != data_bytes:
-      print 'cmap_compacter: bits_hex != data_hex'
-      if have_pydevd:
-        pydevd.settrace()
-      sys.exit(1)
 
 def generateDeltaArray(input_arr):
   """generates delta array for given array
@@ -190,35 +167,25 @@ class _GOSGenerators(object):
       seenGlyphCount += nLeft + 1
     rangeCount = len(firstArr)
     #print 'charset size',rangeCount*4+1,'bytes'
-    if have_bitarray: gos_data = bitarray.bitarray(endian='big')
-    gos_bits = Bits()
-    if have_bitarray: escaped_data = bitarray.bitarray(endian='big')
-    escaped_bits = Bits()
-    if have_bitarray: gos_data.frombytes(struct.pack('>L',cffTableOffset+charsetOffset))
-    gos_bits.frombytes(struct.pack('>L',cffTableOffset+charsetOffset))
+    gos_data = Bits()
+    escaped_data = Bits()
+    gos_data.frombytes(struct.pack('>L',cffTableOffset+charsetOffset))
     if format == 2:
-      if have_bitarray: gos_data.frombytes(struct.pack('>B',6)) #format 2
-      gos_bits.frombytes(struct.pack('>B',6)) #format 2
+      gos_data.frombytes(struct.pack('>B',6)) #format 2
     elif format == 1:
-      if have_bitarray: gos_data.frombytes(struct.pack('>B',7)) #format 1
-      gos_bits.frombytes(struct.pack('>B',7)) #format 1
-    if have_bitarray: gos_data.frombytes(struct.pack('>H',rangeCount))
-    gos_bits.frombytes(struct.pack('>H',rangeCount))
+      gos_data.frombytes(struct.pack('>B',7)) #format 1
+    gos_data.frombytes(struct.pack('>H',rangeCount))
     deltaFirst = generateDeltaArray(firstArr)
     deltaNLeft = generateDeltaArray(nLeftArr)
     for idx in xrange(rangeCount):
       first_enc = NumberEncoders.BitEncodeAllOnesEscape(deltaFirst[idx],5)
-      if have_bitarray: extend_bits_or_escape(gos_data, escaped_data, first_enc)
-      extend_bits_or_escape(gos_bits, escaped_bits, first_enc)
+      extend_bits_or_escape(gos_data, escaped_data, first_enc)
       nLeft_enc = NumberEncoders.BitEncodeAllOnesEscape(deltaNLeft[idx],3)
-      if have_bitarray: extend_bits_or_escape(gos_data, escaped_data, nLeft_enc)
-      extend_bits_or_escape(gos_bits, escaped_bits, nLeft_enc)
+      extend_bits_or_escape(gos_data, escaped_data, nLeft_enc)
 
-    if have_bitarray: whole_data = gos_data.tobytes() + escaped_data.tobytes()
-    whole_bits = gos_bits.tobytes() + escaped_bits.tobytes()
-    if have_bitarray: gos_bits.compare(whole_data, whole_bits)
+    whole_data = gos_data.tobytes() + escaped_data.tobytes()
     #print 'type6 size',len(whole_data)
-    return whole_bits
+    return whole_data
 
 
   @staticmethod
@@ -282,14 +249,10 @@ class _GOSGenerators(object):
     # Handle format 4's special 0xFFFF segment
     #assert fmt4Seg == fmt4SegCount, 'only the 0xFFFF segment left'
     mapping[fmt4Seg] # Make an empty segment
-    if have_bitarray: gos_data = bitarray.bitarray(endian='big')
-    gos_bits = Bits()
-    if have_bitarray: escaped_data = bitarray.bitarray(endian='big')
-    escaped_bits = Bits()
-    if have_bitarray: gos_data.frombytes(struct.pack('>B',4)) #GOS type
-    gos_bits.frombytes(struct.pack('>B',4)) #GOS type
-    if have_bitarray: gos_data.frombytes(struct.pack('>H', fmt4SegCount))
-    gos_bits.frombytes(struct.pack('>H', fmt4SegCount))
+    gos_data = Bits()
+    escaped_data = Bits()
+    gos_data.frombytes(struct.pack('>B',4)) #GOS type
+    gos_data.frombytes(struct.pack('>H', fmt4SegCount))
     #now checks if segments in good condition
     segLens = []
     idRangeOffsets = cmap4['idRangeOffset']
@@ -316,17 +279,14 @@ class _GOSGenerators(object):
 
     for segLen in segLens:
       encoded_value = NumberEncoders.BitEncodeAllOnesEscape(segLen,2)
-      if have_bitarray: extend_bits_or_escape(gos_data, escaped_data, encoded_value)
-      extend_bits_or_escape(gos_bits, escaped_bits, encoded_value)
+      extend_bits_or_escape(gos_data, escaped_data, encoded_value)
 
     change_method(_c_m_a_p.cmap_format_12_or_13,old_12_method,'decompile')
     change_method(_c_m_a_p.cmap_format_4,old_4_method,'decompile')
 
-    if have_bitarray: whole_data = gos_data.tobytes() + escaped_data.tobytes()
-    whole_bits = gos_bits.tobytes() + escaped_bits.tobytes()
-    if have_bitarray: gos_bits.compare(whole_data, whole_bits)
+    whole_data = gos_data.tobytes() + escaped_data.tobytes()
     #print 'type4 size',len(whole_data)
-    return whole_bits
+    return whole_data
 
 
   @staticmethod
@@ -340,32 +300,23 @@ class _GOSGenerators(object):
     lengths = ourData['lengths']
     gids = ourData['gids']
     nGroups = len(gids)
-    if have_bitarray: gos_data = bitarray.bitarray(endian='big')
-    gos_bits = Bits()
-    if have_bitarray: escaped_data = bitarray.bitarray(endian='big')
-    escaped_bits = Bits()
-    if have_bitarray: gos_data.frombytes(struct.pack('>B',3)) #GOS type
-    gos_bits.frombytes(struct.pack('>B',3)) #GOS type
-    if have_bitarray: gos_data.frombytes(struct.pack('>H',nGroups))
-    gos_bits.frombytes(struct.pack('>H',nGroups))
+    gos_data = Bits()
+    escaped_data = Bits()
+    gos_data.frombytes(struct.pack('>B',3)) #GOS type
+    gos_data.frombytes(struct.pack('>H',nGroups))
     for idx in xrange(nGroups):
       delta_code_result = NumberEncoders.BitEncodeAllOnesEscape(deltaCodePoints[idx],5)
-      if have_bitarray: extend_bits_or_escape(gos_data, escaped_data, delta_code_result)
-      extend_bits_or_escape(gos_bits, escaped_bits, delta_code_result)
+      extend_bits_or_escape(gos_data, escaped_data, delta_code_result)
       len_result = NumberEncoders.BitEncodeAllOnesEscape(lengths[idx],3)
-      if have_bitarray: extend_bits_or_escape(gos_data, escaped_data, len_result)
-      extend_bits_or_escape(gos_bits, escaped_bits, len_result)
+      extend_bits_or_escape(gos_data, escaped_data, len_result)
       gid_result = NumberEncoders.BitEncodeAllOnesEscape(gids[idx],16)
-      if have_bitarray: extend_bits_or_escape(gos_data, escaped_data, gid_result)
-      extend_bits_or_escape(gos_bits, escaped_bits, gid_result)
+      extend_bits_or_escape(gos_data, escaped_data, gid_result)
 
     change_method(_c_m_a_p.cmap_format_12_or_13,old_12_method,'decompile')
 
-    if have_bitarray: whole_data = gos_data.tobytes() + escaped_data.tobytes()
-    whole_bits = gos_bits.tobytes() + escaped_bits.tobytes()
-    if have_bitarray: gos_bits.compare(whole_data, whole_bits)
+    whole_data = gos_data.tobytes() + escaped_data.tobytes()
     #print 'type3 size',len(whole_data)
-    return whole_bits
+    return whole_data
 
   @staticmethod
   def type2(font):
@@ -378,32 +329,23 @@ class _GOSGenerators(object):
     lengths = ourData['lengths']
     deltaGids = generateDeltaArray(ourData['gids'])
     nGroups = len(deltaGids)
-    if have_bitarray: gos_data = bitarray.bitarray(endian='big')
-    gos_bits = Bits()
-    if have_bitarray: escaped_data = bitarray.bitarray(endian='big')
-    escaped_bits = Bits()
-    if have_bitarray: gos_data.frombytes(struct.pack('>B',2)) #GOS type
-    gos_bits.frombytes(struct.pack('>B',2)) #GOS type
-    if have_bitarray: gos_data.frombytes(struct.pack('>H',nGroups))
-    gos_bits.frombytes(struct.pack('>H',nGroups))
+    gos_data = Bits()
+    escaped_data = Bits()
+    gos_data.frombytes(struct.pack('>B',2)) #GOS type
+    gos_data.frombytes(struct.pack('>H',nGroups))
     for idx in xrange(nGroups):
       delta_code_result = NumberEncoders.BitEncodeAllOnesEscape(deltaCodePoints[idx],3)
-      if have_bitarray: extend_bits_or_escape(gos_data, escaped_data, delta_code_result)
-      extend_bits_or_escape(gos_bits, escaped_bits, delta_code_result)
+      extend_bits_or_escape(gos_data, escaped_data, delta_code_result)
       len_result = NumberEncoders.BitEncodeAllOnesEscape(lengths[idx],2)
-      if have_bitarray: extend_bits_or_escape(gos_data, escaped_data, len_result)
-      extend_bits_or_escape(gos_bits, escaped_bits, len_result)
+      extend_bits_or_escape(gos_data, escaped_data, len_result)
       gid_result = NumberEncoders.BitEncodeAllOnesEscape(deltaGids[idx],3)
-      if have_bitarray: extend_bits_or_escape(gos_data, escaped_data, gid_result)
-      extend_bits_or_escape(gos_bits, escaped_bits, gid_result)
+      extend_bits_or_escape(gos_data, escaped_data, gid_result)
 
     change_method(_c_m_a_p.cmap_format_12_or_13,old_12_method,'decompile')
 
-    if have_bitarray: whole_data = gos_data.tobytes() + escaped_data.tobytes()
-    whole_bits = gos_bits.tobytes() + escaped_bits.tobytes()
-    if have_bitarray: gos_bits.compare(whole_data, whole_bits)
+    whole_data = gos_data.tobytes() + escaped_data.tobytes()
     #print 'type2 size',len(whole_data)
-    return whole_bits
+    return whole_data
 
 """Type of the Group of Segments
 Type 7: For CFF CharSet format 1 Table
