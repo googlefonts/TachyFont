@@ -88,7 +88,11 @@ BackendService.prototype.parseHeader = function(glyphData) {
   offset += 2; // Skip reserved section.
   var signature = '';
   for (var i = 0; i < 20; i++) {
-    signature += dataView.getUint8(offset++).toString(16);
+    var thisByteStr = dataView.getUint8(offset++).toString(16);
+    if (thisByteStr.length == 1) {
+      thisByteStr = '0' + thisByteStr;
+    }
+    signature += thisByteStr;
   }
   var count = dataView.getUint16(offset);
   offset += 2;
