@@ -18,15 +18,13 @@ import array
 from datetime import datetime
 import json as JSON
 import logging
-from os import path
 from StringIO import StringIO
 import struct
 import sys
 import zipfile
 from binascii import a2b_hex
 
-BASE_DIR = path.dirname(__file__)
-
+from font_mapper import fontname_to_zipfile
 
 last_time = None
 
@@ -159,10 +157,11 @@ def prepare_bundle(request, major, minor):
   """
   glyph_request = _parse_json(request.body)
   font = glyph_request['font']
+  zip_path = fontname_to_zipfile(font)
   codepoints = glyph_request['arr']
   elapsed_time('prepare_bundle for {0} characters'.format(len(codepoints)),
                True)
-  zf = zipfile.ZipFile(BASE_DIR + '/fonts/' + font + '.TachyFont.jar', 'r')
+  zf = zipfile.ZipFile(zip_path, 'r')
   cp_file = zf.open('codepoints', 'r')
   gid_file = zf.open('gids', 'r')
 
