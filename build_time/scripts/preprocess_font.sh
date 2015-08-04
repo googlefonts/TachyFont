@@ -8,7 +8,8 @@ LOG_OPTIONS=--log=INFO
 #DEBUG_OPTIONS=--reuse_clean
 HINTING_OPTIONS=--hinting
 FONTPATH=$1
-DEST_DIR=run_time/src/gae_server/fonts
+DEST_SUBDIR=$2
+DEST_DIR=run_time/src/gae_server/fonts/${DEST_SUBDIR}
 FONTTOOLS_DIR=run_time/src/gae_server/third_party/fonttools/Lib/
 PYTHONPATH=${FONTTOOLS_DIR}:${PYTHONPATH}
 OTS_VALIDATOR=/usr/local/google/home/bstell/ots/trunk/out/Default/validator_checker

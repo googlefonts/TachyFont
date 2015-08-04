@@ -15,7 +15,7 @@ declare -a fonts=(
 
 for i in "${fonts[@]}"
 do
-   ./preprocess_font.sh src_fonts/NotoSansJP/${i}
+   ./preprocess_font.sh src_fonts/NotoSansJP/${i} NotoSansJP
    status=$?
    # Put a blank line between the results.
    echo
