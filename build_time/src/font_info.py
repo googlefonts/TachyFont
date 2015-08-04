@@ -15,81 +15,82 @@
 """
 from fontTools.ttLib import TTFont
 from info_ops import InfoOps
+import collections
 import sys
 
 class FontInfo(object):
 
-  TAGS = {'GLOF':
+  TAGS = collections.OrderedDict([('GLOF',
             {'desc':'Start of the glyphs data relative to font file start',
              'fn': InfoOps._getGLOF
-             },
-          'GLCN':
+             }),
+          ('GLCN',
             {'desc': 'Number of glyphs in the font',
              'fn': InfoOps._getGLCN
-             },
-          'LCOF':
+             }),
+          ('LCOF',
             {'desc': 'Start of the offsets to glyphs relative to font file start',
              'fn': InfoOps._getLCOF
-             },
-          'LCFM':
+             }),
+          ('LCFM',
             {'desc': 'Offset size of the offsets in loca table',
              'fn': InfoOps._getLCFM
-             },
-          'HMOF':
+             }),
+          ('HMOF',
             {'desc':'Start of the HMTX table relative to font file start',
              'fn': InfoOps._getHMOF
-             },
-          'VMOF':
+             }),
+          ('VMOF',
             {'desc':'Start of the VMTX table relative to font file start',
              'fn': InfoOps._getVMOF
-             },
-          'HMMC':
+             }),
+          ('HMMC',
             {'desc': 'Number of hmetrics in hmtx table',
              'fn': InfoOps._getHMMC
-             },
-          'VMMC':
+             }),
+          ('VMMC',
             {'desc': 'Number of vmetrics in vmtx table',
              'fn': InfoOps._getVMMC
-             },
-          'TYPE':
+             }),
+          ('TYPE',
             {'desc':'Type of the font, either TTF or CFF',
              'fn': InfoOps._getTYPE
-             },
-          'CCMP':
-            {'desc':'Compact CMAP',
-             'fn': InfoOps._getCCMP
-             },
-          'CM12':
+             }),
+          ('CM12',
             {'desc':'Start offset and number of groups in cmap format 12 table',
              'fn': InfoOps._getCM12
-             },
-          'CM04':
+             }),
+          ('CM04',
             {'desc':'Start offset of cmap format 4 table',
              'fn': InfoOps._getCM04
-             },
-          'CS02':
+             }),
+          ('CCMP',
+            {'desc':'Compact CMAP',
+             'fn': InfoOps._getCCMP
+             }),
+          ('CS02',
             {'desc':'CFF Charset format 2 in much more compacted way',
              'fn': InfoOps._getCS02
-             },
-          'SHA1':
+             }),
+          ('SHA1',
             {'desc':'SHA-1 hash of fontfile',
              'fn': InfoOps._get_SHA1
-             }
-        }
+             })
+        ])
 
   @staticmethod
   def getInformation(fontfile, tags):
     # TODO(bstell) check if font already opened
     font = TTFont(fontfile)
     dict_of_data = {}
-    for tag in tags:
-      assert tag in FontInfo.TAGS
-      if tag == 'SHA1':
-        result = FontInfo.TAGS[tag]['fn'](fontfile)
-      else:
-        result = FontInfo.TAGS[tag]['fn'](font)
-      if result:
-        dict_of_data[tag] = result
+    for tag, fn in FontInfo.TAGS.iteritems():
+      if tag in tags:
+        if tag == 'SHA1':
+          result = FontInfo.TAGS[tag]['fn'](fontfile)
+        else:
+          result = FontInfo.TAGS[tag]['fn'](font)
+        if result:
+          dict_of_data[tag] = result
     font.close()
     return dict_of_data
 
