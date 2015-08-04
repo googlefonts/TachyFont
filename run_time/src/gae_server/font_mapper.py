@@ -14,14 +14,7 @@
   limitations under the License.
 """
 
-# import logging
 from os import path
-# import StringIO
-# from time import sleep
-# from time import time
-# import zipfile
-# import webapp2
-# from incremental_fonts_utils import prepare_bundle
 
 tachyfont_major_version = 1
 tachyfont_minor_version = 0

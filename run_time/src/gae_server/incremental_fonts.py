@@ -15,18 +15,17 @@
 """
 
 import logging
-from os import path
 import StringIO
 from time import sleep
 from time import time
 import zipfile
 import webapp2
+
 from incremental_fonts_utils import prepare_bundle
+from font_mapper import fontname_to_zipfile
 
 tachyfont_major_version = 1
 tachyfont_minor_version = 0
-
-BASE_DIR = path.dirname(__file__)
 
 
 class IncrementalFonts(webapp2.RequestHandler):
@@ -81,8 +80,8 @@ class IncrFont(webapp2.RequestHandler):
     self.response.headers['Content-Type'] = 'text/plain'
     self.response.headers['Content-Type'] = 'text/richtext'
     basename = fontname.split('/')[0]
-    zipfilename = BASE_DIR + '/fonts/' + basename + '.TachyFont.jar'
-    zf = zipfile.ZipFile(zipfilename, 'r')
+    zip_path = fontname_to_zipfile(basename)
+    zf = zipfile.ZipFile(zip_path, 'r')
     base = zf.open('base', 'r')
     bandwidth_limited_write(base, self.response.out, bandwidth, True)
 
