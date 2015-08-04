@@ -14,6 +14,7 @@ tmp/
 local.properties
 .settings/
 .loadpath
+.checkstyle
 
 # External tool builders
 .externalToolBuilders/
