@@ -16,6 +16,6 @@ FONT='src_fonts/NotoSansJP/NotoSansJP-Thin_subset_smp.otf'
 PREPROCESS_CMD="./preprocess_font.sh"
 
 # Run the command.
-echo ${PREPROCESS_CMD} ${FONT}
-${PREPROCESS_CMD} ${FONT}
+echo ${PREPROCESS_CMD} ${FONT} NotoSansJP
+${PREPROCESS_CMD} ${FONT} NotoSansJP
 
