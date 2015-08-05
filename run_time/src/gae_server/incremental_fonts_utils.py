@@ -18,6 +18,7 @@ import array
 from datetime import datetime
 import json as JSON
 import logging
+import string
 from StringIO import StringIO
 import struct
 import sys
@@ -243,17 +244,8 @@ def prepare_bundle(request, major, minor):
   elapsed_time('build bundle')
 
   zf.close()
-#   print "bundle bytes"
-#   lineCount = 8
-#   print "length =", len(bundle_bytes)
-#   for i in range(len(bundle_bytes)):
-#     if (i % lineCount == 0):
-#       print " ",
-#     print("0x%02x," % (bundle_bytes[i])),
-#     if (i and (i % lineCount == lineCount - 1)):
-#       lineStart = i - lineCount + 1
-#       print " /* 0x%04X - %d */" % (lineStart, lineStart)
-#   print ""
+  #print "bundle bytes"
+  #display_bytes(bundle_bytes)
   elapsed_time('close files')
   return str(bundle_bytes)
 
@@ -299,3 +291,29 @@ class ClosureReader(object):
   def close(self):
     self.idx.close()
     self.data_file.close()
+
+def display_bytes(bytes):
+  lineCount = 8
+  as_chars = ''
+  print "length =", len(bytes)
+  for i in range(len(bytes)):
+    if (i % lineCount == 0):
+      print "   ",
+    print("0x%02x," % (bytes[i])),
+    this_char = chr(bytes[i])
+    if this_char in string.ascii_letters or this_char in string.digits:
+      as_chars += this_char
+    else:
+      as_chars += '.'
+    if (i and (i % lineCount == lineCount - 1)):
+      lineStart = i - lineCount + 1
+      print "// 0x%04X / %5d" % (lineStart, lineStart),
+      print ' ', as_chars
+      as_chars = ''
+  fill_in = (i % lineCount) + 1
+  for j in range(fill_in):
+    print '     ',
+    as_chars += '.'
+  lineStart += lineCount
+  print "// 0x%04X / %5d" % (lineStart, lineStart),
+  print ' ', as_chars
