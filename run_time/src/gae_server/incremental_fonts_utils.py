@@ -292,6 +292,13 @@ class ClosureReader(object):
     self.idx.close()
     self.data_file.close()
 
+def display_file(file):
+  data = file.read()
+  b = bytearray()
+  b.extend(data)
+  display_bytes(b)
+  pass
+
 def display_bytes(bytes):
   lineCount = 8
   as_chars = ''
@@ -310,7 +317,7 @@ def display_bytes(bytes):
       print "// 0x%04X / %5d" % (lineStart, lineStart),
       print ' ', as_chars
       as_chars = ''
-  fill_in = (i % lineCount) + 1
+  fill_in = lineCount - (i % lineCount + 1)
   for j in range(fill_in):
     print '     ',
     as_chars += '.'
