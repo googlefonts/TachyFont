@@ -21,7 +21,7 @@ from time import time
 import zipfile
 import webapp2
 
-from incremental_fonts_utils import prepare_bundle
+from incremental_fonts_utils import prepare_bundle, display_file
 from font_mapper import fontname_to_zipfile
 
 tachyfont_major_version = 1
@@ -82,6 +82,8 @@ class IncrFont(webapp2.RequestHandler):
     basename = fontname.split('/')[0]
     zip_path = fontname_to_zipfile(basename)
     zf = zipfile.ZipFile(zip_path, 'r')
+    # base = zf.open('base', 'r')
+    # display_file(base)
     base = zf.open('base', 'r')
     bandwidth_limited_write(base, self.response.out, bandwidth, True)
 
