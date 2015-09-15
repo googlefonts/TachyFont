@@ -56,7 +56,7 @@ DemoBackendService.prototype.requestCodepoints = function(fontInfo, codes) {
       //{'Content-Type': 'application/json'},
       {'Content-Type': 'text/plain'})
       .then(function(glyphData) {
-        return that.parseHeader(glyphData);
+        return that.parseDataHeader(glyphData);
       });
 };
 

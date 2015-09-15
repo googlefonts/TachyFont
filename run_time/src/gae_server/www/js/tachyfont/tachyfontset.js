@@ -515,7 +515,7 @@ tachyfont.TachyFontSet.prototype.updateFonts =
           if (goog.DEBUG) {
             goog.log.fine(tachyfont.logger, 'updateFonts: setFont: ');
           }
-          var cssSetResult = fontObj.setFont(fontData, fileInfo).
+          var cssSetResult = fontObj.setFont(fontData).
               then(function() {
                 if (startTime == 0) {
                   tachyfont.reporter.addItemTime(

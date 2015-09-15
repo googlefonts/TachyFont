@@ -175,12 +175,11 @@ tachyfont.IncrementalFontUtils.setVisibility = function(style, fontInfo,
 
 /**
  * Add the '@font-face' rule
- * @param {tachyfont.FontInfo} fontInfo Info about this font.
  * @param {DataView} data The font data.
  * @param {string} mimeType The mime-type of the font.
   * @return {string} The blob URL.
   */
-tachyfont.IncrementalFontUtils.getBlobUrl = function(fontInfo, data, mimeType) {
+tachyfont.IncrementalFontUtils.getBlobUrl = function(data, mimeType) {
   var blob;
   try {
     blob = new Blob([data], { type: mimeType });

@@ -70,7 +70,7 @@ GoogleBackendService.prototype.requestCodepoints = function(
       'glyphs=' + encodeURIComponent(this.compressedGlyphsList_(codes)),
       {'Content-Type': 'application/x-www-form-urlencoded'})
       .then(function(glyphData) {
-        return self.parseHeader(glyphData);
+        return self.parseDataHeader(glyphData);
       });
 };
 

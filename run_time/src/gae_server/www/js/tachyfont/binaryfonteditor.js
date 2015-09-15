@@ -718,7 +718,7 @@ tachyfont.BinaryFontEditor.prototype.parseBaseHeader = function() {
   }
   var count = this.getUint16();
   var tags = [], tag, tagOffset, saveOffset,
-      dataStart = count * 8 + 4 + 4 + 2 + 4;//magic,ver,count,headSize
+      dataStart = count * 8 + 4 + 4 + 4 + 2;//magic,headSize,ver,count
   for (var i = 0; i < count; i++) {
     tag = this.readString_(4);
     tagOffset = this.getUint32();

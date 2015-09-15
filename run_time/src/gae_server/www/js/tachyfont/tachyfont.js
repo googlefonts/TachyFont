@@ -19,6 +19,7 @@
 
 goog.provide('tachyfont');
 goog.provide('tachyfont.IncrementalFontLoader');
+goog.provide('tachyfont.TachyFont');
 goog.provide('tachyfont.uint8');
 
 goog.require('goog.Promise');
@@ -30,10 +31,39 @@ goog.require('goog.log.Level');
 goog.require('tachyfont.BinaryFontEditor');
 goog.require('tachyfont.FontInfo');
 goog.require('tachyfont.FontsInfo');
+goog.require('tachyfont.IncrementalFont');
 goog.require('tachyfont.IncrementalFontUtils');
 goog.require('tachyfont.Reporter');
-goog.require('tachyfont.TachyFont');
 goog.require('tachyfont.TachyFontSet');
+
+
+
+/**
+ * TachyFont - A namespace.
+ * @param {!tachyfont.FontInfo} fontInfo The font info.
+ * @param {boolean} dropData If true then drop the persistent store data.
+ * @param {Object=} opt_params Optional parameters.
+ * @constructor
+ */
+tachyfont.TachyFont = function(fontInfo, dropData, opt_params) {
+  var params = opt_params || {};
+
+  /**
+   * The object that handles the binary manipulation of the font data.
+   *
+   * TODO(bstell): integrate the manager into this object.
+   */
+  this.incrfont = tachyfont.IncrementalFont.createManager(fontInfo, dropData,
+      params);
+};
+
+
+/**
+ * Lazily load the data for these chars.;
+ */
+tachyfont.TachyFont.prototype.loadNeededChars = function() {
+  this.incrfont.loadChars();
+};
 
 
 /**
@@ -361,7 +391,6 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
         return goog.Promise.all(bases);
       }).
       then(function(arrayBaseData) {
-        var fetchedBases = [];
         for (var i = 0; i < tachyFonts.length; i++) {
           var loadedBase = arrayBaseData[i];
           var incrfont = tachyFonts[i].incrfont;
@@ -400,8 +429,7 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
                 }
                 // TODO(bstell): only set the font if there are characters.
                 incrFont.sfeStart_ = goog.now();
-                var cssSet = incrFont.setFont(loadedBase[1],
-                    loadedBase[0].isTtf).
+                var cssSet = incrFont.setFont(loadedBase[1]).
                 then(function() {
                   // Report Set Font Early.
                   var weight = this.fontInfo.getWeight();

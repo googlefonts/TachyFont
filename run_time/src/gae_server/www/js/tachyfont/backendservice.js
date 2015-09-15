@@ -72,7 +72,7 @@ BackendService.prototype.requestFontBase = goog.functions.NULL;
  * @param {ArrayBuffer} glyphData from a code point request.
  * @return {tachyfont.GlyphBundleResponse}
  */
-BackendService.prototype.parseHeader = function(glyphData) {
+BackendService.prototype.parseDataHeader = function(glyphData) {
   var dataView = new DataView(glyphData);
   var offset = 0;
   var magicNumber = '';
