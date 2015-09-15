@@ -17,6 +17,7 @@
 
 from common import reverse_cmap
 from fontTools.subset import Options, load_font, Subsetter, save_font
+import font_dev_utils
 
 
 class Cleaner(object):
@@ -79,6 +80,8 @@ class Cleaner(object):
 
   def save(self, outputfile):
     save_font(self.font, outputfile, self.options)
+    #file = open(outputfile, "rb")
+    #font_dev_utils.display_file(file)
 
   def close(self):
     self.font.close()
