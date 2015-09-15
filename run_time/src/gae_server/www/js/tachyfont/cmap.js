@@ -161,10 +161,11 @@ tachyfont.Cmap.writeCmap4 = function(fileInfo, baseFontView, weight) {
  * @param {!Object.<number, !tachyfont.CharCmapInfo>} cmapMapping Information
  *     about the cmap segments for the codepoint.
  * @param {string} weight The font weight for error reporting.
+ * @param {boolean} charsLoaded If set check that the chars are loaded.
  * @return {boolean} True if chars seem okay.
  */
 tachyfont.Cmap.checkCharacters = function(fileInfo, baseFontView, 
-    charList, cmapMapping, weight) {
+    charList, cmapMapping, weight, charsLoaded) {
 
   var charsOkay = true;
   var baseBinEd = new tachyfont.BinaryFontEditor(baseFontView, 0);
@@ -232,12 +233,14 @@ tachyfont.Cmap.checkCharacters = function(fileInfo, baseFontView,
       }
       charsOkay = false;
     }
-    // Check the glyph Id.
-    if (inMemoryGlyphId != segmentGlyphId) {
-      if (glyphIdErrors.length < 5) {
-        glyphIdErrors.push(code);
+    if (charsLoaded) {
+      // Check the glyph Id.
+      if (inMemoryGlyphId != segmentGlyphId) {
+        if (glyphIdErrors.length < 5) {
+          glyphIdErrors.push(code);
+        }
+        charsOkay = false;
       }
-      charsOkay = false;
     }
 
     // Check the loca/charstring-index.
@@ -253,26 +256,28 @@ tachyfont.Cmap.checkCharacters = function(fileInfo, baseFontView,
           glyphId + 1);
       var glyphLength = nextGlyphOffset - glyphOffset;
 
-      // Check the glyph length.
-      if (glyphLength < 0 || (!codeIsBlank && glyphLength == 1)) {
-        // Blank chars sometimes are longer than necessary.
-        if (code <= 32 || (code >= 0x80 && code <= 0xA0)) {
+      if (charsLoaded) {
+        // Check the glyph length.
+        if (glyphLength < 0 || (!codeIsBlank && glyphLength == 1)) {
+          // Blank chars sometimes are longer than necessary.
+          if (code <= 32 || (code >= 0x80 && code <= 0xA0)) {
+            continue;
+          }
+          charsOkay = false;
+          if (glyphLengthErrors.length < 5) {
+            glyphLengthErrors.push(code);
+          }
           continue;
         }
-        charsOkay = false;
-        if (glyphLengthErrors.length < 5) {
-          glyphLengthErrors.push(code);
+        baseBinEd.seek(fileInfo.glyphOffset + glyphOffset);
+        var glyphByte = baseBinEd.getUint8();
+        if (!codeIsBlank && glyphByte == 14) {
+          charsOkay = false;
+          if (glyphDataErrors.length < 5) {
+            glyphDataErrors.push(code);
+          }
+          continue;
         }
-        continue;
-      }
-      baseBinEd.seek(fileInfo.glyphOffset + glyphOffset);
-      var glyphByte = baseBinEd.getUint8();
-      if (!codeIsBlank && glyphByte == 14) {
-        charsOkay = false;
-        if (glyphDataErrors.length < 5) {
-          glyphDataErrors.push(code);
-        }
-        continue;
       }
     }
   }
