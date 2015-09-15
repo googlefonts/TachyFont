@@ -251,6 +251,7 @@ tachyfont.IncrementalFont.createManager = function(fontInfo, dropData, params) {
 };
 
 
+
 /**
  * IncrFontIDB.obj_ - A class to handle interacting the IndexedDB.
  * @param {!tachyfont.FontInfo} fontInfo Info about this font.
@@ -406,7 +407,7 @@ tachyfont.IncrementalFont.obj_.prototype.getPersistedBase = function() {
       then(function(arr) {
         var isOkay = tachyfont.Cmap.checkCharacters(
             this.fileInfo_, arr[1], arr[2], this.cmapMapping_,
-            this.fontInfo.getWeight());
+            this.fontInfo.getWeight(), true);
         if (isOkay) {
           this.charList.resolve(arr[2]);
           return goog.Promise.resolve([arr[0], arr[1], arr[2]]);
