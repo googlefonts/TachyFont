@@ -464,7 +464,7 @@ tachyfont.TachyFontSet.prototype.updateFonts =
         tachyfont.TachyFontSet.reportError_(
             tachyfont.TachyFontSet.Error_.UPDATE_FONT_LOAD_CHARS, err);
       }).
-      then(function(/*loadResults*/) {
+      then(function() {
         var fontsData = [];
         for (var i = 0; i < this.fonts.length; i++) {
           var fontObj = this.fonts[i].incrfont;
