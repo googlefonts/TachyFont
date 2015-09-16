@@ -371,7 +371,7 @@ tachyfont.IncrementalFont.obj_.prototype.getPersistedBase = function() {
                 tachyfont.IncrementalFont.Error_.GET_DATA,
                 'base ' + this.fontInfo.getWeight(), e);
                 return goog.Promise.reject(e);
-              });
+              }.bind(this));
         } else {
           if (goog.DEBUG) {
             goog.log.fine(tachyfont.logger,
@@ -780,10 +780,7 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars = function() {
   if (goog.DEBUG) {
     goog.log.fine(tachyfont.logger, 'loadChars');
   }
-  var chars = '';
-  var charlist;
   var neededCodes = [];
-  var remaining = [];
 
   var msg = this.fontInfo.getName() + ' loadChars';
   if (goog.DEBUG) {
@@ -795,186 +792,27 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars = function() {
       this.finishPrecedingCharsRequest_.getChainedPromise(msg);
   finishPrecedingCharsRequest.getPrecedingPromise().
       then(function() {
-        // TODO(bstell): use charCmapInfo to only request chars in the font.
-        var charArray = Object.keys(this.charsToLoad);
-        // Check if there are any new characters.
-        if (charArray.length == 0) {
-          // Lock will be released below.
-          return null;
-        }
         var pendingResolveFn, pendingRejectFn;
         // TODO(bstell): use tachfont.promise here?
         return new goog.Promise(function(resolve, reject) {
           pendingResolveFn = resolve;
           pendingRejectFn = reject;
 
-          return this.getCharList.
-              then(function(charlist_) {
-                charlist = charlist_;
-                // Make a tmp copy in case we are chunking the requests.
-                var tmp_charlist = {};
-                for (var key in charlist) {
-                  tmp_charlist[key] = charlist[key];
-                }
-                for (var i = 0; i < charArray.length; i++) {
-                  var c = charArray[i];
-                  var code = tachyfont.charToCode(c);
-                  // Check if the font supports the char and it is not loaded.
-                  if (this.cmapMapping_[code] && !tmp_charlist[c]) {
-                    neededCodes.push(code);
-                    tmp_charlist[c] = 1;
-                  }
-                }
-
-                // Report the miss rate/count *before* obfuscation.
-                var missCount = neededCodes.length;
-                var missRate = (neededCodes.length * 100) / charArray.length;
-                var weight = this.fontInfo.getWeight();
-                tachyfont.reporter.addItem(
-                    tachyfont.IncrementalFont.Log_.MISS_COUNT + weight,
-                    missCount);
-                tachyfont.reporter.addItem(
-                    tachyfont.IncrementalFont.Log_.MISS_RATE + weight,
-                    missRate);
-                if (neededCodes.length) {
-                  neededCodes = tachyfont.possibly_obfuscate(neededCodes,
-                  tmp_charlist, this.cmapMapping_);
-                  if (goog.DEBUG) {
-                    goog.log.info(tachyfont.logger, this.fontInfo.getName() +
-                    ': load ' + neededCodes.length + ' codes:');
-                    goog.log.log(tachyfont.logger, goog.log.Level.FINER,
-                    '' + neededCodes);
-                  }
-                } else {
-                  if (goog.DEBUG) {
-                    goog.log.fine(tachyfont.logger, 'no new characters');
-                  }
-                  pendingResolveFn(false);
-                  return;
-                }
-                neededCodes.sort(function(a, b) { return a - b; });
-                if (this.req_size) {
-                  remaining = neededCodes.slice(this.req_size);
-                  neededCodes = neededCodes.slice(0, this.req_size);
-                }
-                for (var i = 0; i < neededCodes.length; i++) {
-                  var c = tachyfont.utils.stringFromCodePoint(neededCodes[i]);
-                  charlist[c] = 1;
-                  delete this.charsToLoad[c];
-                }
-                return this.backendService.requestCodepoints(this.fontInfo,
-                neededCodes).
-                then(function(bundleResponse) {
-                  if (remaining.length) {
-                    setTimeout(function() {
-                      this.loadChars();
-                    }.bind(this), 1);
-                  }
-                  return bundleResponse;
-                }.bind(this));
-              }.bind(this)).
-              then(function(bundleResponse) {
-                return this.checkFingerprint_(bundleResponse);
-              }.bind(this))
-              .thenCatch(function(bundleResponse) {
-                return this.handleFingerprintMismatch_(pendingRejectFn);
+          return this.calcNeededChars_().then(function(neededCodes_) {
+                neededCodes = neededCodes_;
+                return this.fetchChars_(neededCodes_);
               }.bind(this))
               .then(function(bundleResponse) {
-                return this.getBase.
-                then(function(arr) {
-                  var fileInfo = arr[0];
-                  var fontData = arr[1];
-                  var dataLength = 0;
-                  if (bundleResponse != null) {
-                    dataLength = bundleResponse.getDataLength();
-                    if (dataLength != 0) {
-                      this.needToSetFont = true;
-                    }
-                    if (goog.DEBUG) {
-                      goog.log.info(tachyfont.logger,
-                      this.fontName +
-                      ' injectCharacters: glyph count / data length = ' +
-                      bundleResponse.getGlyphCount() + ' / ' + dataLength);
-                    }
-                    var glyphToCodeMap = {};
-                    for (var i = 0; i < neededCodes.length; i++) {
-                      var code = neededCodes[i];
-                      var charCmapInfo = this.cmapMapping_[code];
-                      if (charCmapInfo) {
-                        // Handle multiple codes sharing a glyphId.
-                        if (glyphToCodeMap[charCmapInfo.glyphId] ==
-                        undefined) {
-                          glyphToCodeMap[charCmapInfo.glyphId] = [];
-                        }
-                        glyphToCodeMap[charCmapInfo.glyphId].push(code);
-                      }
-                      if (goog.DEBUG) {
-                        if (!charCmapInfo) {
-                          goog.log.warning(tachyfont.logger,
-                          'no glyph for codepoint 0x' + code.toString(16));
-                        }
-                      }
-                    }
-                    var extraGlyphs = [];
-                    fontData = this.injectCharacters(fontData, bundleResponse,
-                    glyphToCodeMap, extraGlyphs);
-                    var missingCodes = Object.keys(glyphToCodeMap);
-                    if (missingCodes.length != 0) {
-                      missingCodes = missingCodes.slice(0, 5);
-                      tachyfont.IncrementalFont.reportError_(
-                      tachyfont.IncrementalFont.Error_.
-                      LOAD_CHARS_INJECT_CHARS_2,
-                      this.fontInfo.getWeight(), missingCodes.toString());
-                    }
-                    if (goog.DEBUG) {
-                      if (extraGlyphs.length != 0) {
-                        // TODO(bstell): this probably belongs somewhere else.
-                        if (!this.glyphToCodeMap_) {
-                          this.glyphToCodeMap_ = {};
-                          var codepoints = Object.keys(this.cmapMapping_);
-                          for (var j = 0; j < codepoints.length; j++) {
-                            var codepoint = parseInt(codepoints[j], 10);
-                            var cmapMap = this.cmapMapping_[codepoint];
-                            this.glyphToCodeMap_[cmapMap.glyphId] = codepoint;
-                          }
-                        }
-                        for (var j = 0; j < extraGlyphs.length; j++) {
-                          var extraGlyphId = extraGlyphs[j];
-                          var codepoint = this.glyphToCodeMap_[extraGlyphId];
-                          if (codepoint) {
-                            goog.log.warning(tachyfont.logger,
-                                'extraGlyphId / codepoint = ' + extraGlyphId +
-                                ' / 0x' + parseInt(codepoint, 10).toString(16));
-                          }
-                        }
-                      }
-                    }
-                    var msg;
-                    if (remaining.length) {
-                      msg = 'display ' + Object.keys(charlist).length +
-                          ' chars';
-                    } else {
-                      msg = '';
-                    }
-
-                    // Persist the data.
-                    this.persistDelayed_(tachyfont.IncrementalFont.BASE);
-                    this.persistDelayed_(tachyfont.IncrementalFont.CHARLIST);
-                  } else {
-                    var msg = '';
-                  }
-                  pendingResolveFn(true);
-                  // }).
-                  // thenCatch(function(e) {
-                  //   tachyfont.IncrementalFont.reportError_(
-                  //       tachyfont.IncrementalFont.Error_
-                  //       .LOAD_CHARS_INJECT_CHARS_2,
-                  //       this.fontInfo.getWeight(), e);
-                  //   pendingRejectFn(false);
-                }.bind(this));
+                return this.injectChars_(neededCodes, bundleResponse);
+              }.bind(this)).then(function() {
+                // Persist the data.
+                this.persistDelayed_(tachyfont.IncrementalFont.BASE);
+                this.persistDelayed_(tachyfont.IncrementalFont.CHARLIST);
               }.bind(this))
               .thenCatch(function() {
-                pendingRejectFn(false);
+                // Here to handle error if needed.
+              }.bind(this)).then(function() {
+                pendingResolveFn(true);
               });
         }.bind(this)).
             thenCatch(function(e) {
@@ -993,13 +831,114 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars = function() {
       }.bind(this)).
       thenCatch(function(e) {
         // Failed to get the char data so release the lock.
-        finishPrecedingCharsRequest.reject();
+        finishPrecedingCharsRequest.reject('finishPrecedingCharsRequest');
         tachyfont.IncrementalFont.reportError_(
             tachyfont.IncrementalFont.Error_.LOAD_CHARS_GET_LOCK,
             this.fontInfo.getWeight(), e);
         return goog.Promise.resolve(false);
       }.bind(this));
   return finishPrecedingCharsRequest.getPromise();
+};
+
+
+/**
+ * Determine the codepoints that are in the font but not yet loaded.
+ *
+ * @return {goog.Promise} If successful returns a resolved promise.
+ * @private
+ */
+tachyfont.IncrementalFont.obj_.prototype.calcNeededChars_ = function() {
+  // Check if there are any new characters.
+  var charArray = Object.keys(this.charsToLoad);
+  if (charArray.length == 0) {
+    return goog.Promise.resolve([]);
+  }
+
+  return this.getCharList
+      .then(function(charlist) {
+        var neededCodes = [];
+        // Make a tmp copy in case we are chunking the requests.
+        var tmp_charlist = {};
+        for (var key in charlist) {
+          tmp_charlist[key] = charlist[key];
+        }
+        for (var i = 0; i < charArray.length; i++) {
+          var c = charArray[i];
+          var code = tachyfont.charToCode(c);
+          // Check if the font supports the char and it is not loaded.
+          if (this.cmapMapping_[code] && !tmp_charlist[c]) {
+            neededCodes.push(code);
+            tmp_charlist[c] = 1;
+          }
+        }
+
+        // Report the miss rate/count (*before* obfuscation).
+        var missCount = neededCodes.length;
+        var missRate = (neededCodes.length * 100) / charArray.length;
+        var weight = this.fontInfo.getWeight();
+        tachyfont.reporter.addItem(
+           tachyfont.IncrementalFont.Log_.MISS_COUNT + weight,
+           missCount);
+        tachyfont.reporter.addItem(
+           tachyfont.IncrementalFont.Log_.MISS_RATE + weight,
+           missRate);
+        if (neededCodes.length == 0) {
+          if (goog.DEBUG) {
+            goog.log.fine(tachyfont.logger, 'no new characters');
+          }
+          return goog.Promise.reject('no chars to load');
+        }
+        neededCodes = tachyfont.possibly_obfuscate(neededCodes, charlist,
+            this.cmapMapping_);
+        if (goog.DEBUG) {
+          goog.log.info(tachyfont.logger, this.fontInfo.getName() + ': load ' +
+              neededCodes.length + ' codes:');
+          goog.log.log(tachyfont.logger, goog.log.Level.FINER, '' +
+              neededCodes);
+        }
+        var remaining;
+        if (this.req_size) {
+          var remaining = neededCodes.slice(this.req_size);
+          neededCodes = neededCodes.slice(0, this.req_size);
+        } else {
+          remaining = [];
+        }
+        for (var i = 0; i < neededCodes.length; i++) {
+          var c = tachyfont.utils.stringFromCodePoint(neededCodes[i]);
+          charlist[c] = 1;
+          delete this.charsToLoad[c];
+        }
+        if (remaining.length) {
+          setTimeout(function() {
+            this.loadChars();
+          }.bind(this), 1);
+        }
+
+        neededCodes.sort(function(a, b) { return a - b; });
+        return neededCodes;
+      }.bind(this));
+};
+
+
+/**
+ * Fetch glyph data for the requested codepoints.
+ *
+ * @param {Array.<number>} requestedCodes The codes to be injected.
+ * @return {goog.Promise} If successful return a resolved promise.
+ * @private
+ */
+tachyfont.IncrementalFont.obj_.prototype.fetchChars_ =
+    function(requestedCodes) {
+  return this.backendService.requestCodepoints(this.fontInfo, requestedCodes).
+      then(function(bundleResponse) {
+        return bundleResponse;
+      }.bind(this))
+      .then(function(bundleResponse) {
+        return this.checkFingerprint_(bundleResponse);
+      }.bind(this))
+      .thenCatch(function(bundleResponse) {
+        return this.handleFingerprintMismatch_(function() {});
+      }.bind(this));
 };
 
 
@@ -1022,7 +961,7 @@ tachyfont.IncrementalFont.obj_.prototype.checkFingerprint_ = function(
   if (base_signature == bundleResponse.signature) {
     return goog.Promise.resolve(bundleResponse);
   }
-  return goog.Promise.reject();
+  return goog.Promise.reject('reject fingerprint');
 };
 
 
@@ -1046,7 +985,7 @@ tachyfont.IncrementalFont.obj_.prototype.handleFingerprintMismatch_ = function(
   return this.getIDB_
       .then(function(db) {
         db.close();
-        this.getIDB_ = goog.Promise.reject();
+        this.getIDB_ = goog.Promise.reject('fingerprint mismatch');
         // Suppress the "Uncaught" error for rejected promises. See
         // https://code.google.com/p/v8/issues/detail?id=3093
         this.getIDB_.thenCatch(function() {});
@@ -1054,8 +993,95 @@ tachyfont.IncrementalFont.obj_.prototype.handleFingerprintMismatch_ = function(
            this.fontInfo.getWeight())
            .then(function() {
              pendingRejectFn();
-             return goog.Promise.reject();
+             return goog.Promise.reject('deleted database');
            });
+      }.bind(this));
+};
+
+
+/**
+ * Inject glyph data and enable the chars in the cmaps.
+ *
+ * @param {Array.<number>} neededCodes The codes to be injected.
+ * @param {tachyfont.GlyphBundleResponse} bundleResponse New glyph data
+ * @return {goog.Promise} The list of needed chars.
+ * @private
+ */
+tachyfont.IncrementalFont.obj_.prototype.injectChars_ = function(neededCodes, 
+    bundleResponse) {
+  return this.getBase.
+      then(function(arr) {
+        var fileInfo = arr[0];
+        var fontData = arr[1];
+        var dataLength = 0;
+        if (bundleResponse != null) {
+          dataLength = bundleResponse.getDataLength();
+          if (dataLength != 0) {
+            this.needToSetFont = true;
+          }
+          if (goog.DEBUG) {
+            goog.log.info(tachyfont.logger,
+               this.fontName +
+               ' injectCharacters: glyph count / data length = ' +
+               bundleResponse.getGlyphCount() + ' / ' + dataLength);
+          }
+          var glyphToCodeMap = {};
+          for (var i = 0; i < neededCodes.length; i++) {
+            var code = neededCodes[i];
+            var charCmapInfo = this.cmapMapping_[code];
+            if (charCmapInfo) {
+              // Handle multiple codes sharing a glyphId.
+              if (glyphToCodeMap[charCmapInfo.glyphId] ==
+                 undefined) {
+                glyphToCodeMap[charCmapInfo.glyphId] = [];
+              }
+              glyphToCodeMap[charCmapInfo.glyphId].push(code);
+            }
+            if (goog.DEBUG) {
+              if (!charCmapInfo) {
+                goog.log.warning(tachyfont.logger,
+                   'no glyph for codepoint 0x' + code.toString(16));
+              }
+            }
+          }
+          var extraGlyphs = [];
+          fontData = this.injectCharacters(fontData, bundleResponse,
+             glyphToCodeMap, extraGlyphs);
+          var missingCodes = Object.keys(glyphToCodeMap);
+          if (missingCodes.length != 0) {
+            missingCodes = missingCodes.slice(0, 5);
+            tachyfont.IncrementalFont.reportError_(
+               tachyfont.IncrementalFont.Error_.
+               LOAD_CHARS_INJECT_CHARS_2,
+               this.fontInfo.getWeight(), missingCodes.toString());
+          }
+          if (goog.DEBUG) {
+            if (extraGlyphs.length != 0) {
+              // TODO(bstell): this probably belongs somewhere else.
+              if (!this.glyphToCodeMap_) {
+                this.glyphToCodeMap_ = {};
+                var codepoints = Object.keys(this.cmapMapping_);
+                for (var j = 0; j < codepoints.length; j++) {
+                  var codepoint = parseInt(codepoints[j], 10);
+                  var cmapMap = this.cmapMapping_[codepoint];
+                  this.glyphToCodeMap_[cmapMap.glyphId] = codepoint;
+                }
+              }
+              for (var j = 0; j < extraGlyphs.length; j++) {
+                var extraGlyphId = extraGlyphs[j];
+                var codepoint = this.glyphToCodeMap_[extraGlyphId];
+                if (codepoint) {
+                  goog.log.warning(tachyfont.logger,
+                     'extraGlyphId / codepoint = ' + extraGlyphId +
+                     ' / 0x' + parseInt(codepoint, 10).toString(16));
+                }
+              }
+            }
+          }
+          return goog.Promise.resolve();
+        } else {
+          return goog.Promise.reject('bundleResponse == null');
+        }
       }.bind(this));
 };
 
@@ -1179,6 +1205,6 @@ tachyfont.IncrementalFont.obj_.prototype.persist_ = function(name) {
             tachyfont.IncrementalFont.Error_.PERSIST_GET_LOCK,
             that.fontInfo.getWeight(), e);
         // Release the lock.
-        finishedPersisting.reject();
+        finishedPersisting.reject('persisting');
       });
 };
