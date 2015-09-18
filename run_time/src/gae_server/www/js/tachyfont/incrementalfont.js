@@ -792,33 +792,20 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars = function() {
       this.finishPrecedingCharsRequest_.getChainedPromise(msg);
   finishPrecedingCharsRequest.getPrecedingPromise().
       then(function() {
-        var pendingResolveFn, pendingRejectFn;
-        // TODO(bstell): use tachfont.promise here?
-        return new goog.Promise(function(resolve, reject) {
-          pendingResolveFn = resolve;
-          pendingRejectFn = reject;
-
-          return this.calcNeededChars_().then(function(neededCodes_) {
-                neededCodes = neededCodes_;
-                return this.fetchChars_(neededCodes_);
-              }.bind(this))
-              .then(function(bundleResponse) {
-                return this.injectChars_(neededCodes, bundleResponse);
-              }.bind(this)).then(function() {
-                // Persist the data.
-                this.persistDelayed_(tachyfont.IncrementalFont.BASE);
-                this.persistDelayed_(tachyfont.IncrementalFont.CHARLIST);
-              }.bind(this))
-              .thenCatch(function() {
-                // Here to handle error if needed.
-              }.bind(this)).then(function() {
-                pendingResolveFn(true);
-              });
-        }.bind(this)).
-            thenCatch(function(e) {
-              tachyfont.IncrementalFont.reportError_(
-                  tachyfont.IncrementalFont.Error_.LOAD_CHARS_INJECT_CHARS,
-                  this.fontInfo.getWeight(), e);
+        return this.calcNeededChars_().then(function(neededCodes_) {
+          neededCodes = neededCodes_;
+          return this.fetchChars_(neededCodes_);
+        }.bind(this))
+            .then(function(bundleResponse) {
+              return this.injectChars_(neededCodes, bundleResponse);
+            }.bind(this)).then(function() {
+              // Persist the data.
+              this.persistDelayed_(tachyfont.IncrementalFont.BASE);
+              this.persistDelayed_(tachyfont.IncrementalFont.CHARLIST);
+            }.bind(this))
+            .thenCatch(function() {
+              // Here to keep Chrome from complaining that a Promise reject is
+              // not caught.
             }.bind(this));
       }.bind(this)).
       then(function() {
@@ -937,7 +924,7 @@ tachyfont.IncrementalFont.obj_.prototype.fetchChars_ =
         return this.checkFingerprint_(bundleResponse);
       }.bind(this))
       .thenCatch(function(bundleResponse) {
-        return this.handleFingerprintMismatch_(function() {});
+        return this.handleFingerprintMismatch_();
       }.bind(this));
 };
 
@@ -968,16 +955,13 @@ tachyfont.IncrementalFont.obj_.prototype.checkFingerprint_ = function(
 /**
  * Handle the fingerprint mismatch:
  * - close and drop the database
- * - call the pendingRejectFn
  * - return a rejected promise
  *
- * @param {function()} pendingRejectFn A function that tells TachyFont to
- *     reject the char data.
  * @return {goog.Promise} Returns a promise which will eventually reject.
  * @private
  */
-tachyfont.IncrementalFont.obj_.prototype.handleFingerprintMismatch_ = function(
-    pendingRejectFn) {
+tachyfont.IncrementalFont.obj_.prototype.handleFingerprintMismatch_ =
+    function() {
   tachyfont.IncrementalFont.reportError_(
       tachyfont.IncrementalFont.Error_.FINGERPRINT_MISMATCH,
       this.fontInfo.getWeight(), '');
@@ -992,7 +976,6 @@ tachyfont.IncrementalFont.obj_.prototype.handleFingerprintMismatch_ = function(
         return tachyfont.Persist.deleteDatabase(this.fontInfo.getName(),
            this.fontInfo.getWeight())
            .then(function() {
-             pendingRejectFn();
              return goog.Promise.reject('deleted database');
            });
       }.bind(this));
