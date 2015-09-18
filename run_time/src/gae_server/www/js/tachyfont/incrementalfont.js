@@ -359,7 +359,8 @@ tachyfont.IncrementalFont.obj_ = function(fontInfo, params, backendService) {
  * Get the font base from persistent store.
  * @return {goog.Promise} The base bytes in DataView.
  */
-tachyfont.IncrementalFont.obj_.prototype.getPersistedBase = function() {
+tachyfont.IncrementalFont.obj_.prototype.getBaseFontFromPersistence =
+    function() {
   var persistedBase = this.getIDB_.
       then(function(idb) {
         var filedata;
@@ -461,7 +462,7 @@ tachyfont.IncrementalFont.obj_.prototype.parseBaseHeader =
  * @param {!tachyfont.FontInfo} fontInfo Info about this font.
  * @return {goog.Promise} The base bytes in DataView.
  */
-tachyfont.IncrementalFont.obj_.prototype.getUrlBase =
+tachyfont.IncrementalFont.obj_.prototype.getBaseFontFromUrl =
     function(backendService, fontInfo) {
   var rslt = backendService.requestFontBase(fontInfo).
       then(function(urlBaseBytes) {
