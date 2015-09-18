@@ -319,7 +319,7 @@ tachyfont.fontId = function(family, weight) {
 
 
 /**
- * Create a list of TachyFonts
+ * Load a list of TachyFonts
  *
  * @param {string} familyName The font-family name.
  * TODO(bstell): remove the Object type.
@@ -329,41 +329,9 @@ tachyfont.fontId = function(family, weight) {
  * @return {tachyfont.TachyFontSet} The TachyFontSet object.
  */
 tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
-  if (goog.DEBUG) {
-    tachyfont.debugInitialization_();
-    goog.log.fine(tachyfont.logger, 'loadFonts');
-  }
-
-  var dataUrl = fontsInfo.getDataUrl();
-  if (!dataUrl) {
-    dataUrl = window.location.protocol + '//' + window.location.hostname +
-        (window.location.port ? ':' + window.location.port : '');
-  }
-  var reportUrl = fontsInfo.getReportUrl() || dataUrl;
-  tachyfont.initializeReporter(reportUrl);
-  tachyfont.reporter.addItemTime(tachyfont.Log_.LOAD_FONTS + '000');
-
-  // Check if the persistent stores should be dropped.
-  var uri = goog.Uri.parse(window.location.href);
-  var dropDataStr = uri.getParameterValue('TachyFontDropData') || '';
-  var dropData = dropDataStr == 'true';
-
-  // TODO(bstell): this initialization of TachyFontSet should be in the
-  // constructor or and init function.
-  var tachyFontSet = new tachyfont.TachyFontSet(familyName);
+  var tachyFontSet =
+      tachyfont.loadFonts_init_(familyName, fontsInfo, opt_params);
   var tachyFonts = tachyFontSet.fonts;
-  var params = opt_params || {};
-  var fonts = fontsInfo.getFonts();
-  for (var i = 0; i < fonts.length; i++) {
-    var fontInfo = fonts[i];
-    fontInfo.setFamilyName(familyName);
-    fontInfo.setDataUrl(dataUrl);
-    var tachyFont = new tachyfont.TachyFont(fontInfo, dropData, params);
-    tachyFontSet.addFont(tachyFont);
-    // TODO(bstell): need to support slant/width/etc.
-    var fontId = tachyfont.fontId(familyName, fontInfo.getWeight());
-    tachyFontSet.fontIdToIndex[fontId] = i;
-  }
   var msg = 'loadFonts';
   if (goog.DEBUG) {
     goog.log.log(tachyfont.logger, goog.log.Level.FINER,
@@ -555,6 +523,55 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
     }
   });
 
+  return tachyFontSet;
+};
+
+
+/**
+ * Initialization before loading a list of TachyFonts
+ *
+ * @param {string} familyName The font-family name.
+ * TODO(bstell): remove the Object type.
+ * @param {!tachyfont.FontsInfo} fontsInfo The information about the
+ *     fonts.
+ * @param {Object.<string, string>=} opt_params Optional parameters.
+ * @return {tachyfont.TachyFontSet} The TachyFontSet object.
+ * @private
+ */
+tachyfont.loadFonts_init_ = function(familyName, fontsInfo, opt_params) {
+  if (goog.DEBUG) {
+    tachyfont.debugInitialization_();
+    goog.log.fine(tachyfont.logger, 'loadFonts');
+  }
+
+  var dataUrl = fontsInfo.getDataUrl();
+  if (!dataUrl) {
+    dataUrl = window.location.protocol + '//' + window.location.hostname +
+        (window.location.port ? ':' + window.location.port : '');
+  }
+  var reportUrl = fontsInfo.getReportUrl() || dataUrl;
+  tachyfont.initializeReporter(reportUrl);
+  tachyfont.reporter.addItemTime(tachyfont.Log_.LOAD_FONTS + '000');
+
+  // Check if the persistent stores should be dropped.
+  var uri = goog.Uri.parse(window.location.href);
+  var dropDataStr = uri.getParameterValue('TachyFontDropData') || '';
+  var dropData = dropDataStr == 'true';
+
+  var tachyFontSet = new tachyfont.TachyFontSet(familyName);
+  var tachyFonts = tachyFontSet.fonts;
+  var params = opt_params || {};
+  var fonts = fontsInfo.getFonts();
+  for (var i = 0; i < fonts.length; i++) {
+    var fontInfo = fonts[i];
+    fontInfo.setFamilyName(familyName);
+    fontInfo.setDataUrl(dataUrl);
+    var tachyFont = new tachyfont.TachyFont(fontInfo, dropData, params);
+    tachyFontSet.addFont(tachyFont);
+    // TODO(bstell): need to support slant/width/etc.
+    var fontId = tachyfont.fontId(familyName, fontInfo.getWeight());
+    tachyFontSet.fontIdToIndex[fontId] = i;
+  }
   return tachyFontSet;
 };
 
