@@ -331,6 +331,22 @@ tachyfont.fontId = function(family, weight) {
 tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
   var tachyFontSet =
       tachyfont.loadFonts_init_(familyName, fontsInfo, opt_params);
+  var loadAndUsePromise = tachyfont.loadFonts_loadAndUse_(tachyFontSet);
+
+  // Run this in parallel with loading the fonts.
+  tachyfont.loadFonts_setupTextListeners_(tachyFontSet);
+
+  return tachyFontSet;
+};
+
+
+/**
+ * Load and use a list of TachyFonts
+ *
+ * @param {tachyfont.TachyFontSet} tachyFontSet The list of TachyFonts.
+ * @private
+ */
+tachyfont.loadFonts_loadAndUse_ = function(tachyFontSet) {
   var tachyFonts = tachyFontSet.fonts;
   var msg = 'loadFonts';
   if (goog.DEBUG) {
@@ -369,11 +385,6 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
         tachyfont.reportError_(tachyfont.Error_.GET_BASE, e);
         waitForPrecedingPromise.reject();
       });
-
-  // Run this in parallel with loading the fonts.
-  tachyfont.loadFonts_setupTextListeners_(tachyFontSet);
-
-  return tachyFontSet;
 };
 
 
