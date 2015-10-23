@@ -317,6 +317,7 @@ tachyfont.Log_ = {
  * @param {string} weight The font weight;
  * @return {string} The identifier for this font.
  */
+// TODO(bstell): merge this with getDbName
 tachyfont.fontId = function(family, weight) {
   // TODO(bstell): need to support slant/width/etc.
   var fontId = family + ';' + weight;
@@ -426,7 +427,6 @@ tachyfont.loadFonts_init_ = function(familyName, fontsInfo, opt_params) {
   var dropData = dropDataStr == 'true';
 
   var tachyFontSet = new tachyfont.TachyFontSet(familyName);
-  var tachyFonts = tachyFontSet.fonts;
   var params = opt_params || {};
   var fonts = fontsInfo.getFonts();
   for (var i = 0; i < fonts.length; i++) {
@@ -563,7 +563,7 @@ tachyfont.loadFonts_setupTextListeners_ = function(tachyFontSet) {
 
   // Check the DOM when it reports loading the page is done.
   document.addEventListener('DOMContentLoaded', function(event) {
-    tachyfont.loadFonts_handleDomContentLoaded(tachyFontSet, event);
+    tachyfont.loadFonts_handleDomContentLoaded_(tachyFontSet, event);
   });
 };
 
@@ -675,30 +675,31 @@ tachyfont.charToCode = function(inputChar) {
  * Note: mutation observers do not look at INPUT field changes.
  *
  * @param {tachyfont.TachyFontSet} tachyFontSet The TachyFont objects.
+ * @param {Event} event The DOMContentLoaded event.
  * @private
  */
-tachyfont.loadFonts_handleDomContentLoaded = function(tachyFontSet, event) {
+tachyfont.loadFonts_handleDomContentLoaded_ = function(tachyFontSet, event) {
   // Update the fonts when the page content is loaded.
-    tachyFontSet.domContentLoaded = true;
-    // On DOMContentLoaded we want to update the fonts. If there have been
-    // mutation events then do the update now. Characters should be in the DOM
-    // now but the order of DOMContentLoaded and mutation events is not defined
-    // and a mutation event should be coming right after this. We could scan the
-    // DOM and do the update right now but scanning the DOM is expensive. So
-    // instead wait for the mutation event.
-    if (tachyFontSet.hadMutationEvents) {
-      // We have characters so update the fonts.
-      if (goog.DEBUG) {
-        goog.log.info(tachyfont.logger, 'DOMContentLoaded: updateFonts');
-      }
-      tachyFontSet.updateFonts(0, true);
-    } else {
-      // The mutation event should be very soon.
-      if (goog.DEBUG) {
-        goog.log.info(tachyfont.logger,
-            'DOMContentLoaded: wait for mutation event');
-      }
+  tachyFontSet.domContentLoaded = true;
+  // On DOMContentLoaded we want to update the fonts. If there have been
+  // mutation events then do the update now. Characters should be in the DOM
+  // now but the order of DOMContentLoaded and mutation events is not defined
+  // and a mutation event should be coming right after this. We could scan the
+  // DOM and do the update right now but scanning the DOM is expensive. So
+  // instead wait for the mutation event.
+  if (tachyFontSet.hadMutationEvents) {
+    // We have characters so update the fonts.
+    if (goog.DEBUG) {
+      goog.log.info(tachyfont.logger, 'DOMContentLoaded: updateFonts');
     }
+    tachyFontSet.updateFonts(0, true);
+  } else {
+    // The mutation event should be very soon.
+    if (goog.DEBUG) {
+      goog.log.info(tachyfont.logger,
+          'DOMContentLoaded: wait for mutation event');
+    }
+  }
 };
 
 goog.exportSymbol('tachyfont.loadFonts', tachyfont.loadFonts);
