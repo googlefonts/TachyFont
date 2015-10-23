@@ -42,9 +42,9 @@ goog.require('tachyfont.utils');
  * The IndexedDB version.
  * Increment this number every time there is a change in the schema.
  *
- * @type {number}
+ * @const {number}
  */
-tachyfont.IncrementalFont.version = 1;
+tachyfont.IncrementalFont.VERSION = 2;
 
 
 /**

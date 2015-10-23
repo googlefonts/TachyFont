@@ -273,21 +273,30 @@ tachyfontprelude.setFontNoFlash = function(fontDataView, fontInfo) {
  * @return {Promise} This promise resolves when the font is used.
  */
 tachyfontprelude.useFont = function(fontInfo, previousPromise) {
+  var idb;
   return previousPromise.then(function() {
     return tachyfontprelude.openIDB(fontInfo);
-  }).then(tachyfontprelude.getDbBase)
+  }).then(function(db) {
+    idb = db;
+    return db;
+  })
+      .then(tachyfontprelude.getDbBase)
       .then(tachyfontprelude.getFontData)
       .then(function(fontDataView) {
         return tachyfontprelude.setFontNoFlash(fontDataView, fontInfo);
       }).then(
       // Record the font ready time.
       function() {
+        idb.close();
         tachyfontprelude.reports_.push(
             [10 + (new Date()).getTime() - tachyfontprelude.START_TIME,
              fontInfo.weight]);
       },
       // Report the error.
       function(errorNumber) {
+        if (idb) {
+          idb.close();
+        }
         tachyfontprelude.reports_.push([errorNumber, fontInfo.weight]);
         return new Promise(function(resolve) {
           resolve();

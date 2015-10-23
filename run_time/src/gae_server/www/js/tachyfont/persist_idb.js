@@ -90,7 +90,7 @@ tachyfont.Persist.saveData = function(idb, name, data) {
 tachyfont.Persist.openIndexedDB = function(dbName, id) {
   var openIdb = new goog.Promise(function(resolve, reject) {
     var dbOpen = window.indexedDB.open(dbName,
-        tachyfont.IncrementalFont.version);
+        tachyfont.IncrementalFont.VERSION);
 
     dbOpen.onsuccess = function(e) {
       var db = e.target.result;

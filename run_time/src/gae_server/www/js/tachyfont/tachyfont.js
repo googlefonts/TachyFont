@@ -540,59 +540,14 @@ tachyfont.loadFonts_useFonts_ = function(tachyFonts, arrayBaseData) {
 tachyfont.loadFonts_setupTextListeners_ = function(tachyFontSet) {
   // Get any characters that are already in the DOM.
   tachyFontSet.recursivelyAddTextToFontGroups(document.documentElement);
+
   // Remove TachyFont from INPUT fields.
   tachyFontSet.recursivelyRemoveTachyFontFromInputFields(
       document.documentElement);
 
-  // Add DOM mutation observer.
-  // This records the changes on a per-font basis.
-  // Note: mutation observers do not look at INPUT field changes.
-  //create an observer instance
+  // Create a DOM mutation observer.
   var observer = new MutationObserver(function(mutations) {
-    if (goog.DEBUG) {
-      goog.log.fine(tachyfont.logger, 'MutationObserver');
-    }
-    var mutationTime = goog.now();
-    mutations.forEach(function(mutation) {
-      if (mutation.type == 'childList') {
-        for (var i = 0; i < mutation.addedNodes.length; i++) {
-          var node = mutation.addedNodes[i];
-          tachyFontSet.recursivelyAddTextToFontGroups(node);
-          // Remove TachyFont from INPUT fields.
-          tachyFontSet.recursivelyRemoveTachyFontFromInputFields(node);
-        }
-      } else if (mutation.type == 'characterData') {
-        if (goog.DEBUG) {
-          if (mutation.target.nodeName !== '#text') {
-            goog.log.info(tachyfont.logger,
-                'need to handle characterData for non-text');
-          }
-        }
-        tachyFontSet.recursivelyAddTextToFontGroups(mutation.target);
-      }
-    });
-    // If this is the 1st mutation event and it happened after DOMContentLoaded
-    // then do the update now.
-    var immediateUpdate;
-    if (!tachyFontSet.hadMutationEvents && tachyFontSet.domContentLoaded) {
-      immediateUpdate = true;
-    } else {
-      immediateUpdate = false;
-    }
-    tachyFontSet.hadMutationEvents = true;
-    if (immediateUpdate) {
-      if (goog.DEBUG) {
-        goog.log.info(tachyfont.logger, 'mutation observer: updateFonts');
-      }
-      tachyFontSet.updateFonts(mutationTime, true);
-    } else {
-      // For pages that load new data slowly: request the fonts be updated soon.
-      // This attempts to minimize expensive operations:
-      //     1. The round trip delays to fetch data.
-      //     2. The set @font-family time (it takes significant time to pass the
-      //        blobUrl data from Javascript to C++).
-      tachyFontSet.requestUpdateFonts(mutationTime);
-    }
+    tachyfont.loadFonts_domMutationObserver_(tachyFontSet, mutations);
   });
 
   // Watch for these mutations.
@@ -600,28 +555,9 @@ tachyfont.loadFonts_setupTextListeners_ = function(tachyFontSet) {
     'subtree': true, 'characterData': true });
   observer.observe(document.documentElement, config);
 
-  // Update the fonts when the page content is loaded.
+  // Check the DOM when it reports loading the page is done.
   document.addEventListener('DOMContentLoaded', function(event) {
-    tachyFontSet.domContentLoaded = true;
-    // On DOMContentLoaded we want to update the fonts. If there have been
-    // mutation events then do the update now. Characters should be in the DOM
-    // now but the order of DOMContentLoaded and mutation events is not defined
-    // and a mutation event should be coming right after this. We could scan the
-    // DOM and do the update right now but scanning the DOM is expensive. So
-    // instead wait for the mutation event.
-    if (tachyFontSet.hadMutationEvents) {
-      // We have characters so update the fonts.
-      if (goog.DEBUG) {
-        goog.log.info(tachyfont.logger, 'DOMContentLoaded: updateFonts');
-      }
-      tachyFontSet.updateFonts(0, true);
-    } else {
-      // The mutation event should be very soon.
-      if (goog.DEBUG) {
-        goog.log.info(tachyfont.logger,
-            'DOMContentLoaded: wait for mutation event');
-      }
-    }
+    tachyfont.loadFonts_handleDomContentLoaded(tachyFontSet, event);
   });
 };
 
@@ -649,6 +585,64 @@ tachyfont.stringToChars = function(str) {
 
 
 /**
+ * TachyFont DOM Mutation Observer
+ *
+ * This records the changes on a per-font basis.
+ * Note: mutation observers do not look at INPUT field changes.
+ *
+ * @param {tachyfont.TachyFontSet} tachyFontSet The TachyFont objects.
+ * @param {Array.<MutationRecord>} mutations The mutation records.
+ * @private
+ */
+tachyfont.loadFonts_domMutationObserver_ = function(tachyFontSet, mutations) {
+  if (goog.DEBUG) {
+    goog.log.fine(tachyfont.logger, 'MutationObserver');
+  }
+  var mutationTime = goog.now();
+  mutations.forEach(function(mutation) {
+    if (mutation.type == 'childList') {
+      for (var i = 0; i < mutation.addedNodes.length; i++) {
+        var node = mutation.addedNodes[i];
+        tachyFontSet.recursivelyAddTextToFontGroups(node);
+        // Remove TachyFont from INPUT fields.
+        tachyFontSet.recursivelyRemoveTachyFontFromInputFields(node);
+      }
+    } else if (mutation.type == 'characterData') {
+      if (goog.DEBUG) {
+        if (mutation.target.nodeName !== '#text') {
+          goog.log.info(tachyfont.logger,
+              'need to handle characterData for non-text');
+        }
+      }
+      tachyFontSet.recursivelyAddTextToFontGroups(mutation.target);
+    }
+  });
+  // If this is the 1st mutation event and it happened after DOMContentLoaded
+  // then do the update now.
+  var immediateUpdate;
+  if (!tachyFontSet.hadMutationEvents && tachyFontSet.domContentLoaded) {
+    immediateUpdate = true;
+  } else {
+    immediateUpdate = false;
+  }
+  tachyFontSet.hadMutationEvents = true;
+  if (immediateUpdate) {
+    if (goog.DEBUG) {
+      goog.log.info(tachyfont.logger, 'mutation observer: updateFonts');
+    }
+    tachyFontSet.updateFonts(mutationTime, true);
+  } else {
+    // For pages that load new data slowly: request the fonts be updated soon.
+    // This attempts to minimize expensive operations:
+    //     1. The round trip delays to fetch data.
+    //     2. The set @font-family time (it takes significant time to pass the
+    //        blobUrl data from Javascript to C++).
+    tachyFontSet.requestUpdateFonts(mutationTime);
+  }
+};
+
+
+/**
  * Convert a char to its codepoint.
  * This function handles surrogate pairs.
  *
@@ -667,5 +661,38 @@ tachyfont.charToCode = function(inputChar) {
   }
 };
 
+
+/**
+ * TachyFont DOM Mutation Observer
+ *
+ * This records the changes on a per-font basis.
+ * Note: mutation observers do not look at INPUT field changes.
+ *
+ * @param {tachyfont.TachyFontSet} tachyFontSet The TachyFont objects.
+ * @private
+ */
+tachyfont.loadFonts_handleDomContentLoaded = function(tachyFontSet, event) {
+  // Update the fonts when the page content is loaded.
+    tachyFontSet.domContentLoaded = true;
+    // On DOMContentLoaded we want to update the fonts. If there have been
+    // mutation events then do the update now. Characters should be in the DOM
+    // now but the order of DOMContentLoaded and mutation events is not defined
+    // and a mutation event should be coming right after this. We could scan the
+    // DOM and do the update right now but scanning the DOM is expensive. So
+    // instead wait for the mutation event.
+    if (tachyFontSet.hadMutationEvents) {
+      // We have characters so update the fonts.
+      if (goog.DEBUG) {
+        goog.log.info(tachyfont.logger, 'DOMContentLoaded: updateFonts');
+      }
+      tachyFontSet.updateFonts(0, true);
+    } else {
+      // The mutation event should be very soon.
+      if (goog.DEBUG) {
+        goog.log.info(tachyfont.logger,
+            'DOMContentLoaded: wait for mutation event');
+      }
+    }
+};
 
 goog.exportSymbol('tachyfont.loadFonts', tachyfont.loadFonts);
