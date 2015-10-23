@@ -80,8 +80,7 @@ tachyfont.Browser.setFont = function(fontData, fontInfo, isTtf, oldBlobUrl) {
  */
 // TODO(bstell): This is really Chrome specific. Make it more work for other
 // browsers.
-tachyfont.Browser.setFontNoFlash =
-    function(fontInfo, format, blobUrl) {
+tachyfont.Browser.setFontNoFlash = function(fontInfo, format, blobUrl) {
   // The desired @font-face font-family.
   var fontFamily = fontInfo.getFamilyName();
   // The temporary @font-face font-family.
@@ -120,29 +119,44 @@ tachyfont.Browser.setFontNoFlash =
   }).
       then(function() {
         // Now that the font is ready switch the @font-face to the desired name.
-        if (goog.DEBUG) {
-          goog.log.log(tachyfont.logger, goog.log.Level.FINER,
-              'switch to fontFamily');
-        }
-        // Delete the old @font-face.
-        var ruleToDelete = tachyfont.IncrementalFontUtils.findFontFaceRule(
-            sheet, fontFamily, weight);
-        tachyfont.IncrementalFontUtils.deleteCssRule(ruleToDelete, sheet);
-        // Switch the name to use the newly transfered blobUrl data.
-        var rule_to_switch = tachyfont.IncrementalFontUtils.findFontFaceRule(
-            sheet, tmpFontFamily, weight);
-        var rules = sheet.cssRules || sheet.rules;
-        if (rules && rule_to_switch != -1) {
-          var this_rule = rules[rule_to_switch];
-          var this_style = this_rule.style;
-          if (goog.DEBUG) {
-            goog.log.info(tachyfont.logger, '**** switched ' + weight +
-                ' from ' + this_style.fontFamily + ' to ' + fontFamily +
-                ' ****');
-          }
-          this_style.fontFamily = fontFamily;
-        }
+        tachyfont.Browser.switchFont(sheet, tmpFontFamily, fontFamily, weight,
+            blobUrl, format);
       });
 
   return setFontPromise;
 };
+
+
+/**
+ * Switch from the temporary font to the target font.
+ *
+ * @param {CSSStyleSheet} sheet The CSS style sheet.
+ * @param {string} tmpFontFamily The temporary font-family that is loading the
+ *     blob.
+ * @param {string} fontFamily The target font-family.
+ * @param {string} weight The The target weight
+ * @param {string} blobUrl The blob URL for the font data.
+ * @param {string} format The font type.
+ */
+tachyfont.Browser.switchFont = function(sheet, tmpFontFamily, fontFamily,
+    weight, blobUrl, format) {
+  if (goog.DEBUG) {
+    goog.log.log(tachyfont.logger, goog.log.Level.FINER,
+        'switch to fontFamily');
+  }
+  // Set the updated font rule.
+  tachyfont.IncrementalFontUtils.setCssFontRule(sheet, fontFamily, weight,
+      blobUrl, format);
+
+  // Delete the temporary rule
+  var ruleToDelete = tachyfont.IncrementalFontUtils.findFontFaceRule(
+      sheet, tmpFontFamily, weight);
+  if (goog.DEBUG) {
+    goog.log.info(tachyfont.logger, '**** switched ' + weight +
+        ' from ' + tmpFontFamily + ' to ' + fontFamily +
+                ' ****');
+  }
+  tachyfont.IncrementalFontUtils.deleteCssRule(ruleToDelete, sheet);
+};
+
+
