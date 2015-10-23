@@ -217,14 +217,15 @@ tachyfont.IncrementalFont.createManager = function(fontInfo, dropData, params) {
       tachyfont.IncrementalFont.Log_.CREATE_TACHYFONT + weight,
       goog.now() - incrFontMgr.startTime);
 
+  var dbName = incrFontMgr.getDbName_();
   incrFontMgr.getIDB_ = goog.Promise.resolve()
       .then(function() {
         if (dropData) {
-          return tachyfont.Persist.deleteDatabase(fontName, weight);
+          return tachyfont.Persist.deleteDatabase(dbName, weight);
         }
       })
       .then(function() {
-        return tachyfont.Persist.openIndexedDB(fontName, weight);
+        return tachyfont.Persist.openIndexedDB(dbName, weight);
       });
 
   incrFontMgr.getIDB_.then(function() {
@@ -971,7 +972,7 @@ tachyfont.IncrementalFont.obj_.prototype.handleFingerprintMismatch_ =
         // Suppress the "Uncaught" error for rejected promises. See
         // https://code.google.com/p/v8/issues/detail?id=3093
         this.getIDB_.thenCatch(function() {});
-        return tachyfont.Persist.deleteDatabase(this.fontInfo.getName(),
+        return tachyfont.Persist.deleteDatabase(this.getDbName_(),
            this.fontInfo.getWeight())
            .then(function() {
              return goog.Promise.reject('deleted database');
@@ -1064,6 +1065,20 @@ tachyfont.IncrementalFont.obj_.prototype.injectChars_ = function(neededCodes,
           return goog.Promise.reject('bundleResponse == null');
         }
       }.bind(this));
+};
+
+
+/**
+ * Get the database name for this font.
+ * @return {!string} The database name.
+ * @private
+ */
+tachyfont.IncrementalFont.obj_.prototype.getDbName_ = function() {
+  // TODO(bstell): Add style(slant), stretch(width), variant.
+  var dbName = tachyfont.IncrementalFont.DB_NAME +
+      '/' + this.fontInfo.getName() +
+      '/' + this.fontInfo.getWeight();
+  return dbName;
 };
 
 

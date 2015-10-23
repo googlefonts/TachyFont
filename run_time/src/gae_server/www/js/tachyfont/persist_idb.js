@@ -83,13 +83,12 @@ tachyfont.Persist.saveData = function(idb, name, data) {
 
 /**
  * Get the fontDB.
- * @param {string} name The name of the font.
+ * @param {string} dbName The name of the database.
  * @param {string} id For error reporting: the id of the font.
  * @return {goog.Promise} The font DB.
  */
-tachyfont.Persist.openIndexedDB = function(name, id) {
+tachyfont.Persist.openIndexedDB = function(dbName, id) {
   var openIdb = new goog.Promise(function(resolve, reject) {
-    var dbName = tachyfont.IncrementalFont.DB_NAME + '/' + name;
     var dbOpen = window.indexedDB.open(dbName,
         tachyfont.IncrementalFont.version);
 
@@ -99,7 +98,7 @@ tachyfont.Persist.openIndexedDB = function(name, id) {
     };
     dbOpen.onerror = function(e) {
       tachyfont.Persist.reportError_(tachyfont.Persist.Error_.OPEN_IDB,
-          id, '!!! openIndexedDB "' + name + '": ' + e.value);
+          id, '!!! openIndexedDB "' + dbName + '": ' + e.value);
       reject();
     };
 
@@ -134,7 +133,7 @@ tachyfont.Persist.openIndexedDB = function(name, id) {
  */
 tachyfont.Persist.deleteDatabase = function(name, id) {
   var deleteDb = new goog.Promise(function(resolve, reject) {
-    var dbName = tachyfont.IncrementalFont.DB_NAME + '/' + name;
+    var dbName = tachyfont.IncrementalFont.DB_NAME + '/' + name + '/' + id;
     var req = window.indexedDB.deleteDatabase(dbName);
     req.onsuccess = function() {
       // If the user cleared the data something may be wrong.
