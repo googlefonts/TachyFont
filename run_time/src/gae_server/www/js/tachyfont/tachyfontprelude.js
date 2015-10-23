@@ -68,10 +68,14 @@ tachyfontprelude.ERROR_BAD_MAGIC_NUMBER = 3;
  * The errors encounter while loading the Tachyfont preludes.
  * These will be reported by the TachyFont library.
  *
- * @type {Array.<number>}
+ * @type {Array.<Array.<string|number>>}
+ * @private
  */
-// TODO(bstell): record the time and the weight in the error
-tachyfontprelude.errorArray = [];
+tachyfontprelude.reports_ = [];
+
+
+/** @const {number} TachyFontPrelude start time. */
+tachyfontprelude.START_TIME = (new Date()).getTime();
 
 
 
@@ -81,8 +85,9 @@ tachyfontprelude.errorArray = [];
  * @param {string} weight The font weight.
  * @param {boolean} isTtf True is TTF and false if OTF.
  * @constructor
+ * @private
  */
-tachyfontprelude.FontInfo = function(fontFamily, weight, isTtf) {
+tachyfontprelude.FontInfo_ = function(fontFamily, weight, isTtf) {
   /** @type {string} The font name. */
   this.fontFamily = fontFamily;
 
@@ -97,11 +102,12 @@ tachyfontprelude.FontInfo = function(fontFamily, weight, isTtf) {
 
 /**
  * Load the TachyFonts from persistent store if avaiable.
- * @param {!Array.<!tachyfontprelude.FontInfo>} fontInfos The list of fonts to
+ * @param {!Array.<!tachyfontprelude.FontInfo_>} fontInfos The list of fonts to
  *     load.
  * @constructor
+ * @private
  */
-tachyfontprelude.TachyFontPrelude = function(fontInfos) {
+tachyfontprelude.TachyFontPrelude_ = function(fontInfos) {
   var lastPromise = new Promise(function(resolve, reject) {
     resolve();
   });
@@ -113,7 +119,7 @@ tachyfontprelude.TachyFontPrelude = function(fontInfos) {
 
 /**
  * Use a TachyFont from persistent store if avaiable.
- * @param {!tachyfontprelude.FontInfo} fontInfo The info on the font to use.
+ * @param {!tachyfontprelude.FontInfo_} fontInfo The info on the font to use.
  * @return {Promise} This promise resolves when the font is used.
  */
 tachyfontprelude.openIDB = function(fontInfo) {
@@ -225,7 +231,7 @@ tachyfontprelude.setCssFontRule =
 
 /**
  * @param {!DataView} fontDataView The font data.
- * @param {!tachyfontprelude.FontInfo} fontInfo Info about this font.
+ * @param {!tachyfontprelude.FontInfo_} fontInfo Info about this font.
  * @return {Promise} The promise resolves when the glyphs are displaying.
  */
 tachyfontprelude.setFontNoFlash = function(fontDataView, fontInfo) {
@@ -262,7 +268,7 @@ tachyfontprelude.setFontNoFlash = function(fontDataView, fontInfo) {
 
 /**
  * Use a TachyFont from persistent store if avaiable.
- * @param {!tachyfontprelude.FontInfo} fontInfo The info on the font to use.
+ * @param {!tachyfontprelude.FontInfo_} fontInfo The info on the font to use.
  * @param {Promise} previousPromise Wait for this promise to resolve.
  * @return {Promise} This promise resolves when the font is used.
  */
@@ -273,9 +279,16 @@ tachyfontprelude.useFont = function(fontInfo, previousPromise) {
       .then(tachyfontprelude.getFontData)
       .then(function(fontDataView) {
         return tachyfontprelude.setFontNoFlash(fontDataView, fontInfo);
-      }).then(undefined, function(errorNumber) {
-        // Catch if promise rejects.
-        tachyfontprelude.errorArray.push(errorNumber);
+      }).then(
+      // Record the font ready time.
+      function() {
+        tachyfontprelude.reports_.push(
+            [10 + (new Date()).getTime() - tachyfontprelude.START_TIME,
+             fontInfo.weight]);
+      },
+      // Report the error.
+      function(errorNumber) {
+        tachyfontprelude.reports_.push([errorNumber, fontInfo.weight]);
         return new Promise(function(resolve) {
           resolve();
         });
@@ -285,7 +298,7 @@ tachyfontprelude.useFont = function(fontInfo, previousPromise) {
 
 /**
  * Use a TachyFont from persistent store if avaiable.
- * @param {!tachyfontprelude.FontInfo} fontInfo The info on the font to use.
+ * @param {!tachyfontprelude.FontInfo_} fontInfo The info on the font to use.
  * @return {string} This database name
  */
 tachyfontprelude.getDbName = function(fontInfo) {
@@ -296,26 +309,33 @@ tachyfontprelude.getDbName = function(fontInfo) {
 
 
 /**
- * Export the new FontInfo Function.
+ * Do the Exports.
+ */
+window['tachyfontprelude'] = tachyfontprelude;
+tachyfontprelude['reports'] = tachyfontprelude.reports_;
+
+
+/**
+ * Export the new FontInfo_ Function.
  *
  * @param {string} fontFamily The font name.
  * @param {string} weight The font weight.
  * @param {boolean} isTtf True is TTF and false if OTF.
- * @return {!tachyfontprelude.FontInfo} The info to load a font.
+ * @return {!tachyfontprelude.FontInfo_} The info to load a font.
  */
-window['tachyfontprelude_newFontInfo'] = function(fontFamily, weight, isTtf) {
-  return new tachyfontprelude.FontInfo(fontFamily, weight, isTtf);
+tachyfontprelude['newFontInfo'] = function(fontFamily, weight, isTtf) {
+  return new tachyfontprelude.FontInfo_(fontFamily, weight, isTtf);
 };
 
 
 /**
- * Export the new FontInfo Function.
+ * Export the main load function.
  *
- * @param {!Array.<!tachyfontprelude.FontInfo>} fontInfos The list of fonts to
+ * @param {!Array.<!tachyfontprelude.FontInfo_>} fontInfos The list of fonts to
  *     load.
  */
-window['tachyfontprelude_load'] = function(fontInfos) {
-  var tachyFontPreludes = new tachyfontprelude.TachyFontPrelude(fontInfos);
+tachyfontprelude['load'] = function(fontInfos) {
+  var tachyFontPreludes = new tachyfontprelude.TachyFontPrelude_(fontInfos);
 };
 
 
