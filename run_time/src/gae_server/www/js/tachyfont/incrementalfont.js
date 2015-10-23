@@ -886,7 +886,7 @@ tachyfont.IncrementalFont.obj_.prototype.calcNeededChars_ = function() {
         }
         var remaining;
         if (this.req_size) {
-          var remaining = neededCodes.slice(this.req_size);
+          remaining = neededCodes.slice(this.req_size);
           neededCodes = neededCodes.slice(0, this.req_size);
         } else {
           remaining = [];
@@ -917,10 +917,7 @@ tachyfont.IncrementalFont.obj_.prototype.calcNeededChars_ = function() {
  */
 tachyfont.IncrementalFont.obj_.prototype.fetchChars_ =
     function(requestedCodes) {
-  return this.backendService.requestCodepoints(this.fontInfo, requestedCodes).
-      then(function(bundleResponse) {
-        return bundleResponse;
-      }.bind(this))
+  return this.backendService.requestCodepoints(this.fontInfo, requestedCodes)
       .then(function(bundleResponse) {
         return this.checkFingerprint_(bundleResponse);
       }.bind(this))
