@@ -47,6 +47,18 @@ var BackendService = tachyfont.BackendService;
 
 
 /**
+ * Complete version for the tachyfont client/server protocol.
+ */
+tachyfont.BackendService.PROTOCOL_VERSION = '1.0';
+
+
+/**
+ * Major version for the tachyfont client/server protocol.
+ */
+tachyfont.BackendService.PROTOCOL_MAJOR_VERSION = '1';
+
+
+/**
  * Request codepoints from the backend server.
  *
  * @param {!tachyfont.FontInfo} fontInfo containing info on the font; ie:
@@ -84,7 +96,13 @@ BackendService.prototype.parseDataHeader = function(glyphData) {
     throw new Error('Invalid code point bundle header magic number: ' +
         magicNumber);
   }
-  var version = dataView.getUint8(offset++) + '.' + dataView.getUint8(offset++);
+  var majorVersion = dataView.getUint8(offset++);
+  var version = majorVersion + '.' + dataView.getUint8(offset++);
+  if (majorVersion != tachyfont.BackendService.PROTOCOL_MAJOR_VERSION) {
+    throw new Error('Server response\'s major protocol version (' +
+        majorVersion + ') does not match expected: ' +
+        tachyfont.BackendService.PROTOCOL_MAJOR_VERSION);
+  }
   offset += 2; // Skip reserved section.
   var signature = '';
   for (var i = 0; i < 20; i++) {

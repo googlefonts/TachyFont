@@ -110,8 +110,10 @@ GoogleBackendService.prototype.getDataUrl_ =
     // Using familyPath is preferred over familyName.
     familyPath = fontInfo.getFamilyName().replace(/ /g, '').toLowerCase();
   }
-  return this.baseUrl + '/' + prefix + '/' + familyPath + '/' +
-      fontInfo.getVersion() + '/' + fontInfo.getFontKit() + '.' + suffix;
+  return this.baseUrl + '/' + prefix + '/'
+      + 'p' + tachyfont.BackendService.PROTOCOL_MAJOR_VERSION
+      + '/' + familyPath + '/' + fontInfo.getVersion() + '/'
+      + fontInfo.getFontKit() + '.' + suffix;
 };
 
 
