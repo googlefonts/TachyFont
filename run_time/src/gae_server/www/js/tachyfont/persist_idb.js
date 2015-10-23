@@ -98,7 +98,7 @@ tachyfont.Persist.openIndexedDB = function(dbName, id) {
     };
     dbOpen.onerror = function(e) {
       tachyfont.Persist.reportError_(tachyfont.Persist.Error_.OPEN_IDB,
-          id, '!!! openIndexedDB "' + dbName + '": ' + e.value);
+          id, '!!! openIndexedDB "' + dbName);
       reject();
     };
 
@@ -127,13 +127,12 @@ tachyfont.Persist.openIndexedDB = function(dbName, id) {
 
 /**
  * Delete the fontDB.
- * @param {string} name The name of the data.
+ * @param {string} dbName The database name.
  * @param {string} id An additional identifier of the data.
  * @return {goog.Promise} The font DB.
  */
-tachyfont.Persist.deleteDatabase = function(name, id) {
+tachyfont.Persist.deleteDatabase = function(dbName, id) {
   var deleteDb = new goog.Promise(function(resolve, reject) {
-    var dbName = tachyfont.IncrementalFont.DB_NAME + '/' + name + '/' + id;
     var req = window.indexedDB.deleteDatabase(dbName);
     req.onsuccess = function() {
       // If the user cleared the data something may be wrong.
