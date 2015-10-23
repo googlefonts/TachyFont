@@ -252,7 +252,8 @@ tachyfontprelude.setFontNoFlash = function(fontDataView, fontInfo) {
     document.head.appendChild(style);
   }
   var sheet = style.sheet;
-  var tmpFontFamily = 'tmp-' + fontInfo.weight + '-' + fontInfo.fontFamily;
+  var uiLanguageFont = 'UILanguageFont';
+  var tmpFontFamily = 'tmp-' + fontInfo.weight + '-' + uiLanguageFont;
 
   tachyfontprelude.setCssFontRule(sheet, tmpFontFamily, fontInfo.weight,
       blobUrl, format);
@@ -260,7 +261,7 @@ tachyfontprelude.setFontNoFlash = function(fontDataView, fontInfo) {
   var fontStr = '400 20px ' + tmpFontFamily;
   return document.fonts.load(fontStr)
       .then(function(value) {
-        tachyfontprelude.setCssFontRule(sheet, 'UILanguageFont',
+        tachyfontprelude.setCssFontRule(sheet, uiLanguageFont,
             fontInfo.weight, blobUrl, format);
       });
 };
