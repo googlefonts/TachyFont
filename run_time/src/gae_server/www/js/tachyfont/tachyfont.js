@@ -155,20 +155,26 @@ if (goog.DEBUG) {
 
     var uri = goog.Uri.parse(window.location.href);
     var debugLevel;
-    var debugLevelStr = uri.getParameterValue('TachyFontDebugLevel') || '';
-    if (debugLevelStr) {
-      debugLevel = goog.debug.Logger.Level.getPredefinedLevel(debugLevelStr);
-    }
+    var debugLevelStr =
+        uri.getParameterValue('TachyFontDebugLevel') || 'WARNING';
+    debugLevel = goog.debug.Logger.Level.getPredefinedLevel(debugLevelStr);
     var debugConsole = new goog.debug.Console();
     debugConsole.setCapturing(true);
 
     /**
      * @type {goog.debug.Logger}
      */
-    tachyfont.logger = goog.log.getLogger('debug', debugLevel);
+    tachyfont.logger = goog.log.getLogger('tachyfont', debugLevel);
 
     /**
      * For debugging: option to disable the obfuscation.
+     *
+     * Obfuscation is a security feature. If a page was presenting a short
+     * security key it is possible that a TachyFont server could figure out the
+     * security key from the character request. Obfuscation adds random
+     * characters to small character data requests to make this difficult.
+     *
+     * For debugging this obfuscation adds noise to the characters requests.
      */
     var noObfuscateStr = uri.getParameterValue('TachyFontNoObfuscate') || '';
     /** @type {boolean} */
