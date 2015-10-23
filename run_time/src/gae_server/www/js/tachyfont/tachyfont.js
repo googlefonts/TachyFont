@@ -507,7 +507,7 @@ tachyfont.loadFonts_useFonts_ = function(tachyFonts, arrayBaseData) {
     }
     // TODO(bstell): only set the font if there are characters.
     incrFont.sfeStart_ = goog.now();
-    var cssSet = incrFont.setFont(/** @type !DataView */ (loadedBase[1])).
+    var cssSet = incrFont.setFont(/** @type {!DataView} */ (loadedBase[1])).
         then(function() {
           // Report Set Font Early.
           var weight = this.fontInfo.getWeight();
