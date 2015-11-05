@@ -105,7 +105,7 @@ GoogleBackendService.prototype.log = function(message) {
  */
 GoogleBackendService.prototype.getDataUrl_ =
     function(fontInfo, prefix, suffix) {
-  var familyPath = fontInfo.getfamilyPath();
+  var familyPath = fontInfo.getFamilyPath();
   if (!familyPath) {
     // Using familyPath is preferred over familyName.
     familyPath = fontInfo.getFamilyName().replace(/ /g, '').toLowerCase();
