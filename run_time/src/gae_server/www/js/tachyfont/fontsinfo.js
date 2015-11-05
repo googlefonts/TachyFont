@@ -27,8 +27,8 @@ goog.require('tachyfont.FontInfo');
  * The information for a set of fonts.
  *
  * @param {!Array.<tachyfont.FontInfo>} fonts .
- * @param {string} dataUrl The URL of the Tachyfont server.
- * @param {string} reportUrl The URL to send logging/error reports to.
+ * @param {?string} dataUrl The URL of the Tachyfont server.
+ * @param {?string} reportUrl The URL to send logging/error reports to.
  * @constructor
  */
 tachyfont.FontsInfo = function(fonts, dataUrl, reportUrl) {
@@ -36,10 +36,10 @@ tachyfont.FontsInfo = function(fonts, dataUrl, reportUrl) {
   this.fonts_ = fonts;
 
   /** @private {string} */
-  this.dataUrl_ = dataUrl;
+  this.dataUrl_ = dataUrl || '';
 
   /** @private {string} */
-  this.reportUrl_ = reportUrl;
+  this.reportUrl_ = reportUrl || '';
 };
 
 
