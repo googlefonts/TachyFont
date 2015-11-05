@@ -113,24 +113,26 @@ tachyfont.delayedReportError_ = function(obj) {
 };
 
 
-/**
- * Report any uncaught errors.
- *
- * @param {Event} error The error information.
- * @private
- */
-tachyfont.windowOnError_ = function(error) {
-  var errorObj = {};
-  errorObj['message'] = error.error;
-  errorObj['url'] = error.filename;
-  errorObj['lineNumber'] = error.lineno;
-  tachyfont.reportError_(tachyfont.Error_.WINDOW_ON_ERROR, errorObj);
-};
-
 if (window.addEventListener) {
+  /**
+   * Report any uncaught errors.
+   *
+   * @param {Event} error The error information.
+   * @private
+   */
+  tachyfont.windowOnError_ = function(error) {
+    var errorObj = {};
+    errorObj['message'] = error['message'];
+    errorObj['filename'] = error['filename'];
+    errorObj['lineno'] = error['lineno'];
+    errorObj['colno'] = error['colno'];
+    if (error.error) {
+      errorObj['stack'] = error['error']['stack'].substring(0, 1000);
+    }
+    var errorStr = JSON.stringify(errorObj);
+    tachyfont.reportError_(tachyfont.Error_.WINDOW_ON_ERROR, errorStr);
+  };
   window.addEventListener('error', tachyfont.windowOnError_, false);
-} else if (window.attachEvent) { // for versions previous to IE9
-  window.attachEvent('onerror', tachyfont.windowOnError_);
 }
 
 if (goog.DEBUG) {

@@ -142,6 +142,7 @@ tachyfont.IncrementalFont.Error_ = {
   NOT_USING_PERSISTED_DATA: '41',
   FINGERPRINT_MISMATCH: '42',
   CHARS_PER_SEGMENT: '43',
+  DELETE_IDB: '44',
   END: '00'
 };
 
@@ -391,16 +392,30 @@ tachyfont.IncrementalFont.obj_.prototype.dropDb_ = function() {
 tachyfont.IncrementalFont.obj_.prototype.accessDb_ = function(dropDb) {
   // Close the database if it is open.
   this.closeDb_();
+  var weight = this.fontInfo.getWeight();
+  var dbName = this.getDbName_();
   this.getIDB_ = goog.Promise.resolve()
       .then(function() {
         if (dropDb) {
-          return tachyfont.Persist.deleteDatabase(this.getDbName_(),
-              this.fontInfo.getWeight());
+          return tachyfont.Persist.deleteDatabase(dbName, weight)
+              .thenCatch(function() {
+                tachyfont.IncrementalFont.reportError_(
+                    tachyfont.IncrementalFont.Error_.DELETE_IDB, weight,
+                    'accessDb');
+                return goog.Promise.reject();
+              });
+
         }
       }.bind(this))
       .then(function() {
-        return tachyfont.Persist.openIndexedDB(this.getDbName_(),
-            this.fontInfo.getWeight());
+        return tachyfont.Persist.openIndexedDB(dbName, weight)
+            .thenCatch(function() {
+              tachyfont.IncrementalFont.reportError_(
+                  tachyfont.IncrementalFont.Error_.OPEN_IDB, weight,
+                  'accessDb');
+              return goog.Promise.reject('failed to open IDB');
+            });
+
       }.bind(this));
 
   return this.getIDB_;
