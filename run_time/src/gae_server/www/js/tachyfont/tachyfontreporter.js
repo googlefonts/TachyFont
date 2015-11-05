@@ -148,7 +148,6 @@ tachyfont.Reporter.prototype.reportError = function(errNum, id, errInfo) {
     }
   }
   this.addItem(name, msg);
-  this.sendReport();
   if (goog.DEBUG) {
     var keys = Object.keys(this.items_);
     keys.sort();
@@ -159,6 +158,7 @@ tachyfont.Reporter.prototype.reportError = function(errNum, id, errInfo) {
     }
     // debugger; // Enable this when debugging the reporter.
   }
+  this.sendReport();
 
   // Restore any pre-existing items.
   this.items_ = preexistingItems;
