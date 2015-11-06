@@ -102,17 +102,19 @@ tachyfontprelude.FontInfo_ = function(fontFamily, weight, isTtf) {
 
 /**
  * Load the TachyFonts from persistent store if avaiable.
+ * @param {string} cssFontFamily The CSS font-family name.
  * @param {!Array.<!tachyfontprelude.FontInfo_>} fontInfos The list of fonts to
  *     load.
  * @constructor
  * @private
  */
-tachyfontprelude.TachyFontPrelude_ = function(fontInfos) {
+tachyfontprelude.TachyFontPrelude_ = function(cssFontFamily, fontInfos) {
   var lastPromise = new Promise(function(resolve, reject) {
     resolve();
   });
   for (var i = 0; i < fontInfos.length; i++) {
-    lastPromise = tachyfontprelude.useFont(fontInfos[i], lastPromise);
+    lastPromise =
+        tachyfontprelude.useFont(cssFontFamily, fontInfos[i], lastPromise);
   }
 };
 
@@ -230,11 +232,13 @@ tachyfontprelude.setCssFontRule =
 
 
 /**
+ * @param {string} cssFontFamily The CSS font-family name.
  * @param {!DataView} fontDataView The font data.
  * @param {!tachyfontprelude.FontInfo_} fontInfo Info about this font.
  * @return {Promise} The promise resolves when the glyphs are displaying.
  */
-tachyfontprelude.setFontNoFlash = function(fontDataView, fontInfo) {
+tachyfontprelude.setFontNoFlash =
+    function(cssFontFamily, fontDataView, fontInfo) {
   var mimeType;
   var format;
   if (fontInfo.isTtf) {
@@ -252,8 +256,7 @@ tachyfontprelude.setFontNoFlash = function(fontDataView, fontInfo) {
     document.head.appendChild(style);
   }
   var sheet = style.sheet;
-  var uiLanguageFont = 'UILanguageFont';
-  var tmpFontFamily = 'tmp-' + fontInfo.weight + '-' + uiLanguageFont;
+  var tmpFontFamily = 'tmp-' + fontInfo.weight + '-' + cssFontFamily;
 
   tachyfontprelude.setCssFontRule(sheet, tmpFontFamily, fontInfo.weight,
       blobUrl, format);
@@ -261,7 +264,7 @@ tachyfontprelude.setFontNoFlash = function(fontDataView, fontInfo) {
   var fontStr = '400 20px ' + tmpFontFamily;
   return document.fonts.load(fontStr)
       .then(function(value) {
-        tachyfontprelude.setCssFontRule(sheet, uiLanguageFont,
+        tachyfontprelude.setCssFontRule(sheet, cssFontFamily,
             fontInfo.weight, blobUrl, format);
       });
 };
@@ -269,11 +272,12 @@ tachyfontprelude.setFontNoFlash = function(fontDataView, fontInfo) {
 
 /**
  * Use a TachyFont from persistent store if avaiable.
+ * @param {string} cssFontFamily The CSS font-family name.
  * @param {!tachyfontprelude.FontInfo_} fontInfo The info on the font to use.
  * @param {Promise} previousPromise Wait for this promise to resolve.
  * @return {Promise} This promise resolves when the font is used.
  */
-tachyfontprelude.useFont = function(fontInfo, previousPromise) {
+tachyfontprelude.useFont = function(cssFontFamily, fontInfo, previousPromise) {
   var idb;
   return previousPromise.then(function() {
     return tachyfontprelude.openIDB(fontInfo);
@@ -284,7 +288,8 @@ tachyfontprelude.useFont = function(fontInfo, previousPromise) {
       .then(tachyfontprelude.getDbBase)
       .then(tachyfontprelude.getFontData)
       .then(function(fontDataView) {
-        return tachyfontprelude.setFontNoFlash(fontDataView, fontInfo);
+        return tachyfontprelude.setFontNoFlash(cssFontFamily, fontDataView,
+            fontInfo);
       }).then(
       // Record the font ready time.
       function() {
@@ -341,11 +346,13 @@ tachyfontprelude['newFontInfo'] = function(fontFamily, weight, isTtf) {
 /**
  * Export the main load function.
  *
+ * @param {string} cssFontFamily The CSS font-family name.
  * @param {!Array.<!tachyfontprelude.FontInfo_>} fontInfos The list of fonts to
  *     load.
  */
-tachyfontprelude['load'] = function(fontInfos) {
-  var tachyFontPreludes = new tachyfontprelude.TachyFontPrelude_(fontInfos);
+tachyfontprelude['load'] = function(cssFontFamily, fontInfos) {
+  var tachyFontPreludes =
+      new tachyfontprelude.TachyFontPrelude_(cssFontFamily, fontInfos);
 };
 
 
