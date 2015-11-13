@@ -119,6 +119,7 @@ tachyfont.TachyFontSet = function(familyName) {
  */
 tachyfont.TachyFontSet.Log_ = {
   SET_FONT: 'LTSSF.',
+  SET_FONT_PRIORITY: 'LTSSP.',
   SET_FONT_DELAYED: 'LTSSD.',
   SET_FONT_DOM_LOADED: 'LTSSL.'
 };
@@ -417,6 +418,65 @@ tachyfont.TachyFontSet.prototype.requestUpdateFonts = function(startTime) {
 
 
 /**
+ * Switch the CSS to use a group of TachyFonts
+ *
+ * @param {number} startTime The time when the chars were added to the DOM. If
+ *     the number is negative then an intentional delay was happened.
+ * @param {Array.<!Object|DataView>} loadResults The fileInfo and fontData.
+ * @return {!goog.Promise}
+ * @private
+ *
+ */
+tachyfont.TachyFontSet.prototype.setFonts_ = function(startTime, loadResults) {
+  if (goog.DEBUG) {
+    goog.log.log(tachyfont.logger, goog.log.Level.FINER,
+        'updateFonts: got font bases');
+  }
+  var allCssSet = [];
+  for (var i = 0; i < loadResults.length; i++) {
+    var fontObj = this.fonts[i].incrfont;
+    var weight = fontObj.fontInfo.getWeight();
+    var setFontLogId;
+    if (fontObj.fontInfo.getPriority()) {
+      setFontLogId = tachyfont.TachyFontSet.Log_.SET_FONT_PRIORITY;
+    } else {
+      setFontLogId = tachyfont.TachyFontSet.Log_.SET_FONT;
+    }
+    var loadResult = loadResults[i];
+    if (loadResult == null) {
+      // No FOUT so 0 FOUT time.
+      tachyfont.reporter.addItem(setFontLogId + weight, 0);
+      allCssSet.push(goog.Promise.resolve(null));
+      continue;
+    }
+    var fileInfo = loadResult[0];
+    var fontData = loadResult[1];
+    if (goog.DEBUG) {
+      goog.log.fine(tachyfont.logger, 'updateFonts: setFont: ');
+    }
+    var cssSetResult = fontObj.setFont(fontData).
+        then(function() {
+          if (startTime == 0) {
+            tachyfont.reporter.addItemTime(
+                tachyfont.TachyFontSet.Log_.SET_FONT_DOM_LOADED + weight);
+          } else if (startTime >= 0) {
+            tachyfont.reporter.addItem(setFontLogId + weight,
+                goog.now() - startTime);
+          } else {
+            tachyfont.reporter.addItem(
+                tachyfont.TachyFontSet.Log_.SET_FONT_DELAYED + weight,
+                goog.now() + startTime);
+          }
+          tachyfont.IncrementalFontUtils.setVisibility(this.style,
+              this.fontInfo, true);
+        }.bind(fontObj));
+    allCssSet.push(cssSetResult);
+  }
+  return goog.Promise.all(allCssSet);
+};
+
+
+/**
  * Update a group of TachyFonts
  *
  * @param {number} startTime The time when the chars were added to the DOM. If
@@ -499,45 +559,7 @@ tachyfont.TachyFontSet.prototype.updateFonts =
           goog.log.log(tachyfont.logger, goog.log.Level.FINER,
               'updateFonts: got font bases');
         }
-        var allCssSet = [];
-        for (var i = 0; i < loadResults.length; i++) {
-          var fontObj = this.fonts[i].incrfont;
-          var loadResult = loadResults[i];
-          if (loadResult == null) {
-            // No FOUT so 0 FOUT time.
-            tachyfont.reporter.addItem(tachyfont.TachyFontSet.Log_.SET_FONT +
-                fontObj.fontInfo.getWeight(), 0);
-            allCssSet.push(goog.Promise.resolve(null));
-            continue;
-          }
-          var fileInfo = loadResult[0];
-          var fontData = loadResult[1];
-          if (goog.DEBUG) {
-            goog.log.fine(tachyfont.logger, 'updateFonts: setFont: ');
-          }
-          var cssSetResult = fontObj.setFont(fontData).
-              then(function() {
-                if (startTime == 0) {
-                  tachyfont.reporter.addItemTime(
-                  tachyfont.TachyFontSet.Log_.SET_FONT_DOM_LOADED +
-                  this.fontInfo.getWeight());
-                } else if (startTime >= 0) {
-                  tachyfont.reporter.addItem(
-                  tachyfont.TachyFontSet.Log_.SET_FONT +
-                  this.fontInfo.getWeight(),
-                  goog.now() - startTime);
-                } else {
-                  tachyfont.reporter.addItem(
-                  tachyfont.TachyFontSet.Log_.SET_FONT_DELAYED +
-                  this.fontInfo.getWeight(),
-                  goog.now() + startTime);
-                }
-                tachyfont.IncrementalFontUtils.setVisibility(this.style,
-                this.fontInfo, true);
-              }.bind(fontObj));
-          allCssSet.push(cssSetResult);
-        }
-        return goog.Promise.all(allCssSet);
+        return this.setFonts_(startTime, loadResults);
       }.bind(this)).
       then(function(setResults) {
         var okIfNoItems;
