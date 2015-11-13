@@ -194,9 +194,8 @@ tachyfont.BinaryFontEditor.prototype.setOffset_ = function(offSize, value) {
 /**
  * @param {number} length Length of the string
  * @return {string}
- * @private
  */
-tachyfont.BinaryFontEditor.prototype.readString_ = function(length) {
+tachyfont.BinaryFontEditor.prototype.readString = function(length) {
   var str = '';
   for (var i = 0; i < length; i++) {
     str += String.fromCharCode(this.getUint8());
@@ -630,7 +629,7 @@ tachyfont.BinaryFontEditor.readOps.CS02 = function(editor, font) {
  * @param {tachyfont.IncrementalFontLoader} font Font loader object
  */
 tachyfont.BinaryFontEditor.readOps.SHA1 = function(editor, font) {
-  var sha1_fingerprint = editor.readString_(40);
+  var sha1_fingerprint = editor.readString(40);
   font.sha1_fingerprint = sha1_fingerprint;
 };
 
@@ -705,7 +704,7 @@ tachyfont.BinaryFontEditor.TAGS = {
  * @return {Object} Results of parsing the header.
  */
 tachyfont.BinaryFontEditor.prototype.parseBaseHeader = function() {
-  var magic = this.readString_(4);
+  var magic = this.readString(4);
   if (magic != tachyfont.BinaryFontEditor.magicHead) {
     throw 'magic number mismatch: expected ' +
         tachyfont.BinaryFontEditor.magicHead + ' but got ' + magic;
@@ -720,7 +719,7 @@ tachyfont.BinaryFontEditor.prototype.parseBaseHeader = function() {
   var tags = [], tag, tagOffset, saveOffset,
       dataStart = count * 8 + 4 + 4 + 4 + 2;//magic,headSize,ver,count
   for (var i = 0; i < count; i++) {
-    tag = this.readString_(4);
+    tag = this.readString(4);
     tagOffset = this.getUint32();
     if (!tachyfont.BinaryFontEditor.TAGS.hasOwnProperty(tag)) {//unknown tag
       throw 'Unknown Base Font Header TAG';
