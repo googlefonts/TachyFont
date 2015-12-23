@@ -293,3 +293,36 @@ tachyfont.Cff.prototype.getData = function(offset, length) {
   return data;
 };
 
+
+/**
+ * Update the CharStrings element size.
+ * @param {number} deltaSize The size change.
+ */
+tachyfont.Cff.prototype.updateCharStringsSize = function(deltaSize) {
+  // The list of table whos offsets that could change because of a CharStrings
+  // size change.
+  var operators = [
+    tachyfont.CffDict.Operator.CHARSET,
+    tachyfont.CffDict.Operator.FD_SELECT,
+    tachyfont.CffDict.Operator.FD_ARRAY
+  ];
+  for (var i = 0; i < operators.length; i++) {
+    var operator = operators[i];
+    var offset = this.topDict_.getOperand(operator, 0);
+    if (offset > this.charStringsIndexOffset_) {
+      this.topDict_.updateDictEntryOperand(operator, 0, deltaSize);
+    }
+  }
+
+  // Update the offsets to the Private DICTs.
+  var count = this.fontDictIndex_.getCount();
+  for (var i = 0; i < count; i++) {
+    var dict = this.fontDictIndex_.getDictElement(i);
+    var offset = dict.getOperand(tachyfont.CffDict.Operator.PRIVATE, 1);
+    if (offset > this.charStringsIndexOffset_) {
+      dict.updateDictEntryOperand(tachyfont.CffDict.Operator.PRIVATE, 1,
+          deltaSize);
+    }
+  }
+};
+
