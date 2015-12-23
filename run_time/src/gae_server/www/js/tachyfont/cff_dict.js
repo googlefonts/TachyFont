@@ -50,7 +50,7 @@ tachyfont.CffDict = function(name, dataView) {
 
   if (goog.DEBUG) {
     /** @private {!Array.<string>} */
-    this.keys_ = [];
+    this.operators_ = [];
   }
 
   /**
@@ -76,19 +76,22 @@ tachyfont.CffDict.prototype.init_ = function() {
   var binEd = new tachyfont.BinaryFontEditor(this.dataView_, 0);
 
   while (binEd.offset < this.dataView_.byteLength) {
-    var keyValuePair = tachyfont.CffDict.readOperandsOperator_(binEd);
+    var operandsOperatorSet = tachyfont.CffDict.readOperandsOperator_(binEd);
     if (goog.DEBUG) {
-      if (this.dictOperators_ && keyValuePair.key in this.dictOperators_) {
-        goog.log.info(tachyfont.Logger.logger, '  ' + keyValuePair.value + ' ' +
-            this.dictOperators_[keyValuePair.key]);
+      if (this.dictOperators_ &&
+          operandsOperatorSet.operator in this.dictOperators_) {
+        goog.log.info(tachyfont.Logger.logger, '  ' +
+            operandsOperatorSet.operands + ' ' +
+            this.dictOperators_[operandsOperatorSet.operator]);
       } else {
-        goog.log.info(tachyfont.Logger.logger, '  ' + keyValuePair.value + ' ' +
-            keyValuePair.key);
+        goog.log.info(tachyfont.Logger.logger, '  ' +
+            operandsOperatorSet.operands + ' ' +
+            operandsOperatorSet.operator);
       }
     }
-    this.keys_.push(keyValuePair.key);
-    this.dict_[keyValuePair.key] =
-        /** @type {!Array.<number>} */ (keyValuePair.value);
+    this.operators_.push(operandsOperatorSet.operator);
+    this.dict_[operandsOperatorSet.operator] =
+        /** @type {!Array.<number>} */ (operandsOperatorSet.operands);
   }
 };
 
@@ -109,7 +112,10 @@ tachyfont.CffDict.loadDict =
   //tachyfont.utils.hexDump(name, dataView);
   var dict = new tachyfont.CffDict(name, dataView);
   if (goog.DEBUG) {
-    dict.setOperators(opt_dictOperators);
+    if (opt_dictOperators) {
+      dict.setOperators(
+          /** @type {!Object.<string, string>} */ (opt_dictOperators));
+    }
   }
   dict.init_();
   return dict;
@@ -137,41 +143,55 @@ tachyfont.CffDict.prototype.getName = function() {
 
 
 /**
- * Get the dict keys.
- * @return {!Array.<string>} The Dict keys.
+ * Get the dict operators.
+ * @return {!Array.<string>} The Dict operators.
  */
-tachyfont.CffDict.prototype.getKeys = function() {
-  return this.keys_;
+tachyfont.CffDict.prototype.getOperators = function() {
+  return this.operators_;
 };
 
 
 /**
- * Get a CFF DICT value.
- * @param {string} key The key of the key/value.
- * @return {!Array.<number|string>} The Dict value for this key.
+ * Get a CFF DICT operands as an array.
+ * @param {string} operator The operator of the operands/operator set.
+ * @return {!Array.<number>} The array of operands.
  */
-tachyfont.CffDict.prototype.get = function(key) {
-  if (key in this.dict_) {
-    return this.dict_[key];
+tachyfont.CffDict.prototype.getOperands = function(operator) {
+  if (operator in this.dict_) {
+    return this.dict_[operator];
   }
-  throw new RangeError('CFF ' + this.name_ + ' DICT: invalid key: ' + key);
+  throw new RangeError(this.name_ + ' getOperands: ' + operator);
+};
+
+
+/**
+ * Get a CFF DICT operand.
+ * @param {string} operator The operator of the operands/operator.
+ * @param {number} index The index of desired operand.
+ * @return {number} The operand.
+ */
+tachyfont.CffDict.prototype.getOperand = function(operator, index) {
+  if (operator in this.dict_ && index < this.dict_[operator].length) {
+    return this.dict_[operator][index];
+  }
+  throw new RangeError(this.name_ + ' getOperand: ' + operator + '/' + index);
 };
 
 
 
 /**
- * A class holding a key/value pair.
- * @param {string} key The key.
- * @param {*} value The value.
+ * A class holding an operands/operator set.
+ * @param {!Array.<number>} operands The operands.
+ * @param {string} operator The operator.
  * @constructor @struct @final
  * @private
  */
-tachyfont.CffDict.keyValuePair_ = function(key, value) {
+tachyfont.CffDict.OperandsOperatorSet_ = function(operands, operator) {
   /** @type {string} */
-  this.key = key;
+  this.operator = operator;
 
-  /** @type {*} */
-  this.value = value;
+  /** @type {!Array.<number>} */
+  this.operands = operands;
 };
 
 
@@ -194,7 +214,7 @@ tachyfont.CffDict.keyValuePair_ = function(key, value) {
  * Get a CFF DICT Operands/Operator set.
  * @param {!tachyfont.BinaryFontEditor} binEd The binary editor at the position
  *     of the Operands/Operator.
- * @return {!tachyfont.CffDict.keyValuePair_} The key value pair.
+ * @return {!tachyfont.CffDict.OperandsOperatorSet_} The operands operator set.
  * @throws {Error} If a reserved operant is found.
  * @private
  */
@@ -233,7 +253,7 @@ tachyfont.CffDict.readOperandsOperator_ = function(binEd) {
       b4 = binEd.getUint8();
       operand = b1 << 24 | b2 << 16 | b3 << 8 | b4;
     } else if (b0 == 30) {
-      operand = tachyfont.CffDict.parseNibbles_(binEd);
+      operand = Number(tachyfont.CffDict.parseNibbles_(binEd));
     }
     if (operand !== isUndefined) {
       operands.push(operand);
@@ -249,14 +269,14 @@ tachyfont.CffDict.readOperandsOperator_ = function(binEd) {
     operator += op.toString();
     break;
   }
-  return new tachyfont.CffDict.keyValuePair_(operator, operands);
+  return new tachyfont.CffDict.OperandsOperatorSet_(operands, operator);
 };
 
 
 /**
- * Get a CFF DICT nibble value.
+ * Get a CFF DICT nibble operand.
  * @param {!tachyfont.BinaryFontEditor} binEd The binary editor.
- * @return {string} The nibble value.
+ * @return {string} The nibble operand.
  * @private
  */
 tachyfont.CffDict.parseNibbles_ = function(binEd) {
@@ -279,10 +299,12 @@ tachyfont.CffDict.parseNibbles_ = function(binEd) {
         operand += '-';
       } else if (nibble == 0xf) {
         return operand;
+      } else {
+        throw new Error('invalid nibble');
       }
     }
   }
-  return operand;
+  throw new Error('nibble too long');
 };
 
 
