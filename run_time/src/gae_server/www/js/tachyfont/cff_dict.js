@@ -308,13 +308,24 @@ tachyfont.CffDict.parseNibbles_ = function(binEd) {
 };
 
 
+/**
+ * Define the CFF DICT operators.
+ * @enum {string}
+ */
+tachyfont.CffDict.Operator = {
+  FD_ARRAY: '12 36',
+  CHAR_STRINGS: '17',
+  PRIVATE: '18'
+};
+
+
 if (goog.DEBUG) {
   /**
-   * Top DICT operator map.  This map is used to covert the operations to a
-   * human readable form.
+   * Top DICT operator to description map.  This map is used to convert the
+   * operators to meaningfull text.
    * @dict {!Object.<string,string>}
    */
-  tachyfont.CffDict.TOP_DICT_OPERATORS = {
+  tachyfont.CffDict.OperatorDescriptions = {
     '0': 'version',
     '1': 'Notice',
     '12 0': 'Copyright',
