@@ -18,8 +18,8 @@
  */
 
 /**
- * @fileoverview Code to parse the CFF table in an OpenType CFF font. This reads
- * the CFF Header and INDEXs. For a detailed description of the CFF format
+ * @fileoverview Code to parse a CFF INDEX. For a detailed description of a CFF
+ * dict
  * @see http://wwwimages.adobe.com/content/dam/Adobe/en/devnet/font/pdfs/5176.CFF.pdf
  * For a detailed description of the OpenType font format
  * @see http://www.microsoft.com/typography/otspec/otff.htm
