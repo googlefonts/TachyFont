@@ -44,7 +44,7 @@ goog.require('tachyfont.CffIndex');
  */
 tachyfont.Cff = function(tocEntry, fontData) {
   /**
-   * The font's table of contents entery for the CFF table.
+   * The font's table of contents entry for the CFF table.
    * @private {!tachyfont.Sfnt.TableOfContentsEntry}
    */
   this.tocEntry_ = tocEntry;
@@ -92,10 +92,7 @@ tachyfont.Cff = function(tocEntry, fontData) {
    */
   this.offSize_;
 
-  /**
-   * The offset to the Name INDEX.
-   * @private {number}
-   */
+  /** @private {number} */
   this.nameIndexOffset_;
 
   /**
@@ -104,10 +101,7 @@ tachyfont.Cff = function(tocEntry, fontData) {
    */
   this.nameIndex_;
 
-  /**
-   * The offset to the Top DICT INDEX.
-   * @private {number}
-   */
+  /** @private {number} */
   this.topDictIndexOffset_;
 
   /**
@@ -122,10 +116,7 @@ tachyfont.Cff = function(tocEntry, fontData) {
    */
   this.topDict_;
 
-  /**
-   * The offset to the String INDEX.
-   * @private {number}
-   */
+  /** @private {number} */
   this.stringIndexOffset_;
 
   /**
@@ -134,10 +125,7 @@ tachyfont.Cff = function(tocEntry, fontData) {
    */
   this.stringIndex_;
 
-  /**
-   * The offset to the Global Subr INDEX.
-   * @private {number}
-   */
+  /** @private {number} */
   this.globalSubrIndexOffset_;
 
   /**
@@ -152,15 +140,12 @@ tachyfont.Cff = function(tocEntry, fontData) {
    */
 
   /**
-   * The offset to the FS Select table.
+   * The offset to the FD Select table.
    * @private {number}
    */
   this.fdSelectOffset_;
 
-  /**
-   * The offset to the CharStrings INDEX.
-   * @private {number}
-   */
+  /** @private {number} */
   this.charStringsIndexOffset_;
 
   /**
@@ -168,6 +153,12 @@ tachyfont.Cff = function(tocEntry, fontData) {
    * @private {!tachyfont.CffIndex}
    */
   this.charStringsIndex_;
+
+  /**
+   * The number of glyphs in the CharString INDEX.
+   * @private {number}
+   */
+  this.nGlyphs_;
 
   /**
    * The offset to the Font DICT INDEX.
@@ -180,6 +171,12 @@ tachyfont.Cff = function(tocEntry, fontData) {
    * @private {!tachyfont.CffIndex}
    */
   this.fontDictIndex_;
+
+  /**
+   * The per-font Private DICTs.
+   * @private {!Array.<!tachyfont.CffDict>}
+   */
+  this.fontPrivateDicts_ = [];
 };
 
 
@@ -213,6 +210,15 @@ tachyfont.Cff.prototype.init_ = function() {
   this.readStringIndex_();
 
   this.readGlobalSubrIndex_();
+
+  /* CFF CID fonts do not have an Encodings table */
+
+  this.readCharStringsIndex_();
+
+  this.readFontDictIndex_();
+
+  this.readPrivateDicts_();
+
 };
 
 
@@ -263,7 +269,7 @@ tachyfont.Cff.prototype.readTopDictIndex_ = function() {
   this.topDictIndex_ = new tachyfont.CffIndex('TopDICT',
       this.topDictIndexOffset_, tachyfont.CffIndex.TYPE_DICT, this.binEd_);
   if (goog.DEBUG) {
-    this.topDictIndex_.setDictOperators(tachyfont.CffDict.TOP_DICT_OPERATORS);
+    this.topDictIndex_.setDictOperators(tachyfont.CffDict.OperatorDescriptions);
   }
   this.topDictIndex_.loadDicts(this.binEd_);
   if (goog.DEBUG) {
@@ -309,7 +315,71 @@ tachyfont.Cff.prototype.readGlobalSubrIndex_ = function() {
 
 
 /**
- * Get the CFF major number;
+ * Process the Font DICT INDEX.
+ * This has info on the per-font Private DICTs.
+ * @private
+ */
+tachyfont.Cff.prototype.readFontDictIndex_ = function() {
+  this.fontDictIndexOffset_ =
+      this.topDict_.getOperand(tachyfont.CffDict.Operator.FD_ARRAY, 0);
+  this.fontDictIndex_ = new tachyfont.CffIndex('FontDICT',
+      this.fontDictIndexOffset_, tachyfont.CffIndex.TYPE_DICT, this.binEd_);
+  if (goog.DEBUG) {
+    this.fontDictIndex_.setDictOperators(
+        tachyfont.CffDict.OperatorDescriptions);
+  }
+  this.fontDictIndex_.loadDicts(this.binEd_);
+  if (goog.DEBUG) {
+    this.fontDictIndex_.display(true, this.cffTableOffset_);
+  }
+};
+
+
+/**
+ * Process the Font DICT INDEX.
+ * This has info on the per-font Private DICTs.
+ * @private
+ */
+tachyfont.Cff.prototype.readPrivateDicts_ = function() {
+  var count = this.fontDictIndex_.getCount();
+  for (var i = 0; i < count; i++) {
+    var dict = this.fontDictIndex_.getElement(i);
+    var name = dict.getName();
+    var buffer = this.binEd_.dataView.buffer;
+    var length = dict.getOperand(tachyfont.CffDict.Operator.PRIVATE, 0);
+    var offset = this.cffTableOffset_ +
+        dict.getOperand(tachyfont.CffDict.Operator.PRIVATE, 1);
+    var dictOperators;
+    if (goog.DEBUG) {
+      dictOperators = tachyfont.CffDict.OperatorDescriptions;
+    }
+    var privateDict = tachyfont.CffDict.loadDict(name, buffer, offset, length,
+        dictOperators);
+    this.fontPrivateDicts_.push(privateDict);
+  }
+};
+
+
+/**
+ * Process the CharStrings INDEX.
+ * @private
+ */
+tachyfont.Cff.prototype.readCharStringsIndex_ = function() {
+  this.charStringsIndexOffset_ =
+      this.topDict_.getOperand(tachyfont.CffDict.Operator.CHAR_STRINGS, 0);
+  this.charStringsIndex_ = new tachyfont.CffIndex('CharStrings',
+      this.charStringsIndexOffset_, tachyfont.CffIndex.TYPE_BINARY_STRING,
+      this.binEd_);
+  this.nGlyphs_ = this.charStringsIndex_.getCount();
+  this.charStringsIndex_.loadStrings(this.binEd_);
+  if (goog.DEBUG) {
+    this.charStringsIndex_.display(true, this.cffTableOffset_);
+  }
+};
+
+
+/**
+ * Get the CFF major number.
  * @return {number}
  */
 tachyfont.Cff.prototype.getMajor = function() {
