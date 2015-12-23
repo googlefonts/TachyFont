@@ -22,8 +22,10 @@ goog.provide('tachyfont.TachyFontSet');
 goog.require('goog.Promise');
 goog.require('goog.array');
 goog.require('goog.log');
+goog.require('goog.log.Level');
 goog.require('goog.style');
 goog.require('tachyfont.IncrementalFontUtils');
+goog.require('tachyfont.Logger');
 goog.require('tachyfont.chainedPromises');
 
 
@@ -101,14 +103,6 @@ tachyfont.TachyFontSet = function(familyName) {
    */
   this.lastRequestUpdateTime_ = 0;
 
-  /**
-   * Timeout to report lingering needed char data.
-   *
-   * TODO (bstell): need to make this work.
-   *
-   * @private {?number} The timerID from setTimeout.
-   */
-  this.pendingCharDataRequest_ = null;
 };
 
 
@@ -148,7 +142,7 @@ tachyfont.TachyFontSet.reportError_ = function(errNum, errObj) {
   if (goog.DEBUG) {
     if (!tachyfont.reporter) {
       debugger; // Failed to report the error.
-      goog.log.error(tachyfont.logger, 'failed to report error');
+      goog.log.error(tachyfont.Logger.logger, 'failed to report error');
     }
   }
   if (tachyfont.reporter) {
@@ -265,7 +259,7 @@ tachyfont.TachyFontSet.prototype.removeTachyFontFromInputField =
   var cssFamily = goog.style.getComputedStyle(/** @type {Element} */ (node),
       'font-family');
   if (goog.DEBUG) {
-    goog.log.log(tachyfont.logger, goog.log.Level.FINER,
+    goog.log.log(tachyfont.Logger.logger, goog.log.Level.FINER,
         'INPUT css family: ' + cssFamily);
   }
 
@@ -279,7 +273,8 @@ tachyfont.TachyFontSet.prototype.removeTachyFontFromInputField =
   var newCssFamily = families.join(', ');
   node.style.fontFamily = newCssFamily;
   if (goog.DEBUG) {
-    goog.log.log(tachyfont.logger, goog.log.Level.FINER, 'newCssFamily: ' +
+    goog.log.log(tachyfont.Logger.logger, goog.log.Level.FINER,
+        'newCssFamily: ' +
         goog.style.getComputedStyle(/** @type {Element} */ (node),
             'font-family'));
   }
@@ -330,7 +325,7 @@ tachyfont.TachyFontSet.prototype.addTextToFontGroups = function(node) {
   var weight = goog.style.getComputedStyle(parentNode, 'font-weight');
   // TODO(bstell): add support for slant, width, etc.
   if (goog.DEBUG) {
-    goog.log.fine(tachyfont.logger, cssFamily + '/' + weight + ': "' +
+    goog.log.fine(tachyfont.Logger.logger, cssFamily + '/' + weight + ': "' +
         text + '"');
   }
 
@@ -349,7 +344,7 @@ tachyfont.TachyFontSet.prototype.addTextToFontGroups = function(node) {
   }
   if (!family) {
     if (goog.DEBUG) {
-      goog.log.log(tachyfont.logger, goog.log.Level.FINER,
+      goog.log.log(tachyfont.Logger.logger, goog.log.Level.FINER,
           'cssFamily \'' + cssFamily + '\' not supported');
     }
     return false;
@@ -363,7 +358,7 @@ tachyfont.TachyFontSet.prototype.addTextToFontGroups = function(node) {
   var index = this.fontIdToIndex[fontId];
   if (index == undefined) {
     if (goog.DEBUG) {
-      goog.log.log(tachyfont.logger, goog.log.Level.FINER,
+      goog.log.log(tachyfont.Logger.logger, goog.log.Level.FINER,
           'did not find = ' + fontId);
     }
     return false;
@@ -410,7 +405,7 @@ tachyfont.TachyFontSet.prototype.requestUpdateFonts = function(startTime) {
   // There was a recent update so delay this one.
   this.pendingUpdateRequest_ = setTimeout(function() {
     if (goog.DEBUG) {
-      goog.log.info(tachyfont.logger, 'requestUpdateFonts: updateFonts');
+      goog.log.info(tachyfont.Logger.logger, 'requestUpdateFonts: updateFonts');
     }
     this.updateFonts(-startTime, false);
   }.bind(this), tachyfont.TachyFontSet.TIMEOUT);
@@ -429,7 +424,7 @@ tachyfont.TachyFontSet.prototype.requestUpdateFonts = function(startTime) {
  */
 tachyfont.TachyFontSet.prototype.setFonts_ = function(startTime, loadResults) {
   if (goog.DEBUG) {
-    goog.log.log(tachyfont.logger, goog.log.Level.FINER,
+    goog.log.log(tachyfont.Logger.logger, goog.log.Level.FINER,
         'updateFonts: got font bases');
   }
   var allCssSet = [];
@@ -449,10 +444,10 @@ tachyfont.TachyFontSet.prototype.setFonts_ = function(startTime, loadResults) {
       allCssSet.push(goog.Promise.resolve(null));
       continue;
     }
-    var fileInfo = loadResult[0];
+    // loadResult[0] holds fileInfo.
     var fontData = loadResult[1];
     if (goog.DEBUG) {
-      goog.log.fine(tachyfont.logger, 'updateFonts: setFont: ');
+      goog.log.fine(tachyfont.Logger.logger, 'updateFonts: setFont: ');
     }
     var cssSetResult = fontObj.setFont(fontData).
         then(function() {
@@ -490,26 +485,26 @@ tachyfont.TachyFontSet.prototype.updateFonts =
     function(startTime, allowEarlyUse) {
   this.lastRequestUpdateTime_ = goog.now();
   if (goog.DEBUG) {
-    goog.log.fine(tachyfont.logger, 'updateFonts');
+    goog.log.fine(tachyfont.Logger.logger, 'updateFonts');
   }
   // Clear any pending request.
   if (this.pendingUpdateRequest_ != null) {
     if (goog.DEBUG) {
-      goog.log.info(tachyfont.logger, 'clear pendingUpdateRequest_');
+      goog.log.info(tachyfont.Logger.logger, 'clear pendingUpdateRequest_');
     }
     clearTimeout(this.pendingUpdateRequest_);
     this.pendingUpdateRequest_ = null;
   }
   var msg = 'updateFonts';
   if (goog.DEBUG) {
-    goog.log.log(tachyfont.logger, goog.log.Level.FINER,
+    goog.log.log(tachyfont.Logger.logger, goog.log.Level.FINER,
         'updateFonts: wait for preceding update');
   }
   var allUpdated = this.finishPrecedingUpdateFont.getChainedPromise(msg);
   allUpdated.getPrecedingPromise().
       then(function() {
         if (goog.DEBUG) {
-          goog.log.log(tachyfont.logger, goog.log.Level.FINER,
+          goog.log.log(tachyfont.Logger.logger, goog.log.Level.FINER,
               'updateFonts: done waiting for preceding update');
         }
         var updatingFonts = [];
@@ -549,14 +544,14 @@ tachyfont.TachyFontSet.prototype.updateFonts =
           fontsData.push(fontData);
         }
         if (goog.DEBUG) {
-          goog.log.log(tachyfont.logger, goog.log.Level.FINER,
+          goog.log.log(tachyfont.Logger.logger, goog.log.Level.FINER,
               'updateFonts: wait for font bases');
         }
         return goog.Promise.all(fontsData);
       }.bind(this)).
       then(function(loadResults) {
         if (goog.DEBUG) {
-          goog.log.log(tachyfont.logger, goog.log.Level.FINER,
+          goog.log.log(tachyfont.Logger.logger, goog.log.Level.FINER,
               'updateFonts: got font bases');
         }
         return this.setFonts_(startTime, loadResults);
@@ -565,7 +560,8 @@ tachyfont.TachyFontSet.prototype.updateFonts =
         var okIfNoItems;
         if (goog.DEBUG) {
           okIfNoItems = true;
-          goog.log.fine(tachyfont.logger, 'updateFonts: updated all fonts');
+          goog.log.fine(tachyfont.Logger.logger,
+              'updateFonts: updated all fonts');
         }
         tachyfont.reporter.sendReport(okIfNoItems);
         allUpdated.resolve();

@@ -20,6 +20,7 @@
 goog.provide('tachyfont.Reporter');
 
 goog.require('goog.log');
+goog.require('tachyfont.Logger');
 
 
 
@@ -36,15 +37,6 @@ tachyfont.Reporter = function(url) {
 
   /** @private {!Object.<string, (number|string)>} */
   this.items_ = {};
-
-  /**
-   * The duplicate items count;
-   *
-   * Useful when keeping duplicates separately.
-   *
-   * @private {!Object.<string, number>}
-   */
-  this.dupCnts_ = {};
 };
 
 
@@ -121,7 +113,6 @@ tachyfont.Reporter.prototype.reportError = function(errNum, id, errInfo) {
   var msg = '';
 
   // Get the error message out of the error object.
-  var value = '';
   if (typeof errInfo == 'string') {
     msg += errInfo;
   } else if (typeof errInfo == 'object') {
@@ -153,7 +144,7 @@ tachyfont.Reporter.prototype.reportError = function(errNum, id, errInfo) {
     keys.sort();
     for (var i = 0; i < keys.length; i++) {
       name = keys[i];
-      goog.log.error(tachyfont.logger, '    ' + name + ': ' +
+      goog.log.error(tachyfont.Logger.logger, '    ' + name + ': ' +
           this.items_[name]);
     }
     // debugger; // Enable this when debugging the reporter.
@@ -178,7 +169,7 @@ tachyfont.Reporter.prototype.sendReport = function(opt_okIfNoItems) {
   if (keys.length == 0) {
     if (goog.DEBUG) {
       if (!opt_okIfNoItems) {
-        goog.log.warning(tachyfont.logger, 'sendReport: no items');
+        goog.log.warning(tachyfont.Logger.logger, 'sendReport: no items');
       }
     }
     return;
@@ -188,7 +179,7 @@ tachyfont.Reporter.prototype.sendReport = function(opt_okIfNoItems) {
   var length = baseUrl.length;
   var items = [];
   if (goog.DEBUG) {
-    goog.log.info(tachyfont.logger, 'report items:');
+    goog.log.info(tachyfont.Logger.logger, 'report items:');
   }
   for (var i = 0; i < keys.length; i++) {
     var name = keys[i];
@@ -203,7 +194,7 @@ tachyfont.Reporter.prototype.sendReport = function(opt_okIfNoItems) {
     length += item.length;
     items.push(item);
     if (goog.DEBUG) {
-      goog.log.info(tachyfont.logger, '    ' + item);
+      goog.log.info(tachyfont.Logger.logger, '    ' + item);
     }
   }
   this.sendGen204_(baseUrl, items);

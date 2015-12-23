@@ -20,6 +20,10 @@
 goog.provide('tachyfont.Browser');
 
 goog.require('goog.Promise');
+goog.require('goog.log');
+goog.require('goog.log.Level');
+goog.require('tachyfont.IncrementalFontUtils');
+goog.require('tachyfont.Logger');
 
 
 /**
@@ -50,7 +54,7 @@ tachyfont.Browser.setFont = function(fontData, fontInfo, isTtf, oldBlobUrl) {
         return tachyfont.Browser.setFontNoFlash(fontInfo, format, blobUrl).
            then(function() {
              if (goog.DEBUG) {
-               goog.log.fine(tachyfont.logger, 'setFont: setFont done');
+               goog.log.fine(tachyfont.Logger.logger, 'setFont: setFont done');
              }
              return goog.Promise.resolve(blobUrl);
            });
@@ -86,13 +90,12 @@ tachyfont.Browser.setFontNoFlash = function(fontInfo, format, blobUrl) {
   // The temporary @font-face font-family.
   var weight = fontInfo.getWeight();
   var tmpFontFamily = 'tmp-' + weight + '-' + fontFamily;
-  var fontName = fontInfo.getName(); // The font name.
   var sheet = tachyfont.IncrementalFontUtils.getStyleSheet();
 
   // Create a temporary @font-face rule to transfer the blobUrl data from
   // Javascript to the browser side.
   if (goog.DEBUG) {
-    goog.log.log(tachyfont.logger, goog.log.Level.FINER,
+    goog.log.log(tachyfont.Logger.logger, goog.log.Level.FINER,
         'setFont: ' + tmpFontFamily + '/' + weight);
   }
   tachyfont.IncrementalFontUtils.setCssFontRule(sheet, tmpFontFamily, weight,
@@ -103,7 +106,7 @@ tachyfont.Browser.setFontNoFlash = function(fontInfo, format, blobUrl) {
     // of 100. So use an artifical weight to work around this problem.
     var fontStr = '400 20px ' + tmpFontFamily;
     if (goog.DEBUG) {
-      goog.log.log(tachyfont.logger, goog.log.Level.FINER,
+      goog.log.log(tachyfont.Logger.logger, goog.log.Level.FINER,
           'setFont: fontStr = ' + fontStr);
     }
     // Transfer the data.
@@ -111,8 +114,8 @@ tachyfont.Browser.setFontNoFlash = function(fontInfo, format, blobUrl) {
     document.fonts.load(fontStr).
         then(function(value) {
           if (goog.DEBUG) {
-            goog.log.fine(tachyfont.logger, 'loaded ' + tmpFontFamily + '/' +
-                weight);
+            goog.log.fine(tachyfont.Logger.logger, 'loaded ' + tmpFontFamily +
+                '/' + weight);
           }
           resolve();
         });
@@ -141,7 +144,7 @@ tachyfont.Browser.setFontNoFlash = function(fontInfo, format, blobUrl) {
 tachyfont.Browser.switchFont = function(sheet, tmpFontFamily, fontFamily,
     weight, blobUrl, format) {
   if (goog.DEBUG) {
-    goog.log.log(tachyfont.logger, goog.log.Level.FINER,
+    goog.log.log(tachyfont.Logger.logger, goog.log.Level.FINER,
         'switch to fontFamily');
   }
   // Set the updated font rule.
@@ -152,7 +155,7 @@ tachyfont.Browser.switchFont = function(sheet, tmpFontFamily, fontFamily,
   var ruleToDelete = tachyfont.IncrementalFontUtils.findFontFaceRule(
       sheet, tmpFontFamily, weight);
   if (goog.DEBUG) {
-    goog.log.info(tachyfont.logger, '**** switched ' + weight +
+    goog.log.info(tachyfont.Logger.logger, '**** switched ' + weight +
         ' from ' + tmpFontFamily + ' to ' + fontFamily +
                 ' ****');
   }
