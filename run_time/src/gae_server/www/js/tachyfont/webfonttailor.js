@@ -17,19 +17,20 @@
  * the License.
  */
 
-goog.provide('webfonttailor');
+goog.provide('tachyfont.webfonttailor');
 
+goog.require('tachyfont');
 goog.require('tachyfont.FontInfo');
 goog.require('tachyfont.FontsInfo');
-goog.require('webfonttailor.alternate');
+goog.require('tachyfont.webfonttailor_alternate');
 
 
 /**
  * The list of supported weights for Noto Sans JP normal (upright).
  *
- * @type {!Object.<string, !Object.<string, string>>}
+ * @private {!Object.<string, !Object.<string, string>>}
  */
-webfonttailor.JaNormalInfo = {
+tachyfont.webfonttailor.JaNormalInfo_ = {
   '100': { 'name': 'NotoSansJP-Thin', 'weight': '100' },
   '300': { 'name': 'NotoSansJP-Light', 'weight': '300' },
   '350': { 'name': 'NotoSansJP-DemiLight', 'weight': '350' },
@@ -43,30 +44,30 @@ webfonttailor.JaNormalInfo = {
 /**
  * This list of supported styles (slants) for Noto Sans JP.
  *
- * @type {!Object.<string, !Object>}
+ * @private {!Object.<string, !Object>}
  */
-webfonttailor.JaStyleInfo = {
-  'normal': webfonttailor.JaNormalInfo
+tachyfont.webfonttailor.JaStyleInfo_ = {
+  'normal': tachyfont.webfonttailor.JaNormalInfo_
 };
 
 
 /**
  * This list of supported languages for the Noto Sans font family.
  *
- * @type {!Object.<string, !Object>}
+ * @private {!Object.<string, !Object>}
  */
-webfonttailor.NotoSansLanguageInfo = {
-  'ja': webfonttailor.JaStyleInfo
+tachyfont.webfonttailor.NotoSansLanguageInfo_ = {
+  'ja': tachyfont.webfonttailor.JaStyleInfo_
 };
 
 
 /**
  * This list of supported font families.
  *
- * @type {!Object.<string, !Object>}
+ * @private {!Object.<string, !Object>}
  */
-webfonttailor.FontFamliesInfo = {
-  'Noto Sans': webfonttailor.NotoSansLanguageInfo
+tachyfont.webfonttailor.FontFamliesInfo_ = {
+  'Noto Sans': tachyfont.webfonttailor.NotoSansLanguageInfo_
 };
 
 
@@ -81,16 +82,16 @@ webfonttailor.FontFamliesInfo = {
  *     fonts: A list of font.
  *     url: The url to the tachyfont server.
  */
-webfonttailor.getTachyFontsInfo = function(fontFamlies, languages, faces,
-    options) {
+tachyfont.webfonttailor.getTachyFontsInfo =
+    function(fontFamlies, languages, faces, options) {
   if (options['useAlternate']) {
-    return webfonttailor.alternate.getTachyFontsInfo(fontFamlies, languages,
-        faces, options);
+    return tachyfont.webfonttailor_alternate.getTachyFontsInfo(fontFamlies,
+        languages, faces, options);
   }
   var fonts = [];
   for (var i = 0; i < fontFamlies.length; i++) {
     var fontFamily = fontFamlies[i];
-    var languagesInfo = webfonttailor.FontFamliesInfo[fontFamily];
+    var languagesInfo = tachyfont.webfonttailor.FontFamliesInfo_[fontFamily];
     if (!languagesInfo) {
       continue;
     }
@@ -119,7 +120,7 @@ webfonttailor.getTachyFontsInfo = function(fontFamlies, languages, faces,
   return new tachyfont.FontsInfo(fonts, '', '');
 };
 
-goog.exportSymbol('webfonttailor', webfonttailor);
-goog.exportProperty(webfonttailor, 'getTachyFontsInfo',
-    webfonttailor.getTachyFontsInfo);
+goog.exportSymbol('tachyfont.webfonttailor', tachyfont.webfonttailor);
+goog.exportProperty(tachyfont.webfonttailor, 'getTachyFontsInfo',
+    tachyfont.webfonttailor.getTachyFontsInfo);
 
