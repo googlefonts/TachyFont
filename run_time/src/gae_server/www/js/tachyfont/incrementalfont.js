@@ -319,7 +319,7 @@ tachyfont.IncrementalFont.obj_ = function(fontInfo, params, backendService) {
   /** @type {!tachyfont.BackendService} */
   this.backendService = backendService;
 
-  if (params['persistData'] == false || !tachyfont.persistData) {
+  if (params['persistData'] == false || !tachyfont.utils.persistData) {
     this.persistData = false;
   }
 
@@ -446,7 +446,7 @@ tachyfont.IncrementalFont.obj_.prototype.getBaseFontFromPersistence =
   var persistedBase = this.getDb_().
       then(function(idb) {
         var filedata;
-        if (tachyfont.persistData) {
+        if (tachyfont.utils.persistData) {
           filedata = tachyfont.Persist.getData(idb,
               tachyfont.IncrementalFont.BASE)
               .thenCatch(function(e) {
@@ -790,12 +790,12 @@ tachyfont.IncrementalFont.obj_.prototype.setFont = function(fontData) {
  * @return {!Array.<number>} The codepoints with obusfuscation.
  */
 tachyfont.possibly_obfuscate = function(codes, charlist, cmapMapping) {
-  if (tachyfont.noObfuscate == true) {
+  if (tachyfont.utils.noObfuscate == true) {
     return codes;
   }
 
   // Check if we need to obfuscate the request.
-  if (codes.length >= tachyfont.MINIMUM_NON_OBFUSCATION_LENGTH)
+  if (codes.length >= tachyfont.utils.MINIMUM_NON_OBFUSCATION_LENGTH)
     return codes;
 
   var code_map = {};
@@ -803,18 +803,19 @@ tachyfont.possibly_obfuscate = function(codes, charlist, cmapMapping) {
     var code = codes[i];
     code_map[code] = code;
   }
-  var num_new_codes = tachyfont.MINIMUM_NON_OBFUSCATION_LENGTH - codes.length;
-  var target_length = tachyfont.MINIMUM_NON_OBFUSCATION_LENGTH;
+  var num_new_codes =
+      tachyfont.utils.MINIMUM_NON_OBFUSCATION_LENGTH - codes.length;
+  var target_length = tachyfont.utils.MINIMUM_NON_OBFUSCATION_LENGTH;
   var max_tries = num_new_codes * 10 + 100;
   for (var i = 0;
       Object.keys(code_map).length < target_length && i < max_tries;
       i++) {
     var code = codes[i % codes.length];
-    var bottom = code - tachyfont.OBFUSCATION_RANGE / 2;
+    var bottom = code - tachyfont.utils.OBFUSCATION_RANGE / 2;
     if (bottom < 0) {
       bottom = 0;
     }
-    var top = code + tachyfont.OBFUSCATION_RANGE / 2;
+    var top = code + tachyfont.utils.OBFUSCATION_RANGE / 2;
     var newCode = Math.floor(goog.math.uniformRandom(bottom, top + 1));
     if (!cmapMapping[newCode]) {
       // This code is not supported in the font.
@@ -935,7 +936,7 @@ tachyfont.IncrementalFont.obj_.prototype.calcNeededChars_ = function() {
         }
         for (var i = 0; i < charArray.length; i++) {
           var c = charArray[i];
-          var code = tachyfont.charToCode(c);
+          var code = tachyfont.utils.charToCode(c);
           // Check if the font supports the char and it is not loaded.
           if (this.cmapMapping_[code] && !tmp_charlist[c]) {
             neededCodes.push(code);

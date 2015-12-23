@@ -24,6 +24,7 @@ goog.require('goog.log.Level');
 goog.require('tachyfont.BinaryFontEditor');
 goog.require('tachyfont.Logger');
 goog.require('tachyfont.Reporter');
+goog.require('tachyfont.utils');
 
 
 /**
@@ -187,8 +188,8 @@ tachyfont.Cmap.checkCharacters = function(fileInfo, baseFontView,
   var segments = fileInfo.compact_gos.cmap12.segments;
   for (var i = 0; i < count; i += 1) {
     var aChar = chars[i];
-    var code = tachyfont.charToCode(aChar);
-    var codeIsBlank = tachyfont.BLANK_CHARS[code] ? true : false;
+    var code = tachyfont.utils.charToCode(aChar);
+    var codeIsBlank = tachyfont.utils.BLANK_CHARS[code] ? true : false;
     var charInfo = cmapMapping[code];
     if (!charInfo) {
       if (charInfoErrors.length < 5) {
