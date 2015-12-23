@@ -205,15 +205,17 @@ if (goog.DEBUG) {
       if (showData) {
         if (this.type_ == tachyfont.CffIndex.TYPE_DICT) {
           var dict = this.elements_[i];
-          var keys = dict.getKeys();
+          var operators = dict.getOperators();
           // display the dict operands/operators.
-          for (var j = 0; j < keys.length; j++) {
-            var key = keys[j];
+          for (var j = 0; j < operators.length; j++) {
+            var operator = operators[j];
             if (dict.dictOperators_) {
-              goog.log.info(tachyfont.Logger.logger, dict.get(key) + ' ' +
-                  this.dictOperators_[key]);
+              goog.log.info(tachyfont.Logger.logger,
+                  dict.getOperands(operator) + ' ' +
+                  this.dictOperators_[operator]);
             } else {
-              goog.log.info(tachyfont.Logger.logger, dict.get(key) + ' ' + key);
+              goog.log.info(tachyfont.Logger.logger,
+                  dict.getOperands(operator) + ' ' + operator);
             }
           }
         } else {
