@@ -165,7 +165,7 @@ tachyfont.Cmap.writeCmap4 = function(fileInfo, baseFontView, weight) {
  *     about the cmap segments for the codepoint.
  * @param {string} weight The font weight for error reporting.
  * @param {boolean} charsLoaded If set check that the chars are loaded.
- * @return {boolean} True if chars seem okay.
+ * @return {boolean} Whether the chars seem okay.
  */
 tachyfont.Cmap.checkCharacters = function(fileInfo, baseFontView, 
     charList, cmapMapping, weight, charsLoaded) {
@@ -548,7 +548,7 @@ tachyfont.Cmap.setFormat12GlyphIds = function(fileInfo, baseFontView, glyphIds,
  * accurate as character data is added.
  *
  * @param {!Object} fileInfo Information about the font file.
- * @return {boolean} true if only one char per segment.
+ * @return {boolean} Whether there is only one char per segment.
  */
 tachyfont.Cmap.isOneCharPerSeg = function(fileInfo) {
   if (fileInfo.compact_gos.cmap4) {

@@ -302,7 +302,7 @@ tachyfont.TachyFontSet.prototype.recursivelyAddTextToFontGroups =
  * Record the needed text for each TachyFont.
  *
  * @param {Node} node The text node.
- * @return {boolean} True if text was added.
+ * @return {boolean} Whether text was added.
  */
 tachyfont.TachyFontSet.prototype.addTextToFontGroups = function(node) {
   if (node.nodeName != '#text') {
