@@ -142,9 +142,8 @@ tachyfont.BinaryFontEditor.prototype.setArrayOf = function(setter, arr) {
 /**
  * @param {number} offSize Number of bytes in offset
  * @return {number} Offset
- * @private
  */
-tachyfont.BinaryFontEditor.prototype.getOffset_ = function(offSize) {
+tachyfont.BinaryFontEditor.prototype.getOffset = function(offSize) {
   var offset;
   switch (offSize) {
     case 1:
@@ -154,6 +153,7 @@ tachyfont.BinaryFontEditor.prototype.getOffset_ = function(offSize) {
       offset = this.getUint16();
       break;
     case 3:
+      // TODO(bstell): fix this to not read the trailing byte.
       offset = this.getUint32() >>> 8;
       this.offset--;
       break;
@@ -192,7 +192,20 @@ tachyfont.BinaryFontEditor.prototype.setOffset_ = function(offSize, value) {
 
 
 /**
- * @param {number} length Length of the string
+ * @param {number} length Length of the bytes to reas.
+ * @return {string}
+ */
+tachyfont.BinaryFontEditor.prototype.readBinaryString = function(length) {
+  var str = '';
+  for (var i = 0; i < length; i++) {
+    str += this.getUint8();
+  }
+  return str;
+};
+
+
+/**
+ * @param {number} length Length of the string to read.
  * @return {string}
  */
 tachyfont.BinaryFontEditor.prototype.readString = function(length) {
@@ -205,7 +218,7 @@ tachyfont.BinaryFontEditor.prototype.readString = function(length) {
 
 
 /**
- * @param {number} newOffset
+ * @param {number} newOffset The new offset to move to.
  */
 tachyfont.BinaryFontEditor.prototype.seek = function(newOffset) {
   this.offset = newOffset;
@@ -324,7 +337,7 @@ tachyfont.BinaryFontEditor.prototype.readNextGOS = function() {
     var extraOffset = [];
     var startCode, length, gid, segment;
     for (var i = 0; i < nGroups; i++) {
-      segment = this.getOffset_(3); //lower 24 bits
+      segment = this.getOffset(3); //lower 24 bits
       startCode = (segment & 0xF80000) >> 19;
       length = (segment & 0x70000) >> 16;
       gid = segment & 0xFFFF;
@@ -763,7 +776,7 @@ tachyfont.BinaryFontEditor.prototype.setMtxSideBearing =
 tachyfont.BinaryFontEditor.prototype.getGlyphDataOffset =
     function(start, offSize, gid) {
   this.seek(start + gid * offSize);
-  return this.getOffset_(offSize);
+  return this.getOffset(offSize);
 };
 
 
