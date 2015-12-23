@@ -24,6 +24,7 @@ goog.require('goog.Promise');
 goog.require('goog.log');
 goog.require('goog.log.Level');
 goog.require('tachyfont.Logger');
+goog.require('tachyfont.Reporter');
 
 
 
@@ -84,13 +85,13 @@ tachyfont.promise.Error_ = {
  */
 tachyfont.promise.reportError_ = function(errNum, errInfo) {
   if (goog.DEBUG) {
-    if (!tachyfont.reporter) {
+    if (!tachyfont.Reporter.isReady()) {
       debugger; // Failed to report error.
       goog.log.error(tachyfont.Logger.logger, 'failed to report error');
     }
   }
-  if (tachyfont.reporter) {
-    tachyfont.reporter.reportError(tachyfont.promise.Error_.FILE_ID + errNum,
+  if (tachyfont.Reporter.isReady()) {
+    tachyfont.Reporter.reportError(tachyfont.promise.Error_.FILE_ID + errNum,
         '000', errInfo);
   }
 };

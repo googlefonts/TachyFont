@@ -60,16 +60,23 @@ tachyfont.Reporter.instance_;
 
 
 /**
- * Get the reporter singleton.
+ * Indicated is the reporter has been intialized.
+ * @return {boolean}
+ */
+tachyfont.Reporter.isReady = function() {
+  return typeof tachyfont.Reporter.instance_ == 'object';
+};
+
+
+/**
+ * Initialize the reporter singleton.
  *
  * @param {string} url The base URL to send reports to.
- * @return {!tachyfont.Reporter} The reporter singleton.
  */
-tachyfont.Reporter.getReporter = function(url) {
+tachyfont.Reporter.initReporter = function(url) {
   if (!tachyfont.Reporter.instance_) {
     tachyfont.Reporter.instance_ = new tachyfont.Reporter(url);
   }
-  return tachyfont.Reporter.instance_;
 };
 
 
@@ -78,9 +85,9 @@ tachyfont.Reporter.getReporter = function(url) {
  *
  * @param {string} name The name of the item.
  */
-tachyfont.Reporter.prototype.addItemTime = function(name) {
+tachyfont.Reporter.addItemTime = function(name) {
   var deltaTime = goog.now() - tachyfont.Reporter.startTime_;
-  this.addItem(name, deltaTime);
+  tachyfont.Reporter.addItem(name, deltaTime);
 };
 
 
@@ -90,11 +97,11 @@ tachyfont.Reporter.prototype.addItemTime = function(name) {
  * @param {string} name The name of the item.
  * @param {string|number} value The value of the item.
  */
-tachyfont.Reporter.prototype.addItem = function(name, value) {
+tachyfont.Reporter.addItem = function(name, value) {
   if (typeof value == 'number') {
     value = Math.round(value);
   }
-  this.items_[name] = value;
+  tachyfont.Reporter.instance_.items_[name] = value;
 };
 
 
@@ -105,10 +112,10 @@ tachyfont.Reporter.prototype.addItem = function(name, value) {
  * @param {string} id Identifying information.
  * @param {*} errInfo The error information.
  */
-tachyfont.Reporter.prototype.reportError = function(errNum, id, errInfo) {
+tachyfont.Reporter.reportError = function(errNum, id, errInfo) {
   // Move any pre-existing items aside.
-  var preexistingItems = this.items_;
-  this.items_ = {};
+  var preexistingItems = tachyfont.Reporter.instance_.items_;
+  tachyfont.Reporter.instance_.items_ = {};
   var name = errNum + '.' + id;
   var msg = '';
 
@@ -138,21 +145,21 @@ tachyfont.Reporter.prototype.reportError = function(errNum, id, errInfo) {
       msg += errInfo['lineNumber'] + ', ';
     }
   }
-  this.addItem(name, msg);
+  tachyfont.Reporter.addItem(name, msg);
   if (goog.DEBUG) {
-    var keys = Object.keys(this.items_);
+    var keys = Object.keys(tachyfont.Reporter.instance_.items_);
     keys.sort();
     for (var i = 0; i < keys.length; i++) {
       name = keys[i];
       goog.log.error(tachyfont.Logger.logger, '    ' + name + ': ' +
-          this.items_[name]);
+          tachyfont.Reporter.instance_.items_[name]);
     }
     // debugger; // Enable this when debugging the reporter.
   }
-  this.sendReport();
+  tachyfont.Reporter.sendReport();
 
   // Restore any pre-existing items.
-  this.items_ = preexistingItems;
+  tachyfont.Reporter.instance_.items_ = preexistingItems;
 
 
 };
@@ -163,8 +170,8 @@ tachyfont.Reporter.prototype.reportError = function(errNum, id, errInfo) {
  *
  * @param {boolean=} opt_okIfNoItems Do not complain if not items.
  */
-tachyfont.Reporter.prototype.sendReport = function(opt_okIfNoItems) {
-  var keys = Object.keys(this.items_);
+tachyfont.Reporter.sendReport = function(opt_okIfNoItems) {
+  var keys = Object.keys(tachyfont.Reporter.instance_.items_);
   keys.sort();
   if (keys.length == 0) {
     if (goog.DEBUG) {
@@ -175,7 +182,7 @@ tachyfont.Reporter.prototype.sendReport = function(opt_okIfNoItems) {
     return;
   }
 
-  var baseUrl = this.url_ + '/gen_204?id=tf&';
+  var baseUrl = tachyfont.Reporter.instance_.url_ + '/gen_204?id=tf&';
   var length = baseUrl.length;
   var items = [];
   if (goog.DEBUG) {
@@ -183,11 +190,12 @@ tachyfont.Reporter.prototype.sendReport = function(opt_okIfNoItems) {
   }
   for (var i = 0; i < keys.length; i++) {
     var name = keys[i];
-    var value = encodeURIComponent((this.items_[name]).toString());
-    delete this.items_[name];
+    var value = encodeURIComponent(
+        (tachyfont.Reporter.instance_.items_[name]).toString());
+    delete tachyfont.Reporter.instance_.items_[name];
     var item = encodeURIComponent(name) + '=' + value;
     if (length + item.length > 2000) {
-      this.sendGen204_(baseUrl, items);
+      tachyfont.Reporter.sendGen204_(baseUrl, items);
       length = baseUrl.length;
       items = [];
     }
@@ -197,7 +205,7 @@ tachyfont.Reporter.prototype.sendReport = function(opt_okIfNoItems) {
       goog.log.info(tachyfont.Logger.logger, '    ' + item);
     }
   }
-  this.sendGen204_(baseUrl, items);
+  tachyfont.Reporter.sendGen204_(baseUrl, items);
 };
 
 
@@ -208,7 +216,7 @@ tachyfont.Reporter.prototype.sendReport = function(opt_okIfNoItems) {
  * @param {Array.<string>} params The URL parameters.
  * @private
  */
-tachyfont.Reporter.prototype.sendGen204_ = function(baseUrl, params) {
+tachyfont.Reporter.sendGen204_ = function(baseUrl, params) {
   var reportUrl = baseUrl + params.join('&');
   var image = new Image();
   image.onload = image.onerror = tachyfont.Reporter.cleanUpFunc_(image);

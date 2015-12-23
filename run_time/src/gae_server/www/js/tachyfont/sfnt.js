@@ -36,7 +36,7 @@ tachyfont.Sfnt.TableOfContents = function() {
   /** @private {Array.<!tachyfont.Sfnt.TableOfContentsEntry>} */
   this.items_ = [];
 
-  /** @private {Object.<!string, !number>} */
+  /** @private {Object.<string, number>} */
   this.tagIndex_ = {};
 };
 
@@ -51,7 +51,6 @@ tachyfont.Sfnt.TableOfContents.CFF_VERSION_TAG = 'OTTO';
 
 /**
  * Factory to get a font table of contents.
- *
  * @param {DataView} fontData The font data.
  * @return {!tachyfont.Sfnt.TableOfContents}
  */
@@ -64,7 +63,6 @@ tachyfont.Sfnt.getTableOfContents = function(fontData) {
 
 /**
  * Initialize the Table Of Contents.
- *
  * @param {DataView} fontData The font data.
  * @private
  */
@@ -98,7 +96,6 @@ tachyfont.Sfnt.TableOfContents.prototype.init_ = function(fontData) {
 
 /**
  * Get a Table Of Contents table entry.
- *
  * @param {string} tag The 4 character tag for the table.
  * @return {tachyfont.Sfnt.TableOfContentsEntry} ;
  */
@@ -111,32 +108,30 @@ tachyfont.Sfnt.TableOfContents.prototype.getTocEntry = function(tag) {
 
 /**
  * An item in the Font table of contents.
- *
- * @param {!string} tag The table name.
- * @param {!number} checksum The checksum of the table.
- * @param {!number} offset The offset to the table.
- * @param {!number} length The length of the table.
+ * @param {string} tag The table name.
+ * @param {number} checksum The checksum of the table.
+ * @param {number} offset The offset to the table.
+ * @param {number} length The length of the table.
  * @constructor
  */
 tachyfont.Sfnt.TableOfContentsEntry = function(tag, checksum, offset, length) {
-  // @private {!string}
+  /** @private {string} */
   this.tag_ = tag;
 
-  // @private {!number}
+  /** @private {number} */
   this.checksum_ = checksum;
 
-  // @private {!number}
+  /** @private {number} */
   this.offset_ = offset;
 
-  // @private {!number}
+  /** @private {number} */
   this.length_ = length;
 };
 
 
 /**
  * Get the table offset from the beginning of the font to the table.
- *
- * @return {!number} The offset to the table.
+ * @return {number} The offset to the table.
  */
 tachyfont.Sfnt.TableOfContentsEntry.prototype.getOffset = function() {
   return this.offset_;

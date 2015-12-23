@@ -26,6 +26,7 @@ goog.require('goog.log.Level');
 goog.require('goog.style');
 goog.require('tachyfont.IncrementalFontUtils');
 goog.require('tachyfont.Logger');
+goog.require('tachyfont.Reporter');
 goog.require('tachyfont.chainedPromises');
 
 
@@ -140,13 +141,13 @@ tachyfont.TachyFontSet.Error_ = {
  */
 tachyfont.TachyFontSet.reportError_ = function(errNum, errObj) {
   if (goog.DEBUG) {
-    if (!tachyfont.reporter) {
+    if (!tachyfont.Reporter.isReady()) {
       debugger; // Failed to report the error.
       goog.log.error(tachyfont.Logger.logger, 'failed to report error');
     }
   }
-  if (tachyfont.reporter) {
-    tachyfont.reporter.reportError(
+  if (tachyfont.Reporter.isReady()) {
+    tachyfont.Reporter.reportError(
         tachyfont.TachyFontSet.Error_.FILE_ID + errNum, '000', errObj);
   }
 };
@@ -440,7 +441,7 @@ tachyfont.TachyFontSet.prototype.setFonts_ = function(startTime, loadResults) {
     var loadResult = loadResults[i];
     if (loadResult == null) {
       // No FOUT so 0 FOUT time.
-      tachyfont.reporter.addItem(setFontLogId + weight, 0);
+      tachyfont.Reporter.addItem(setFontLogId + weight, 0);
       allCssSet.push(goog.Promise.resolve(null));
       continue;
     }
@@ -452,13 +453,13 @@ tachyfont.TachyFontSet.prototype.setFonts_ = function(startTime, loadResults) {
     var cssSetResult = fontObj.setFont(fontData).
         then(function() {
           if (startTime == 0) {
-            tachyfont.reporter.addItemTime(
+            tachyfont.Reporter.addItemTime(
                 tachyfont.TachyFontSet.Log_.SET_FONT_DOM_LOADED + weight);
           } else if (startTime >= 0) {
-            tachyfont.reporter.addItem(setFontLogId + weight,
+            tachyfont.Reporter.addItem(setFontLogId + weight,
                 goog.now() - startTime);
           } else {
-            tachyfont.reporter.addItem(
+            tachyfont.Reporter.addItem(
                 tachyfont.TachyFontSet.Log_.SET_FONT_DELAYED + weight,
                 goog.now() + startTime);
           }
@@ -563,7 +564,7 @@ tachyfont.TachyFontSet.prototype.updateFonts =
           goog.log.fine(tachyfont.Logger.logger,
               'updateFonts: updated all fonts');
         }
-        tachyfont.reporter.sendReport(okIfNoItems);
+        tachyfont.Reporter.sendReport(okIfNoItems);
         allUpdated.resolve();
       }.bind(this)).
       thenCatch(function(e) {

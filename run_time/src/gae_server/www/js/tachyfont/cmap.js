@@ -23,6 +23,7 @@ goog.require('goog.log');
 goog.require('goog.log.Level');
 goog.require('tachyfont.BinaryFontEditor');
 goog.require('tachyfont.Logger');
+goog.require('tachyfont.Reporter');
 
 
 /**
@@ -68,12 +69,12 @@ tachyfont.Cmap.Error_ = {
  */
 tachyfont.Cmap.reportError_ = function(errNum, errId, errInfo) {
   if (goog.DEBUG) {
-    if (!tachyfont.reporter) {
+    if (!tachyfont.Reporter.isReady()) {
       goog.log.error(tachyfont.Logger.logger, 'failed to report error');
     }
   }
-  if (tachyfont.reporter) {
-    tachyfont.reporter.reportError(
+  if (tachyfont.Reporter.isReady()) {
+    tachyfont.Reporter.reportError(
         tachyfont.Cmap.Error_.FILE_ID + errNum, errId, errInfo);
   }
 };

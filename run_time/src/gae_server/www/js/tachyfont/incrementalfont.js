@@ -32,6 +32,7 @@ goog.require('tachyfont.IncrementalFontUtils');
 goog.require('tachyfont.Logger');
 goog.require('tachyfont.Persist');
 goog.require('tachyfont.RLEDecoder');
+goog.require('tachyfont.Reporter');
 goog.require('tachyfont.chainedPromises');
 goog.require('tachyfont.promise');
 goog.require('tachyfont.utils');
@@ -155,12 +156,12 @@ tachyfont.IncrementalFont.Error_ = {
  */
 tachyfont.IncrementalFont.reportError_ = function(errNum, errId, errInfo) {
   if (goog.DEBUG) {
-    if (!tachyfont.reporter) {
+    if (!tachyfont.Reporter.isReady()) {
       goog.log.error(tachyfont.Logger.logger, 'failed to report error');
     }
   }
-  if (tachyfont.reporter) {
-    tachyfont.reporter.reportError(
+  if (tachyfont.Reporter.isReady()) {
+    tachyfont.Reporter.reportError(
         tachyfont.IncrementalFont.Error_.FILE_ID + errNum, errId, errInfo);
   }
 };
@@ -213,7 +214,7 @@ tachyfont.IncrementalFont.createManager = function(fontInfo, dropData, params) {
 
   var incrFontMgr =
       new tachyfont.IncrementalFont.obj_(fontInfo, params, backendService);
-  tachyfont.reporter.addItem(
+  tachyfont.Reporter.addItem(
       tachyfont.IncrementalFont.Log_.CREATE_TACHYFONT + weight,
       goog.now() - incrFontMgr.startTime);
 
@@ -228,7 +229,7 @@ tachyfont.IncrementalFont.createManager = function(fontInfo, dropData, params) {
       })
       .then(function() {
         // TODO(bstell): probably want to remove this time reporting code.
-        tachyfont.reporter.addItem(
+        tachyfont.Reporter.addItem(
             tachyfont.IncrementalFont.Log_.OPEN_IDB + weight,
             goog.now() - incrFontMgr.startTime);
       }).
@@ -464,7 +465,7 @@ tachyfont.IncrementalFont.obj_.prototype.getBaseFontFromPersistence =
         return goog.Promise.all([goog.Promise.resolve(idb), filedata]);
       }.bind(this)).
       then(function(arr) {
-        tachyfont.reporter.addItem(tachyfont.IncrementalFont.Log_.IDB_GET_BASE +
+        tachyfont.Reporter.addItem(tachyfont.IncrementalFont.Log_.IDB_GET_BASE +
             this.fontInfo.getWeight(), goog.now() - this.startTime);
         var idb = arr[0];
         var filedata = new DataView(arr[1]);
@@ -522,7 +523,7 @@ tachyfont.IncrementalFont.obj_.prototype.parseBaseHeader =
   var binEd = new tachyfont.BinaryFontEditor(baseFontView, 0);
   var fileInfo = binEd.parseBaseHeader();
   if (!fileInfo.headSize) {
-    tachyfont.reporter.addItem(tachyfont.IncrementalFont.Log_.PARSE_HEADER +
+    tachyfont.Reporter.addItem(tachyfont.IncrementalFont.Log_.PARSE_HEADER +
         this.fontInfo.getWeight(), goog.now() - this.startTime);
     throw 'missing header info';
   }
@@ -547,7 +548,7 @@ tachyfont.IncrementalFont.obj_.prototype.getBaseFontFromUrl =
     function(backendService, fontInfo) {
   var rslt = backendService.requestFontBase(fontInfo).
       then(function(urlBaseBytes) {
-        tachyfont.reporter.addItem(tachyfont.IncrementalFont.Log_.URL_GET_BASE +
+        tachyfont.Reporter.addItem(tachyfont.IncrementalFont.Log_.URL_GET_BASE +
             this.fontInfo.getWeight(), goog.now() - this.startTime);
         var results = this.processUrlBase_(urlBaseBytes);
         this.persistDelayed_(tachyfont.IncrementalFont.BASE);
@@ -946,9 +947,9 @@ tachyfont.IncrementalFont.obj_.prototype.calcNeededChars_ = function() {
         var missCount = neededCodes.length;
         var missRate = (neededCodes.length * 100) / charArray.length;
         var weight = this.fontInfo.getWeight();
-        tachyfont.reporter.addItem(
+        tachyfont.Reporter.addItem(
            tachyfont.IncrementalFont.Log_.MISS_COUNT + weight, missCount);
-        tachyfont.reporter.addItem(
+        tachyfont.Reporter.addItem(
            tachyfont.IncrementalFont.Log_.MISS_RATE + weight, missRate);
         if (neededCodes.length == 0) {
           if (goog.DEBUG) {
@@ -1146,7 +1147,7 @@ tachyfont.IncrementalFont.obj_.prototype.injectChars_ = function(neededCodes,
 
 /**
  * Get the database name for this font.
- * @return {!string} The database name.
+ * @return {string} The database name.
  * @private
  */
 tachyfont.IncrementalFont.obj_.prototype.getDbName_ = function() {
