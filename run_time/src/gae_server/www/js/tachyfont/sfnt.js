@@ -278,7 +278,7 @@ tachyfont.Sfnt.TableOfContents.prototype.getTocEntry = function(tag) {
 
 /**
  * Get isCff.
- * @return {boolean}
+ * @return {boolean} Whether the font type is CFF (not Truetype).
  */
 tachyfont.Sfnt.TableOfContents.prototype.isCff = function() {
   return this.isCff_;

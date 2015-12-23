@@ -153,7 +153,7 @@ tachyfont.FontInfo.prototype.setDataUrl = function(dataUrl) {
 /**
  * Get the priority of this font.
  *
- * @return {boolean} True if is a priority font.
+ * @return {boolean} Whether this is a priority font.
  */
 tachyfont.FontInfo.prototype.getPriority = function() {
   return this.priority_;

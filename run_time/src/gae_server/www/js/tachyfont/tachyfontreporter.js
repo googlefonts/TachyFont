@@ -61,7 +61,7 @@ tachyfont.Reporter.instance_;
 
 /**
  * Indicated is the reporter has been intialized.
- * @return {boolean}
+ * @return {boolean} Whether the reporter has been initialized.
  */
 tachyfont.Reporter.isReady = function() {
   return typeof tachyfont.Reporter.instance_ == 'object';
