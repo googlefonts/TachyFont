@@ -45,6 +45,21 @@ tachyfont.utils.stringFromCodePoint = function(codePoint) {
 
 if (goog.DEBUG) {
   /**
+   * Convert a DataView to a hex string.
+   *
+   * @param {DataView} dataView The DataView.
+   * @param {number=} opt_length An optional length;
+   * @return {string}
+   */
+  tachyfont.utils.dataViewToHex = function(dataView, opt_length) {
+    // TODO(bstell): code this.
+    var str = '';
+    return str;
+  };
+
+
+
+  /**
    * Report the list of codepoints.
    *
    * @param {string} title The title of the codepoint list.
@@ -92,5 +107,20 @@ if (goog.DEBUG) {
       console.log('----------');
     }
   };
+  /**
+   * Convert a number to hex.
+   * @param {number} number The number to convert to
+   * @param {number=} opt_length Optional number of hex chars.
+   * @return {string}
+   */
+  tachyfont.utils.numberToHex = function(number, opt_length) {
+    // TODO(bstell): if desired, add better length handling.
+    if (opt_length == 2) {
+      return '0x' + ('00' + number.toString(16)).substr(-2);
+    } else {
+      return '0x' + ('0000' + number.toString(16)).substr(-4);
+    }
+  };
+
 }
 
