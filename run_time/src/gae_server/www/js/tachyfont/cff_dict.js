@@ -55,7 +55,7 @@ tachyfont.CffDict = function(name, dataView) {
 
   /**
    * Map of operator->operand.
-   * @private {!Object.<string, !Array.<number>>}
+   * @private {!Object.<string, !tachyfont.CffDict.OperandsOperatorSet_>}
    */
   this.dict_ = {};
 
@@ -90,8 +90,7 @@ tachyfont.CffDict.prototype.init_ = function() {
       }
     }
     this.operators_.push(operandsOperatorSet.operator);
-    this.dict_[operandsOperatorSet.operator] =
-        /** @type {!Array.<number>} */ (operandsOperatorSet.operands);
+    this.dict_[operandsOperatorSet.operator] = operandsOperatorSet;
   }
 };
 
@@ -158,7 +157,7 @@ tachyfont.CffDict.prototype.getOperators = function() {
  */
 tachyfont.CffDict.prototype.getOperands = function(operator) {
   if (operator in this.dict_) {
-    return this.dict_[operator];
+    return this.dict_[operator].operands;
   }
   throw new RangeError(this.name_ + ' getOperands: ' + operator);
 };
@@ -171,10 +170,51 @@ tachyfont.CffDict.prototype.getOperands = function(operator) {
  * @return {number} The operand.
  */
 tachyfont.CffDict.prototype.getOperand = function(operator, index) {
-  if (operator in this.dict_ && index < this.dict_[operator].length) {
-    return this.dict_[operator][index];
+  if (operator in this.dict_ && index < this.dict_[operator].operands.length) {
+    return this.dict_[operator].operands[index];
   }
   throw new RangeError(this.name_ + ' getOperand: ' + operator + '/' + index);
+};
+
+
+/**
+ * Get a CFF DICT OperandsOperatorSet.
+ * @param {string} operator The operator of the operands/operator.
+ * @return {!tachyfont.CffDict.OperandsOperatorSet_ } The OperandsOperatorSet.
+ */
+tachyfont.CffDict.prototype.getOperandsOperatorSet = function(operator) {
+  if (operator in this.dict_) {
+    return this.dict_[operator];
+  }
+  throw new RangeError(this.name_ + ' getOperandsOperatorSet: ' + operator);
+};
+
+
+/**
+ * Update a operand entry in a CFF DICT.
+ * Note: this does not support modifying nibbles.
+ * @param {string} operator The operator.
+ * @param {number} index The index of the operand.
+ * @param {number} delta The delta change to the operand.
+ */
+tachyfont.CffDict.prototype.updateDictEntryOperand =
+    function(operator, index, delta) {
+  var operandsOperatorSet = this.dict_[operator];
+  var operand = operandsOperatorSet.operands[index] + delta;
+  var length = operandsOperatorSet.operandLengths[index];
+  var operandOffset = 0;
+  for (var i = 0; i < index; i++) {
+    operandOffset += operandsOperatorSet.operandLengths[i];
+  }
+  var operandValues = tachyfont.CffDict.numberToOperand_(operand, length);
+
+  // Update the operand value.
+  var binEd = new tachyfont.BinaryFontEditor(this.dataView_,
+      operandsOperatorSet.offset + operandOffset);
+  for (var i = 0; i < operandValues.length; i++) {
+    binEd.setUint8(operandValues[i]);
+  }
+  operandsOperatorSet.operands[index] = operand;
 };
 
 
@@ -183,15 +223,24 @@ tachyfont.CffDict.prototype.getOperand = function(operator, index) {
  * A class holding an operands/operator set.
  * @param {!Array.<number>} operands The operands.
  * @param {string} operator The operator.
+ * @param {number} offset The starting offset of the operands/operator.
+ * @param {!Array.<number>} operandLengths The lengths of the operands.
  * @constructor @struct @final
  * @private
  */
-tachyfont.CffDict.OperandsOperatorSet_ = function(operands, operator) {
+tachyfont.CffDict.OperandsOperatorSet_ =
+    function(operands, operator, offset, operandLengths) {
   /** @type {string} */
   this.operator = operator;
 
   /** @type {!Array.<number>} */
   this.operands = operands;
+
+  /** @type {number} */
+  this.offset = offset;
+
+  /** @type {!Array.<number>} */
+  this.operandLengths = operandLengths;
 };
 
 
@@ -211,6 +260,48 @@ tachyfont.CffDict.OperandsOperatorSet_ = function(operands, operator) {
 
 
 /**
+ * Give a number and length convert it to an operand.
+ * Note: this does not handle nibbles.
+ * @param {number} number The number to convert.
+ * @param {number} length The length in bytes to convert the number to.
+ * @return {!Array.<number>} The byte values for the operand.
+ * @private
+ */
+tachyfont.CffDict.numberToOperand_ = function(number, length) {
+  var b0, b1, b2, b3, b4;
+  if (length == 1 && number >= -107 && number <= 107) {
+    // b0-139 = number
+    return [number + 139];
+  } else if (length == 2 && number >= 108 && number <= 1131) {
+    // (b0-247)*256+b1+108 = number
+    number -= 108;
+    b0 = (number >> 8) + 247;
+    b1 = number & 0xff;
+    return [b0, b1];
+  } else if (length == 2 && number <= -108 && number >= -1131) {
+    // -(b0-251)*256-b1-108 = number
+    number = -number - 108;
+    b0 = (number >> 8) + 251;
+    b1 = number & 0xff;
+    return [b0, b1];
+  } else if (length == 3 && number >= -32768 && number <= 32767) {
+    // b1<<8|b2 = number
+    b1 = number >> 8;
+    b2 = number & 0xff;
+    return [28, b1, b2];
+  } else if (length == 5 && number >= -2147483648 && number <= 2147483647) {
+    // b1<<24|b2<<16|b3<<8|b4 = number
+    b1 = (number >> 24) & 0xff;
+    b2 = (number >> 16) & 0xff;
+    b3 = (number >> 8) & 0xff;
+    b4 = number & 0xff;
+    return [29, b1, b2, b3, b4];
+  }
+  throw new Error('invalid length/number: ' + length + '/' + number);
+};
+
+
+/**
  * Get a CFF DICT Operands/Operator set.
  * @param {!tachyfont.BinaryFontEditor} binEd The binary editor at the position
  *     of the Operands/Operator.
@@ -219,7 +310,7 @@ tachyfont.CffDict.OperandsOperatorSet_ = function(operands, operator) {
  * @private
  */
 tachyfont.CffDict.readOperandsOperator_ = function(binEd) {
-  var operands = [], operator = '';
+  var operands = [], operandLengths = [], operator = '', offset = binEd.offset;
 
   var operand = '', b0, b1, b2, b3, b4, op, isUndefined;
   while (operands.length <= 48) {
@@ -236,24 +327,29 @@ tachyfont.CffDict.readOperandsOperator_ = function(binEd) {
     }
     if (b0 >= 32 && b0 <= 246) {
       operand = b0 - 139;
+      operandLengths.push(1);
     } else if (b0 >= 247 && b0 <= 250) {
       b1 = binEd.getUint8();
+      operandLengths.push(2);
       operand = (b0 - 247) * 256 + b1 + 108;
     } else if (b0 >= 251 && b0 <= 254) {
       b1 = binEd.getUint8();
+      operandLengths.push(2);
       operand = -(b0 - 251) * 256 - b1 - 108;
     } else if (b0 == 28) {
       b1 = binEd.getUint8();
       b2 = binEd.getUint8();
+      operandLengths.push(3);
       operand = b1 << 8 | b2;
     } else if (b0 == 29) {
       b1 = binEd.getUint8();
       b2 = binEd.getUint8();
       b3 = binEd.getUint8();
       b4 = binEd.getUint8();
+      operandLengths.push(5);
       operand = b1 << 24 | b2 << 16 | b3 << 8 | b4;
     } else if (b0 == 30) {
-      operand = Number(tachyfont.CffDict.parseNibbles_(binEd));
+      operand = Number(tachyfont.CffDict.parseNibbles_(binEd, operandLengths));
     }
     if (operand !== isUndefined) {
       operands.push(operand);
@@ -269,20 +365,24 @@ tachyfont.CffDict.readOperandsOperator_ = function(binEd) {
     operator += op.toString();
     break;
   }
-  return new tachyfont.CffDict.OperandsOperatorSet_(operands, operator);
+  return new tachyfont.CffDict.OperandsOperatorSet_(operands, operator, offset,
+      operandLengths);
 };
 
 
 /**
  * Get a CFF DICT nibble operand.
  * @param {!tachyfont.BinaryFontEditor} binEd The binary editor.
+ * @param {!Array.<number>} operandLengths The length of the operands.
  * @return {string} The nibble operand.
  * @private
  */
-tachyfont.CffDict.parseNibbles_ = function(binEd) {
+tachyfont.CffDict.parseNibbles_ = function(binEd, operandLengths) {
   var operand = '', aByte, nibbles = [], nibble, operandsCnt = 0;
+  var operandLength = 1; // Add one for the nibble indicator (30)  byte.
   while (operandsCnt++ <= 48) {
     aByte = binEd.getUint8();
+    operandLength++;
     nibbles[0] = aByte >> 4;
     nibbles[1] = aByte & 0xf;
     for (var i = 0; i < 2; i++) {
@@ -298,6 +398,7 @@ tachyfont.CffDict.parseNibbles_ = function(binEd) {
       } else if (nibble == 0xe) {
         operand += '-';
       } else if (nibble == 0xf) {
+        operandLengths.push(operandLength);
         return operand;
       } else {
         throw new Error('invalid nibble');
@@ -314,7 +415,9 @@ tachyfont.CffDict.parseNibbles_ = function(binEd) {
  */
 tachyfont.CffDict.Operator = {
   FD_ARRAY: '12 36',
+  FD_SELECT: '12 37',
   CHAR_STRINGS: '17',
+  CHARSET: '15',
   PRIVATE: '18'
 };
 
