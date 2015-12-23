@@ -28,6 +28,7 @@ goog.require('tachyfont.IncrementalFontUtils');
 goog.require('tachyfont.Logger');
 goog.require('tachyfont.Reporter');
 goog.require('tachyfont.chainedPromises');
+goog.require('tachyfont.utils');
 
 
 
@@ -352,8 +353,8 @@ tachyfont.TachyFontSet.prototype.addTextToFontGroups = function(node) {
   }
 
   // Normalize the weight; eg, 'normal' -> '400'
-  weight = tachyfont.cssWeightToNumber[weight] || weight;
-  var fontId = tachyfont.fontId(family, weight);
+  weight = tachyfont.utils.cssWeightToNumber[weight] || weight;
+  var fontId = tachyfont.utils.fontId(family, weight);
 
   // Look for this in the font set.
   var index = this.fontIdToIndex[fontId];
@@ -367,7 +368,7 @@ tachyfont.TachyFontSet.prototype.addTextToFontGroups = function(node) {
 
   var tachyFont = this.fonts[index];
   // Handle UTF16.
-  var charArray = tachyfont.stringToChars(text);
+  var charArray = tachyfont.utils.stringToChars(text);
   var textAdded = false;
   // Tell the font it needs these characters.
   var charlist = tachyFont.incrfont.charsToLoad;
