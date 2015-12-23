@@ -31,20 +31,18 @@ def display_bytes(bytes):
     if (i % lineCount == 0):
       print "   ",
     print("0x%02x," % (bytes[i])),
-    this_char = chr(bytes[i])
-    if this_char in string.ascii_letters or this_char in string.digits:
-      as_chars += this_char
+    if bytes[i] >= 0x20 and bytes[i] <= 0x7f:
+      as_chars += chr(bytes[i])
     else:
       as_chars += '.'
     if (i and (i % lineCount == lineCount - 1)):
       lineStart = i - lineCount + 1
-      print "// 0x%04X / %5d" % (lineStart, lineStart),
-      print ' ', as_chars
+      print "// %05d / 0x%04X" % (lineStart, lineStart),
+      print '', as_chars
       as_chars = ''
   fill_in = lineCount - (i % lineCount + 1)
   for j in range(fill_in):
     print '     ',
-    as_chars += '.'
   lineStart += lineCount
-  print "// 0x%04X / %5d" % (lineStart, lineStart),
+  print "// %05d / 0x%04X" % (lineStart, lineStart),
   print ' ', as_chars
