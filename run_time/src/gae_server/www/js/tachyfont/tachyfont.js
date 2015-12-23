@@ -28,11 +28,10 @@ goog.require('goog.debug.Console');
 goog.require('goog.debug.Logger');
 goog.require('goog.log');
 goog.require('goog.log.Level');
-goog.require('tachyfont.BinaryFontEditor');
-goog.require('tachyfont.FontInfo');
 goog.require('tachyfont.FontsInfo');
 goog.require('tachyfont.IncrementalFont');
 goog.require('tachyfont.IncrementalFontUtils');
+goog.require('tachyfont.Logger');
 goog.require('tachyfont.Reporter');
 goog.require('tachyfont.TachyFontSet');
 
@@ -108,7 +107,7 @@ tachyfont.reportError_ = function(errNum, errInfo) {
  * @private
  */
 tachyfont.delayedReportError_ = function(obj) {
-  goog.log.error(tachyfont.logger, 'delayedReportError_');
+  goog.log.error(tachyfont.Logger.logger, 'delayedReportError_');
   tachyfont.reportError_(obj.errNum, obj.errInfo);
 };
 
@@ -162,11 +161,7 @@ if (goog.DEBUG) {
     debugLevel = goog.debug.Logger.Level.getPredefinedLevel(debugLevelStr);
     var debugConsole = new goog.debug.Console();
     debugConsole.setCapturing(true);
-
-    /**
-     * @type {goog.debug.Logger}
-     */
-    tachyfont.logger = goog.log.getLogger('tachyfont', debugLevel);
+    tachyfont.Logger.init(debugLevel);
 
     /**
      * For debugging: option to disable the obfuscation.
@@ -340,7 +335,7 @@ tachyfont.fontId = function(family, weight) {
 tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
   var tachyFontSet =
       tachyfont.loadFonts_init_(familyName, fontsInfo, opt_params);
-  var loadAndUsePromise = tachyfont.loadFonts_loadAndUse_(tachyFontSet);
+  tachyfont.loadFonts_loadAndUse_(tachyFontSet);
 
   // Run this in parallel with loading the fonts.
   tachyfont.loadFonts_setupTextListeners_(tachyFontSet);
@@ -359,7 +354,7 @@ tachyfont.loadFonts_loadAndUse_ = function(tachyFontSet) {
   var tachyFonts = tachyFontSet.fonts;
   var msg = 'loadFonts';
   if (goog.DEBUG) {
-    goog.log.log(tachyfont.logger, goog.log.Level.FINER,
+    goog.log.log(tachyfont.Logger.logger, goog.log.Level.FINER,
         'loadFonts: wait for preceding update');
   }
   var waitPreviousTime = goog.now();
@@ -370,7 +365,7 @@ tachyfont.loadFonts_loadAndUse_ = function(tachyFontSet) {
         tachyfont.reporter.addItem(tachyfont.Log_.LOAD_FONTS_WAIT_PREVIOUS +
             '000', goog.now() - waitPreviousTime);
         if (goog.DEBUG) {
-          goog.log.log(tachyfont.logger, goog.log.Level.FINER,
+          goog.log.log(tachyfont.Logger.logger, goog.log.Level.FINER,
               'loadFonts: done waiting for preceding update');
         }
         // Load the fonts from persistent store or URL.
@@ -380,7 +375,8 @@ tachyfont.loadFonts_loadAndUse_ = function(tachyFontSet) {
             }).
             then(function(allSetResults) {
               if (goog.DEBUG) {
-                goog.log.fine(tachyfont.logger, 'loadFonts: all fonts loaded');
+                goog.log.fine(tachyfont.Logger.logger,
+                    'loadFonts: all fonts loaded');
               }
               // Allow any pending updates to happen.
               waitForPrecedingPromise.resolve();
@@ -411,7 +407,7 @@ tachyfont.loadFonts_loadAndUse_ = function(tachyFontSet) {
 tachyfont.loadFonts_init_ = function(familyName, fontsInfo, opt_params) {
   if (goog.DEBUG) {
     tachyfont.debugInitialization_();
-    goog.log.fine(tachyfont.logger, 'loadFonts');
+    goog.log.fine(tachyfont.Logger.logger, 'loadFonts');
   }
 
   var dataUrl = fontsInfo.getDataUrl();
@@ -502,7 +498,7 @@ tachyfont.loadFonts_useFonts_ = function(tachyFonts, arrayBaseData) {
     // set the font.
     if (!incrFont.alreadyPersisted) {
       if (goog.DEBUG) {
-        goog.log.fine(tachyfont.logger, 'loadFonts: not persisted');
+        goog.log.fine(tachyfont.Logger.logger, 'loadFonts: not persisted');
       }
       allCssSet.push(goog.Promise.resolve(null));
       continue;
@@ -511,7 +507,7 @@ tachyfont.loadFonts_useFonts_ = function(tachyFonts, arrayBaseData) {
     // * it is very likely that the font _already_ has the UI text
     //   so immediately show the UI in the TachyFont.
     if (goog.DEBUG) {
-      goog.log.fine(tachyfont.logger, 'loadFonts: setFont_');
+      goog.log.fine(tachyfont.Logger.logger, 'loadFonts: setFont_');
     }
     // TODO(bstell): only set the font if there are characters.
     incrFont.sfeStart_ = goog.now();
@@ -526,7 +522,7 @@ tachyfont.loadFonts_useFonts_ = function(tachyFonts, arrayBaseData) {
               tachyfont.Log_.SWITCH_FONT_DELTA_TIME + weight,
               deltaTime);
           if (goog.DEBUG) {
-            goog.log.fine(tachyfont.logger, 'loadFonts: setFont_ done');
+            goog.log.fine(tachyfont.Logger.logger, 'loadFonts: setFont_ done');
           }
           tachyfont.IncrementalFontUtils.setVisibility(this.style,
               this.fontInfo, true);
@@ -604,7 +600,7 @@ tachyfont.stringToChars = function(str) {
  */
 tachyfont.loadFonts_domMutationObserver_ = function(tachyFontSet, mutations) {
   if (goog.DEBUG) {
-    goog.log.fine(tachyfont.logger, 'MutationObserver');
+    goog.log.fine(tachyfont.Logger.logger, 'MutationObserver');
   }
   var mutationTime = goog.now();
   mutations.forEach(function(mutation) {
@@ -618,7 +614,7 @@ tachyfont.loadFonts_domMutationObserver_ = function(tachyFontSet, mutations) {
     } else if (mutation.type == 'characterData') {
       if (goog.DEBUG) {
         if (mutation.target.nodeName !== '#text') {
-          goog.log.info(tachyfont.logger,
+          goog.log.info(tachyfont.Logger.logger,
               'need to handle characterData for non-text');
         }
       }
@@ -636,7 +632,7 @@ tachyfont.loadFonts_domMutationObserver_ = function(tachyFontSet, mutations) {
   tachyFontSet.hadMutationEvents = true;
   if (immediateUpdate) {
     if (goog.DEBUG) {
-      goog.log.info(tachyfont.logger, 'mutation observer: updateFonts');
+      goog.log.info(tachyfont.Logger.logger, 'mutation observer: updateFonts');
     }
     tachyFontSet.updateFonts(mutationTime, true);
   } else {
@@ -692,13 +688,13 @@ tachyfont.loadFonts_handleDomContentLoaded_ = function(tachyFontSet, event) {
   if (tachyFontSet.hadMutationEvents) {
     // We have characters so update the fonts.
     if (goog.DEBUG) {
-      goog.log.info(tachyfont.logger, 'DOMContentLoaded: updateFonts');
+      goog.log.info(tachyfont.Logger.logger, 'DOMContentLoaded: updateFonts');
     }
     tachyFontSet.updateFonts(0, true);
   } else {
     // The mutation event should be very soon.
     if (goog.DEBUG) {
-      goog.log.info(tachyfont.logger,
+      goog.log.info(tachyfont.Logger.logger,
           'DOMContentLoaded: wait for mutation event');
     }
   }

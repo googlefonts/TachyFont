@@ -21,9 +21,10 @@ goog.provide('tachyfont.IncrementalFontUtils');
 
 goog.require('goog.asserts');
 goog.require('goog.log');
+goog.require('goog.log.Level');
 goog.require('tachyfont.BinaryFontEditor');
 goog.require('tachyfont.CharCmapInfo');
-goog.require('tachyfont.FontInfo');
+goog.require('tachyfont.Logger');
 
 
 /**
@@ -248,7 +249,7 @@ tachyfont.IncrementalFontUtils.deleteCssRule = function(ruleToDelete, sheet) {
       sheet.removeRule(ruleToDelete);
     } else {
       if (goog.DEBUG) {
-        goog.log.error(tachyfont.logger, 'no delete/drop rule');
+        goog.log.error(tachyfont.Logger.logger, 'no delete/drop rule');
       }
     }
   }
@@ -273,7 +274,7 @@ tachyfont.IncrementalFontUtils.findFontFaceRule =
       var this_rule = rules[i];
       if (this_rule.type == CSSRule.FONT_FACE_RULE) {
         if (goog.DEBUG) {
-          goog.log.log(tachyfont.logger, goog.log.Level.FINER,
+          goog.log.log(tachyfont.Logger.logger, goog.log.Level.FINER,
               'found an @font-face rule');
         }
         var this_style = this_rule.style;
@@ -310,7 +311,8 @@ tachyfont.IncrementalFontUtils.setCssFontRule =
       ' format("' + format + '");\n' +
       '}\n';
   if (goog.DEBUG) {
-    goog.log.log(tachyfont.logger, goog.log.Level.FINER, 'rule = ' + rule_str);
+    goog.log.log(tachyfont.Logger.logger, goog.log.Level.FINER,
+        'rule = ' + rule_str);
   }
   var ruleToDelete = tachyfont.IncrementalFontUtils.findFontFaceRule(
       sheet, fontFamily, weight);
