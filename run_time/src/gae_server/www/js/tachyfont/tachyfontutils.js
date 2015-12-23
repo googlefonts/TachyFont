@@ -23,6 +23,47 @@ goog.provide('tachyfont.utils.uint8');
 
 
 /**
+ * The IndexedDB version.
+ * Increment this number every time there is a change in the schema.
+ *
+ * @const {number}
+ */
+tachyfont.utils.IDB_VERSION = 2;
+
+
+/**
+ * The base name.
+ *
+ * @const {string}
+ */
+tachyfont.utils.IDB_BASE = 'base';
+
+
+/**
+ * The base is dirty (needs to be persisted) key.
+ *
+ * @const {string}
+ */
+tachyfont.utils.IDB_BASE_DIRTY = 'base_dirty';
+
+
+/**
+ * The char list name.
+ *
+ * @const {string}
+ */
+tachyfont.utils.IDB_CHARLIST = 'charlist';
+
+
+/**
+ * The charlist is dirty (needs to be persisted) key.
+ *
+ * @const {string}
+ */
+tachyfont.utils.IDB_CHARLIST_DIRTY = 'charlist_dirty';
+
+
+/**
  * Enable/disable using/saving persisted data.
  *
  * @type {boolean}
@@ -247,6 +288,8 @@ if (goog.DEBUG) {
       console.log('----------');
     }
   };
+
+
   /**
    * Convert a number to hex.
    * @param {number} number The number to convert to

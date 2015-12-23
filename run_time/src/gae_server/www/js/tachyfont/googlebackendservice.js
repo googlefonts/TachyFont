@@ -21,6 +21,7 @@ goog.provide('tachyfont.GoogleBackendService');
 
 goog.require('goog.Promise');
 goog.require('tachyfont.BackendService');
+/** @suppress {extraRequire} */
 goog.require('tachyfont.FontInfo');
 goog.require('tachyfont.utils');
 

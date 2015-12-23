@@ -23,6 +23,7 @@ goog.require('goog.Promise');
 goog.require('goog.log');
 goog.require('tachyfont.Logger');
 goog.require('tachyfont.Reporter');
+goog.require('tachyfont.utils');
 
 
 /**
@@ -93,7 +94,7 @@ tachyfont.Persist.saveData = function(idb, name, data) {
 tachyfont.Persist.openIndexedDB = function(dbName, id) {
   var openIdb = new goog.Promise(function(resolve, reject) {
     var dbOpen = window.indexedDB.open(dbName,
-        tachyfont.IncrementalFont.VERSION);
+        tachyfont.utils.IDB_VERSION);
 
     dbOpen.onsuccess = function(e) {
       var db = e.target.result;
@@ -114,14 +115,14 @@ tachyfont.Persist.openIndexedDB = function(dbName, id) {
             id, 'onupgradeneeded error: ' + e.value);
         reject();
       };
-      if (db.objectStoreNames.contains(tachyfont.IncrementalFont.BASE)) {
-        db.deleteObjectStore(tachyfont.IncrementalFont.BASE);
+      if (db.objectStoreNames.contains(tachyfont.utils.IDB_BASE)) {
+        db.deleteObjectStore(tachyfont.utils.IDB_BASE);
       }
-      if (db.objectStoreNames.contains(tachyfont.IncrementalFont.CHARLIST)) {
-        db.deleteObjectStore(tachyfont.IncrementalFont.CHARLIST);
+      if (db.objectStoreNames.contains(tachyfont.utils.IDB_CHARLIST)) {
+        db.deleteObjectStore(tachyfont.utils.IDB_CHARLIST);
       }
-      db.createObjectStore(tachyfont.IncrementalFont.BASE);
-      db.createObjectStore(tachyfont.IncrementalFont.CHARLIST);
+      db.createObjectStore(tachyfont.utils.IDB_BASE);
+      db.createObjectStore(tachyfont.utils.IDB_CHARLIST);
     };
   });
   return openIdb;

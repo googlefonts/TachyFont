@@ -19,6 +19,7 @@
 
 goog.provide('tachyfont.FontsInfo');
 
+/** @suppress {extraRequire} */
 goog.require('tachyfont.FontInfo');
 
 

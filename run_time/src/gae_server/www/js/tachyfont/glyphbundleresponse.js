@@ -19,7 +19,6 @@
 
 goog.provide('tachyfont.GlyphBundleResponse');
 
-goog.require('goog.log');
 goog.require('tachyfont.BinaryFontEditor');
 
 
