@@ -18,7 +18,6 @@
  */
 
 goog.provide('tachyfont');
-goog.provide('tachyfont.IncrementalFontLoader');
 goog.provide('tachyfont.TachyFont');
 
 goog.require('goog.Promise');
@@ -27,6 +26,7 @@ goog.require('goog.debug.Console');
 goog.require('goog.debug.Logger');
 goog.require('goog.log');
 goog.require('goog.log.Level');
+/** @suppress {extraRequire} */
 goog.require('tachyfont.FontsInfo');
 goog.require('tachyfont.IncrementalFont');
 goog.require('tachyfont.IncrementalFontUtils');

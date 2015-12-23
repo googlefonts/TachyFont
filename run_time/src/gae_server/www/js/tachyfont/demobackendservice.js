@@ -19,11 +19,7 @@
 
 goog.provide('tachyfont.DemoBackendService');
 
-goog.require('goog.events');
-goog.require('goog.net.EventType');
-goog.require('goog.net.XhrIo');
 goog.require('tachyfont.BackendService');
-goog.require('tachyfont.FontInfo');
 
 
 goog.scope(function() {

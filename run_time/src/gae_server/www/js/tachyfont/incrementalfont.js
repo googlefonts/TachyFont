@@ -39,15 +39,6 @@ goog.require('tachyfont.utils');
 
 
 /**
- * The IndexedDB version.
- * Increment this number every time there is a change in the schema.
- *
- * @const {number}
- */
-tachyfont.IncrementalFont.VERSION = 2;
-
-
-/**
  * The maximum time in milliseconds to hide the text to prevent FOUT.
  *
  * @type {number}
@@ -69,38 +60,6 @@ tachyfont.IncrementalFont.DB_NAME = 'incrfonts';
  * @type {number}
  */
 tachyfont.IncrementalFont.PERSIST_TIMEOUT = 1000;
-
-
-/**
- * The base name.
- *
- * @type {string}
- */
-tachyfont.IncrementalFont.BASE = 'base';
-
-
-/**
- * The base is dirty (needs to be persisted) key.
- *
- * @type {string}
- */
-tachyfont.IncrementalFont.BASE_DIRTY = 'base_dirty';
-
-
-/**
- * The char list name.
- *
- * @type {string}
- */
-tachyfont.IncrementalFont.CHARLIST = 'charlist';
-
-
-/**
- * The charlist is dirty (needs to be persisted) key.
- *
- * @type {string}
- */
-tachyfont.IncrementalFont.CHARLIST_DIRTY = 'charlist_dirty';
 
 
 /**
@@ -312,8 +271,8 @@ tachyfont.IncrementalFont.obj_ = function(fontInfo, params, backendService) {
   this.alreadyPersisted = false;
   this.persistData = true;
   this.persistInfo = {};
-  this.persistInfo[tachyfont.IncrementalFont.BASE_DIRTY] = false;
-  this.persistInfo[tachyfont.IncrementalFont.CHARLIST_DIRTY] = false;
+  this.persistInfo[tachyfont.utils.IDB_BASE_DIRTY] = false;
+  this.persistInfo[tachyfont.utils.IDB_CHARLIST_DIRTY] = false;
   this.style = null;
 
   /** @type {!tachyfont.BackendService} */
@@ -448,7 +407,7 @@ tachyfont.IncrementalFont.obj_.prototype.getBaseFontFromPersistence =
         var filedata;
         if (tachyfont.utils.persistData) {
           filedata = tachyfont.Persist.getData(idb,
-              tachyfont.IncrementalFont.BASE)
+              tachyfont.utils.IDB_BASE)
               .thenCatch(function(e) {
                 tachyfont.IncrementalFont.reportError_(
                 tachyfont.IncrementalFont.Error_.GET_DATA,
@@ -475,7 +434,7 @@ tachyfont.IncrementalFont.obj_.prototype.getBaseFontFromPersistence =
       }.bind(this)).
       then(function(arr) {
         var charList = tachyfont.Persist.getData(arr[0],
-            tachyfont.IncrementalFont.CHARLIST)
+            tachyfont.utils.IDB_CHARLIST)
             .thenCatch(function(e) {
               tachyfont.IncrementalFont.reportError_(
               tachyfont.IncrementalFont.Error_.GET_DATA,
@@ -551,7 +510,7 @@ tachyfont.IncrementalFont.obj_.prototype.getBaseFontFromUrl =
         tachyfont.Reporter.addItem(tachyfont.IncrementalFont.Log_.URL_GET_BASE +
             this.fontInfo.getWeight(), goog.now() - this.startTime);
         var results = this.processUrlBase_(urlBaseBytes);
-        this.persistDelayed_(tachyfont.IncrementalFont.BASE);
+        this.persistDelayed_(tachyfont.utils.IDB_BASE);
         return results;
       }.bind(this));
   return rslt;
@@ -789,7 +748,8 @@ tachyfont.IncrementalFont.obj_.prototype.setFont = function(fontData) {
  *     characters in the font.
  * @return {!Array.<number>} The codepoints with obusfuscation.
  */
-tachyfont.possibly_obfuscate = function(codes, charlist, cmapMapping) {
+tachyfont.IncrementalFont.possibly_obfuscate =
+    function(codes, charlist, cmapMapping) {
   if (tachyfont.utils.noObfuscate == true) {
     return codes;
   }
@@ -885,8 +845,8 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars = function() {
               return this.injectChars_(neededCodes, bundleResponse);
             }.bind(this)).then(function() {
               // Persist the data.
-              this.persistDelayed_(tachyfont.IncrementalFont.BASE);
-              this.persistDelayed_(tachyfont.IncrementalFont.CHARLIST);
+              this.persistDelayed_(tachyfont.utils.IDB_BASE);
+              this.persistDelayed_(tachyfont.utils.IDB_CHARLIST);
             }.bind(this))
             .thenCatch(function(e) {
               // No chars to fetch.
@@ -958,8 +918,8 @@ tachyfont.IncrementalFont.obj_.prototype.calcNeededChars_ = function() {
           }
           return goog.Promise.reject('no chars to load');
         }
-        neededCodes = tachyfont.possibly_obfuscate(neededCodes, charlist,
-            this.cmapMapping_);
+        neededCodes = tachyfont.IncrementalFont.possibly_obfuscate(neededCodes,
+            charlist, this.cmapMapping_);
         if (goog.DEBUG) {
           goog.log.info(tachyfont.Logger.logger, this.fontInfo.getName() +
               ': load ' + neededCodes.length + ' codes:');
@@ -1173,10 +1133,10 @@ tachyfont.IncrementalFont.obj_.prototype.persistDelayed_ = function(name) {
   var that = this;
 
   // Note what needs to be persisted.
-  if (name == tachyfont.IncrementalFont.BASE) {
-    this.persistInfo[tachyfont.IncrementalFont.BASE_DIRTY] = true;
-  } else if (name == tachyfont.IncrementalFont.CHARLIST) {
-    this.persistInfo[tachyfont.IncrementalFont.CHARLIST_DIRTY] = true;
+  if (name == tachyfont.utils.IDB_BASE) {
+    this.persistInfo[tachyfont.utils.IDB_BASE_DIRTY] = true;
+  } else if (name == tachyfont.utils.IDB_CHARLIST) {
+    this.persistInfo[tachyfont.utils.IDB_CHARLIST_DIRTY] = true;
   }
 
   // In a little bit do the persisting.
@@ -1204,9 +1164,9 @@ tachyfont.IncrementalFont.obj_.prototype.persist_ = function(name) {
       then(function() {
         // Previous persists may have already saved the data so see if there is
         // anything still to persist.
-        var base_dirty = that.persistInfo[tachyfont.IncrementalFont.BASE_DIRTY];
+        var base_dirty = that.persistInfo[tachyfont.utils.IDB_BASE_DIRTY];
         var charlist_dirty =
-            that.persistInfo[tachyfont.IncrementalFont.CHARLIST_DIRTY];
+            that.persistInfo[tachyfont.utils.IDB_CHARLIST_DIRTY];
         if (!base_dirty && !charlist_dirty) {
           // Nothing to persist so release the lock.
           finishedPersisting.resolve();
@@ -1214,8 +1174,8 @@ tachyfont.IncrementalFont.obj_.prototype.persist_ = function(name) {
         }
 
         // What ever got in upto this point will get saved.
-        that.persistInfo[tachyfont.IncrementalFont.BASE_DIRTY] = false;
-        that.persistInfo[tachyfont.IncrementalFont.CHARLIST_DIRTY] = false;
+        that.persistInfo[tachyfont.utils.IDB_BASE_DIRTY] = false;
+        that.persistInfo[tachyfont.utils.IDB_CHARLIST_DIRTY] = false;
 
         // Do the persisting.
         return goog.Promise.resolve().
@@ -1232,7 +1192,7 @@ tachyfont.IncrementalFont.obj_.prototype.persist_ = function(name) {
                     goog.log.fine(tachyfont.Logger.logger, 'save base');
                   }
                   return tachyfont.Persist.saveData(arr[0],
-                      tachyfont.IncrementalFont.BASE, arr[2].buffer)
+                      tachyfont.utils.IDB_BASE, arr[2].buffer)
                       .thenCatch(function(e) {
                         tachyfont.IncrementalFont.reportError_(
                         tachyfont.IncrementalFont.Error_.SAVE_DATA,
@@ -1253,7 +1213,7 @@ tachyfont.IncrementalFont.obj_.prototype.persist_ = function(name) {
                     goog.log.fine(tachyfont.Logger.logger, 'save charlist');
                   }
                   return tachyfont.Persist.saveData(arr[0],
-                      tachyfont.IncrementalFont.CHARLIST, arr[1])
+                      tachyfont.utils.IDB_CHARLIST, arr[1])
                       .thenCatch(function(e) {
                         tachyfont.IncrementalFont.reportError_(
                         tachyfont.IncrementalFont.Error_.SAVE_DATA,
