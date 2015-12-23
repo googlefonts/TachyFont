@@ -475,7 +475,7 @@ tachyfont.IncrementalFont.obj_.prototype.getBaseFontFromPersistence =
 
 /**
  * Parses base font header, set properties.
- * @param {DataView} baseFontView Base font with header.
+ * @param {!DataView} baseFontView Base font with header.
  */
 tachyfont.IncrementalFont.obj_.prototype.parseBaseHeader =
     function(baseFontView) {
@@ -545,14 +545,14 @@ tachyfont.IncrementalFont.obj_.prototype.processUrlBase_ =
 
 /**
  * Inject glyphs in the glyphData to the baseFontView
- * @param {DataView} baseFontView Current base font
- * @param {tachyfont.GlyphBundleResponse} bundleResponse New glyph data
- * @param {Object.<number, Array.<number>>} glyphToCodeMap An input and output
+ * @param {!DataView} baseFontView Current base font
+ * @param {!tachyfont.GlyphBundleResponse} bundleResponse New glyph data
+ * @param {!Object.<number, Array.<number>>} glyphToCodeMap An input and output
  *     value.
  *       Input: the glyph Id to code point mapping;
  *       Output: the glyph Ids that were expected but not in the bundleResponse.
- * @param {Array.<number>} extraGlyphs An output list of the extra glyph Ids.
- * @return {DataView} Updated base font
+ * @param {!Array.<number>} extraGlyphs An output list of the extra glyph Ids.
+ * @return {!DataView} Updated base font
  */
 tachyfont.IncrementalFont.obj_.prototype.injectCharacters =
     function(baseFontView, bundleResponse, glyphToCodeMap, extraGlyphs) {

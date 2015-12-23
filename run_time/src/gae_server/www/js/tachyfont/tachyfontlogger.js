@@ -30,6 +30,14 @@ if (goog.DEBUG) {
   tachyfont.Logger.hasInitialized_ = false;
 
   /**
+   * For test allow reinitializing the logger.
+   * @param {boolean} hasInitialized
+   */
+  tachyfont.Logger.setHasInitialized = function(hasInitialized) {
+    tachyfont.Logger.hasInitialized_ = hasInitialized;
+  };
+
+  /**
    * Initialize the logger.
    * @param {goog.debug.Logger.Level} debugLevel The desired debug level.
    */

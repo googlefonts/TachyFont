@@ -61,8 +61,8 @@ tachyfont.IncrementalFontUtils.STYLESHEET_ID =
 
 /**
  * Parses base font header, set properties.
- * @param {DataView} baseFont Base font with header.
- * @param {Object} headerInfo Header information
+ * @param {!DataView} baseFont Base font with header.
+ * @param {!Object} headerInfo Header information
  */
 tachyfont.IncrementalFontUtils.writeCharsetFormat2 =
     function(baseFont, headerInfo) {
@@ -85,9 +85,9 @@ tachyfont.IncrementalFontUtils.writeCharsetFormat2 =
 
 /**
  * Sanitize base font to pass OTS
- * @param {Object} headerInfo The font header information.
- * @param {DataView} baseFont Base font as DataView
- * @return {DataView} Sanitized base font
+ * @param {!Object} headerInfo The font header information.
+ * @param {!DataView} baseFont Base font as DataView
+ * @return {!DataView} Sanitized base font
  */
 tachyfont.IncrementalFontUtils.sanitizeBaseFont =
     function(headerInfo, baseFont) {

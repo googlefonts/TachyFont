@@ -64,18 +64,16 @@ tachyfont.CffIndex = function(name, offset, type, binEd) {
   /** @private {number} */
   this.count_ = binEd.getUint16();
 
-  /** @private {number} */
-  this.offSize_;
+  /**
+   * Note: not following the CFF spec here.
+   * The spec says an empty INDEX is only 2 bytes long but all the fonts handled
+   * by TachyFont have been processed by fontTools and it always adds a 0x01
+   * byte for offSize and a single 0x01 byte for the offsets array.
+   * @private {number}
+   */
+  this.offSize_ = binEd.getUint8();
 
   /** @private {!Array.<number>} */
-  this.offsets_ = [];
-
-  // The spec says an empty INDEX is only 2 bytes long but all the fonts handled
-  // by TachyFont have been processed by fontTools and it always adds a 0x01
-  // byte for offSize and a single 0x01 byte for the offsets array.
-
-  // Non-empty INDEX so collect the basic info.
-  this.offSize_ = binEd.getUint8();
   this.offsets_ = [];
 
   for (var i = 0; i <= this.count_; i++) {
@@ -156,6 +154,15 @@ if (goog.DEBUG) {
 
 
 /**
+ * Get the offSize of elements.
+ * @return {number} The offSize of elements.
+ */
+tachyfont.CffIndex.prototype.getOffSize = function() {
+  return this.offSize_;
+};
+
+
+/**
  * Get the count of elements.
  * @return {number} The count of elements.
  */
@@ -165,11 +172,50 @@ tachyfont.CffIndex.prototype.getCount = function() {
 
 
 /**
+ * Get the elements.
+ * @return {!Array.<string|!DataView|!tachyfont.CffDict>} The elements.
+ */
+tachyfont.CffIndex.prototype.getElements = function() {
+  return this.elements_;
+};
+
+
+/**
+ * Get the element's offset from the beginning of the index.
+ * @param {number} index The index to get the offset for.
+ * @return {number} The element's offset.
+ */
+tachyfont.CffIndex.prototype.getAdjustedElementOffset = function(index) {
+  var offset = 2 + 1 + (this.offSize_ * (this.count_ + 1)) - 1;
+  offset += this.offsets_[index];
+  return offset;
+};
+
+
+/**
+ * Get the element offsets.
+ * @return {!Array.<number>} The element offsets.
+ */
+tachyfont.CffIndex.prototype.getOffsets = function() {
+  return this.offsets_;
+};
+
+
+/**
  * Get the table length.
  * @return {number} The length of the table.
  */
 tachyfont.CffIndex.prototype.getLength = function() {
   return this.tableLength_;
+};
+
+
+/**
+ * Get the table type.
+ * @return {number} The type of the table.
+ */
+tachyfont.CffIndex.prototype.getType = function() {
+  return this.type_;
 };
 
 

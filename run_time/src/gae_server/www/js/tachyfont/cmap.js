@@ -330,9 +330,9 @@ tachyfont.Cmap.checkCharacters = function(fileInfo, baseFontView,
  * Note: this is not well tested.
  *
  * @param {!Object} fileInfo Information about the font file.
- * @param {DataView} baseFontView Current base font
- * @param {Array.<number>} glyphIds The glyph Ids to set.
- * @param {Object.<number, Array.<number>>} glyphToCodeMap The glyph Id to code
+ * @param {!DataView} baseFontView Current base font
+ * @param {!Array.<number>} glyphIds The glyph Ids to set.
+ * @param {!Object.<number, Array.<number>>} glyphToCodeMap The glyph Id to code
  *     point mapping;
  * @param {!Object.<number, !tachyfont.CharCmapInfo>} cmapMapping Information
  *     about the cmap segments for the codepoint.
@@ -454,9 +454,9 @@ tachyfont.Cmap.setFormat4GlyphIds = function(fileInfo, baseFontView, glyphIds,
  * Set the format 12 glyph Ids.
  *
  * @param {!Object} fileInfo Information about the font file.
- * @param {DataView} baseFontView Current base font
- * @param {Array.<number>} glyphIds The glyph Ids to set.
- * @param {Object.<number, Array.<number>>} glyphToCodeMap The glyph Id to code
+ * @param {!DataView} baseFontView Current base font
+ * @param {!Array.<number>} glyphIds The glyph Ids to set.
+ * @param {!Object.<number, Array.<number>>} glyphToCodeMap The glyph Id to code
  *     point mapping;
  * @param {!Object.<number, !tachyfont.CharCmapInfo>} cmapMapping Information
  *     about the cmap segments for the codepoint.
