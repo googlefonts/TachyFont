@@ -267,7 +267,7 @@ tachyfont.Cff.prototype.readTopDictIndex_ = function() {
   if (goog.DEBUG) {
     this.topDictIndex_.setDictOperators(tachyfont.CffDict.TOP_DICT_OPERATORS);
   }
-  this.topDictIndex_.loadDict(this.binEd_);
+  this.topDictIndex_.loadDicts(this.binEd_);
   if (goog.DEBUG) {
     this.topDictIndex_.display(true, this.cffTableOffset_);
   }
