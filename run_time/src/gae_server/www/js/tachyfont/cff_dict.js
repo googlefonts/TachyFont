@@ -70,14 +70,15 @@ tachyfont.CffDict = function(name, dataView) {
 
 /**
  * Initialize a CFF DICT.
+ * @private
  */
-tachyfont.CffDict.prototype.init = function() {
+tachyfont.CffDict.prototype.init_ = function() {
   var binEd = new tachyfont.BinaryFontEditor(this.dataView_, 0);
 
   while (binEd.offset < this.dataView_.byteLength) {
     var keyValuePair = tachyfont.CffDict.readOperandsOperator_(binEd);
     if (goog.DEBUG) {
-      if (this.dictOperators_) {
+      if (this.dictOperators_ && keyValuePair.key in this.dictOperators_) {
         goog.log.info(tachyfont.Logger.logger, '  ' + keyValuePair.value + ' ' +
             this.dictOperators_[keyValuePair.key]);
       } else {
@@ -92,6 +93,29 @@ tachyfont.CffDict.prototype.init = function() {
 };
 
 
+/**
+ * Load a CFF DICT.
+ * @param {string} name The name of the dict.
+ * @param {!ArrayBuffer} buffer The font bytes.
+ * @param {number} offset The offset in the font bytes to the DICT.
+ * @param {number} length The length of the DICT.
+ * @param {!Object.<string,string>=} opt_dictOperators A map of the DICT
+ *     operators to the logical names.
+ * @return {!tachyfont.CffDict}
+ */
+tachyfont.CffDict.loadDict =
+    function(name, buffer, offset, length, opt_dictOperators) {
+  var dataView = new DataView(buffer, offset, length);
+  //tachyfont.utils.hexDump(name, dataView);
+  var dict = new tachyfont.CffDict(name, dataView);
+  if (goog.DEBUG) {
+    dict.setOperators(opt_dictOperators);
+  }
+  dict.init_();
+  return dict;
+};
+
+
 if (goog.DEBUG) {
   /**
    * For debug set the DICT operators map.
@@ -101,6 +125,15 @@ if (goog.DEBUG) {
     this.dictOperators_ = dictOperators;
   };
 }
+
+
+/**
+ * Get the dict name.
+ * @return {string} The Dict name.
+ */
+tachyfont.CffDict.prototype.getName = function() {
+  return this.name_;
+};
 
 
 /**
@@ -266,6 +299,11 @@ if (goog.DEBUG) {
     '2': 'FullName',
     '3': 'FamilyName',
     '4': 'Weight',
+    '5': 'FontBBox',
+    '6': 'BlueValues',
+    '7': 'OtherBlue',
+    '10': 'StdHW',
+    '11': 'StdVW',
     '12 1': 'IsFixedPitch',
     '12 2': 'ItalicAngle',
     '12 3': 'UnderlinePosition',
@@ -273,14 +311,19 @@ if (goog.DEBUG) {
     '12 5': 'PaintType',
     '12 6': 'CharstringType',
     '12 7': 'FontMatrix',
-    '13': 'UniqueID',
-    '5': 'FontBBox',
     '12 8': 'StrokeWidth',
+    '12 12': 'StemSnapH',
+    '12 13': 'StemSnapV',
+    '12 17': 'LanguageGroup',
+    '13': 'UniqueID',
     '14': 'XUID',
     '15': 'charset',
     '16': 'Encoding',
     '17': 'CharStrings',
     '18': 'Private',
+    '19': 'Subrs',
+    '20': 'DefaultWidthX',
+    '21': 'NominalWidthX',
     '12 20': 'SyntheticBase',
     '12 21': 'PostScript',
     '12 22': 'BaseFontName',
@@ -291,7 +334,7 @@ if (goog.DEBUG) {
     '12 33': 'CIDFontType',
     '12 34': 'CIDCount',
     '12 35': 'UIDBase',
-    '12 36': 'FDArraay',
+    '12 36': 'FDArray',
     '12 37': 'FDSelect',
     '12 38': 'FontName'
   };

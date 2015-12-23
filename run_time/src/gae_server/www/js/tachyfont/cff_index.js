@@ -138,6 +138,15 @@ if (goog.DEBUG) {
 
 
 /**
+ * Get the count of elements.
+ * @return {number} The count of elements.
+ */
+tachyfont.CffIndex.prototype.getCount = function() {
+  return this.count_;
+};
+
+
+/**
  * Get the table length.
  * @return {number} The length of the table.
  */
@@ -227,24 +236,23 @@ if (goog.DEBUG) {
  * Load the INDEX DICTs.
  * @param {!tachyfont.BinaryFontEditor} binEd A binary font editor.
  */
-tachyfont.CffIndex.prototype.loadDict = function(binEd) {
+tachyfont.CffIndex.prototype.loadDicts = function(binEd) {
+  if (this.type_ != tachyfont.CffIndex.TYPE_DICT) {
+    throw new Error(this.name_ + ' does not hold DICTS');
+  }
   // TODO(bstell): in debug check this is a DICT INDEX.
   goog.log.info(tachyfont.Logger.logger, this.name_);
+  var arrayBuffer = binEd.dataView.buffer;
   var dataStart = this.offset_ + 2 + 1 + (this.count_ + 1) * this.offSize_;
-  binEd.seek(dataStart);
   for (var i = 0; i < this.count_; i++) {
     goog.log.info(tachyfont.Logger.logger, 'dict[' + i + ']');
+    var name = this.name_ + i;
     var length = this.offsets_[i + 1] - this.offsets_[i];
     // TODO(bstell): make this reusable.
-    var arrayBuffer = binEd.dataView.buffer;
-    var offset = binEd.dataView.byteOffset + binEd.baseOffset + binEd.offset;
-    var dataView = new DataView(arrayBuffer, offset, length);
-    //tachyfont.utils.hexDump('TopDICT', dataView);
-    var dict = new tachyfont.CffDict(this.name_ + i, dataView);
-    if (goog.DEBUG) {
-      dict.setOperators(this.dictOperators_);
-    }
-    dict.init();
+    var offset = binEd.dataView.byteOffset + binEd.baseOffset + dataStart +
+        this.offsets_[i] - 1;
+    var dict = tachyfont.CffDict.loadDict(name, arrayBuffer, offset, length,
+        this.dictOperators_);
     this.elements_.push(dict);
   }
 };
