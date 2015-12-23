@@ -25,6 +25,16 @@ goog.addDependency('../../../tachyfont/browser_chrome.js',
     ['tachyfont.Browser'],
     ['goog.Promise', 'goog.log', 'goog.log.Level',
      'tachyfont.IncrementalFontUtils', 'tachyfont.Logger']);
+goog.addDependency('../../../tachyfont/cff_dict.js',
+    ['tachyfont.CffDict'],
+    ['goog.log', 'tachyfont.BinaryFontEditor', 'tachyfont.Logger',
+    'tachyfont.utils',]);
+goog.addDependency('../../../tachyfont/cff_index.js',
+    ['tachyfont.CffIndex'],
+    ['goog.log', 'tachyfont.CffDict', 'tachyfont.Logger', 'tachyfont.utils',]);
+goog.addDependency('../../../tachyfont/cff.js',
+    ['tachyfont.Cff'],
+    ['tachyfont.BinaryFontEditor', 'tachyfont.CffDict', 'tachyfont.CffIndex',]);
 goog.addDependency('../../../tachyfont/charcmapinfo.js',
     ['tachyfont.CharCmapInfo'],
     []);
@@ -67,6 +77,9 @@ goog.addDependency('../../../tachyfont/persist_idb.js',
 goog.addDependency('../../../tachyfont/rledecoder.js',
     ['tachyfont.RLEDecoder'],
     []);
+goog.addDependency('../../../tachyfont/sfnt.js',
+    ['tachyfont.sfnt'],
+    ['tachyfont.BinaryFontEditor']);
 goog.addDependency('../../../tachyfont/tachyfont.js',
     ['tachyfont', 'tachyfont.TachyFont'],
     ['goog.Promise', 'goog.Uri', 'goog.debug.Console', 'goog.debug.Logger',

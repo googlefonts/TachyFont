@@ -17,8 +17,7 @@
  * the License.
  */
 
-goog.provide('tachyfont.Sfnt.TableOfContents');
-goog.provide('tachyfont.Sfnt.TableOfContentsEntry');
+goog.provide('tachyfont.Sfnt');
 
 goog.require('tachyfont.BinaryFontEditor');
 
@@ -105,6 +104,15 @@ tachyfont.Sfnt.TableOfContents.prototype.getTocEntry = function(tag) {
 };
 
 
+/**
+ * Get isCff.
+ * @return {boolean}
+ */
+tachyfont.Sfnt.TableOfContents.prototype.isCff = function() {
+  return this.isCff_;
+};
+
+
 
 /**
  * An item in the Font table of contents.
@@ -126,6 +134,34 @@ tachyfont.Sfnt.TableOfContentsEntry = function(tag, checksum, offset, length) {
 
   /** @private {number} */
   this.length_ = length;
+};
+
+
+/**
+ * Get the tag for this entry.
+ * @return {string} The tag (exactly 4 chars) for this entry.
+ */
+tachyfont.Sfnt.TableOfContentsEntry.prototype.getTag = function() {
+  return this.tag_;
+};
+
+
+/**
+ * Get the checksum for this entry.
+ *
+ * @return {number} The checksum for this entry.
+ */
+tachyfont.Sfnt.TableOfContentsEntry.prototype.getChecksum = function() {
+  return this.checksum_;
+};
+
+
+/**
+ * Get the length for this entry.
+ * @return {number} The length for this entry.
+ */
+tachyfont.Sfnt.TableOfContentsEntry.prototype.getLength = function() {
+  return this.length_;
 };
 
 
