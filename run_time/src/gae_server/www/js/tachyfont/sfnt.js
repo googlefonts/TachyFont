@@ -94,7 +94,7 @@ tachyfont.Sfnt.Font.prototype.getTable = function(tableTag) {
 /**
  * Replace a table.
  * @param {string} tableTag The name of the table.
- * @param {!Array.<!Uint8Array>} data The new table contents.
+ * @param {!Array.<!Array.<!Uint8Array>>} data The new table contents.
  */
 tachyfont.Sfnt.Font.prototype.replaceTable = function(tableTag, data) {
   var entry = this.tableOfContents_.getTocEntry(tableTag);
@@ -107,20 +107,22 @@ tachyfont.Sfnt.Font.prototype.replaceTable = function(tableTag, data) {
  * Replace a block of data.
  * @param {number} offset Where to insert the new data.
  * @param {number} length How much old data to remove.
- * @param {!Array.<!Uint8Array>} data The new table contents.
+ * @param {!Array.<!Array.<!Uint8Array>>} data The new table contents.
  * @return {number} The delta size change.
  * @private
  */
 tachyfont.Sfnt.Font.prototype.replaceData_ = function(offset, length, data) {
   // Get the new table size;
-  var dataLength = data.length, newTableLength = 0;
-  for (var i = 0; i < dataLength; i++) {
-    newTableLength += data[i].byteLength;
+  var newTableLength = 0;
+  for (var i = 0; i < data.length; i++) {
+    var dataGroup = data[i];
+    for (var j = 0; j < dataGroup.length; j++) {
+      newTableLength += dataGroup[j].byteLength;
+    }
   }
 
   var dataBefore = new Uint8Array(this.fontData_.buffer, 0, offset);
   var dataAfter = new Uint8Array(this.fontData_.buffer, offset + length);
-
 
   // Merge the data into a single buffer.
   // TODO(bstell): does the data really need to be in a single ArrayBuffer?
@@ -132,9 +134,12 @@ tachyfont.Sfnt.Font.prototype.replaceData_ = function(offset, length, data) {
   var newFontData = new Uint8Array(this.fontData_.byteLength + deltaSize);
   newFontData.set(dataBefore);
   var position = dataBefore.byteLength;
-  for (var i = 0; i < dataLength; i++) {
-    newFontData.set(data[i], position);
-    position += data[i].byteLength;
+  for (var i = 0; i < data.length; i++) {
+    var dataGroup = data[i];
+    for (var j = 0; j < dataGroup.length; j++) {
+      newFontData.set(dataGroup[j], position);
+      position += dataGroup[j].byteLength;
+    }
   }
   newFontData.set(dataAfter, position);
 

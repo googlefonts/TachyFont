@@ -69,19 +69,7 @@ tachyfont.Cff = function(tocEntry, fontData) {
   this.binEd_;
 
   /**
-   * This font's CFF major version number.
-   * @private {number}
-   */
-  this.major_;
-
-  /**
-   * This font's CFF minor version number.
-   * @private {number}
-   */
-  this.minor_;
-
-  /**
-   * Size of the CFF Header.
+   * The Header size.
    * @private {number}
    */
   this.hdrSize_;
@@ -237,10 +225,12 @@ tachyfont.Cff.prototype.initBinaryEditor_ = function() {
  * @private
  */
 tachyfont.Cff.prototype.readHeader_ = function() {
-  this.major_ = this.binEd_.getUint8();
-  this.minor_ = this.binEd_.getUint8();
+  // Skip the major and minor number.
+  this.binEd_.skip(2);
   this.hdrSize_ = this.binEd_.getUint8();
-  this.offSize_ = this.binEd_.getUint8();
+  // Skip offSize.
+  this.binEd_.skip(1);
+  this.binEd_.seek(this.hdrSize);
 };
 
 
@@ -275,8 +265,7 @@ tachyfont.Cff.prototype.readTopDictIndex_ = function() {
   if (goog.DEBUG) {
     this.topDictIndex_.display(true, this.cffTableOffset_);
   }
-  this.topDict_ =
-      /** @type {!tachyfont.CffDict} */ (this.topDictIndex_.getElement(0));
+  this.topDict_ = this.topDictIndex_.getDictElement(0);
 };
 
 
@@ -375,23 +364,5 @@ tachyfont.Cff.prototype.readCharStringsIndex_ = function() {
   if (goog.DEBUG) {
     this.charStringsIndex_.display(true, this.cffTableOffset_);
   }
-};
-
-
-/**
- * Get the CFF major number.
- * @return {number}
- */
-tachyfont.Cff.prototype.getMajor = function() {
-  return this.major_;
-};
-
-
-/**
- * Get the CFF minor number.
- * @return {number}
- */
-tachyfont.Cff.prototype.getMinor = function() {
-  return this.minor_;
 };
 
