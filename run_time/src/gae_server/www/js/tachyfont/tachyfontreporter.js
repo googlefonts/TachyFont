@@ -54,7 +54,7 @@ tachyfont.Reporter.startTime_ = goog.now();
 /**
  * TachyFont singleton object.
  *
- * @private {!tachyfont.Reporter}
+ * @private {!tachyfont.Reporter|undefined}
  */
 tachyfont.Reporter.instance_;
 
@@ -70,13 +70,20 @@ tachyfont.Reporter.isReady = function() {
 
 /**
  * Initialize the reporter singleton.
- *
  * @param {string} url The base URL to send reports to.
  */
 tachyfont.Reporter.initReporter = function(url) {
   if (!tachyfont.Reporter.instance_) {
     tachyfont.Reporter.instance_ = new tachyfont.Reporter(url);
   }
+};
+
+
+/**
+ * Reset the reporter singleton.
+ */
+tachyfont.Reporter.reset = function() {
+  tachyfont.Reporter.instance_ = undefined;
 };
 
 
