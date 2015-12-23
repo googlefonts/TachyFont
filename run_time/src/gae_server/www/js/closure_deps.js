@@ -34,8 +34,7 @@ goog.addDependency('../../../tachyfont/cmap.js',
      'tachyfont.Logger', 'tachyfont.Reporter', 'tachyfont.utils']);
 goog.addDependency('../../../tachyfont/demobackendservice.js',
     ['tachyfont.DemoBackendService'],
-    ['goog.events', 'goog.net.EventType', 'goog.net.XhrIo',
-     'tachyfont.BackendService', 'tachyfont.FontInfo']);
+    ['tachyfont.BackendService']);
 goog.addDependency('../../../tachyfont/fontinfo.js',
     ['tachyfont.FontInfo'],
     []);
@@ -44,7 +43,7 @@ goog.addDependency('../../../tachyfont/fontsinfo.js',
     ['tachyfont.FontInfo']);
 goog.addDependency('../../../tachyfont/glyphbundleresponse.js',
     ['tachyfont.GlyphBundleResponse'],
-    ['goog.log', 'tachyfont.BinaryFontEditor']);
+    ['tachyfont.BinaryFontEditor']);
 goog.addDependency('../../../tachyfont/googlebackendservice.js',
     ['tachyfont.GoogleBackendService'],
     ['goog.Promise', 'tachyfont.BackendService', 'tachyfont.FontInfo',
@@ -63,16 +62,17 @@ goog.addDependency('../../../tachyfont/incrementalfontutils.js',
      'tachyfont.CharCmapInfo', 'tachyfont.FontInfo', 'tachyfont.Logger']);
 goog.addDependency('../../../tachyfont/persist_idb.js',
     ['tachyfont.Persist'],
-    ['goog.Promise', 'goog.log', 'tachyfont.Logger', 'tachyfont.Reporter']);
+    ['goog.Promise', 'goog.log', 'tachyfont.Logger', 'tachyfont.Reporter',
+    'tachyfont.utils']);
 goog.addDependency('../../../tachyfont/rledecoder.js',
     ['tachyfont.RLEDecoder'],
     []);
 goog.addDependency('../../../tachyfont/tachyfont.js',
     ['tachyfont', 'tachyfont.TachyFont'],
     ['goog.Promise', 'goog.Uri', 'goog.debug.Console', 'goog.debug.Logger',
-     'goog.log', 'goog.log.Level', 'tachyfont.FontsInfo', 'tachyfont.FontsInfo',
+     'goog.log', 'goog.log.Level', 'tachyfont.FontsInfo',
      'tachyfont.IncrementalFont', 'tachyfont.IncrementalFontUtils',
-     'tachyfont.Logger', 'tachyfont.Reporter', 'tachyfont.Reporter',
+     'tachyfont.Logger', 'tachyfont.Reporter',
      'tachyfont.TachyFontSet', 'tachyfont.utils']);
 goog.addDependency('../../../tachyfont/tachyfontlogger.js',
     [ 'tachyfont.Logger'],
