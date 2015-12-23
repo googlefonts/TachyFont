@@ -68,8 +68,7 @@ tachyfontprelude.ERROR_BAD_MAGIC_NUMBER = 3;
  * The errors encounter while loading the Tachyfont preludes.
  * These will be reported by the TachyFont library.
  *
- * @type {Array.<Array.<string|number>>}
- * @private
+ * @private {Array.<Array.<string|number>>}
  */
 tachyfontprelude.reports_ = [];
 

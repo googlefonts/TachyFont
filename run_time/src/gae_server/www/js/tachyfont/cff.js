@@ -148,9 +148,8 @@ tachyfont.Cff = function(tocEntry, fontData) {
 
   /**
    * The offset to the Encodings table.
-   * @private {number}
+   * Note: CFF CID fonts do not have an Encodings table.
    */
-  this.encodingsOffset_;
 
   /**
    * The offset to the FS Select table.
@@ -246,7 +245,7 @@ tachyfont.Cff.prototype.readHeader_ = function() {
 tachyfont.Cff.prototype.readNameIndex_ = function() {
   this.nameIndexOffset_ = this.hdrSize_;
   this.nameIndex_ = new tachyfont.CffIndex('Name', this.nameIndexOffset_,
-      tachyfont.CffIndex.TYPE_STRING, false, this.binEd_);
+      tachyfont.CffIndex.TYPE_STRING, this.binEd_);
   this.nameIndex_.loadStrings(this.binEd_);
   if (goog.DEBUG) {
     this.nameIndex_.display(true, this.cffTableOffset_);
@@ -262,8 +261,7 @@ tachyfont.Cff.prototype.readTopDictIndex_ = function() {
   this.topDictIndexOffset_ =
       this.nameIndexOffset_ + this.nameIndex_.getLength();
   this.topDictIndex_ = new tachyfont.CffIndex('TopDICT',
-      this.topDictIndexOffset_, tachyfont.CffIndex.TYPE_DICT, true,
-      this.binEd_);
+      this.topDictIndexOffset_, tachyfont.CffIndex.TYPE_DICT, this.binEd_);
   if (goog.DEBUG) {
     this.topDictIndex_.setDictOperators(tachyfont.CffDict.TOP_DICT_OPERATORS);
   }
@@ -284,7 +282,7 @@ tachyfont.Cff.prototype.readStringIndex_ = function() {
   this.stringIndexOffset_ =
       this.topDictIndexOffset_ + this.topDictIndex_.getLength();
   this.stringIndex_ = new tachyfont.CffIndex('String', this.stringIndexOffset_,
-      tachyfont.CffIndex.TYPE_STRING, false, this.binEd_);
+      tachyfont.CffIndex.TYPE_STRING, this.binEd_);
   this.stringIndex_.loadStrings(this.binEd_);
   if (goog.DEBUG) {
     this.stringIndex_.display(true, this.cffTableOffset_);
@@ -300,12 +298,12 @@ tachyfont.Cff.prototype.readGlobalSubrIndex_ = function() {
   this.globalSubrIndexOffset_ = this.stringIndexOffset_ +
       this.stringIndex_.getLength();
   this.globalSubrIndex_ = new tachyfont.CffIndex('GlobalSubr',
-      this.globalSubrIndexOffset_, tachyfont.CffIndex.TYPE_STRING, true,
+      this.globalSubrIndexOffset_, tachyfont.CffIndex.TYPE_BINARY_STRING,
       this.binEd_);
   // To conserver memory do not process the data.
   // this.globalSubrIndex_.loadStrings(this.binEd_);
   //if (goog.DEBUG) {
-  //  this.stringIndex_.display(true, this.cffTableOffset_);
+  //  this.globalSubrIndex_.display(true, this.cffTableOffset_);
   //}
 };
 
@@ -320,7 +318,7 @@ tachyfont.Cff.prototype.getMajor = function() {
 
 
 /**
- * Get the CFF minor number;
+ * Get the CFF minor number.
  * @return {number}
  */
 tachyfont.Cff.prototype.getMinor = function() {
