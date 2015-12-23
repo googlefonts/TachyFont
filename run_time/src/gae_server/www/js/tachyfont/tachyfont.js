@@ -86,8 +86,8 @@ tachyfont.Error_ = {
  * @private
  */
 tachyfont.reportError_ = function(errNum, errInfo) {
-  if (tachyfont.reporter) {
-    tachyfont.reporter.reportError(tachyfont.Error_.FILE_ID + errNum, '000',
+  if (tachyfont.Reporter.isReady()) {
+    tachyfont.Reporter.reportError(tachyfont.Error_.FILE_ID + errNum, '000',
         errInfo);
   } else {
     var obj = {};
@@ -137,7 +137,6 @@ if (window.addEventListener) {
 if (goog.DEBUG) {
   /**
    * A class variable to limit debug initialization to a single time.
-   *
    * @private {boolean}
    */
   tachyfont.hasInitializedDebug_ = false;
@@ -275,26 +274,6 @@ tachyfont.IncrementalFontLoader;
 
 
 /**
- * Logging and error reporter.
- *
- * @type {!tachyfont.Reporter}
- */
-tachyfont.reporter;
-
-
-/**
- * Initialize the tachyfont reporter.
- *
- * @param {string} reportUrl The base url to send reports to.
- */
-tachyfont.initializeReporter = function(reportUrl) {
-  if (!tachyfont.reporter) {
-    tachyfont.reporter = tachyfont.Reporter.getReporter(reportUrl);
-  }
-};
-
-
-/**
  * Enum for logging values.
  * @enum {string}
  * @private
@@ -362,7 +341,7 @@ tachyfont.loadFonts_loadAndUse_ = function(tachyFontSet) {
       tachyFontSet.finishPrecedingUpdateFont.getChainedPromise(msg);
   waitForPrecedingPromise.getPrecedingPromise().
       then(function() {
-        tachyfont.reporter.addItem(tachyfont.Log_.LOAD_FONTS_WAIT_PREVIOUS +
+        tachyfont.Reporter.addItem(tachyfont.Log_.LOAD_FONTS_WAIT_PREVIOUS +
             '000', goog.now() - waitPreviousTime);
         if (goog.DEBUG) {
           goog.log.log(tachyfont.Logger.logger, goog.log.Level.FINER,
@@ -416,8 +395,8 @@ tachyfont.loadFonts_init_ = function(familyName, fontsInfo, opt_params) {
         (window.location.port ? ':' + window.location.port : '');
   }
   var reportUrl = fontsInfo.getReportUrl() || dataUrl;
-  tachyfont.initializeReporter(reportUrl);
-  tachyfont.reporter.addItemTime(tachyfont.Log_.LOAD_FONTS + '000');
+  tachyfont.Reporter.initReporter(reportUrl);
+  tachyfont.Reporter.addItemTime(tachyfont.Log_.LOAD_FONTS + '000');
 
   // Check if the persistent stores should be dropped.
   var uri = goog.Uri.parse(window.location.href);
@@ -470,7 +449,7 @@ tachyfont.loadFonts_getBaseFonts_ = function(tachyFonts) {
           } else {
             // If not persisted the fetch the base from the URL.
             arrayBaseData[i] = incrfont.getBaseFontFromUrl(
-                incrfont.backendService, incrfont.fontInfo);
+               incrfont.backendService, incrfont.fontInfo);
           }
         }
         return goog.Promise.all(arrayBaseData);
@@ -515,10 +494,10 @@ tachyfont.loadFonts_useFonts_ = function(tachyFonts, arrayBaseData) {
         then(function() {
           // Report Set Font Early.
           var weight = this.fontInfo.getWeight();
-          tachyfont.reporter.addItem(tachyfont.Log_.SWITCH_FONT +
+          tachyfont.Reporter.addItem(tachyfont.Log_.SWITCH_FONT +
               weight, goog.now() - incrFont.startTime);
           var deltaTime = goog.now() - this.sfeStart_;
-          tachyfont.reporter.addItem(
+          tachyfont.Reporter.addItem(
               tachyfont.Log_.SWITCH_FONT_DELTA_TIME + weight,
               deltaTime);
           if (goog.DEBUG) {
