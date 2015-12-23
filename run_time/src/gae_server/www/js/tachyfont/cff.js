@@ -127,12 +127,6 @@ tachyfont.Cff = function(tocEntry, fontData) {
    * Note: CFF CID fonts do not have an Encodings table.
    */
 
-  /**
-   * The offset to the FD Select table.
-   * @private {number}
-   */
-  this.fdSelectOffset_;
-
   /** @private {number} */
   this.charStringsIndexOffset_;
 
@@ -149,22 +143,10 @@ tachyfont.Cff = function(tocEntry, fontData) {
   this.nGlyphs_;
 
   /**
-   * The offset to the Font DICT INDEX.
-   * @private {number}
-   */
-  this.fontDictIndexOffset_;
-
-  /**
    * The Font DICT INDEX.
    * @private {!tachyfont.CffIndex}
    */
   this.fontDictIndex_;
-
-  /**
-   * The per-font Private DICTs.
-   * @private {!Array.<!tachyfont.CffDict>}
-   */
-  this.fontPrivateDicts_ = [];
 };
 
 
@@ -195,18 +177,9 @@ tachyfont.Cff.prototype.init_ = function() {
 
   this.readTopDictIndex_();
 
-  this.readStringIndex_();
-
-  this.readGlobalSubrIndex_();
-
-  /* CFF CID fonts do not have an Encodings table */
-
   this.readCharStringsIndex_();
 
   this.readFontDictIndex_();
-
-  this.readPrivateDicts_();
-
 };
 
 
@@ -230,7 +203,7 @@ tachyfont.Cff.prototype.readHeader_ = function() {
   this.hdrSize_ = this.binEd_.getUint8();
   // Skip offSize.
   this.binEd_.skip(1);
-  this.binEd_.seek(this.hdrSize);
+  this.binEd_.seek(this.hdrSize_);
 };
 
 
@@ -270,49 +243,15 @@ tachyfont.Cff.prototype.readTopDictIndex_ = function() {
 
 
 /**
- * Process the String INDEX.
- * @private
- */
-tachyfont.Cff.prototype.readStringIndex_ = function() {
-  this.stringIndexOffset_ =
-      this.topDictIndexOffset_ + this.topDictIndex_.getLength();
-  this.stringIndex_ = new tachyfont.CffIndex('String', this.stringIndexOffset_,
-      tachyfont.CffIndex.TYPE_STRING, this.binEd_);
-  this.stringIndex_.loadStrings(this.binEd_);
-  if (goog.DEBUG) {
-    this.stringIndex_.display(true, this.cffTableOffset_);
-  }
-};
-
-
-/**
- * Process the Global Subr INDEX.
- * @private
- */
-tachyfont.Cff.prototype.readGlobalSubrIndex_ = function() {
-  this.globalSubrIndexOffset_ = this.stringIndexOffset_ +
-      this.stringIndex_.getLength();
-  this.globalSubrIndex_ = new tachyfont.CffIndex('GlobalSubr',
-      this.globalSubrIndexOffset_, tachyfont.CffIndex.TYPE_BINARY_STRING,
-      this.binEd_);
-  // To conserver memory do not process the data.
-  // this.globalSubrIndex_.loadStrings(this.binEd_);
-  //if (goog.DEBUG) {
-  //  this.globalSubrIndex_.display(true, this.cffTableOffset_);
-  //}
-};
-
-
-/**
  * Process the Font DICT INDEX.
  * This has info on the per-font Private DICTs.
  * @private
  */
 tachyfont.Cff.prototype.readFontDictIndex_ = function() {
-  this.fontDictIndexOffset_ =
+  var fontDictIndexOffset =
       this.topDict_.getOperand(tachyfont.CffDict.Operator.FD_ARRAY, 0);
   this.fontDictIndex_ = new tachyfont.CffIndex('FontDICT',
-      this.fontDictIndexOffset_, tachyfont.CffIndex.TYPE_DICT, this.binEd_);
+      fontDictIndexOffset, tachyfont.CffIndex.TYPE_DICT, this.binEd_);
   if (goog.DEBUG) {
     this.fontDictIndex_.setDictOperators(
         tachyfont.CffDict.OperatorDescriptions);
@@ -320,31 +259,6 @@ tachyfont.Cff.prototype.readFontDictIndex_ = function() {
   this.fontDictIndex_.loadDicts(this.binEd_);
   if (goog.DEBUG) {
     this.fontDictIndex_.display(true, this.cffTableOffset_);
-  }
-};
-
-
-/**
- * Process the Font DICT INDEX.
- * This has info on the per-font Private DICTs.
- * @private
- */
-tachyfont.Cff.prototype.readPrivateDicts_ = function() {
-  var count = this.fontDictIndex_.getCount();
-  for (var i = 0; i < count; i++) {
-    var dict = this.fontDictIndex_.getElement(i);
-    var name = dict.getName();
-    var buffer = this.binEd_.dataView.buffer;
-    var length = dict.getOperand(tachyfont.CffDict.Operator.PRIVATE, 0);
-    var offset = this.cffTableOffset_ +
-        dict.getOperand(tachyfont.CffDict.Operator.PRIVATE, 1);
-    var dictOperators;
-    if (goog.DEBUG) {
-      dictOperators = tachyfont.CffDict.OperatorDescriptions;
-    }
-    var privateDict = tachyfont.CffDict.loadDict(name, buffer, offset, length,
-        dictOperators);
-    this.fontPrivateDicts_.push(privateDict);
   }
 };
 
@@ -364,5 +278,18 @@ tachyfont.Cff.prototype.readCharStringsIndex_ = function() {
   if (goog.DEBUG) {
     this.charStringsIndex_.display(true, this.cffTableOffset_);
   }
+};
+
+
+/**
+ * Get a block of the font data.
+ * @param {number} offset The starting offset.
+ * @param {number} length One greater than the last byte.
+ * @return {!Uint8Array}
+ */
+tachyfont.Cff.prototype.getData = function(offset, length) {
+  offset += this.binEd_.baseOffset;
+  var data = new Uint8Array(this.fontData_.buffer, offset, length);
+  return data;
 };
 
