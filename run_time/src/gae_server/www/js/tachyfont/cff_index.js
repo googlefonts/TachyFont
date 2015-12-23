@@ -70,18 +70,14 @@ tachyfont.CffIndex = function(name, offset, type, binEd) {
   /** @private {!Array.<number>} */
   this.offsets_ = [];
 
-  // Handle an empty INDEX.
-  if (this.count_ == 0) {
-    this.tableLength_ = 2;
-    this.offSize_ = 0;
-    return;
-  }
+  // The spec says an empty INDEX is only 2 bytes long but all the fonts handled
+  // by TachyFont have been processed by fontTools and it always adds a 0x01
+  // byte for offSize and a single 0x01 byte for the offsets array.
 
   // Non-empty INDEX so collect the basic info.
   this.offSize_ = binEd.getUint8();
   this.offsets_ = [];
 
-  //debugger;
   for (var i = 0; i <= this.count_; i++) {
     var elementOffset = binEd.getOffset(this.offSize_);
     this.offsets_.push(elementOffset);
@@ -124,6 +120,24 @@ tachyfont.CffIndex.TYPE_DICT = 3;
 tachyfont.CffIndex.prototype.getElement = function(index) {
   if (index in this.elements_) {
     return this.elements_[index];
+  }
+  throw new RangeError('CFF ' + this.name_ + ' INDEX: invalid index: ' + index);
+};
+
+
+/**
+ * Get an INDEX DICT element.
+ * @param {number} index The index of the element.
+ * @return {!tachyfont.CffDict} The DICT element from the INDEX.
+ * @throws Error if is not a DICT index.
+ * @throws RangeError if index is not in the array.
+ */
+tachyfont.CffIndex.prototype.getDictElement = function(index) {
+  if (this.type_ != tachyfont.CffIndex.TYPE_DICT) {
+    throw new Error('not a DICT INDEX');
+  }
+  if (index in this.elements_) {
+    return /** @type {!tachyfont.CffDict} */ (this.elements_[index]);
   }
   throw new RangeError('CFF ' + this.name_ + ' INDEX: invalid index: ' + index);
 };
