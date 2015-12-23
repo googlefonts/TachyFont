@@ -153,9 +153,8 @@ tachyfont.BinaryFontEditor.prototype.getOffset = function(offSize) {
       offset = this.getUint16();
       break;
     case 3:
-      // TODO(bstell): fix this to not read the trailing byte.
-      offset = this.getUint32() >>> 8;
-      this.offset--;
+      offset = this.getUint16() << 8;
+      offset |= this.getUint8();
       break;
     case 4:
       offset = this.getUint32();
@@ -192,19 +191,22 @@ tachyfont.BinaryFontEditor.prototype.setOffset_ = function(offSize, value) {
 
 
 /**
- * @param {number} length Length of the bytes to reas.
- * @return {string}
+ * Read as a DataView.
+ *
+ * @param {number} length Length of the bytes to read.
+ * @return {!DataView}
  */
-tachyfont.BinaryFontEditor.prototype.readBinaryString = function(length) {
-  var str = '';
-  for (var i = 0; i < length; i++) {
-    str += this.getUint8();
-  }
-  return str;
+tachyfont.BinaryFontEditor.prototype.readDataView = function(length) {
+  var offset = this.baseOffset + this.offset;
+  var dataView = new DataView(this.dataView.buffer, offset, length);
+  this.offset += length;
+  return dataView;
 };
 
 
 /**
+ * Read as a string.
+ *
  * @param {number} length Length of the string to read.
  * @return {string}
  */
