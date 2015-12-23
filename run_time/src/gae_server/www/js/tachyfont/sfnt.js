@@ -50,6 +50,30 @@ tachyfont.Sfnt.Font = function() {
 
 
 /**
+ * @return {!DataView}
+ */
+tachyfont.Sfnt.Font.prototype.getFontData = function() {
+  return this.fontData_;
+};
+
+
+/**
+ * @return {!tachyfont.BinaryFontEditor}
+ */
+tachyfont.Sfnt.Font.prototype.getBinEd = function() {
+  return this.binEd_;
+};
+
+
+/**
+ * @return {!tachyfont.Sfnt.TableOfContents}
+ */
+tachyfont.Sfnt.Font.prototype.getTableOfContents = function() {
+  return this.tableOfContents_;
+};
+
+
+/**
  * Set the font data.
  * Because the init call is protected a useful tachyfont.Sfnt.Font can only be
  * created by tachyfont.Sfnt.getFont (not by new);
@@ -160,11 +184,35 @@ tachyfont.Sfnt.TableOfContents = function() {
   /** @private {boolean} */
   this.isCff_ = false;
 
-  /** @private {Array.<!tachyfont.Sfnt.TableOfContentsEntry>} */
+  /** @private {!Array.<!tachyfont.Sfnt.TableOfContentsEntry>} */
   this.items_ = [];
 
-  /** @private {Object.<string, number>} */
+  /** @private {!Object.<string, number>} */
   this.tagIndex_ = {};
+};
+
+
+/**
+ * @return {boolean}
+ */
+tachyfont.Sfnt.TableOfContents.prototype.getIsCff = function() {
+  return this.isCff_;
+};
+
+
+/**
+ * @return {!Array.<!tachyfont.Sfnt.TableOfContentsEntry>}
+ */
+tachyfont.Sfnt.TableOfContents.prototype.getItems = function() {
+  return this.items_;
+};
+
+
+/**
+ * @return {!Object.<string, number>}
+ */
+tachyfont.Sfnt.TableOfContents.prototype.getTagIndex = function() {
+  return this.tagIndex_;
 };
 
 
@@ -211,12 +259,15 @@ tachyfont.Sfnt.TableOfContents.prototype.init_ = function(fontData, binEd) {
   var numTables = binEd.getUint16();
   binEd.skip(6); // searchRange, entrySelector, rangeShift
   for (var i = 0; i < numTables; i++) {
+    var entryOffset = binEd.tell();
     var tag = binEd.readString(4);
+    binEd.seek(entryOffset);
+    var tagNumber = binEd.getUint32();
     var checksum = binEd.getUint32();
     var offset = binEd.getUint32();
     var length = binEd.getUint32();
-    var item =
-        new tachyfont.Sfnt.TableOfContentsEntry(tag, checksum, offset, length);
+    var item = new tachyfont.Sfnt.TableOfContentsEntry(tag, tagNumber, checksum,
+        offset, length);
     this.items_.push(item);
     this.tagIndex_[tag] = i;
   }
@@ -289,14 +340,19 @@ tachyfont.Sfnt.TableOfContents.prototype.isCff = function() {
 /**
  * An item in the Font table of contents.
  * @param {string} tag The table name.
+ * @param {number} tagNumber The table name number.
  * @param {number} checksum The checksum of the table.
  * @param {number} offset The offset to the table.
  * @param {number} length The length of the table.
  * @constructor @struct @final
  */
-tachyfont.Sfnt.TableOfContentsEntry = function(tag, checksum, offset, length) {
+tachyfont.Sfnt.TableOfContentsEntry = function(tag, tagNumber, checksum, offset,
+    length) {
   /** @private {string} */
   this.tag_ = tag;
+
+  /** @private {number} */
+  this.tagNumber_ = tagNumber;
 
   /** @private {number} */
   this.checksum_ = checksum;
@@ -319,12 +375,29 @@ tachyfont.Sfnt.TableOfContentsEntry.prototype.getTag = function() {
 
 
 /**
+ * Get the tag (as a number) for this entry.
+ * @return {number}
+ */
+tachyfont.Sfnt.TableOfContentsEntry.prototype.getTagNumber = function() {
+  return this.tagNumber_;
+};
+
+
+/**
  * Get the checksum for this entry.
- *
- * @return {number} The checksum for this entry.
+ * @return {number}
  */
 tachyfont.Sfnt.TableOfContentsEntry.prototype.getChecksum = function() {
   return this.checksum_;
+};
+
+
+/**
+ * Get the offset for this entry.
+ * @return {number}
+ */
+tachyfont.Sfnt.TableOfContentsEntry.prototype.getOffset = function() {
+  return this.offset_;
 };
 
 
@@ -337,12 +410,5 @@ tachyfont.Sfnt.TableOfContentsEntry.prototype.getLength = function() {
 };
 
 
-/**
- * Get the table offset from the beginning of the font to the table.
- * @return {number} The offset to the table.
- */
-tachyfont.Sfnt.TableOfContentsEntry.prototype.getOffset = function() {
-  return this.offset_;
-};
 
 
