@@ -17,8 +17,9 @@
  * the License.
  */
 
-goog.provide('webfonttailor.alternate');
+goog.provide('tachyfont.webfonttailor_alternate');
 
+goog.require('tachyfont');
 goog.require('tachyfont.FontInfo');
 goog.require('tachyfont.FontsInfo');
 
@@ -34,8 +35,8 @@ goog.require('tachyfont.FontsInfo');
  *     fonts: A list of font.
  *     url: The url to the tachyfont server.
  */
-webfonttailor.alternate.getTachyFontsInfo = function(fontFamlies, languages,
-    faces, options) {
+tachyfont.webfonttailor_alternate.getTachyFontsInfo =
+    function(fontFamlies, languages, faces, options) {
   var fonts = [];
   var dataUrl = '';
   var reportUrl = '';
@@ -43,7 +44,8 @@ webfonttailor.alternate.getTachyFontsInfo = function(fontFamlies, languages,
   return new tachyfont.FontsInfo(fonts, dataUrl, reportUrl);
 };
 
-goog.exportSymbol('webfonttailor.alternate', webfonttailor.alternate);
-goog.exportProperty(webfonttailor.alternate, 'getTachyFontsInfo',
-                    webfonttailor.alternate.getTachyFontsInfo);
+goog.exportSymbol('tachyfont.webfonttailor_alternate',
+                  tachyfont.webfonttailor_alternate);
+goog.exportProperty(tachyfont.webfonttailor_alternate, 'getTachyFontsInfo',
+                    tachyfont.webfonttailor_alternate.getTachyFontsInfo);
 
