@@ -40,11 +40,10 @@ goog.require('tachyfont.utils');
  * @param {string} name The table name.
  * @param {number} offset The offset from start of the CFF table.
  * @param {number} type Indicates the data type in the index.
- * @param {boolean} isBinary Indicates the data in the index is binary.
  * @param {!tachyfont.BinaryFontEditor} binEd A binary font editor.
  * @constructor @struct @final
  */
-tachyfont.CffIndex = function(name, offset, type, isBinary, binEd) {
+tachyfont.CffIndex = function(name, offset, type, binEd) {
   /** @private {string} */
   this.name_ = name;
 
@@ -53,9 +52,6 @@ tachyfont.CffIndex = function(name, offset, type, isBinary, binEd) {
 
   /** @private {number} */
   this.type_ = type;
-
-  /** @private {boolean} */
-  this.isBinary_ = isBinary;
 
   /** @dict @private {!Object.<string,string>} */
   this.dictOperators_;
@@ -98,17 +94,25 @@ tachyfont.CffIndex = function(name, offset, type, isBinary, binEd) {
 
 
 /**
- * Indicates the CFF INDEX holds strings.
+ * Indicates the CFF INDEX holds human readable strings.
  * @const {number}
  */
 tachyfont.CffIndex.TYPE_STRING = 1;
 
 
 /**
- * Indicates the CFF INDEX holds DICTs.
+ * Indicates the CFF INDEX holds human readable strings.
  * @const {number}
  */
-tachyfont.CffIndex.TYPE_DICT = 2;
+tachyfont.CffIndex.TYPE_BINARY_STRING = 2;
+
+
+/**
+ * Indicates the CFF INDEX holds DICTs.
+ * DICTs always have binary data.
+ * @const {number}
+ */
+tachyfont.CffIndex.TYPE_DICT = 3;
 
 
 /**
@@ -165,12 +169,12 @@ tachyfont.CffIndex.prototype.loadStrings = function(binEd) {
   binEd.seek(dataStart);
   for (var i = 0; i < this.count_; i++) {
     var dataLength = this.offsets_[i + 1] - this.offsets_[i];
-    if (this.isBinary_) {
-      var dataView = binEd.readDataView(dataLength);
-      this.elements_.push(dataView);
-    } else {
+    if (this.type_ == tachyfont.CffIndex.TYPE_STRING) {
       var str = binEd.readString(dataLength);
       this.elements_.push(str);
+    } else {
+      var dataView = binEd.readDataView(dataLength);
+      this.elements_.push(dataView);
     }
   }
 };
@@ -220,11 +224,11 @@ if (goog.DEBUG) {
           }
         } else {
           displayStr += ' ';
-          if (this.isBinary_) {
+          if (this.type_ == tachyfont.CffIndex.TYPE_STRING) {
+            displayStr += '"' + this.elements_[i] + '"';
+          } else {
             displayStr += tachyfont.utils.dataViewToHex(
                 /** @type {!DataView} */ (this.elements_[i]));
-          } else {
-            displayStr += '"' + this.elements_[i] + '"';
           }
           goog.log.info(tachyfont.Logger.logger, displayStr);
         }
