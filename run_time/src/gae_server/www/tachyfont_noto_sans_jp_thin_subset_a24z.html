@@ -1,0 +1,26 @@
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+  <!-- TachyFont -->
+  <script src="js/closure-library/closure/goog/base.js"></script>
+  <script src="js/closure_deps.js"></script>
+  <script src="js/tachyfont/tachyfont.js"></script>
+</head>
+
+<body>
+  <script>
+    // Because of the way Closure includes javascript files this cannot be in
+    // the head section.
+
+    // Hand build a FontsInfo.
+    var url = '';
+    var font = new tachyfont.FontInfo('NotoSansJP-Thin_subset_a24z', '100');
+    var fonts = [font];
+    var fontsInfo = new tachyfont.FontsInfo(fonts, url);
+    var tachyFontSet = tachyfont.loadFonts('NotoSansJP-Thin_subset', fontsInfo);
+  </script>
+<span class='NotoSansJP-Thin_subset_a24z'>acefzABZ123</span>
+<br>
+</body>
+</html>
