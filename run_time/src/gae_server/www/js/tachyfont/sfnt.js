@@ -236,9 +236,13 @@ tachyfont.Sfnt.Font.prototype.replaceTable = function(tableTag, data) {
   }
 
   var entry = this.tableOfContents_.getTocEntry(tableTag);
+  var deltaTableLength = length - entry.getLength();
   var allocatedLength = this.getAllocatedLength(tableTag);
-  var deltaSize = this.replaceData_(entry.offset_, allocatedLength, data);
-  this.tableOfContents_.updateOffsets_(this.binEd_, deltaSize, entry.offset_);
+  var deltaAllocatedLength = this.replaceData_(entry.offset_, allocatedLength,
+      data);
+  this.tableOfContents_.updateOffsets_(this.binEd_, deltaTableLength,
+      deltaAllocatedLength, entry.offset_);
+  this.init(this.fontData_);
 };
 
 
@@ -260,17 +264,17 @@ tachyfont.Sfnt.Font.prototype.replaceData_ = function(offset, length, data) {
     }
   }
 
-  var dataBefore = new Uint8Array(this.fontData_.buffer, 0, offset);
-  var dataAfter = new Uint8Array(this.fontData_.buffer, offset + length);
+  var headerSize = this.fontData_.byteOffset;
+  var fontBytesBuffer = this.fontData_.buffer;
+  var beforeLength = offset + headerSize;
+  var dataBefore = new Uint8Array(fontBytesBuffer, 0, beforeLength);
+  var afterStart = beforeLength + length;
+  var dataAfter = new Uint8Array(fontBytesBuffer, afterStart);
 
-  // Merge the data into a single buffer.
-  // TODO(bstell): does the data really need to be in a single ArrayBuffer?
-  // Sending it over to C++ code uses a Blob with can accept an array of items.
-  // If the data can be handled as an array of ArrayBuffer then no copying would
-  // be needed. Could have 2 getters: one that gets it as is and one that forces
-  // it to a single ArrayBuffer if needed.
+  // Merge the data into a single buffer (the Uint8Array set() method is very
+  // fast).
   var deltaSize = newTableLength - length;
-  var newFontBytes = new Uint8Array(this.fontData_.byteLength + deltaSize);
+  var newFontBytes = new Uint8Array(fontBytesBuffer.byteLength + deltaSize);
   newFontBytes.set(dataBefore);
   var position = dataBefore.byteLength;
   for (var i = 0; i < data.length; i++) {
@@ -283,7 +287,7 @@ tachyfont.Sfnt.Font.prototype.replaceData_ = function(offset, length, data) {
   newFontBytes.set(dataAfter, position);
 
   // Install the new data into the font.
-  this.fontData_ = new DataView(newFontBytes.buffer);
+  this.fontData_ = new DataView(newFontBytes.buffer, headerSize);
   this.binEd_ = new tachyfont.BinaryFontEditor(this.fontData_, 0);
 
   return deltaSize;
@@ -479,12 +483,13 @@ tachyfont.Sfnt.TableOfContents.prototype.init_ = function(fontData, binEd) {
 /**
  * Update the Table Of Contents.
  * @param {!tachyfont.BinaryFontEditor} binEd A binary editor for the font.
- * @param {number} deltaSize The amount to change the offset.
+ * @param {number} deltaTableLength The amount to change the table size.
+ * @param {number} deltaAllocatedLength The amount to change the offset.
  * @param {number} afterOffset Only change offsets that were after this offset.
  * @private
  */
 tachyfont.Sfnt.TableOfContents.prototype.updateOffsets_ =
-    function(binEd, deltaSize, afterOffset) {
+    function(binEd, deltaTableLength, deltaAllocatedLength, afterOffset) {
   // Skip sfntVersion, numTables, searchRange, entrySelector, rangeShift.
   binEd.seek(12);
 
@@ -503,11 +508,11 @@ tachyfont.Sfnt.TableOfContents.prototype.updateOffsets_ =
       // Skip the offset.
       binEd.skip(4);
       // Update the length
-      entry.length_ += deltaSize;
+      entry.length_ += deltaTableLength;
       binEd.setUint32(entry.length_);
     } else if (entry.offset_ > afterOffset) {
       // Update the offset.
-      entry.offset_ += deltaSize;
+      entry.offset_ += deltaAllocatedLength;
       binEd.setUint32(entry.offset_);
       // Skip the length.
       binEd.skip(4);
