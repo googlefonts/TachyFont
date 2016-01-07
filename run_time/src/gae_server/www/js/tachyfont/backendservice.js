@@ -113,12 +113,8 @@ BackendService.prototype.parseDataHeader = function(glyphData) {
     }
     signature += thisByteStr;
   }
-  var count = dataView.getUint16(offset);
-  offset += 2;
-  var flags = dataView.getUint16(offset);
-  offset += 2;
-  return new tachyfont.GlyphBundleResponse(
-      version, signature, count, flags, offset, glyphData);
+  return new tachyfont.GlyphBundleResponse(version, signature, offset,
+      glyphData);
 };
 
 
