@@ -46,6 +46,12 @@ tachyfont.Sfnt.Font = function() {
 
   /** @private {!tachyfont.Sfnt.TableOfContents} */
   this.tableOfContents_;
+
+  /** @private {!tachyfont.Sfnt.TableOfContents} */
+  this.sortedTableOfContents_;
+
+  /** @private {!Array.<number>} */
+  this.allocatedLengths_ = [];
 };
 
 
@@ -74,6 +80,55 @@ tachyfont.Sfnt.Font.prototype.getTableOfContents = function() {
 
 
 /**
+ * Get a Table Of Contents table entry.
+ * @param {string} tag The 4 character tag for the table.
+ * @return {!tachyfont.Sfnt.TableOfContentsEntry} ;
+ */
+tachyfont.Sfnt.Font.prototype.getTableEntry = function(tag) {
+  var tagsIndex = this.tableOfContents_.getTagsIndex();
+  if (tag in tagsIndex) {
+    var index = tagsIndex[tag];
+    return this.tableOfContents_.getItems()[index];
+  }
+  throw new Error('no such table: ' + tag);
+};
+
+
+/**
+ * Get a Table Of Contents table offset.
+ * @param {string} tag The 4 character tag for the table.
+ * @return {number} ;
+ */
+tachyfont.Sfnt.Font.prototype.getTableOffset = function(tag) {
+  var tableEntry = this.getTableEntry(tag);
+  return tableEntry.getOffset();
+};
+
+
+/**
+ * @return {!tachyfont.Sfnt.TableOfContents}
+ */
+tachyfont.Sfnt.Font.prototype.getSortedTableOfContents = function() {
+  return this.sortedTableOfContents_;
+};
+
+
+/**
+ * Get the allocated space. This is the tableEntry size plus any padding.
+ * @param {string} tag The tag name;
+ * @return {number}
+ */
+tachyfont.Sfnt.Font.prototype.getAllocatedLength = function(tag) {
+  var sortedTagsIndex = this.sortedTableOfContents_.getTagsIndex();
+  if (!(tag in sortedTagsIndex)) {
+    throw new Error('tag ' + tag + ' not in font');
+  }
+  var index = sortedTagsIndex[tag];
+  return this.allocatedLengths_[index];
+};
+
+
+/**
  * Set the font data.
  * Because the init call is protected a useful tachyfont.Sfnt.Font can only be
  * created by tachyfont.Sfnt.getFont (not by new);
@@ -85,7 +140,21 @@ tachyfont.Sfnt.Font.prototype.init = function(fontData) {
   this.binEd_ = new tachyfont.BinaryFontEditor(fontData, 0);
   // Get the table of contents.
   this.tableOfContents_ =
-      tachyfont.Sfnt.getTableOfContents(fontData, this.binEd_);
+      tachyfont.Sfnt.parseTableOfContents_(fontData, this.binEd_);
+  // Get the table of contents sorted by offset.
+  this.sortedTableOfContents_ = this.tableOfContents_.getSorted_();
+  var items = this.sortedTableOfContents_.getItems();
+  // Get the allocated lengths. This includes any padding which the tableEntry
+  // length does not.
+  var i, countLessOne = items.length - 1;
+  for (i = 0; i < countLessOne; i++) {
+    var thisEntry = items[i];
+    var nextEntry = items[i + 1];
+    this.allocatedLengths_[i] = nextEntry.getOffset() - thisEntry.getOffset();
+  }
+  var lastEntry = items[countLessOne];
+  this.allocatedLengths_[countLessOne] = fontData.byteLength -
+      lastEntry.getOffset();
 };
 
 
@@ -106,7 +175,7 @@ tachyfont.Sfnt.getFont = function(fontData) {
  * @param {string} tableTag The name of the table.
  * @return {!Uint8Array} The table contents.
  */
-tachyfont.Sfnt.Font.prototype.getTable = function(tableTag) {
+tachyfont.Sfnt.Font.prototype.getTableData = function(tableTag) {
   var tocEntry = this.tableOfContents_.getTocEntry(tableTag);
   var offset = tocEntry.offset_;
   var length = tocEntry.length_;
@@ -121,8 +190,26 @@ tachyfont.Sfnt.Font.prototype.getTable = function(tableTag) {
  * @param {!Array.<!Array.<!Uint8Array>>} data The new table contents.
  */
 tachyfont.Sfnt.Font.prototype.replaceTable = function(tableTag, data) {
+  // Add padding if necessary.
+  var length = 0;
+  for (var i = 0; i < data.length; i++) {
+    var elements = data[i];
+    for (var j = 0; j < elements.length; j++) {
+      var element = elements[j];
+      length += element.byteLength;
+    }
+  }
+  var countBeyondLongAlignment = length % 4;
+  if (countBeyondLongAlignment) {
+    var neededLength = 4 - countBeyondLongAlignment;
+    var padding = new Uint8Array(neededLength);
+    var lastElementArray = data[data.length - 1];
+    lastElementArray.push(padding);
+  }
+
   var entry = this.tableOfContents_.getTocEntry(tableTag);
-  var deltaSize = this.replaceData_(entry.offset_, entry.length_, data);
+  var allocatedLength = this.getAllocatedLength(tableTag);
+  var deltaSize = this.replaceData_(entry.offset_, allocatedLength, data);
   this.tableOfContents_.updateOffsets_(this.binEd_, deltaSize, entry.offset_);
 };
 
@@ -193,6 +280,30 @@ tachyfont.Sfnt.TableOfContents = function() {
 
 
 /**
+ * Routine to make a sorted copy of the tables in a sfnt font.
+ * @return {!tachyfont.Sfnt.TableOfContents}
+ * @private
+ */
+tachyfont.Sfnt.TableOfContents.prototype.getSorted_ = function() {
+  var sortedTable = new tachyfont.Sfnt.TableOfContents();
+  sortedTable.isCff_ = this.isCff_;
+  sortedTable.items_ = this.items_.slice();
+
+  sortedTable.items_.sort(function(a, b) {
+    return a.getOffset() - b.getOffset();
+  });
+  sortedTable.tagIndex_ = {};
+  for (var i = 0; i < sortedTable.items_.length; i++) {
+    var entry = sortedTable.items_[i];
+    var tag = entry.getTag();
+    sortedTable.tagIndex_[tag] = i;
+  }
+
+  return sortedTable;
+};
+
+
+/**
  * @return {boolean}
  */
 tachyfont.Sfnt.TableOfContents.prototype.getIsCff = function() {
@@ -211,7 +322,7 @@ tachyfont.Sfnt.TableOfContents.prototype.getItems = function() {
 /**
  * @return {!Object.<string, number>}
  */
-tachyfont.Sfnt.TableOfContents.prototype.getTagIndex = function() {
+tachyfont.Sfnt.TableOfContents.prototype.getTagsIndex = function() {
   return this.tagIndex_;
 };
 
@@ -229,8 +340,9 @@ tachyfont.Sfnt.TableOfContents.CFF_VERSION_TAG = 'OTTO';
  * @param {!DataView} fontData The font data.
  * @param {!tachyfont.BinaryFontEditor} binEd A binary editor for the font.
  * @return {!tachyfont.Sfnt.TableOfContents}
+ * @private
  */
-tachyfont.Sfnt.getTableOfContents = function(fontData, binEd) {
+tachyfont.Sfnt.parseTableOfContents_ = function(fontData, binEd) {
   var tableOfContents = new tachyfont.Sfnt.TableOfContents();
   tableOfContents.init_(fontData, binEd);
   return tableOfContents;
@@ -324,15 +436,6 @@ tachyfont.Sfnt.TableOfContents.prototype.updateOffsets_ =
 tachyfont.Sfnt.TableOfContents.prototype.getTocEntry = function(tag) {
   var index = this.tagIndex_[tag];
   return this.items_[index];
-};
-
-
-/**
- * Get isCff.
- * @return {boolean} Whether the font type is CFF (not Truetype).
- */
-tachyfont.Sfnt.TableOfContents.prototype.isCff = function() {
-  return this.isCff_;
 };
 
 

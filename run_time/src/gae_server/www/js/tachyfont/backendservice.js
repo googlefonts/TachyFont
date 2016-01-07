@@ -83,7 +83,7 @@ BackendService.prototype.requestFontBase = goog.functions.NULL;
  * Parses the header of a codepoint response and returns info on it:
  *
  * @param {ArrayBuffer} glyphData from a code point request.
- * @return {tachyfont.GlyphBundleResponse}
+ * @return {!tachyfont.GlyphBundleResponse}
  */
 BackendService.prototype.parseDataHeader = function(glyphData) {
   var dataView = new DataView(glyphData);

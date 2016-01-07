@@ -197,7 +197,7 @@ tachyfont.BinaryFontEditor.prototype.setOffset_ = function(offSize, value) {
  * @return {!DataView}
  */
 tachyfont.BinaryFontEditor.prototype.readDataView = function(length) {
-  var offset = this.baseOffset + this.offset;
+  var offset = this.dataView.byteOffset + this.baseOffset + this.offset;
   var dataView = new DataView(this.dataView.buffer, offset, length);
   this.offset += length;
   return dataView;
