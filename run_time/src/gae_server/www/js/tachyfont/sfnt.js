@@ -55,6 +55,22 @@ tachyfont.Sfnt.Font = function() {
 };
 
 
+/** @type {string} */
+tachyfont.Sfnt.CFF_TAG = 'CFF ';
+
+
+/** @type {string} */
+tachyfont.Sfnt.CMAP_TAG = 'cmap';
+
+
+/** @type {string} */
+tachyfont.Sfnt.HMTX_TAG = 'hmtx';
+
+
+/** @type {string} */
+tachyfont.Sfnt.VMTX_TAG = 'vmtx';
+
+
 /**
  * @return {!DataView}
  */
@@ -102,6 +118,18 @@ tachyfont.Sfnt.Font.prototype.getTableEntry = function(tag) {
 tachyfont.Sfnt.Font.prototype.getTableOffset = function(tag) {
   var tableEntry = this.getTableEntry(tag);
   return tableEntry.getOffset();
+};
+
+
+/**
+ * Get a Table Of Contents table length. This does not include any padding
+ * length.
+ * @param {string} tag The 4 character tag for the table.
+ * @return {number} ;
+ */
+tachyfont.Sfnt.Font.prototype.getTableLength = function(tag) {
+  var tableEntry = this.getTableEntry(tag);
+  return tableEntry.getLength();
 };
 
 
@@ -242,23 +270,85 @@ tachyfont.Sfnt.Font.prototype.replaceData_ = function(offset, length, data) {
   // be needed. Could have 2 getters: one that gets it as is and one that forces
   // it to a single ArrayBuffer if needed.
   var deltaSize = newTableLength - length;
-  var newFontData = new Uint8Array(this.fontData_.byteLength + deltaSize);
-  newFontData.set(dataBefore);
+  var newFontBytes = new Uint8Array(this.fontData_.byteLength + deltaSize);
+  newFontBytes.set(dataBefore);
   var position = dataBefore.byteLength;
   for (var i = 0; i < data.length; i++) {
     var dataGroup = data[i];
     for (var j = 0; j < dataGroup.length; j++) {
-      newFontData.set(dataGroup[j], position);
+      newFontBytes.set(dataGroup[j], position);
       position += dataGroup[j].byteLength;
     }
   }
-  newFontData.set(dataAfter, position);
+  newFontBytes.set(dataAfter, position);
 
   // Install the new data into the font.
-  this.fontData_ = new DataView(newFontData.buffer);
+  this.fontData_ = new DataView(newFontBytes.buffer);
   this.binEd_ = new tachyfont.BinaryFontEditor(this.fontData_, 0);
 
   return deltaSize;
+};
+
+
+/**
+ * The offsets affected by Compact TachyFont.
+ * @return {!tachyfont.Sfnt.CompactOffsets}
+ */
+tachyfont.Sfnt.Font.prototype.getCompactOffsets = function() {
+  return new tachyfont.Sfnt.CompactOffsets(
+      this.getTableOffset(tachyfont.Sfnt.CFF_TAG),
+      this.getTableOffset(tachyfont.Sfnt.CMAP_TAG),
+      this.getTableOffset(tachyfont.Sfnt.HMTX_TAG),
+      this.getTableOffset(tachyfont.Sfnt.VMTX_TAG));
+};
+
+
+
+/**
+ * The offsets affected by Compact TachyFont.
+ * @param {number} cffOffset
+ * @param {number} cmapOffset
+ * @param {number} hmtxOffset
+ * @param {number} vmtxOffset
+ * @constructor @struct @final
+ */
+tachyfont.Sfnt.CompactOffsets =
+    function(cffOffset, cmapOffset, hmtxOffset, vmtxOffset) {
+  /** @private {number} */
+  this.cffOffset_ = cffOffset;
+
+  /** @private {number} */
+  this.cmapOffset_ = cmapOffset;
+
+  /** @private {number} */
+  this.hmtxOffset_ = hmtxOffset;
+
+  /** @private {number} */
+  this.vmtxOffset_ = vmtxOffset;
+};
+
+
+/** @return {number} */
+tachyfont.Sfnt.CompactOffsets.prototype.getCffOffset = function() {
+  return this.cffOffset_;
+};
+
+
+/** @return {number} */
+tachyfont.Sfnt.CompactOffsets.prototype.getCmapOffset = function() {
+  return this.cmapOffset_;
+};
+
+
+/** @return {number} */
+tachyfont.Sfnt.CompactOffsets.prototype.getHmtxOffset = function() {
+  return this.hmtxOffset_;
+};
+
+
+/** @return {number} */
+tachyfont.Sfnt.CompactOffsets.prototype.getVmtxOffset = function() {
+  return this.vmtxOffset_;
 };
 
 
