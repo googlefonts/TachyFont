@@ -558,11 +558,11 @@ tachyfont.IncrementalFont.obj_.prototype.injectCharacters =
     function(baseFontView, bundleResponse, glyphToCodeMap, extraGlyphs) {
   // time_start('inject')
   this.fileInfo_.dirty = true;
-  var bundleBinEd = bundleResponse.getFontEditor();
   var baseBinEd = new tachyfont.BinaryFontEditor(baseFontView, 0);
 
   var count = bundleResponse.getGlyphCount();
   var flags = bundleResponse.getFlags();
+  var glyphDataArray = bundleResponse.getGlyphDataArray();
 
   var isCFF = flags & tachyfont.IncrementalFontUtils.FLAGS.HAS_CFF;
   var offsetDivisor = 1;
@@ -573,22 +573,23 @@ tachyfont.IncrementalFont.obj_.prototype.injectCharacters =
   }
   var glyphIds = [];
   for (var i = 0; i < count; i += 1) {
-    var id = bundleBinEd.getUint16();
+    var glyphData = glyphDataArray[i];
+    var id = glyphData.getId();
     glyphIds.push(id);
     var nextId = id + 1;
     var hmtx, vmtx;
     if (flags & tachyfont.IncrementalFontUtils.FLAGS.HAS_HMTX) {
-      hmtx = bundleBinEd.getUint16();
+      hmtx = glyphData.getHmtx();
       baseBinEd.setMtxSideBearing(this.fileInfo_.hmtxOffset,
           this.fileInfo_.hmetricCount, id, hmtx);
     }
     if (flags & tachyfont.IncrementalFontUtils.FLAGS.HAS_VMTX) {
-      vmtx = bundleBinEd.getUint16();
+      vmtx = glyphData.getVmtx();
       baseBinEd.setMtxSideBearing(this.fileInfo_.vmtxOffset,
           this.fileInfo_.vmetricCount, id, vmtx);
     }
-    var offset = bundleBinEd.getUint32();
-    var length = bundleBinEd.getUint16();
+    var offset = glyphData.getOffset();
+    var length = glyphData.getLength();
 
     if (!isCFF) {
       // Set the loca for this glyph.
@@ -665,7 +666,7 @@ tachyfont.IncrementalFont.obj_.prototype.injectCharacters =
       }
     }
 
-    var bytes = bundleBinEd.getArrayOf(bundleBinEd.getUint8, length);
+    var bytes = glyphData.getBytes();
     baseBinEd.seek(this.fileInfo_.glyphOffset + offset);
     baseBinEd.setArrayOf(baseBinEd.setUint8, bytes);
   }
@@ -1027,23 +1028,16 @@ tachyfont.IncrementalFont.obj_.prototype.handleFingerprintMismatch_ =
  * @return {goog.Promise} The list of needed chars.
  * @private
  */
-tachyfont.IncrementalFont.obj_.prototype.injectChars_ = function(neededCodes, 
+tachyfont.IncrementalFont.obj_.prototype.injectChars_ = function(neededCodes,
     bundleResponse) {
   return this.getBase
       .then(function(arr) {
         // arr[0] holds fileInfo.
         var fontData = arr[1];
-        var dataLength = 0;
         if (bundleResponse != null) {
-          dataLength = bundleResponse.getDataLength();
-          if (dataLength != 0) {
+          var glyphCount = bundleResponse.getGlyphCount();
+          if (glyphCount != 0) {
             this.needToSetFont = true;
-          }
-          if (goog.DEBUG) {
-            goog.log.info(tachyfont.Logger.logger,
-               this.fontName +
-               ' injectCharacters: glyph count / data length = ' +
-               bundleResponse.getGlyphCount() + ' / ' + dataLength);
           }
           var glyphToCodeMap = {};
           for (var i = 0; i < neededCodes.length; i++) {
