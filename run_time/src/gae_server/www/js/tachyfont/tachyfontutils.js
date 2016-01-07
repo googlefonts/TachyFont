@@ -184,7 +184,7 @@ tachyfont.utils.stringFromCodePoint = function(codePoint) {
  * This function handles surrogate pairs.
  *
  * @param {string} str The input string.
- * @return {Array.<string>} The array of characters.
+ * @return {!Array.<string>} The array of characters.
  */
 tachyfont.utils.stringToChars = function(str) {
   var charArray = [];
