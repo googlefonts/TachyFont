@@ -39,9 +39,7 @@ tachyfont.GlyphBundleResponse = function(version, signature, offset, buffer) {
 
   this.version = version;
   this.signature = signature;
-  this.count = count;
   this.flags = flags;
-  this.offsetToGlyphData = offset + 4;
   this.glyphBuffer = buffer;
   this.glyphDataArray_ = [];
 
@@ -72,28 +70,10 @@ tachyfont.GlyphBundleResponse = function(version, signature, offset, buffer) {
 
 
 /**
- * @return {number} the length of the glyph data in this response.
- */
-tachyfont.GlyphBundleResponse.prototype.getDataLength = function() {
-  return this.glyphBuffer.byteLength - this.offsetToGlyphData;
-};
-
-
-/**
- * @return {tachyfont.BinaryFontEditor} a font editor for the glyph data in this
- *         response.
- */
-tachyfont.GlyphBundleResponse.prototype.getFontEditor = function() {
-  return new tachyfont.BinaryFontEditor(new DataView(this.glyphBuffer),
-                                        this.offsetToGlyphData);
-};
-
-
-/**
  * @return {number} Number of glyphs in this response.
  */
 tachyfont.GlyphBundleResponse.prototype.getGlyphCount = function() {
-  return this.count;
+  return this.glyphDataArray_.length;
 };
 
 
@@ -154,18 +134,24 @@ tachyfont.GlyphBundleResponse.GlyphData.prototype.getId = function() {
 
 
 /**
- * @return {number|undefined}
+ * @return {number}
  */
 tachyfont.GlyphBundleResponse.GlyphData.prototype.getHmtx = function() {
-  return this.hmtx_;
+  if (typeof this.hmtx_ == 'undefined') {
+    throw new Error('hmtx undefined');
+  }
+  return /** @type {number} */ (this.hmtx_);
 };
 
 
 /**
- * @return {number|undefined}
+ * @return {number}
  */
 tachyfont.GlyphBundleResponse.GlyphData.prototype.getVmtx = function() {
-  return this.vmtx_;
+  if (typeof this.vmtx_ == 'undefined') {
+    throw new Error('vmtx undefined');
+  }
+  return /** @type {number} */ (this.vmtx_);
 };
 
 
