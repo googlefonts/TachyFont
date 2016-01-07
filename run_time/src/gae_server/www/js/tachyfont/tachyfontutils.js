@@ -227,17 +227,37 @@ if (goog.DEBUG) {
 
   /**
    * Convert a DataView to a hex string.
-   *
-   * @param {DataView} dataView The DataView.
-   * @param {number=} opt_length An optional length;
+   * @param {!DataView} dataView
+   * @param {number=} opt_offset
+   * @param {number=} opt_length
    * @return {string}
    */
-  tachyfont.utils.dataViewToHex = function(dataView, opt_length) {
-    // TODO(bstell): code this.
-    var str = '';
-    return str;
+  tachyfont.utils.dataViewToHex = function(dataView, opt_offset, opt_length) {
+    var offset = 0;
+    var length = dataView.byteLength;
+    if (opt_offset != undefined) {
+      offset = opt_offset;
+    }
+    if (opt_length != undefined) {
+      length = opt_length;
+    }
+    var msg = '';
+    var i;
+    for (i = 0; i < length; i++) {
+      if (i % 8 == 0) {
+        msg += '    ';
+      }
+      var number = dataView.getUint8(offset++);
+      msg += tachyfont.utils.uint8ToHex(number) + ', ';
+      if (i % 8 == 7) {
+        msg += '\n';
+      }
+    }
+    if (i % 8) {
+      msg += '\n';
+    }
+    return msg;
   };
-
 
 
   /**
@@ -292,7 +312,7 @@ if (goog.DEBUG) {
 
   /**
    * Convert a number to hex.
-   * @param {number} number The number to convert to
+   * @param {number} number The number to convert to hex.
    * @param {number=} opt_length Optional number of hex chars.
    * @return {string}
    */
@@ -304,6 +324,101 @@ if (goog.DEBUG) {
       return '0x' + ('0000' + number.toString(16)).substr(-4);
     }
   };
+
+
+  /**
+   * Routine to convert an offset to hex.
+   * @param {number} offset
+   * @param {number} offSize The number of bytes in the offset.
+   * @return {string}
+   */
+  tachyfont.utils.offsetToHexComma = function(offset, offSize) {
+    var msg = '';
+    for (var i = 0; i < offSize; i++) {
+      msg = tachyfont.utils.uint8ToHex(offset & 0xff) + ', ' + msg;
+      offset >>= 8;
+    }
+    return msg;
+  };
+
+
+  /**
+   * Routine to convert an 8 bit value to hex.
+   * @param {number} number The byte value.
+   * @return {string}
+   */
+  tachyfont.utils.uint8ToHex = function(number) {
+    return '0x' + ('0' + number.toString(16)).substr(-2);
+  };
+
+
+  /**
+   * Routine to convert an 8 bit value to hex with a comma.
+   * @param {number} number The byte value.
+   * @return {string}
+   */
+  tachyfont.utils.uint8ToHexComma = function(number) {
+    return '0x' + ('0' + number.toString(16)).substr(-2) + ', ';
+  };
+
+
+  /**
+   * Routine to convert a 16 bit value to hex with commas.
+   * @param {number} number The byte value.
+   * @return {string}
+   */
+  tachyfont.utils.uint16ToHexComma = function(number) {
+    var msg = '';
+    msg += tachyfont.utils.uint8ToHex((number >> 8) & 0xff) + ', ';
+    msg += tachyfont.utils.uint8ToHex((number >> 0) & 0xff) + ', ';
+    return msg;
+  };
+
+
+  /**
+   * Routine to convert a 32 bit value to hex with commas.
+   * @param {number} number The byte value.
+   * @return {string}
+   */
+  tachyfont.utils.uint32ToHexComma = function(number) {
+    var msg = '';
+    msg += tachyfont.utils.uint8ToHex((number >> 24) & 0xff) + ', ';
+    msg += tachyfont.utils.uint8ToHex((number >> 16) & 0xff) + ', ';
+    msg += tachyfont.utils.uint8ToHex((number >> 8) & 0xff) + ', ';
+    msg += tachyfont.utils.uint8ToHex((number >> 0) & 0xff) + ', ';
+    return msg;
+  };
+
+
+  /**
+   * Routine to display a range of bytes in a sfnt.
+   * @param {!tachyfont.BinaryFontEditor} binEd The binary editor.
+   * @param {number} offset The starting offset to display.
+   * @param {number} length The length to display.
+   * @return {string}
+   */
+  tachyfont.utils.binaryEditorBytesToHexComma =
+      function(binEd, offset, length) {
+    binEd.seek(offset);
+    var msg = '';
+    var i;
+    for (i = 0; i < length; i++) {
+      if (i % 8 == 0) {
+        msg += '    ';
+      }
+      var number = binEd.getUint8();
+      msg += tachyfont.utils.uint8ToHex(number) + ', ';
+      if (i % 8 == 7) {
+        msg += '\n';
+      }
+    }
+    if (i % 8) {
+      msg += '\n';
+    }
+    return msg;
+  };
+
+
 
 }
 
