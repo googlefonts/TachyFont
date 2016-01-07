@@ -116,7 +116,7 @@ tachyfont.BinaryFontEditor.prototype.getInt32_ = function() {
 /**
  * @param {function()} getter One of getUint or getInt functions
  * @param {number} count Size of array
- * @return {Array.<number>}
+ * @return {!Array.<number>}
  */
 tachyfont.BinaryFontEditor.prototype.getArrayOf = function(getter, count) {
   var arr = [];
