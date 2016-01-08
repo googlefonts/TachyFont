@@ -169,8 +169,9 @@ tachyfont.BinaryFontEditor.prototype.getOffset = function(offSize) {
 /**
  * @param {number} offSize Number of bytes in offset
  * @param {number} value Offset value
+ * @private
  */
-tachyfont.BinaryFontEditor.prototype.setOffset = function(offSize, value) {
+tachyfont.BinaryFontEditor.prototype.setOffset_ = function(offSize, value) {
   switch (offSize) {
     case 1:
       this.setUint8(value);
@@ -793,7 +794,7 @@ tachyfont.BinaryFontEditor.prototype.setGlyphDataOffset =
     function(start, offSize, gid,
     value) {
   this.seek(start + gid * offSize);
-  this.setOffset(offSize, value);
+  this.setOffset_(offSize, value);
 };
 
 
