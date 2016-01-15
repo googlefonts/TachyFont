@@ -107,8 +107,8 @@ goog.addDependency('../../../tachyfont/tachyfontutils.js',
     'tachyfont.utils.uint8'],
     []);
 goog.addDependency('../../../tachyfont/webfonttailoralternate.js',
-    ['webfonttailor.alternate'],
+    ['tachyfont.webfonttailor_alternate'],
     ['tachyfont.FontInfo', 'tachyfont.FontsInfo']);
 goog.addDependency('../../../tachyfont/webfonttailor.js',
-    ['webfonttailor'],
+    ['tachyfont.webfonttailor'],
     ['tachyfont.FontInfo', 'tachyfont.FontsInfo', 'webfonttailor.alternate']);
