@@ -17,6 +17,7 @@ OTS_VALIDATOR=/usr/local/google/home/bstell/ots/trunk/out/Default/validator_chec
 trap "echo 'caught signal; exiting ...'; exit 1" SIGHUP SIGINT SIGTERM
 
 # Generate the filename of the 'cleaned' version.
+mkdir -p ${DEST_DIR}
 fontname="${FONTPATH##*/}"
 fontname_sans_ext=${fontname%.*}
 ext="${fontname##*.}"
