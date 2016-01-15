@@ -78,17 +78,20 @@ tachyfont.webfonttailor.FontFamliesInfo_ = {
  * @param {!Array.<string>} languages The language codes list.
  * @param {!Array.<Object>} faces The faces (eg, slant, weight) list.
  * @param {!Object.<string, string>} options Additional info; eg, stretch.
+ * @param {!Array.<string>=} opt_priorityWeights Weights to prioritize
+ *     (optional).
  * @return {!tachyfont.FontsInfo} The information describing the fonts, include:
  *     fonts: A list of font.
  *     url: The url to the tachyfont server.
  */
 tachyfont.webfonttailor.getTachyFontsInfo =
-    function(fontFamlies, languages, faces, options) {
+    function(fontFamlies, languages, faces, options, opt_priorityWeights) {
   if (options['useAlternate']) {
     return tachyfont.webfonttailor_alternate.getTachyFontsInfo(fontFamlies,
         languages, faces, options);
   }
-  var fonts = [];
+  var priorityWeights = opt_priorityWeights || [];
+  var priorityFonts = [], nonPriorityFonts = [];
   for (var i = 0; i < fontFamlies.length; i++) {
     var fontFamily = fontFamlies[i];
     var languagesInfo = tachyfont.webfonttailor.FontFamliesInfo_[fontFamily];
@@ -111,12 +114,18 @@ tachyfont.webfonttailor.getTachyFontsInfo =
           var font = weightsInfo[weight];
           if (font) {
             var fontInfo = new tachyfont.FontInfo(font['name'], font['weight']);
-            fonts.push(fontInfo);
+            if (priorityWeights.indexOf(weight) != -1) {
+              fontInfo.setPriority(true);
+              priorityFonts.push(fontInfo);
+            } else {
+              nonPriorityFonts.push(fontInfo);
+            }
           }
         }
       }
     }
   }
+  var fonts = priorityFonts.concat(nonPriorityFonts);
   return new tachyfont.FontsInfo(fonts, '', '');
 };
 
