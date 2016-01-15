@@ -1,0 +1,28 @@
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+  <!-- TachyFont -->
+  <script src="js/closure-library/closure/goog/base.js"></script>
+  <script src="js/closure_deps.js"></script>
+  <script src="js/tachyfont/tachyfont.js"></script>
+</head>
+
+<body>
+  <script>
+    // Because of the way Closure includes javascript files this cannot be in
+    // the head section.
+
+    // Hand build a FontsInfo.
+    var url = '';
+    var font = new tachyfont.FontInfo('NotoSansEgyptianHieroglyphs-Regular_subset_A001_A005', '400');
+    var fonts = [font];
+    var fontsInfo = new tachyfont.FontsInfo(fonts, url);
+    var tachyFontSet = tachyfont.loadFonts('NotoSansEgyptianHieroglyphs-Regular_subset_A001_A005', fontsInfo);
+  </script>
+<span class='NotoSansEgyptianHieroglyphs-Regular_subset_A001_A005' style='font-size: 500%'>
+&#x13000;&#x13001;&#x13002;&#x13003;&#x13004;
+</span>
+<br>
+</body>
+</html>
