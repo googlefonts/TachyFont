@@ -55,6 +55,24 @@ class table__c_m_a_p(DefaultTable.DefaultTable):
 	
 	def compile(self, ttFont):
 		self.tables.sort()    # sort according to the spec; see CmapSubtable.__lt__()
+		format12 = None
+		format4 = None
+		for table in self.tables:
+			if table.format == 12:
+				format12 = table
+			if table.format == 4:
+				format4 = table
+		if format4 and not format12:
+			# Add format 12.
+			format12 = cmap_format_12(12)
+			format12.platformID = 3
+			format12.platEncID = 10
+			format12.language = format4.language
+			format12.cmap = format4.cmap.copy()
+			format12.data = None
+			self.tables.append(format12)
+
+		self.tables.sort()    # sort according to the spec; see CmapSubtable.__lt__()
 		numSubTables = len(self.tables)
 		totalOffset = 4 + 8 * numSubTables
 		data = struct.pack(">HH", self.tableVersion, numSubTables)
