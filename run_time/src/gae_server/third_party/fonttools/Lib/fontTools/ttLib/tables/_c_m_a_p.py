@@ -54,7 +54,6 @@ class table__c_m_a_p(DefaultTable.DefaultTable):
 			tables.append(table)
 	
 	def compile(self, ttFont):
-		self.tables.sort()    # sort according to the spec; see CmapSubtable.__lt__()
 		format12 = None
 		format4 = None
 		for table in self.tables:
