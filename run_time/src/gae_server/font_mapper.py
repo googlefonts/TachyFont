@@ -25,6 +25,10 @@ def fontname_to_zipfile(fontname):
   family_dir = ''
   if fontname[0:10] == 'NotoSansJP':
     family_dir = 'NotoSansJP/'
+  elif fontname[0:8] == 'NotoSans':
+    family_dir = 'NotoSans/'
+  elif fontname[0:5] == 'Arimo':
+    family_dir = 'Arimo/'
   zip_path = BASE_DIR + '/fonts/' + family_dir + fontname + '.TachyFont.jar'
   return zip_path
 
