@@ -168,7 +168,7 @@ tachyfont.Sfnt.Font.prototype.init = function(fontData) {
   this.binaryEditor_ = new tachyfont.BinaryFontEditor(fontData, 0);
   // Get the table of contents.
   this.tableOfContents_ =
-      tachyfont.Sfnt.parseTableOfContents_(fontData, this.binaryEditor_);
+      tachyfont.Sfnt.parseTableOfContents(fontData, this.binaryEditor_);
   // Get the table of contents sorted by offset.
   this.sortedTableOfContents_ = this.tableOfContents_.getSorted_();
   var items = this.sortedTableOfContents_.getItems();
@@ -440,9 +440,8 @@ tachyfont.Sfnt.TableOfContents.CFF_VERSION_TAG = 'OTTO';
  * @param {!tachyfont.BinaryFontEditor} binaryEditor A binary editor for the
  *     font.
  * @return {!tachyfont.Sfnt.TableOfContents}
- * @private
  */
-tachyfont.Sfnt.parseTableOfContents_ = function(fontData, binaryEditor) {
+tachyfont.Sfnt.parseTableOfContents = function(fontData, binaryEditor) {
   var tableOfContents = new tachyfont.Sfnt.TableOfContents();
   tableOfContents.init_(fontData, binaryEditor);
   return tableOfContents;

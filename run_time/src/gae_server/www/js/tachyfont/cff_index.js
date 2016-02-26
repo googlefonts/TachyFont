@@ -121,6 +121,15 @@ tachyfont.CffIndex.computeLength = function(offset, binaryEditor) {
 
 
 /**
+ * Gets the offsetSize of elements.
+ * @return {number} The offset in teh CFF table to this index.
+ */
+tachyfont.CffIndex.prototype.getOffset = function() {
+  return this.offset_;
+};
+
+
+/**
  * Indicates the CFF INDEX holds human readable strings.
  * @const {number}
  */
