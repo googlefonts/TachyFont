@@ -68,17 +68,17 @@ tachyfont.IncrementalFontUtils.writeCharsetFormat2 =
     function(baseFont, headerInfo) {
   if (!headerInfo.charset_fmt)
     return;
-  var binEd = new tachyfont.BinaryFontEditor(baseFont,
+  var binaryEditor = new tachyfont.BinaryFontEditor(baseFont,
       headerInfo.charset_fmt.offset + 1);
   var nGroups = headerInfo.charset_fmt.gos.len;
   var segments = headerInfo.charset_fmt.gos.segments;
   var is_fmt_2 = (headerInfo.charset_fmt.gos.type == 6);
   for (var i = 0; i < nGroups; i++) {
-    binEd.setUint16(segments[i][0]);
+    binaryEditor.setUint16(segments[i][0]);
     if (is_fmt_2)
-      binEd.setUint16(segments[i][1]);
+      binaryEditor.setUint16(segments[i][1]);
     else
-      binEd.setUint8(segments[i][1]);
+      binaryEditor.setUint8(segments[i][1]);
   }
 };
 
@@ -94,37 +94,37 @@ tachyfont.IncrementalFontUtils.sanitizeBaseFont =
 
   if (headerInfo.isTtf) {
     headerInfo.dirty = true;
-    var binEd = new tachyfont.BinaryFontEditor(baseFont, 0);
+    var binaryEditor = new tachyfont.BinaryFontEditor(baseFont, 0);
     var glyphOffset = headerInfo.glyphOffset;
     var glyphCount = headerInfo.numGlyphs;
     var glyphSize, thisOne, nextOne;
     for (var i = (tachyfont.IncrementalFontUtils.LOCA_BLOCK_SIZE - 1);
         i < glyphCount;
         i += tachyfont.IncrementalFontUtils.LOCA_BLOCK_SIZE) {
-      thisOne = binEd.getGlyphDataOffset(headerInfo.glyphDataOffset,
+      thisOne = binaryEditor.getGlyphDataOffset(headerInfo.glyphDataOffset,
           headerInfo.offsetSize, i);
-      nextOne = binEd.getGlyphDataOffset(headerInfo.glyphDataOffset,
+      nextOne = binaryEditor.getGlyphDataOffset(headerInfo.glyphDataOffset,
           headerInfo.offsetSize, i + 1);
       glyphSize = nextOne - thisOne;
       if (glyphSize) {
-        binEd.seek(glyphOffset + thisOne);
-        binEd.setInt16(-1);
+        binaryEditor.seek(glyphOffset + thisOne);
+        binaryEditor.setInt16(-1);
       }
     }
   } else {
     headerInfo.dirty = true;
-    var binEd = new tachyfont.BinaryFontEditor(baseFont, 0);
+    var binaryEditor = new tachyfont.BinaryFontEditor(baseFont, 0);
     var glyphOffset = headerInfo.glyphOffset;
     var glyphCount = headerInfo.numGlyphs;
-    var lastRealOffset = binEd.getGlyphDataOffset(headerInfo.glyphDataOffset,
-        headerInfo.offsetSize, 0);
+    var lastRealOffset = binaryEditor.getGlyphDataOffset(
+        headerInfo.glyphDataOffset, headerInfo.offsetSize, 0);
     var delta = 0, thisOne;
     for (var i = 0; i < glyphCount + 1; i++) {
-      thisOne = binEd.getGlyphDataOffset(headerInfo.glyphDataOffset,
+      thisOne = binaryEditor.getGlyphDataOffset(headerInfo.glyphDataOffset,
           headerInfo.offsetSize, i);
       if (lastRealOffset == thisOne) {
         thisOne = lastRealOffset + delta;
-        binEd.setGlyphDataOffset(headerInfo.glyphDataOffset,
+        binaryEditor.setGlyphDataOffset(headerInfo.glyphDataOffset,
             headerInfo.offsetSize, i, thisOne);
         delta++;
       } else {
@@ -132,8 +132,8 @@ tachyfont.IncrementalFontUtils.sanitizeBaseFont =
         delta = 1;
       }
       if (i < glyphCount) {
-        binEd.seek(glyphOffset + thisOne);
-        binEd.setUint8(14);
+        binaryEditor.seek(glyphOffset + thisOne);
+        binaryEditor.setUint8(14);
       }
     }
   }

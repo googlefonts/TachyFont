@@ -479,8 +479,8 @@ tachyfont.IncrementalFont.obj_.prototype.getBaseFontFromPersistence =
  */
 tachyfont.IncrementalFont.obj_.prototype.parseBaseHeader =
     function(baseFontView) {
-  var binEd = new tachyfont.BinaryFontEditor(baseFontView, 0);
-  var fileInfo = binEd.parseBaseHeader();
+  var binaryEditor = new tachyfont.BinaryFontEditor(baseFontView, 0);
+  var fileInfo = binaryEditor.parseBaseHeader();
   if (!fileInfo.headSize) {
     tachyfont.Reporter.addItem(tachyfont.IncrementalFont.Log_.PARSE_HEADER +
         this.fontInfo.getWeight(), goog.now() - this.startTime);
