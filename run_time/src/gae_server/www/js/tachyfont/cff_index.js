@@ -19,8 +19,8 @@
 
 /**
  * @fileoverview Code to parse a CFF INDEX. For a detailed description of a CFF
- * dict
- * @see http://wwwimages.adobe.com/content/dam/Adobe/en/devnet/font/pdfs/5176.CFF.pdf
+ * dict @see
+ * http://wwwimages.adobe.com/content/dam/Adobe/en/devnet/font/pdfs/5176.CFF.pdf
  * For a detailed description of the OpenType font format
  * @see http://www.microsoft.com/typography/otspec/otff.htm
  * @author bstell@google.com (Brian Stell)
@@ -95,7 +95,7 @@ tachyfont.CffIndex.TYPE_STRING = 1;
 
 
 /**
- * Indicates the CFF INDEX holds human readable strings.
+ * Indicates the CFF INDEX holds human binary strings.
  * @const {number}
  */
 tachyfont.CffIndex.TYPE_BINARY_STRING = 2;

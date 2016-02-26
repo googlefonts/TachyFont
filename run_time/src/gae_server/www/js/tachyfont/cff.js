@@ -282,7 +282,7 @@ tachyfont.Cff.prototype.getTopDictOperand = function(operator, index) {
  * @param {number} deltaSize The size change.
  */
 tachyfont.Cff.prototype.updateCharStringsSize = function(deltaSize) {
-  // The list of table whos offsets that could change because of a CharStrings
+  // The list of table whose offsets that could change because of a CharStrings
   // size change.
   var operators = [
     tachyfont.CffDict.Operator.CHARSET,
