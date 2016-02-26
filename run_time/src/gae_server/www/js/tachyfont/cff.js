@@ -50,19 +50,32 @@ goog.require('tachyfont.CffIndex');
  * http://wwwimages.adobe.com/content/dam/Adobe/en/devnet/font/pdfs/5176.CFF.pdf
  * For a detailed description of the OpenType font format @see
  * http://www.microsoft.com/typography/otspec/otff.htm
+ * @param {number} cffTableOffset The offset in the OpenType font to the CFF
+ *     table.
  * @param {!DataView} fontData The font data.
- * @param {!tachyfont.BinaryFontEditor} binaryEditor Helper class to edit the
- *     binary data.
- * @param {!tachyfont.CffDict} topDict The CFF Top DICT info which holds offsets
- *     to other parts of the CFF table.
- * @param {!tachyfont.CffIndex} charStringsIndex The CFF CharStrings INDEX which
- *     holds the CFF glyph data.
- * @param {!tachyfont.CffIndex} fontDictIndex The CFF Font DICT INDEX which
- *     holds font private info.
  * @constructor @struct @final
  */
-tachyfont.Cff = function(fontData, binaryEditor, topDict, charStringsIndex,
-    fontDictIndex) {
+tachyfont.Cff = function(cffTableOffset, fontData) {
+
+  // As detailed in
+  // http://wwwimages.adobe.com/content/dam/Adobe/en/devnet/font/pdfs/5176.CFF.pdf
+  //
+  // the items in the CFF table are organized as:
+  //     1) Items that are placed one after another.
+  //        - Header
+  //        - Name INDEX
+  //        - Top DICT INDEX
+  //        - etc.
+  //     2) Items found by their offset in the Top DICT.
+  //        - CharStrings INDEX
+  //        - Font DICT INDEX
+  //        - Private DICTs (which are found relative to the Font DICT INDEX)
+  //
+  // To read the CFF table the code:
+  //     - Determines the sizes of the items before the Top DICT INDEX
+  //     - Reads the Top DICT INDEX
+  //     - Uses the first element in the Top DICT INDEX as the Top DICT
+  //     - Reads the other items using the offsets in the Top DICT
 
   /**
    * Font data bytes.
@@ -74,71 +87,41 @@ tachyfont.Cff = function(fontData, binaryEditor, topDict, charStringsIndex,
    * Helper class to edit the binary data.
    * @private {!tachyfont.BinaryFontEditor}
    */
-  this.binaryEditor_ = binaryEditor;
+  this.binaryEditor_ = new tachyfont.BinaryFontEditor(fontData, cffTableOffset);
+
+  // Find the offset to the Top DICT INDEX.
+  // Move past the CFF Header.
+  var offset = tachyfont.Cff.getHeaderSize(this.binaryEditor_);
+  // Move past the CFF Name INDEX
+  offset += tachyfont.CffIndex.computeLength(offset, this.binaryEditor_);
+  // Read the Top DICT INDEX.
+  var topDictIndex = tachyfont.Cff.readTopDictIndex(offset, this.binaryEditor_);
 
   /**
    * The CFF Top DICT.
+   * The Top DICT gives the offsets to the other tables.
    * @private {!tachyfont.CffDict}
    */
-  this.topDict_ = topDict;
-
-  // The offset to the Encodings table.
-  // Note: CFF CID fonts do not have an Encodings table.
+  this.topDict_ = topDictIndex.getDictElement(0);
 
   /**
-   * The CFF CharStrings INDEX.
+   * The CFF CharStrings INDEX:
+   *     - found by an offset in the Top DICT
+   *     - holds the glyph data.
    * @private {!tachyfont.CffIndex}
    */
-  this.charStringsIndex_ = charStringsIndex;
+  this.charStringsIndex_ =
+      tachyfont.Cff.readCharStringsIndex(this.topDict_, this.binaryEditor_);
 
 
   /**
-   * The CFF Font DICT INDEX.
-   * This holds font private information.
+   * The CFF Font DICT INDEX:
+   *     - found by an offset in the Top DICT
+   *     - holds per-font information
    * @private {!tachyfont.CffIndex}
    */
-  this.fontDictIndex_ = fontDictIndex;
-};
-
-
-/**
- * A factory that reads the CFF table within a OpenType font.
- * For a list of the tables see
- * http://wwwimages.adobe.com/content/dam/Adobe/en/devnet/font/pdfs/5176.CFF.pdf
- * @param {number} cffTableOffset The offset the the CFF table.
- * @param {!DataView} fontData The font data.
- * @return {!tachyfont.Cff} The class holding the CFF table information.
- */
-tachyfont.Cff.getCffTable = function(cffTableOffset, fontData) {
-  // Helper class to edit the binary data.
-  var binaryEditor = new tachyfont.BinaryFontEditor(fontData, cffTableOffset);
-
-  // The initial tables are in the CFF table one-after-another.
-
-  // Move past the CFF Header.
-  var offset = tachyfont.Cff.getHeaderSize(binaryEditor);
-  // Move past the CFF Name INDEX
-  offset += tachyfont.CffIndex.computeLength(offset, binaryEditor);
-
-  // Read the Top DICT which gives the offsets to the other tables.
-  var topDict = tachyfont.Cff.readTopDictIndex(offset, binaryEditor);
-
-  // The following tables:
-  //     - are found by offsets in the Top DICT.
-  //     - are modified when inserting data into the CharStrings INDEX.
-
-  // Read the CharStrings INDEX which holds the glyph data.
-  var charStringsIndex =
-      tachyfont.Cff.readCharStringsIndex(topDict, binaryEditor);
-
-  // Read the Private Font DICTs which holds information about the fonts in the
-  // CFF table.
-  var fontDictIndex = tachyfont.Cff.readFontDictIndex(topDict, binaryEditor);
-
-  // Bundle all this info together for later use.
-  var cff = new tachyfont.Cff(fontData, binaryEditor, topDict, charStringsIndex,
-      fontDictIndex);
-  return cff;
+  this.fontDictIndex_ =
+      tachyfont.Cff.readFontDictIndex(this.topDict_, this.binaryEditor_);
 };
 
 
@@ -196,16 +179,13 @@ tachyfont.Cff.getHeaderSize = function(binaryEditor) {
  * @param {number} offset The offset in the CFF table to the Top DICT INDEX.
  * @param {!tachyfont.BinaryFontEditor} binaryEditor Helper class to edit the
  *     binary data.
- * @return {!tachyfont.CffDict}
+ * @return {!tachyfont.CffIndex}
  */
 tachyfont.Cff.readTopDictIndex = function(offset, binaryEditor) {
   var topDictIndex = new tachyfont.CffIndex('TopDICT', offset,
       tachyfont.CffIndex.TYPE_DICT, binaryEditor);
   topDictIndex.loadDicts(binaryEditor);
-  // The Top DICT INDEX is designed to support a CFF font having multiple
-  // fonts in it. A CFF table in an OpenType only has one font. So no need to
-  // return an array of Top DICTs. Just return the Top DICT for the single font.
-  return topDictIndex.getDictElement(0);
+  return topDictIndex;
 };
 
 

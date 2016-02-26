@@ -310,10 +310,10 @@ tachyfont.CffIndex.prototype.loadDicts = function(binaryEditor) {
   for (var i = 0; i < this.count_; i++) {
     var name = this.name_ + i;
     var length = this.offsets_[i + 1] - this.offsets_[i];
-    // TODO(bstell): make this reusable.
     var offset = dataView.byteOffset + binaryEditor.getBaseOffset() +
         dataStart + this.offsets_[i] - 1;
-    var dict = tachyfont.CffDict.loadDict(name, arrayBuffer, offset, length);
+    var dictDataView = new DataView(arrayBuffer, offset, length);
+    var dict = new tachyfont.CffDict(name, dictDataView);
     this.elements_.push(dict);
   }
 };
