@@ -268,13 +268,14 @@ tachyfont.CffIndex.prototype.loadDicts = function(binaryEditor) {
   if (this.type_ != tachyfont.CffIndex.TYPE_DICT) {
     throw new Error(this.name_ + ' does not hold DICTS');
   }
-  var arrayBuffer = binaryEditor.dataView.buffer;
+  var dataView = binaryEditor.getDataView();
+  var arrayBuffer = dataView.buffer;
   var dataStart = this.offset_ + 2 + 1 + (this.count_ + 1) * this.offsetSize_;
   for (var i = 0; i < this.count_; i++) {
     var name = this.name_ + i;
     var length = this.offsets_[i + 1] - this.offsets_[i];
     // TODO(bstell): make this reusable.
-    var offset = binaryEditor.dataView.byteOffset + binaryEditor.baseOffset +
+    var offset = dataView.byteOffset + binaryEditor.getBaseOffset() +
         dataStart + this.offsets_[i] - 1;
     var dict = tachyfont.CffDict.loadDict(name, arrayBuffer, offset, length);
     this.elements_.push(dict);

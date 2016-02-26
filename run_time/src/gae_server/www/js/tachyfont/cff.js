@@ -184,7 +184,7 @@ tachyfont.Cff.prototype.getCharStringsIndex = function() {
  * @return {!Uint8Array}
  */
 tachyfont.Cff.prototype.getData = function(offset, length) {
-  offset += this.binaryEditor_.baseOffset;
+  offset += this.binaryEditor_.getBaseOffset();
   var data = new Uint8Array(this.fontData_.buffer, offset, length);
   return data;
 };

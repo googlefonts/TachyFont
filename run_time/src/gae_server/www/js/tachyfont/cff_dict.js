@@ -56,6 +56,25 @@ tachyfont.CffDict = function(name, dataView) {
 
 
 /**
+ * Get the DataView.
+ * @return {!DataView}
+ */
+tachyfont.CffDict.prototype.getDataView = function() {
+  return this.dataView_;
+};
+
+
+/**
+ * Get the dict.
+ * This holds the operator/operands sets from the CFF DICT.
+ * @return {!Object<string, !tachyfont.CffDict.OperandsOperatorSet_>}
+ */
+tachyfont.CffDict.prototype.getDict = function() {
+  return this.dict_;
+};
+
+
+/**
  * Initializes a CFF DICT.
  * @private
  */

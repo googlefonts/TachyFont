@@ -22,17 +22,59 @@ goog.provide('tachyfont.BinaryFontEditor');
 
 
 /**
- * Binary Font Editor - A namespace.
- * Binary operation over font file or glyph bundle.
+ * Binary Font Editor.
+ * This class provides a Unix file like interface to read and write to a
+ * DataView; eg, a 16 bit read reads 2 bytes and 'advances' to the data after
+ * those 2 bytes. This class also provides routines to read/write font and
+ * TachyFont specific data structures.
  * Always big endian byte order.
  * @param {!DataView} dataView DataView which includes data
  * @param {number} baseOffset Set this offset as 0 offset for operations
  * @constructor
  */
 tachyfont.BinaryFontEditor = function(dataView, baseOffset) {
-  this.dataView = dataView;
-  this.baseOffset = baseOffset;
+  /**
+   * The font data to edit.
+   * @private @const {!DataView}
+   */
+  this.dataView_ = dataView;
+
+  /**
+   * The base offset into the beginning of the data of interest.
+   * By having a base offset the calling code can easily seek within that data
+   * without having to know if the data is in a DataView by itself of embedded
+   * in a larger block of data.
+   * @private @const {number}
+   */
+  this.baseOffset_ = baseOffset;
+
+  /**
+   * The offset to the current byte within the data of interest.
+   * This value is the current position within the data of interest and is used
+   * to manage the current position; eg, after reading/writing a 32 bit value
+   * this value in increased by 4. This also provides support for seek and skip
+   * operations.
+   * @type {number}
+   */
   this.offset = 0;
+};
+
+
+/**
+ * Get the DataView.
+ * @return {!DataView}
+ */
+tachyfont.BinaryFontEditor.prototype.getDataView = function() {
+  return this.dataView_;
+};
+
+
+/**
+ * Get the baseOffset.
+ * @return {number}
+ */
+tachyfont.BinaryFontEditor.prototype.getBaseOffset = function() {
+  return this.baseOffset_;
 };
 
 
@@ -40,7 +82,7 @@ tachyfont.BinaryFontEditor = function(dataView, baseOffset) {
  * @return {tachyfont.utils.uint8} Unsigned byte
  */
 tachyfont.BinaryFontEditor.prototype.getUint8 = function() {
-  var data = this.dataView.getUint8(this.baseOffset + this.offset);
+  var data = this.dataView_.getUint8(this.baseOffset_ + this.offset);
   this.offset++;
   return data;
 };
@@ -50,7 +92,7 @@ tachyfont.BinaryFontEditor.prototype.getUint8 = function() {
  * @param {number} data Unsigned byte
  */
 tachyfont.BinaryFontEditor.prototype.setUint8 = function(data) {
-  this.dataView.setUint8(this.baseOffset + this.offset, data);
+  this.dataView_.setUint8(this.baseOffset_ + this.offset, data);
   this.offset++;
 };
 
@@ -59,7 +101,7 @@ tachyfont.BinaryFontEditor.prototype.setUint8 = function(data) {
  * @return {number} Unsigned short
  */
 tachyfont.BinaryFontEditor.prototype.getUint16 = function() {
-  var data = this.dataView.getUint16(this.baseOffset + this.offset);
+  var data = this.dataView_.getUint16(this.baseOffset_ + this.offset);
   this.offset += 2;
   return data;
 };
@@ -69,7 +111,7 @@ tachyfont.BinaryFontEditor.prototype.getUint16 = function() {
  * @param {number} data Unsigned short
  */
 tachyfont.BinaryFontEditor.prototype.setUint16 = function(data) {
-  this.dataView.setUint16(this.baseOffset + this.offset, data);
+  this.dataView_.setUint16(this.baseOffset_ + this.offset, data);
   this.offset += 2;
 };
 
@@ -78,7 +120,7 @@ tachyfont.BinaryFontEditor.prototype.setUint16 = function(data) {
  * @param {number} data Signed short
  */
 tachyfont.BinaryFontEditor.prototype.setInt16 = function(data) {
-  this.dataView.setInt16(this.baseOffset + this.offset, data);
+  this.dataView_.setInt16(this.baseOffset_ + this.offset, data);
   this.offset += 2;
 };
 
@@ -87,7 +129,7 @@ tachyfont.BinaryFontEditor.prototype.setInt16 = function(data) {
  * @return {number} Unsigned integer
  */
 tachyfont.BinaryFontEditor.prototype.getUint32 = function() {
-  var data = this.dataView.getUint32(this.baseOffset + this.offset);
+  var data = this.dataView_.getUint32(this.baseOffset_ + this.offset);
   this.offset += 4;
   return data;
 };
@@ -97,7 +139,7 @@ tachyfont.BinaryFontEditor.prototype.getUint32 = function() {
  * @param {number} data Unsigned integer
  */
 tachyfont.BinaryFontEditor.prototype.setUint32 = function(data) {
-  this.dataView.setUint32(this.baseOffset + this.offset, data);
+  this.dataView_.setUint32(this.baseOffset_ + this.offset, data);
   this.offset += 4;
 };
 
@@ -107,7 +149,7 @@ tachyfont.BinaryFontEditor.prototype.setUint32 = function(data) {
  * @private
  */
 tachyfont.BinaryFontEditor.prototype.getInt32_ = function() {
-  var data = this.dataView.getInt32(this.baseOffset + this.offset);
+  var data = this.dataView_.getInt32(this.baseOffset_ + this.offset);
   this.offset += 4;
   return data;
 };
@@ -196,8 +238,8 @@ tachyfont.BinaryFontEditor.prototype.setOffset = function(offSize, value) {
  * @return {!DataView}
  */
 tachyfont.BinaryFontEditor.prototype.readDataView = function(length) {
-  var offset = this.dataView.byteOffset + this.baseOffset + this.offset;
-  var dataView = new DataView(this.dataView.buffer, offset, length);
+  var offset = this.dataView_.byteOffset + this.baseOffset_ + this.offset;
+  var dataView = new DataView(this.dataView_.buffer, offset, length);
   this.offset += length;
   return dataView;
 };
