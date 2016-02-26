@@ -20,6 +20,7 @@
 goog.provide('tachyfont.Reporter');
 
 goog.require('goog.log');
+goog.require('goog.userAgent');
 goog.require('tachyfont.Logger');
 
 
@@ -192,6 +193,9 @@ tachyfont.Reporter.sendReport = function(opt_okIfNoItems) {
   var baseUrl = tachyfont.Reporter.instance_.url_ + '/gen_204?id=tf&';
   var length = baseUrl.length;
   var items = [];
+  var item = 'm=' + (goog.userAgent.MOBILE ? '1' : '0');
+  length += item.length;
+  items.push(item);
   if (goog.DEBUG) {
     goog.log.info(tachyfont.Logger.logger, 'report items:');
   }
@@ -200,7 +204,7 @@ tachyfont.Reporter.sendReport = function(opt_okIfNoItems) {
     var value = encodeURIComponent(
         (tachyfont.Reporter.instance_.items_[name]).toString());
     delete tachyfont.Reporter.instance_.items_[name];
-    var item = encodeURIComponent(name) + '=' + value;
+    item = encodeURIComponent(name) + '=' + value;
     if (length + item.length > 2000) {
       tachyfont.Reporter.sendGen204_(baseUrl, items);
       length = baseUrl.length;
