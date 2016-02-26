@@ -63,22 +63,22 @@ tachyfont.Cff = function(offset, fontData) {
       new tachyfont.BinaryFontEditor(this.fontData_, this.cffTableOffset_);
 
   /**
-   * The Header size.
+   * The CFF Header size.
    * @private {number}
    */
-  this.hdrSize_;
+  this.headerSize_;
 
   /**
-   * The offset size (number of bytes used in a offset) in the font.
+   * The CFF offset size (number of bytes used in a offset) in the font.
    * @private {number}
    */
-  this.offSize_;
+  this.offsetSize_;
 
   /** @private {number} */
   this.nameIndexOffset_;
 
   /**
-   * The Name INDEX.
+   * The CFF Name INDEX.
    * @private {!tachyfont.CffIndex}
    */
   this.nameIndex_;
@@ -87,13 +87,13 @@ tachyfont.Cff = function(offset, fontData) {
   this.topDictIndexOffset_;
 
   /**
-   * The Top DICT INDEX.
+   * The CFF Top DICT INDEX.
    * @private {!tachyfont.CffIndex}
    */
   this.topDictIndex_;
 
   /**
-   * The Top DICT (a associative map).
+   * The CFF Top DICT.
    * @private {!tachyfont.CffDict}
    */
   this.topDict_;
@@ -102,7 +102,7 @@ tachyfont.Cff = function(offset, fontData) {
   this.stringIndexOffset_;
 
   /**
-   * The String INDEX.
+   * The CFF String INDEX.
    * @private {!tachyfont.CffIndex}
    */
   this.stringIndex_;
@@ -111,7 +111,7 @@ tachyfont.Cff = function(offset, fontData) {
   this.globalSubrIndexOffset_;
 
   /**
-   * The Global Subr INDEX.
+   * The CFF Global Subr INDEX.
    * @private {!tachyfont.CffIndex}
    */
   this.globalSubrIndex_;
@@ -125,19 +125,14 @@ tachyfont.Cff = function(offset, fontData) {
   this.charStringsIndexOffset_;
 
   /**
-   * The CharStrings INDEX.
+   * The CFF CharStrings INDEX.
    * @private {!tachyfont.CffIndex}
    */
   this.charStringsIndex_;
 
-  /**
-   * The number of glyphs in the CharString INDEX.
-   * @private {number}
-   */
-  this.nGlyphs_;
 
   /**
-   * The Font DICT INDEX.
+   * The CFF Font DICT INDEX.
    * @private {!tachyfont.CffIndex}
    */
   this.fontDictIndex_;
@@ -181,10 +176,10 @@ tachyfont.Cff.prototype.init_ = function() {
 tachyfont.Cff.prototype.readHeader_ = function() {
   // Skip the major and minor number.
   this.binaryEditor_.skip(2);
-  this.hdrSize_ = this.binaryEditor_.getUint8();
+  this.headerSize_ = this.binaryEditor_.getUint8();
   // Skip offSize.
   this.binaryEditor_.skip(1);
-  this.binaryEditor_.seek(this.hdrSize_);
+  this.binaryEditor_.seek(this.headerSize_);
 };
 
 
@@ -193,7 +188,7 @@ tachyfont.Cff.prototype.readHeader_ = function() {
  * @private
  */
 tachyfont.Cff.prototype.readNameIndex_ = function() {
-  this.nameIndexOffset_ = this.hdrSize_;
+  this.nameIndexOffset_ = this.headerSize_;
   this.nameIndex_ = new tachyfont.CffIndex('Name', this.nameIndexOffset_,
       tachyfont.CffIndex.TYPE_STRING, this.binaryEditor_);
   this.nameIndex_.loadStrings(this.binaryEditor_);
@@ -239,7 +234,6 @@ tachyfont.Cff.prototype.readCharStringsIndex_ = function() {
   this.charStringsIndex_ = new tachyfont.CffIndex('CharStrings',
       this.charStringsIndexOffset_, tachyfont.CffIndex.TYPE_BINARY_STRING,
       this.binaryEditor_);
-  this.nGlyphs_ = this.charStringsIndex_.getCount();
   this.charStringsIndex_.loadStrings(this.binaryEditor_);
 };
 

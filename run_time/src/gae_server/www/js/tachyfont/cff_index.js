@@ -71,18 +71,18 @@ tachyfont.CffIndex = function(name, offset, type, binEd) {
    * byte for offSize and a single 0x01 byte for the offsets array.
    * @private {number}
    */
-  this.offSize_ = binEd.getUint8();
+  this.offsetSize_ = binEd.getUint8();
 
   /** @private {!Array.<number>} */
   this.offsets_ = [];
 
   for (var i = 0; i <= this.count_; i++) {
-    var elementOffset = binEd.getOffset(this.offSize_);
+    var elementOffset = binEd.getOffset(this.offsetSize_);
     this.offsets_.push(elementOffset);
   }
 
   /** @private {number} */
-  this.tableLength_ = 2 + 1 + (this.count_ + 1) * this.offSize_ +
+  this.tableLength_ = 2 + 1 + (this.count_ + 1) * this.offsetSize_ +
       this.offsets_[this.count_] - 1;
 };
 
@@ -158,7 +158,7 @@ if (goog.DEBUG) {
  * @return {number} The offSize of elements.
  */
 tachyfont.CffIndex.prototype.getOffSize = function() {
-  return this.offSize_;
+  return this.offsetSize_;
 };
 
 
@@ -186,7 +186,7 @@ tachyfont.CffIndex.prototype.getElements = function() {
  * @return {number} The element's offset.
  */
 tachyfont.CffIndex.prototype.getAdjustedElementOffset = function(index) {
-  var offset = 2 + 1 + (this.offSize_ * (this.count_ + 1)) - 1;
+  var offset = 2 + 1 + (this.offsetSize_ * (this.count_ + 1)) - 1;
   offset += this.offsets_[index];
   return offset;
 };
@@ -225,7 +225,7 @@ tachyfont.CffIndex.prototype.getType = function() {
  */
 tachyfont.CffIndex.prototype.loadStrings = function(binEd) {
   goog.log.info(tachyfont.Logger.logger, this.name_);
-  var dataStart = this.offset_ + 2 + 1 + (this.count_ + 1) * this.offSize_;
+  var dataStart = this.offset_ + 2 + 1 + (this.count_ + 1) * this.offsetSize_;
   binEd.seek(dataStart);
   for (var i = 0; i < this.count_; i++) {
     var dataLength = this.offsets_[i + 1] - this.offsets_[i];
@@ -309,7 +309,7 @@ tachyfont.CffIndex.prototype.loadDicts = function(binEd) {
   // TODO(bstell): in debug check this is a DICT INDEX.
   goog.log.info(tachyfont.Logger.logger, this.name_);
   var arrayBuffer = binEd.dataView.buffer;
-  var dataStart = this.offset_ + 2 + 1 + (this.count_ + 1) * this.offSize_;
+  var dataStart = this.offset_ + 2 + 1 + (this.count_ + 1) * this.offsetSize_;
   for (var i = 0; i < this.count_; i++) {
     goog.log.info(tachyfont.Logger.logger, 'dict[' + i + ']');
     var name = this.name_ + i;
