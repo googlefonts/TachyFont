@@ -362,7 +362,12 @@ tachyfont.Sfnt.CompactOffsets.prototype.getVmtxOffset = function() {
  * @constructor @struct @final @protected
  */
 tachyfont.Sfnt.TableOfContents = function() {
-  /** @private @const {boolean} */
+  /**
+   * Indicates if this is a CFF font or a TrueType font.
+   * TODO(bstell): make this const when changing the init call to be called
+   * before the constructor.
+   * @private {boolean}
+   */
   this.isCff_ = false;
 
   /** @private {!Array<!tachyfont.Sfnt.TableOfContentsEntry>} */
