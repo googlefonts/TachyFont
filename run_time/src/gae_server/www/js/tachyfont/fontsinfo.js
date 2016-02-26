@@ -27,14 +27,24 @@ goog.require('tachyfont.FontInfo');
 /**
  * The information for a set of fonts.
  *
- * @param {!Array.<tachyfont.FontInfo>} fonts .
+ * @param {!Array.<!tachyfont.FontInfo>} fonts .
  * @param {?string} dataUrl The URL of the Tachyfont server.
  * @param {?string} reportUrl The URL to send logging/error reports to.
  * @constructor
  */
 tachyfont.FontsInfo = function(fonts, dataUrl, reportUrl) {
+  var priorityFonts = [], nonPriorityFonts = [];
+  // Sort the priority fonts to the front of the list.
+  for (var i = 0; i < fonts.length; i++) {
+    var font = fonts[i];
+    if (font.getPriority()) {
+      priorityFonts.push(font);
+    } else {
+      nonPriorityFonts.push(font);
+    }
+  }
   /** @private {!Array.<tachyfont.FontInfo>} */
-  this.fonts_ = fonts;
+  this.prioritySortedFonts_ = priorityFonts.concat(nonPriorityFonts);
 
   /** @private {string} */
   this.dataUrl_ = dataUrl || '';
@@ -49,8 +59,8 @@ tachyfont.FontsInfo = function(fonts, dataUrl, reportUrl) {
  *
  * @return {Array.<tachyfont.FontInfo>} The URL to the TachyFont server.
  */
-tachyfont.FontsInfo.prototype.getFonts = function() {
-  return this.fonts_;
+tachyfont.FontsInfo.prototype.getPrioritySortedFonts = function() {
+  return this.prioritySortedFonts_;
 };
 
 
@@ -76,8 +86,6 @@ tachyfont.FontsInfo.prototype.getReportUrl = function() {
 
 goog.scope(function() {
 goog.exportSymbol('tachyfont.FontsInfo', tachyfont.FontsInfo);
-goog.exportProperty(tachyfont.FontsInfo.prototype, 'getFonts',
-                    tachyfont.FontsInfo.prototype.getFonts);
 goog.exportProperty(tachyfont.FontsInfo.prototype, 'getDataUrl',
                     tachyfont.FontsInfo.prototype.getDataUrl);
 goog.exportProperty(tachyfont.FontsInfo.prototype, 'getReportUrl',
