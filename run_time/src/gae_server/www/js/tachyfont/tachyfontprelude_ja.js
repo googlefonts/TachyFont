@@ -34,6 +34,6 @@
         tachyfontprelude['newFontInfo'](fontFamily, weights[i], isTtf);
     fontInfos.push(fontInfo);
   }
-  var tachyfontpreludes = tachyfontprelude['load'](cssFontFamily, fontInfos);
+  tachyfontprelude['load'](cssFontFamily, fontInfos);
 })();
 
