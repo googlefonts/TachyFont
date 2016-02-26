@@ -51,6 +51,12 @@ tachyfont.CffDict = function(name, dataView) {
    * @private {!Object<string, !tachyfont.CffDict.OperandsOperatorSet>}
    */
   this.dict_ = {};
+  var binaryEditor = new tachyfont.BinaryFontEditor(this.dataView_, 0);
+  while (binaryEditor.getOffset() < this.dataView_.byteLength) {
+    var operandsOperatorSet =
+        tachyfont.CffDict.readOperandsOperator(binaryEditor);
+    this.dict_[operandsOperatorSet.operator] = operandsOperatorSet;
+  }
 
 };
 
@@ -71,38 +77,6 @@ tachyfont.CffDict.prototype.getDataView = function() {
  */
 tachyfont.CffDict.prototype.getDict = function() {
   return this.dict_;
-};
-
-
-/**
- * Initializes a CFF DICT.
- */
-tachyfont.CffDict.prototype.init = function() {
-  var binaryEditor = new tachyfont.BinaryFontEditor(this.dataView_, 0);
-
-  while (binaryEditor.getOffset() < this.dataView_.byteLength) {
-    var operandsOperatorSet =
-        tachyfont.CffDict.readOperandsOperator(binaryEditor);
-    this.dict_[operandsOperatorSet.operator] = operandsOperatorSet;
-  }
-};
-
-
-/**
- * Reads a CFF DICT.
- * @param {string} name The name of the dict.
- * @param {!ArrayBuffer} buffer The font bytes.
- * @param {number} offset The offset in the font bytes to the DICT.
- * @param {number} length The length of the DICT.
- *     operators to the logical names.
- * @return {!tachyfont.CffDict}
- */
-tachyfont.CffDict.loadDict = function(name, buffer, offset, length) {
-  var dataView = new DataView(buffer, offset, length);
-  //tachyfont.utils.hexDump(name, dataView);
-  var dict = new tachyfont.CffDict(name, dataView);
-  dict.init();
-  return dict;
 };
 
 
