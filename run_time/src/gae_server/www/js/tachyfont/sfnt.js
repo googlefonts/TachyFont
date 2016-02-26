@@ -42,7 +42,7 @@ tachyfont.Sfnt.Font = function() {
   this.fontData_;
 
   /** @private {!tachyfont.BinaryFontEditor} */
-  this.binEd_;
+  this.binaryEditor_;
 
   /** @private {!tachyfont.Sfnt.TableOfContents} */
   this.tableOfContents_;
@@ -83,7 +83,7 @@ tachyfont.Sfnt.Font.prototype.getFontData = function() {
  * @return {!tachyfont.BinaryFontEditor}
  */
 tachyfont.Sfnt.Font.prototype.getBinEd = function() {
-  return this.binEd_;
+  return this.binaryEditor_;
 };
 
 
@@ -165,10 +165,10 @@ tachyfont.Sfnt.Font.prototype.getAllocatedLength = function(tag) {
  */
 tachyfont.Sfnt.Font.prototype.init = function(fontData) {
   this.fontData_ = fontData;
-  this.binEd_ = new tachyfont.BinaryFontEditor(fontData, 0);
+  this.binaryEditor_ = new tachyfont.BinaryFontEditor(fontData, 0);
   // Get the table of contents.
   this.tableOfContents_ =
-      tachyfont.Sfnt.parseTableOfContents_(fontData, this.binEd_);
+      tachyfont.Sfnt.parseTableOfContents_(fontData, this.binaryEditor_);
   // Get the table of contents sorted by offset.
   this.sortedTableOfContents_ = this.tableOfContents_.getSorted_();
   var items = this.sortedTableOfContents_.getItems();
@@ -240,7 +240,7 @@ tachyfont.Sfnt.Font.prototype.replaceTable = function(tableTag, data) {
   var allocatedLength = this.getAllocatedLength(tableTag);
   var deltaAllocatedLength = this.replaceData_(entry.offset_, allocatedLength,
       data);
-  this.tableOfContents_.updateOffsets_(this.binEd_, deltaTableLength,
+  this.tableOfContents_.updateOffsets_(this.binaryEditor_, deltaTableLength,
       deltaAllocatedLength, entry.offset_);
   this.init(this.fontData_);
 };
@@ -288,7 +288,7 @@ tachyfont.Sfnt.Font.prototype.replaceData_ = function(offset, length, data) {
 
   // Install the new data into the font.
   this.fontData_ = new DataView(newFontBytes.buffer, headerSize);
-  this.binEd_ = new tachyfont.BinaryFontEditor(this.fontData_, 0);
+  this.binaryEditor_ = new tachyfont.BinaryFontEditor(this.fontData_, 0);
 
   return deltaSize;
 };

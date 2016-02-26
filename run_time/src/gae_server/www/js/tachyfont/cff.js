@@ -59,7 +59,7 @@ tachyfont.Cff = function(offset, fontData) {
    * Helper class to edit the binary data.
    * @private {!tachyfont.BinaryFontEditor}
    */
-  this.binEd_ =
+  this.binaryEditor_ =
       new tachyfont.BinaryFontEditor(this.fontData_, this.cffTableOffset_);
 
   /**
@@ -180,11 +180,11 @@ tachyfont.Cff.prototype.init_ = function() {
  */
 tachyfont.Cff.prototype.readHeader_ = function() {
   // Skip the major and minor number.
-  this.binEd_.skip(2);
-  this.hdrSize_ = this.binEd_.getUint8();
+  this.binaryEditor_.skip(2);
+  this.hdrSize_ = this.binaryEditor_.getUint8();
   // Skip offSize.
-  this.binEd_.skip(1);
-  this.binEd_.seek(this.hdrSize_);
+  this.binaryEditor_.skip(1);
+  this.binaryEditor_.seek(this.hdrSize_);
 };
 
 
@@ -195,8 +195,8 @@ tachyfont.Cff.prototype.readHeader_ = function() {
 tachyfont.Cff.prototype.readNameIndex_ = function() {
   this.nameIndexOffset_ = this.hdrSize_;
   this.nameIndex_ = new tachyfont.CffIndex('Name', this.nameIndexOffset_,
-      tachyfont.CffIndex.TYPE_STRING, this.binEd_);
-  this.nameIndex_.loadStrings(this.binEd_);
+      tachyfont.CffIndex.TYPE_STRING, this.binaryEditor_);
+  this.nameIndex_.loadStrings(this.binaryEditor_);
 };
 
 
@@ -208,8 +208,9 @@ tachyfont.Cff.prototype.readTopDictIndex_ = function() {
   this.topDictIndexOffset_ =
       this.nameIndexOffset_ + this.nameIndex_.getLength();
   this.topDictIndex_ = new tachyfont.CffIndex('TopDICT',
-      this.topDictIndexOffset_, tachyfont.CffIndex.TYPE_DICT, this.binEd_);
-  this.topDictIndex_.loadDicts(this.binEd_);
+      this.topDictIndexOffset_, tachyfont.CffIndex.TYPE_DICT,
+      this.binaryEditor_);
+  this.topDictIndex_.loadDicts(this.binaryEditor_);
   this.topDict_ = this.topDictIndex_.getDictElement(0);
 };
 
@@ -223,8 +224,8 @@ tachyfont.Cff.prototype.readFontDictIndex_ = function() {
   var fontDictIndexOffset =
       this.topDict_.getOperand(tachyfont.CffDict.Operator.FD_ARRAY, 0);
   this.fontDictIndex_ = new tachyfont.CffIndex('FontDICT',
-      fontDictIndexOffset, tachyfont.CffIndex.TYPE_DICT, this.binEd_);
-  this.fontDictIndex_.loadDicts(this.binEd_);
+      fontDictIndexOffset, tachyfont.CffIndex.TYPE_DICT, this.binaryEditor_);
+  this.fontDictIndex_.loadDicts(this.binaryEditor_);
 };
 
 
@@ -237,9 +238,9 @@ tachyfont.Cff.prototype.readCharStringsIndex_ = function() {
       this.topDict_.getOperand(tachyfont.CffDict.Operator.CHAR_STRINGS, 0);
   this.charStringsIndex_ = new tachyfont.CffIndex('CharStrings',
       this.charStringsIndexOffset_, tachyfont.CffIndex.TYPE_BINARY_STRING,
-      this.binEd_);
+      this.binaryEditor_);
   this.nGlyphs_ = this.charStringsIndex_.getCount();
-  this.charStringsIndex_.loadStrings(this.binEd_);
+  this.charStringsIndex_.loadStrings(this.binaryEditor_);
 };
 
 
@@ -259,7 +260,7 @@ tachyfont.Cff.prototype.getCharStringsIndex = function() {
  * @return {!Uint8Array}
  */
 tachyfont.Cff.prototype.getData = function(offset, length) {
-  offset += this.binEd_.baseOffset;
+  offset += this.binaryEditor_.baseOffset;
   var data = new Uint8Array(this.fontData_.buffer, offset, length);
   return data;
 };
