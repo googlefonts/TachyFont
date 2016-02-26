@@ -21,7 +21,6 @@
 goog.provide('tachyfont.Cff');
 
 goog.require('tachyfont.BinaryFontEditor');
-/** @suppress {extraRequire} */
 goog.require('tachyfont.CffDict');
 goog.require('tachyfont.CffIndex');
 
@@ -99,15 +98,19 @@ tachyfont.Cff = function(cffTableOffset, fontData) {
 
   /**
    * The CFF Top DICT.
-   * The Top DICT gives the offsets to the other tables.
+   * The Top DICT has the offsets to other items with the CFF table (as well as
+   * meta information about the font).
    * @private {!tachyfont.CffDict}
    */
   this.topDict_ = topDictIndex.getDictElement(0);
 
   /**
    * The CFF CharStrings INDEX:
-   *     - found by an offset in the Top DICT
-   *     - holds the glyph data.
+   *   - found by an offset in the Top DICT
+   *   - holds the glyph data.
+   * This item is poorly named:
+   *   - 'Char': this holds data about glyphs not about chars.
+   *   - 'Strings': this hold binary data not human readable strings.
    * @private {!tachyfont.CffIndex}
    */
   this.charStringsIndex_ =
@@ -116,8 +119,8 @@ tachyfont.Cff = function(cffTableOffset, fontData) {
 
   /**
    * The CFF Font DICT INDEX:
-   *     - found by an offset in the Top DICT
-   *     - holds per-font information
+   *   - found by an offset in the Top DICT
+   *   - holds per-font information such as 'nominal width' of the glyphs.
    * @private {!tachyfont.CffIndex}
    */
   this.fontDictIndex_ =
@@ -154,6 +157,7 @@ tachyfont.Cff.prototype.getTopDict = function() {
 
 /**
  * Get the Font DICT INDEX.
+ * This has the relative offsets to the Private Font DICTs.
  * @return {!tachyfont.CffIndex}
  */
 tachyfont.Cff.prototype.getFontDictIndex = function() {
@@ -163,6 +167,8 @@ tachyfont.Cff.prototype.getFontDictIndex = function() {
 
 /**
  * Get the CFF header size.
+ * The CFF Header holds it own length to provide upward compatibility if more
+ * space is needed.
  * @param {!tachyfont.BinaryFontEditor} binaryEditor Helper class to edit the
  *     binary data.
  * @return {number} The size of the CFF header.
@@ -191,8 +197,11 @@ tachyfont.Cff.readTopDictIndex = function(offset, binaryEditor) {
 
 /**
  * Reads the CFF Font DICT INDEX.
- * This has info on the per-font Private DICTs. Even though a CFF table has
- * only one font that font can have multiple Private DICTs.
+ * This has info on the per-font Private DICTs. Even though a CFF table in an
+ * OpenType font can only one main font that font can be used as if it were
+ * multiple fonts. For example, some of the glyph data could be 'changed'
+ * making one version have square ends and the other have round ends.
+ * have multiple Private DICTs.
  * @param {!tachyfont.CffDict} topDict The CFF Top DICT with the offset to the
  *     CharStrings INDEX.
  * @param {!tachyfont.BinaryFontEditor} binaryEditor Helper class to edit the
@@ -229,7 +238,7 @@ tachyfont.Cff.readCharStringsIndex = function(topDict, binaryEditor) {
 
 
 /**
- * Gets the CharStrings INDEX.
+ * Gets the CharStrings INDEX object.
  * @return {!tachyfont.CffIndex}
  */
 tachyfont.Cff.prototype.getCharStringsIndex = function() {
@@ -251,7 +260,10 @@ tachyfont.Cff.prototype.getData = function(offset, length) {
 
 
 /**
- * Gets an operand for an operator.
+ * Get the specified operand for an operator.
+ * CFF DICTs store values as sets of (1 or more) operands followed by an
+ * operator. For example the font bounding box is specified by four operands
+ * (eg, -991 -1050 2930 1810) followed by the FontBBox (5) operator.
  * @param {string} operator The operator.
  * @param {number} index The index of the operand to get.
  * @return {number}
@@ -264,6 +276,7 @@ tachyfont.Cff.prototype.getTopDictOperand = function(operator, index) {
 
 /**
  * Updates the CharStrings element size.
+ * Given a delta size update the offsets in the Top DICT and Private DICTs.
  * @param {number} deltaSize The size change.
  */
 tachyfont.Cff.prototype.updateCharStringsSize = function(deltaSize) {
@@ -274,7 +287,7 @@ tachyfont.Cff.prototype.updateCharStringsSize = function(deltaSize) {
     tachyfont.CffDict.Operator.FD_SELECT,
     tachyfont.CffDict.Operator.FD_ARRAY
   ];
-  var charStringsIndexOffset = this.charStringsIndex_.getOffset();
+  var charStringsIndexOffset = this.charStringsIndex_.getOffsetToIndex();
   for (var i = 0; i < operators.length; i++) {
     var operator = operators[i];
     var offset = this.topDict_.getOperand(operator, 0);
@@ -284,7 +297,7 @@ tachyfont.Cff.prototype.updateCharStringsSize = function(deltaSize) {
   }
 
   // Update the offsets to the Private DICTs.
-  var count = this.fontDictIndex_.getCount();
+  var count = this.fontDictIndex_.getNumberOfElements();
   for (var i = 0; i < count; i++) {
     var dict = this.fontDictIndex_.getDictElement(i);
     var offset = dict.getOperand(tachyfont.CffDict.Operator.PRIVATE, 1);

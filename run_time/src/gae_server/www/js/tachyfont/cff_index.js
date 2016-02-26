@@ -25,8 +25,9 @@ goog.require('tachyfont.CffDict');
 
 
 /**
- * This class reads a CFF (Adobe's Compact Font Format) INDEX. For a detailed
- * description of a CFF dict @see
+ * This class reads a CFF (Adobe's Compact Font Format) INDEX.
+ * See cff.js for an overview of how the CFF table is being modified.
+ * For a detailed description of a CFF INDEX @see
  * http://wwwimages.adobe.com/content/dam/Adobe/en/devnet/font/pdfs/5176.CFF.pdf
  * For a detailed description of the OpenType font format @see
  * http://www.microsoft.com/typography/otspec/
@@ -43,7 +44,7 @@ tachyfont.CffIndex = function(name, offset, type, binaryEditor) {
   /**
    * The offset in the CFF table to this INDEX.
    * @private @const {number} */
-  this.offset_ = offset;
+  this.offsetToIndex_ = offset;
 
   /**
    * The type of the elements in this INDEX.
@@ -56,13 +57,19 @@ tachyfont.CffIndex = function(name, offset, type, binaryEditor) {
 
   binaryEditor.seek(offset);
 
-  /** @private {number} */
-  this.count_ = binaryEditor.getUint16();
+  // Get the INDEX's count.
+  var count = binaryEditor.getUint16();
 
-  // Note: not following the CFF spec here.
-  // The spec says an empty INDEX is only 2 bytes long but all the fonts handled
-  // by TachyFont have been processed by fontTools and it always adds a 0x01
-  // byte for offsetSize and a single 0x01 byte for the offsets array.
+  /**
+   * The number offsets.
+   * Note: not strictly following the CFF spec here. The spec says an empty
+   * INDEX (count == 0) is only 2 bytes long (ie: does not have a offsetSize nor
+   * any offsets). However, all the fonts handled by TachyFont have been
+   * processed by fontTools and it always adds a 0x01 byte for offsetSize and a
+   * single 0x01 byte for the offsets array.
+   * @private {number}
+   */
+  this.numberOfOffsets_ = count + 1;
 
   /**
    * The number of bytes per element in the offset array.
@@ -70,20 +77,41 @@ tachyfont.CffIndex = function(name, offset, type, binaryEditor) {
    */
   this.offsetSize_ = binaryEditor.getUint8();
 
-  /** @private {!Array<number>} */
+  /**
+   * The offsets array.
+   * Note: that offsets are 1-indexed; ie: the element[0] is at offset 1.
+   * @private {!Array<number>}
+   */
   this.offsets_ = [];
 
-  for (var i = 0; i <= this.count_; i++) {
+  // Read in the offsets.
+  for (var i = 0; i < this.numberOfOffsets_; i++) {
     var elementOffset = binaryEditor.getElementOffset(this.offsetSize_);
     this.offsets_.push(elementOffset);
   }
 
-  /** @private @const {number} */
+  /**
+   * Calculate the INDEX length.
+   * @private @const {number}
+   */
   this.tableLength_ =
-      2 + // 2 count bytes.
-      1 + // 1 offSize byte (indicate the bytes per offset).
-      (this.count_ + 1) * this.offsetSize_ + // The offsets array size.
-      this.offsets_[this.count_] - 1; // The elements size.
+      2 + // The count field size.
+      1 + // The offsetSize field size (indicates the bytes per offset).
+      this.numberOfOffsets_ * this.offsetSize_ + // The offsets array size.
+      this.offsets_[this.numberOfOffsets_ - 1] - 1; // The elements size.
+};
+
+
+/**
+ * Compute a CFF INDEX's length.
+ * @param {number} offset The offset from start of the CFF table.
+ * @param {!tachyfont.BinaryFontEditor} binaryEditor A binary font editor.
+ * @return {number} The length of the INDEX.
+ */
+tachyfont.CffIndex.computeLength = function(offset, binaryEditor) {
+  var tmpIndex = new tachyfont.CffIndex('tmpName', offset,
+      tachyfont.CffIndex.TYPE_STRING, binaryEditor);
+  return tmpIndex.getLength();
 };
 
 
@@ -97,44 +125,11 @@ tachyfont.CffIndex.prototype.getName = function() {
 
 
 /**
- * Compute a CFF INDEX's length.
- * @param {number} offset The offset from start of the CFF table.
- * @param {!tachyfont.BinaryFontEditor} binaryEditor A binary font editor.
- * @return {number} The length of the INDEX.
+ * Gets the offset in the CFF table to this INDEX.
+ * @return {number}
  */
-tachyfont.CffIndex.computeLength = function(offset, binaryEditor) {
-  // Move the the start of the INDEX.
-  binaryEditor.seek(offset);
-
-  // Get the number of elements (2 bytes).
-  var count = binaryEditor.getUint16();
-
-  // Get the element size (1 byte).
-  var offsetSize = binaryEditor.getUint8();
-
-  // Move to the last offset.
-  binaryEditor.skip(count * offsetSize); // The offsets array field size.
-
-  // Get the elements field size
-  // CFF INDEXs store the actual offset + 1. So the elements field size is the
-  // last offset - 1
-  var elementsSize = binaryEditor.getElementOffset(offsetSize) - 1;
-
-  // Calculate the table size.
-  var tableSize = 2 + // The count field size.
-      1 + // The offsetSize field size.
-      (count + 1) * offsetSize + // The offset array field size.
-      elementsSize; // The elements field size.
-  return tableSize;
-};
-
-
-/**
- * Gets the offsetSize of elements.
- * @return {number} The offset in teh CFF table to this index.
- */
-tachyfont.CffIndex.prototype.getOffset = function() {
-  return this.offset_;
+tachyfont.CffIndex.prototype.getOffsetToIndex = function() {
+  return this.offsetToIndex_;
 };
 
 
@@ -194,6 +189,7 @@ tachyfont.CffIndex.prototype.getDictElement = function(index) {
 
 /**
  * Gets the offsetSize of elements.
+ * This is the number of bytes used by each element offset.
  * @return {number} The offsetSize of elements.
  */
 tachyfont.CffIndex.prototype.getOffsetSize = function() {
@@ -202,11 +198,11 @@ tachyfont.CffIndex.prototype.getOffsetSize = function() {
 
 
 /**
- * Gets the count of elements.
- * @return {number} The count of offsets.
+ * Gets the number of offsets.
+ * @return {number}
  */
-tachyfont.CffIndex.prototype.getCount = function() {
-  return this.count_;
+tachyfont.CffIndex.prototype.getNumberOfOffsets = function() {
+  return this.numberOfOffsets_;
 };
 
 
@@ -214,7 +210,7 @@ tachyfont.CffIndex.prototype.getCount = function() {
  * Gets the elements lenght.
  * @return {number}
  */
-tachyfont.CffIndex.prototype.getElementsLength = function() {
+tachyfont.CffIndex.prototype.getNumberOfElements = function() {
   return this.elements_.length;
 };
 
@@ -243,7 +239,7 @@ tachyfont.CffIndex.prototype.pushElement = function(element) {
  * @return {number} The element's offset.
  */
 tachyfont.CffIndex.prototype.getAdjustedElementOffset = function(index) {
-  var offset = 2 + 1 + (this.offsetSize_ * (this.count_ + 1)) - 1;
+  var offset = 2 + 1 + (this.offsetSize_ * this.numberOfOffsets_) - 1;
   offset += this.offsets_[index];
   return offset;
 };
@@ -281,9 +277,11 @@ tachyfont.CffIndex.prototype.getType = function() {
  * @param {!tachyfont.BinaryFontEditor} binaryEditor A binary font editor.
  */
 tachyfont.CffIndex.prototype.loadStrings = function(binaryEditor) {
-  var dataStart = this.offset_ + 2 + 1 + (this.count_ + 1) * this.offsetSize_;
+  var dataStart = this.offsetToIndex_ + 2 + 1 +
+      this.numberOfOffsets_ * this.offsetSize_;
   binaryEditor.seek(dataStart);
-  for (var i = 0; i < this.count_; i++) {
+  var count = this.numberOfOffsets_ - 1;
+  for (var i = 0; i < count; i++) {
     var dataLength = this.offsets_[i + 1] - this.offsets_[i];
     if (this.type_ == tachyfont.CffIndex.TYPE_STRING) {
       var str = binaryEditor.readString(dataLength);
@@ -306,8 +304,10 @@ tachyfont.CffIndex.prototype.loadDicts = function(binaryEditor) {
   }
   var dataView = binaryEditor.getDataView();
   var arrayBuffer = dataView.buffer;
-  var dataStart = this.offset_ + 2 + 1 + (this.count_ + 1) * this.offsetSize_;
-  for (var i = 0; i < this.count_; i++) {
+  var dataStart = this.offsetToIndex_ + 2 + 1 +
+      this.numberOfOffsets_ * this.offsetSize_;
+  var count = this.numberOfOffsets_ - 1;
+  for (var i = 0; i < count; i++) {
     var name = this.name_ + i;
     var length = this.offsets_[i + 1] - this.offsets_[i];
     var offset = dataView.byteOffset + binaryEditor.getBaseOffset() +
