@@ -295,6 +295,8 @@ tachyfont.CffIndex.prototype.loadStrings = function(binaryEditor) {
  */
 tachyfont.CffIndex.prototype.loadDicts = function(binaryEditor) {
   if (this.type_ != tachyfont.CffIndex.type.DICT) {
+    // Library fatal error: something is deeply wrong; perhaps a bad font. No
+    // recovery is possible.
     throw new Error(this.name_ + ' does not hold DICTS');
   }
   var dataView = binaryEditor.getDataView();
