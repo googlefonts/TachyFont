@@ -30,7 +30,7 @@ goog.provide('tachyfont.BinaryFontEditor');
  * Always big endian byte order.
  * @param {!DataView} dataView DataView which includes data
  * @param {number} baseOffset Set this offset as 0 offset for operations
- * @constructor
+ * @constructor @struct @final
  */
 tachyfont.BinaryFontEditor = function(dataView, baseOffset) {
   /**
@@ -54,9 +54,9 @@ tachyfont.BinaryFontEditor = function(dataView, baseOffset) {
    * to manage the current position; eg, after reading/writing a 32 bit value
    * this value in increased by 4. This also provides support for seek and skip
    * operations.
-   * @type {number}
+   * @private {number}
    */
-  this.offset = 0;
+  this.offset_ = 0;
 };
 
 
@@ -79,11 +79,20 @@ tachyfont.BinaryFontEditor.prototype.getBaseOffset = function() {
 
 
 /**
+ * Get the offset.
+ * @return {number}
+ */
+tachyfont.BinaryFontEditor.prototype.getOffset = function() {
+  return this.offset_;
+};
+
+
+/**
  * @return {tachyfont.utils.uint8} Unsigned byte
  */
 tachyfont.BinaryFontEditor.prototype.getUint8 = function() {
-  var data = this.dataView_.getUint8(this.baseOffset_ + this.offset);
-  this.offset++;
+  var data = this.dataView_.getUint8(this.baseOffset_ + this.offset_);
+  this.offset_++;
   return data;
 };
 
@@ -92,8 +101,8 @@ tachyfont.BinaryFontEditor.prototype.getUint8 = function() {
  * @param {number} data Unsigned byte
  */
 tachyfont.BinaryFontEditor.prototype.setUint8 = function(data) {
-  this.dataView_.setUint8(this.baseOffset_ + this.offset, data);
-  this.offset++;
+  this.dataView_.setUint8(this.baseOffset_ + this.offset_, data);
+  this.offset_++;
 };
 
 
@@ -101,8 +110,8 @@ tachyfont.BinaryFontEditor.prototype.setUint8 = function(data) {
  * @return {number} Unsigned short
  */
 tachyfont.BinaryFontEditor.prototype.getUint16 = function() {
-  var data = this.dataView_.getUint16(this.baseOffset_ + this.offset);
-  this.offset += 2;
+  var data = this.dataView_.getUint16(this.baseOffset_ + this.offset_);
+  this.offset_ += 2;
   return data;
 };
 
@@ -111,8 +120,8 @@ tachyfont.BinaryFontEditor.prototype.getUint16 = function() {
  * @param {number} data Unsigned short
  */
 tachyfont.BinaryFontEditor.prototype.setUint16 = function(data) {
-  this.dataView_.setUint16(this.baseOffset_ + this.offset, data);
-  this.offset += 2;
+  this.dataView_.setUint16(this.baseOffset_ + this.offset_, data);
+  this.offset_ += 2;
 };
 
 
@@ -120,8 +129,8 @@ tachyfont.BinaryFontEditor.prototype.setUint16 = function(data) {
  * @param {number} data Signed short
  */
 tachyfont.BinaryFontEditor.prototype.setInt16 = function(data) {
-  this.dataView_.setInt16(this.baseOffset_ + this.offset, data);
-  this.offset += 2;
+  this.dataView_.setInt16(this.baseOffset_ + this.offset_, data);
+  this.offset_ += 2;
 };
 
 
@@ -129,8 +138,8 @@ tachyfont.BinaryFontEditor.prototype.setInt16 = function(data) {
  * @return {number} Unsigned integer
  */
 tachyfont.BinaryFontEditor.prototype.getUint32 = function() {
-  var data = this.dataView_.getUint32(this.baseOffset_ + this.offset);
-  this.offset += 4;
+  var data = this.dataView_.getUint32(this.baseOffset_ + this.offset_);
+  this.offset_ += 4;
   return data;
 };
 
@@ -139,8 +148,8 @@ tachyfont.BinaryFontEditor.prototype.getUint32 = function() {
  * @param {number} data Unsigned integer
  */
 tachyfont.BinaryFontEditor.prototype.setUint32 = function(data) {
-  this.dataView_.setUint32(this.baseOffset_ + this.offset, data);
-  this.offset += 4;
+  this.dataView_.setUint32(this.baseOffset_ + this.offset_, data);
+  this.offset_ += 4;
 };
 
 
@@ -149,8 +158,8 @@ tachyfont.BinaryFontEditor.prototype.setUint32 = function(data) {
  * @private
  */
 tachyfont.BinaryFontEditor.prototype.getInt32_ = function() {
-  var data = this.dataView_.getInt32(this.baseOffset_ + this.offset);
-  this.offset += 4;
+  var data = this.dataView_.getInt32(this.baseOffset_ + this.offset_);
+  this.offset_ += 4;
   return data;
 };
 
@@ -185,7 +194,7 @@ tachyfont.BinaryFontEditor.prototype.setArrayOf = function(setter, arr) {
  * @param {number} offSize Number of bytes in offset
  * @return {number} Offset
  */
-tachyfont.BinaryFontEditor.prototype.getOffset = function(offSize) {
+tachyfont.BinaryFontEditor.prototype.getElementOffset = function(offSize) {
   var offset;
   switch (offSize) {
     case 1:
@@ -238,9 +247,9 @@ tachyfont.BinaryFontEditor.prototype.setOffset = function(offSize, value) {
  * @return {!DataView}
  */
 tachyfont.BinaryFontEditor.prototype.readDataView = function(length) {
-  var offset = this.dataView_.byteOffset + this.baseOffset_ + this.offset;
+  var offset = this.dataView_.byteOffset + this.baseOffset_ + this.offset_;
   var dataView = new DataView(this.dataView_.buffer, offset, length);
-  this.offset += length;
+  this.offset_ += length;
   return dataView;
 };
 
@@ -264,7 +273,7 @@ tachyfont.BinaryFontEditor.prototype.readString = function(length) {
  * @param {number} newOffset The new offset to move to.
  */
 tachyfont.BinaryFontEditor.prototype.seek = function(newOffset) {
-  this.offset = newOffset;
+  this.offset_ = newOffset;
 };
 
 
@@ -274,7 +283,7 @@ tachyfont.BinaryFontEditor.prototype.seek = function(newOffset) {
 tachyfont.BinaryFontEditor.prototype.skip = function(len) {
   if (len < 0)
     throw 'Only nonnegative numbers are accepted';
-  this.offset += len;
+  this.offset_ += len;
 };
 
 
@@ -282,7 +291,7 @@ tachyfont.BinaryFontEditor.prototype.skip = function(len) {
  * @return {number} current offset
  */
 tachyfont.BinaryFontEditor.prototype.tell = function() {
-  return this.offset;
+  return this.offset_;
 };
 
 
@@ -380,7 +389,7 @@ tachyfont.BinaryFontEditor.prototype.readNextGOS = function() {
     var extraOffset = [];
     var startCode, length, gid, segment;
     for (var i = 0; i < nGroups; i++) {
-      segment = this.getOffset(3); //lower 24 bits
+      segment = this.getElementOffset(3); //lower 24 bits
       startCode = (segment & 0xF80000) >> 19;
       length = (segment & 0x70000) >> 16;
       gid = segment & 0xFFFF;
@@ -819,7 +828,7 @@ tachyfont.BinaryFontEditor.prototype.setMtxSideBearing =
 tachyfont.BinaryFontEditor.prototype.getGlyphDataOffset =
     function(start, offSize, gid) {
   this.seek(start + gid * offSize);
-  return this.getOffset(offSize);
+  return this.getElementOffset(offSize);
 };
 
 

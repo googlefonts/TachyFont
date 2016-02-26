@@ -74,7 +74,7 @@ tachyfont.CffIndex = function(name, offset, type, binaryEditor) {
   this.offsets_ = [];
 
   for (var i = 0; i <= this.count_; i++) {
-    var elementOffset = binaryEditor.getOffset(this.offsetSize_);
+    var elementOffset = binaryEditor.getElementOffset(this.offsetSize_);
     this.offsets_.push(elementOffset);
   }
 
@@ -109,7 +109,7 @@ tachyfont.CffIndex.computeLength = function(offset, binaryEditor) {
   // Get the elements field size
   // CFF INDEXs store the actual offset + 1. So the elements field size is the
   // last offset - 1
-  var elementsSize = binaryEditor.getOffset(offsetSize) - 1;
+  var elementsSize = binaryEditor.getElementOffset(offsetSize) - 1;
 
   // Calculate the table size.
   var tableSize = 2 + // The count field size.

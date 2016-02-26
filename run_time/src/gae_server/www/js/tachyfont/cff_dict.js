@@ -81,7 +81,7 @@ tachyfont.CffDict.prototype.getDict = function() {
 tachyfont.CffDict.prototype.init_ = function() {
   var binaryEditor = new tachyfont.BinaryFontEditor(this.dataView_, 0);
 
-  while (binaryEditor.offset < this.dataView_.byteLength) {
+  while (binaryEditor.getOffset() < this.dataView_.byteLength) {
     var operandsOperatorSet =
         tachyfont.CffDict.readOperandsOperator_(binaryEditor);
     this.dict_[operandsOperatorSet.operator] = operandsOperatorSet;
@@ -275,7 +275,7 @@ tachyfont.CffDict.numberToOperand_ = function(number, length) {
  */
 tachyfont.CffDict.readOperandsOperator_ = function(binaryEditor) {
   var operands = [], operandLengths = [], operator = '',
-      offset = binaryEditor.offset;
+      offset = binaryEditor.getOffset();
 
   var operand = '', b0, b1, b2, b3, b4, op, isUndefined;
   while (operands.length <= 48) {
