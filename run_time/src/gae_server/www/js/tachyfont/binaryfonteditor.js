@@ -300,7 +300,10 @@ tachyfont.BinaryFontEditor.prototype.tell = function() {
  * @return {function()} NibbleOfNumber decoder function
  */
 tachyfont.BinaryFontEditor.prototype.nibbleReader = function() {
-  var that = this, value, nibbleByte, aligned = true;
+  var that = this;
+  var value;
+  var nibbleByte;
+  var aligned = true;
   return function() {
     if (aligned) {
       nibbleByte = that.getUint8();
@@ -320,8 +323,11 @@ tachyfont.BinaryFontEditor.prototype.nibbleReader = function() {
  * @return {Array<number>} array of extra numbers
  */
 tachyfont.BinaryFontEditor.prototype.readExtraArray = function(extraLen) {
-  var readNextNibble = this.nibbleReader(), extraArray = [],
-      extraData, sign, numNibbles;
+  var readNextNibble = this.nibbleReader();
+  var extraArray = [];
+  var extraData;
+  var sign;
+  var numNibbles;
   for (var i = 0; i < extraLen; i++) {
     extraData = 0;
     numNibbles = readNextNibble();
@@ -354,7 +360,9 @@ tachyfont.BinaryFontEditor.prototype.readNextGOS = function() {
   var segments = [];
 
   if (type == 5) {
-    var startCode, length, gid;
+    var startCode;
+    var length;
+    var gid;
     for (var i = 0; i < nGroups; i++) {
       startCode = this.getUint32();
       length = this.getUint32();
@@ -363,7 +371,9 @@ tachyfont.BinaryFontEditor.prototype.readNextGOS = function() {
     }
   } else if (type == 4) {
     var extraOffset = [];
-    var i = 0, nextByte, value;
+    var i = 0;
+    var nextByte;
+    var value;
     while (i < nGroups) {
       nextByte = this.getUint8();
       for (var j = 0; j < 4; j++) {
@@ -380,14 +390,17 @@ tachyfont.BinaryFontEditor.prototype.readNextGOS = function() {
         }
       }
     }
-    var extraLen = extraOffset.length,
-            extraArray = this.readExtraArray(extraLen);
+    var extraLen = extraOffset.length;
+    var extraArray = this.readExtraArray(extraLen);
     for (i = 0; i < extraLen; i++) {
       segments[extraOffset[i]] = extraArray[i];
     }
   } else if (type == 3) {
     var extraOffset = [];
-    var startCode, length, gid, segment;
+    var startCode;
+    var length;
+    var gid;
+    var segment;
     for (var i = 0; i < nGroups; i++) {
       segment = this.getElementOffset(3); //lower 24 bits
       startCode = (segment & 0xF80000) >> 19;
@@ -401,8 +414,8 @@ tachyfont.BinaryFontEditor.prototype.readNextGOS = function() {
         extraOffset.push([i, 1]);
       }
     }
-    var extraLen = extraOffset.length,
-        extraArray = this.readExtraArray(extraLen);
+    var extraLen = extraOffset.length;
+    var extraArray = this.readExtraArray(extraLen);
     for (var i = 0; i < extraLen; i++) {
       segments[extraOffset[i][0]][extraOffset[i][1]] = extraArray[i];
     }
@@ -411,7 +424,10 @@ tachyfont.BinaryFontEditor.prototype.readNextGOS = function() {
     }
   } else if (type == 2) {
     var extraOffset = [];
-    var deltaStartCode, length, deltaGid, segment;
+    var deltaStartCode;
+    var length;
+    var deltaGid;
+    var segment;
     for (var i = 0; i < nGroups; i++) {
       segment = this.getUint8();
       deltaStartCode = (segment & 0xE0) >> 5;
@@ -428,8 +444,8 @@ tachyfont.BinaryFontEditor.prototype.readNextGOS = function() {
         extraOffset.push([i, 2]);
       }
     }
-    var extraLen = extraOffset.length,
-        extraArray = this.readExtraArray(extraLen);
+    var extraLen = extraOffset.length;
+    var extraArray = this.readExtraArray(extraLen);
     for (var i = 0; i < extraLen; i++) {
       segments[extraOffset[i][0]][extraOffset[i][1]] = extraArray[i];
     }
@@ -439,7 +455,9 @@ tachyfont.BinaryFontEditor.prototype.readNextGOS = function() {
     }
   } else if (type == 6 || type == 7) {
     var extraOffset = [];
-    var deltaFirst, deltaNleft, segment;
+    var deltaFirst;
+    var deltaNleft;
+    var segment;
     for (var i = 0; i < nGroups; i++) {
       segment = this.getUint8();
       deltaFirst = (segment & 0xF8) >> 3;
@@ -452,8 +470,8 @@ tachyfont.BinaryFontEditor.prototype.readNextGOS = function() {
         extraOffset.push([i, 1]);
       }
     }
-    var extraLen = extraOffset.length,
-        extraArray = this.readExtraArray(extraLen);
+    var extraLen = extraOffset.length;
+    var extraArray = this.readExtraArray(extraLen);
     for (var i = 0; i < extraLen; i++) {
       segments[extraOffset[i][0]][extraOffset[i][1]] = extraArray[i];
     }
@@ -616,9 +634,16 @@ tachyfont.BinaryFontEditor.readOps.CCMP = function(editor, font) {
     var format_4_arrays = [];
     var glyphIdArray = [];
     var glyphIdIdx = 0;
-    var fmt12SegNum = 0, fmt12SegNumBegin, fmt12SegNumEnd;
+    var fmt12SegNum = 0;
+    var fmt12SegNumBegin;
+    var fmt12SegNumEnd;
     var fmt4SegCount = gos_type_4_lens.len;
-    var startCode, endCode, idDelta, idRangeOffset, startGid, codeRange;
+    var startCode;
+    var endCode;
+    var idDelta;
+    var idRangeOffset;
+    var startGid;
+    var codeRange;
     for (var i = 0; i < fmt4SegCount; i++) { // fix this
       if (gos_type_4_lens.segments[i] == 0) {
         // The only time there is a format 4 segment with no format 12
@@ -644,9 +669,9 @@ tachyfont.BinaryFontEditor.readOps.CCMP = function(editor, font) {
         idRangeOffset = 2 * (glyphIdIdx - i + fmt4SegCount);
         codeRange = endCode - startCode + 1;
         glyphIdIdx += codeRange;
-        var currentSeg = fmt12SegNumBegin,
-            currentSegArr = gos_type_12.segments[currentSeg],
-                    gid;
+        var currentSeg = fmt12SegNumBegin;
+        var currentSegArr = gos_type_12.segments[currentSeg];
+        var gid;
         for (var codePoint = startCode; codePoint <= endCode; ) {
           if (codePoint >= currentSegArr[0] &&
               codePoint <= (currentSegArr[0] + currentSegArr[1] - 1)) {
@@ -781,8 +806,10 @@ tachyfont.BinaryFontEditor.prototype.parseBaseHeader = function() {
     throw 'Incompatible Base Font Version detected!';
   }
   var count = this.getUint16();
-  var tag, tagOffset, saveOffset,
-      dataStart = count * 8 + 4 + 4 + 4 + 2;//magic, headSize, ver, count
+  var tag;
+  var tagOffset;
+  var saveOffset;
+  var dataStart = count * 8 + 4 + 4 + 4 + 2;//magic, headSize, ver, count
   for (var i = 0; i < count; i++) {
     tag = this.readString(4);
     tagOffset = this.getUint32();

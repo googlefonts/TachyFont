@@ -45,7 +45,8 @@ tachyfont.GlyphBundleResponse = function(version, signature, offset, buffer) {
 
   for (var i = 0; i < count; i += 1) {
     var id = binaryEditor.getUint16();
-    var hmtx, vmtx;
+    var hmtx;
+    var vmtx;
     if (flags & tachyfont.IncrementalFontUtils.FLAGS.HAS_HMTX) {
       hmtx = binaryEditor.getUint16();
     }

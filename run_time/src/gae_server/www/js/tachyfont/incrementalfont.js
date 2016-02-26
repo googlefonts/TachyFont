@@ -610,7 +610,8 @@ tachyfont.IncrementalFont.obj.prototype.injectCharacters =
     var id = glyphData.getId();
     glyphIds.push(id);
     var nextId = id + 1;
-    var hmtx, vmtx;
+    var hmtx;
+    var vmtx;
     if (flags & tachyfont.IncrementalFontUtils.FLAGS.HAS_HMTX) {
       hmtx = glyphData.getHmtx();
       baseBinEd.setMtxSideBearing(this.fileInfo_.hmtxOffset,
