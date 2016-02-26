@@ -88,6 +88,15 @@ tachyfont.CffIndex = function(name, offset, type, binaryEditor) {
 
 
 /**
+ * Get the INDEX's name.
+ * @return {string}
+ */
+tachyfont.CffIndex.prototype.getName = function() {
+  return this.name_;
+};
+
+
+/**
  * Compute a CFF INDEX's length.
  * @param {number} offset The offset from start of the CFF table.
  * @param {!tachyfont.BinaryFontEditor} binaryEditor A binary font editor.
@@ -194,10 +203,19 @@ tachyfont.CffIndex.prototype.getOffsetSize = function() {
 
 /**
  * Gets the count of elements.
- * @return {number} The count of elements.
+ * @return {number} The count of offsets.
  */
 tachyfont.CffIndex.prototype.getCount = function() {
   return this.count_;
+};
+
+
+/**
+ * Gets the elements lenght.
+ * @return {number}
+ */
+tachyfont.CffIndex.prototype.getElementsLength = function() {
+  return this.elements_.length;
 };
 
 
@@ -207,6 +225,15 @@ tachyfont.CffIndex.prototype.getCount = function() {
  */
 tachyfont.CffIndex.prototype.getElements = function() {
   return this.elements_;
+};
+
+
+/**
+ * Push an element.
+ * @param {string|!DataView|!tachyfont.CffDict} element An element to push.
+ */
+tachyfont.CffIndex.prototype.pushElement = function(element) {
+  this.elements_.push(element);
 };
 
 

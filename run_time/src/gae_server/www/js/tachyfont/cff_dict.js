@@ -48,7 +48,7 @@ tachyfont.CffDict = function(name, dataView) {
 
   /**
    * Map of operator->operand.
-   * @private {!Object<string, !tachyfont.CffDict.OperandsOperatorSet_>}
+   * @private {!Object<string, !tachyfont.CffDict.OperandsOperatorSet>}
    */
   this.dict_ = {};
 
@@ -67,7 +67,7 @@ tachyfont.CffDict.prototype.getDataView = function() {
 /**
  * Get the dict.
  * This holds the operator/operands sets from the CFF DICT.
- * @return {!Object<string, !tachyfont.CffDict.OperandsOperatorSet_>}
+ * @return {!Object<string, !tachyfont.CffDict.OperandsOperatorSet>}
  */
 tachyfont.CffDict.prototype.getDict = function() {
   return this.dict_;
@@ -76,14 +76,13 @@ tachyfont.CffDict.prototype.getDict = function() {
 
 /**
  * Initializes a CFF DICT.
- * @private
  */
-tachyfont.CffDict.prototype.init_ = function() {
+tachyfont.CffDict.prototype.init = function() {
   var binaryEditor = new tachyfont.BinaryFontEditor(this.dataView_, 0);
 
   while (binaryEditor.getOffset() < this.dataView_.byteLength) {
     var operandsOperatorSet =
-        tachyfont.CffDict.readOperandsOperator_(binaryEditor);
+        tachyfont.CffDict.readOperandsOperator(binaryEditor);
     this.dict_[operandsOperatorSet.operator] = operandsOperatorSet;
   }
 };
@@ -102,7 +101,7 @@ tachyfont.CffDict.loadDict = function(name, buffer, offset, length) {
   var dataView = new DataView(buffer, offset, length);
   //tachyfont.utils.hexDump(name, dataView);
   var dict = new tachyfont.CffDict(name, dataView);
-  dict.init_();
+  dict.init();
   return dict;
 };
 
@@ -146,7 +145,7 @@ tachyfont.CffDict.prototype.getOperand = function(operator, index) {
 /**
  * Gets a CFF DICT OperandsOperatorSet.
  * @param {string} operator The operator of the operands/operator.
- * @return {!tachyfont.CffDict.OperandsOperatorSet_ } The OperandsOperatorSet.
+ * @return {!tachyfont.CffDict.OperandsOperatorSet} The OperandsOperatorSet.
  */
 tachyfont.CffDict.prototype.getOperandsOperatorSet = function(operator) {
   if (operator in this.dict_) {
@@ -172,7 +171,7 @@ tachyfont.CffDict.prototype.updateDictEntryOperand =
   for (var i = 0; i < index; i++) {
     operandOffset += operandsOperatorSet.operandLengths[i];
   }
-  var operandValues = tachyfont.CffDict.numberToOperand_(operand, length);
+  var operandValues = tachyfont.CffDict.numberToOperand(operand, length);
 
   // Update the operand value.
   var binaryEditor = new tachyfont.BinaryFontEditor(this.dataView_,
@@ -192,9 +191,8 @@ tachyfont.CffDict.prototype.updateDictEntryOperand =
  * @param {number} offset The starting offset of the operands/operator.
  * @param {!Array<number>} operandLengths The lengths of the operands.
  * @constructor @struct @final
- * @private
  */
-tachyfont.CffDict.OperandsOperatorSet_ =
+tachyfont.CffDict.OperandsOperatorSet =
     function(operands, operator, offset, operandLengths) {
   /** @type {string} */
   this.operator = operator;
@@ -229,9 +227,8 @@ tachyfont.CffDict.OperandsOperatorSet_ =
  * @param {number} number The number to convert.
  * @param {number} length The length in bytes to convert the number to.
  * @return {!Array<number>} The byte values for the operand.
- * @private
  */
-tachyfont.CffDict.numberToOperand_ = function(number, length) {
+tachyfont.CffDict.numberToOperand = function(number, length) {
   var b0, b1, b2, b3, b4;
   if (length == 1 && number >= -107 && number <= 107) {
     // b0-139 = number
@@ -269,11 +266,10 @@ tachyfont.CffDict.numberToOperand_ = function(number, length) {
  * Reads a CFF DICT Operands/Operator set.
  * @param {!tachyfont.BinaryFontEditor} binaryEditor The binary editor at the
  *     position of the Operands/Operator.
- * @return {!tachyfont.CffDict.OperandsOperatorSet_} The operands operator set.
+ * @return {!tachyfont.CffDict.OperandsOperatorSet} The operands operator set.
  * @throws {Error} If a reserved operant is found.
- * @private
  */
-tachyfont.CffDict.readOperandsOperator_ = function(binaryEditor) {
+tachyfont.CffDict.readOperandsOperator = function(binaryEditor) {
   var operands = [], operandLengths = [], operator = '',
       offset = binaryEditor.getOffset();
 
@@ -327,7 +323,7 @@ tachyfont.CffDict.readOperandsOperator_ = function(binaryEditor) {
     operator += op.toString();
     break;
   }
-  return new tachyfont.CffDict.OperandsOperatorSet_(operands, operator, offset,
+  return new tachyfont.CffDict.OperandsOperatorSet(operands, operator, offset,
       operandLengths);
 };
 
