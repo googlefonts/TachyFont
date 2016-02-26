@@ -68,7 +68,7 @@ tachyfontprelude.ERROR_BAD_MAGIC_NUMBER = 3;
  * The errors encounter while loading the Tachyfont preludes.
  * These will be reported by the TachyFont library.
  *
- * @private {Array.<Array.<string|number>>}
+ * @private {Array<Array<string|number>>}
  */
 tachyfontprelude.reports_ = [];
 
@@ -102,7 +102,7 @@ tachyfontprelude.FontInfo_ = function(fontFamily, weight, isTtf) {
 /**
  * Load the TachyFonts from persistent store if avaiable.
  * @param {string} cssFontFamily The CSS font-family name.
- * @param {!Array.<!tachyfontprelude.FontInfo_>} fontInfos The list of fonts to
+ * @param {!Array<!tachyfontprelude.FontInfo_>} fontInfos The list of fonts to
  *     load.
  * @constructor
  * @private
@@ -346,7 +346,7 @@ tachyfontprelude['newFontInfo'] = function(fontFamily, weight, isTtf) {
  * Export the main load function.
  *
  * @param {string} cssFontFamily The CSS font-family name.
- * @param {!Array.<!tachyfontprelude.FontInfo_>} fontInfos The list of fonts to
+ * @param {!Array<!tachyfontprelude.FontInfo_>} fontInfos The list of fonts to
  *     load.
  */
 tachyfontprelude['load'] = function(cssFontFamily, fontInfos) {
