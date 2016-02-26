@@ -99,7 +99,7 @@ tachyfont.Cff = function(cffTableOffset, fontData) {
   /**
    * The CFF Top DICT.
    * The Top DICT has the offsets to other items with the CFF table (as well as
-   * meta information about the font).
+   * other meta information about the font).
    * @private {!tachyfont.CffDict}
    */
   this.topDict_ = topDictIndex.getDictElement(0);
@@ -168,7 +168,7 @@ tachyfont.Cff.prototype.getFontDictIndex = function() {
 /**
  * Get the CFF header size.
  * The CFF Header holds it own length to provide upward compatibility if more
- * space is needed.
+ * header space is needed.
  * @param {!tachyfont.BinaryFontEditor} binaryEditor Helper class to edit the
  *     binary data.
  * @return {number} The size of the CFF header.
@@ -189,7 +189,7 @@ tachyfont.Cff.getHeaderSize = function(binaryEditor) {
  */
 tachyfont.Cff.readTopDictIndex = function(offset, binaryEditor) {
   var topDictIndex = new tachyfont.CffIndex('TopDICT', offset,
-      tachyfont.CffIndex.TYPE_DICT, binaryEditor);
+      tachyfont.CffIndex.type.DICT, binaryEditor);
   topDictIndex.loadDicts(binaryEditor);
   return topDictIndex;
 };
@@ -201,7 +201,6 @@ tachyfont.Cff.readTopDictIndex = function(offset, binaryEditor) {
  * OpenType font can only one main font that font can be used as if it were
  * multiple fonts. For example, some of the glyph data could be 'changed'
  * making one version have square ends and the other have round ends.
- * have multiple Private DICTs.
  * @param {!tachyfont.CffDict} topDict The CFF Top DICT with the offset to the
  *     CharStrings INDEX.
  * @param {!tachyfont.BinaryFontEditor} binaryEditor Helper class to edit the
@@ -211,7 +210,7 @@ tachyfont.Cff.readFontDictIndex = function(topDict, binaryEditor) {
   var fontDictIndexOffset =
       topDict.getOperand(tachyfont.CffDict.Operator.FD_ARRAY, 0);
   var fontDictIndex = new tachyfont.CffIndex('FontDICT', fontDictIndexOffset,
-      tachyfont.CffIndex.TYPE_DICT, binaryEditor);
+      tachyfont.CffIndex.type.DICT, binaryEditor);
   fontDictIndex.loadDicts(binaryEditor);
   return fontDictIndex;
 };
@@ -230,7 +229,7 @@ tachyfont.Cff.readCharStringsIndex = function(topDict, binaryEditor) {
   var charStringsIndexOffset =
       topDict.getOperand(tachyfont.CffDict.Operator.CHAR_STRINGS, 0);
   var charStringsIndex = new tachyfont.CffIndex('CharStrings',
-      charStringsIndexOffset, tachyfont.CffIndex.TYPE_BINARY_STRING,
+      charStringsIndexOffset, tachyfont.CffIndex.type.BINARY_STRING,
       binaryEditor);
   charStringsIndex.loadStrings(binaryEditor);
   return charStringsIndex;
@@ -254,8 +253,7 @@ tachyfont.Cff.prototype.getCharStringsIndex = function() {
  */
 tachyfont.Cff.prototype.getData = function(offset, length) {
   offset += this.binaryEditor_.getBaseOffset();
-  var data = new Uint8Array(this.fontData_.buffer, offset, length);
-  return data;
+  return new Uint8Array(this.fontData_.buffer, offset, length);
 };
 
 
@@ -269,27 +267,32 @@ tachyfont.Cff.prototype.getData = function(offset, length) {
  * @return {number}
  */
 tachyfont.Cff.prototype.getTopDictOperand = function(operator, index) {
-  var value = this.topDict_.getOperand(operator, index);
-  return value;
+  return this.topDict_.getOperand(operator, index);
 };
 
 
 /**
- * Updates the CharStrings element size.
+ * Lists the items in the CFF table whose offsets can change when the
+ * CharStrings INDEX is resized.
+ * @const
+ * @private {Array<string>}
+ */
+tachyfont.Cff.repositionedItemsOperators_ = [
+  tachyfont.CffDict.Operator.CHARSET,
+  tachyfont.CffDict.Operator.FD_SELECT,
+  tachyfont.CffDict.Operator.FD_ARRAY
+];
+
+
+/**
+ * Updates the offsets in the CFF table when the CharStrings INDEX changes size.
  * Given a delta size update the offsets in the Top DICT and Private DICTs.
  * @param {number} deltaSize The size change.
  */
 tachyfont.Cff.prototype.updateCharStringsSize = function(deltaSize) {
-  // The list of table whose offsets that could change because of a CharStrings
-  // size change.
-  var operators = [
-    tachyfont.CffDict.Operator.CHARSET,
-    tachyfont.CffDict.Operator.FD_SELECT,
-    tachyfont.CffDict.Operator.FD_ARRAY
-  ];
   var charStringsIndexOffset = this.charStringsIndex_.getOffsetToIndex();
-  for (var i = 0; i < operators.length; i++) {
-    var operator = operators[i];
+  for (var i = 0; i < tachyfont.Cff.repositionedItemsOperators_.length; i++) {
+    var operator = tachyfont.Cff.repositionedItemsOperators_[i];
     var offset = this.topDict_.getOperand(operator, 0);
     if (offset > charStringsIndexOffset) {
       this.topDict_.updateDictEntryOperand(operator, 0, deltaSize);

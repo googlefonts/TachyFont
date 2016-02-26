@@ -174,7 +174,8 @@ tachyfont.Sfnt.Font.prototype.init = function(fontData) {
   var items = this.sortedTableOfContents_.getItems();
   // Get the allocated lengths. This includes any padding which the tableEntry
   // length does not.
-  var i, countLessOne = items.length - 1;
+  var i;
+  var countLessOne = items.length - 1;
   for (i = 0; i < countLessOne; i++) {
     var thisEntry = items[i];
     var nextEntry = items[i + 1];

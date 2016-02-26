@@ -33,7 +33,8 @@ goog.require('tachyfont.FontInfo');
  * @constructor
  */
 tachyfont.FontsInfo = function(fonts, dataUrl, reportUrl) {
-  var priorityFonts = [], nonPriorityFonts = [];
+  var priorityFonts = [];
+  var nonPriorityFonts = [];
   // Sort the priority fonts to the front of the list.
   for (var i = 0; i < fonts.length; i++) {
     var font = fonts[i];

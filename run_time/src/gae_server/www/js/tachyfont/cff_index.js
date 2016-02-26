@@ -48,6 +48,7 @@ tachyfont.CffIndex = function(name, offset, type, binaryEditor) {
 
   /**
    * The type of the elements in this INDEX.
+   * Possible types are STRING, BINARY_STRING, and (CFF) DICT.
    * @private @const {number}
    */
   this.type_ = type;
@@ -94,7 +95,7 @@ tachyfont.CffIndex = function(name, offset, type, binaryEditor) {
    * Calculate the INDEX length.
    * @private @const {number}
    */
-  this.tableLength_ =
+  this.indexByteLength_ =
       2 + // The count field size.
       1 + // The offsetSize field size (indicates the bytes per offset).
       this.numberOfOffsets_ * this.offsetSize_ + // The offsets array size.
@@ -110,8 +111,8 @@ tachyfont.CffIndex = function(name, offset, type, binaryEditor) {
  */
 tachyfont.CffIndex.computeLength = function(offset, binaryEditor) {
   var tmpIndex = new tachyfont.CffIndex('tmpName', offset,
-      tachyfont.CffIndex.TYPE_STRING, binaryEditor);
-  return tmpIndex.getLength();
+      tachyfont.CffIndex.type.STRING, binaryEditor);
+  return tmpIndex.indexByteLength_;
 };
 
 
@@ -134,25 +135,17 @@ tachyfont.CffIndex.prototype.getOffsetToIndex = function() {
 
 
 /**
- * Indicates the CFF INDEX holds human readable strings.
- * @const {number}
+ * Defines the type of data held in a CFF INDEX.
+ * @enum {number}
  */
-tachyfont.CffIndex.TYPE_STRING = 1;
-
-
-/**
- * Indicates the CFF INDEX holds human binary strings.
- * @const {number}
- */
-tachyfont.CffIndex.TYPE_BINARY_STRING = 2;
-
-
-/**
- * Indicates the CFF INDEX holds DICTs.
- * DICTs always have binary data.
- * @const {number}
- */
-tachyfont.CffIndex.TYPE_DICT = 3;
+tachyfont.CffIndex.type = {
+  /** The INDEX hold human readable strings. */
+  STRING: 1,
+  /** The INDEX hold binary strings. */
+  BINARY_STRING: 2,
+  /** The INDEX hold CFF DICT(s). */
+  DICT: 3
+};
 
 
 /**
@@ -177,7 +170,7 @@ tachyfont.CffIndex.prototype.getElement = function(index) {
  * @throws RangeError if index is not in the array.
  */
 tachyfont.CffIndex.prototype.getDictElement = function(index) {
-  if (this.type_ != tachyfont.CffIndex.TYPE_DICT) {
+  if (this.type_ != tachyfont.CffIndex.type.DICT) {
     throw new Error('not a DICT INDEX');
   }
   if (index in this.elements_) {
@@ -225,7 +218,7 @@ tachyfont.CffIndex.prototype.getElements = function() {
 
 
 /**
- * Push an element.
+ * Pushes an element.
  * @param {string|!DataView|!tachyfont.CffDict} element An element to push.
  */
 tachyfont.CffIndex.prototype.pushElement = function(element) {
@@ -234,14 +227,15 @@ tachyfont.CffIndex.prototype.pushElement = function(element) {
 
 
 /**
- * Gets the element's offset from the beginning of the index.
+ * Gets the element's offset from the beginning of the INDEX.
+ * When lazily loading glyph data this is needed to update the CharStrings data
+ * and the DICT data.
  * @param {number} index The index to get the offset for.
  * @return {number} The element's offset.
  */
 tachyfont.CffIndex.prototype.getAdjustedElementOffset = function(index) {
   var offset = 2 + 1 + (this.offsetSize_ * this.numberOfOffsets_) - 1;
-  offset += this.offsets_[index];
-  return offset;
+  return offset + this.offsets_[index];
 };
 
 
@@ -255,16 +249,17 @@ tachyfont.CffIndex.prototype.getOffsets = function() {
 
 
 /**
- * Gets the table length.
+ * Gets the number of bytes used by this INDEX.
  * @return {number} The length of the table.
  */
-tachyfont.CffIndex.prototype.getLength = function() {
-  return this.tableLength_;
+tachyfont.CffIndex.prototype.getIndexByteLength = function() {
+  return this.indexByteLength_;
 };
 
 
 /**
  * Gets the table type.
+ * TODO(bstell): make subclasses for binary string and DICT.
  * @return {number} The type of the table.
  */
 tachyfont.CffIndex.prototype.getType = function() {
@@ -274,6 +269,7 @@ tachyfont.CffIndex.prototype.getType = function() {
 
 /**
  * Loads the INDEX strings.
+ * TODO(bstell): put this in a binary string subclass.
  * @param {!tachyfont.BinaryFontEditor} binaryEditor A binary font editor.
  */
 tachyfont.CffIndex.prototype.loadStrings = function(binaryEditor) {
@@ -283,7 +279,7 @@ tachyfont.CffIndex.prototype.loadStrings = function(binaryEditor) {
   var count = this.numberOfOffsets_ - 1;
   for (var i = 0; i < count; i++) {
     var dataLength = this.offsets_[i + 1] - this.offsets_[i];
-    if (this.type_ == tachyfont.CffIndex.TYPE_STRING) {
+    if (this.type_ == tachyfont.CffIndex.type.STRING) {
       var str = binaryEditor.readString(dataLength);
       this.elements_.push(str);
     } else {
@@ -296,10 +292,11 @@ tachyfont.CffIndex.prototype.loadStrings = function(binaryEditor) {
 
 /**
  * Loads the INDEX DICTs.
+ * TODO(bstell): put this in a DICT subclass.
  * @param {!tachyfont.BinaryFontEditor} binaryEditor A binary font editor.
  */
 tachyfont.CffIndex.prototype.loadDicts = function(binaryEditor) {
-  if (this.type_ != tachyfont.CffIndex.TYPE_DICT) {
+  if (this.type_ != tachyfont.CffIndex.type.DICT) {
     throw new Error(this.name_ + ' does not hold DICTS');
   }
   var dataView = binaryEditor.getDataView();

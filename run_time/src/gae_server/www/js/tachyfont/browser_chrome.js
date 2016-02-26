@@ -37,7 +37,8 @@ goog.require('tachyfont.Logger');
 tachyfont.Browser.setFont = function(fontData, fontInfo, isTtf, oldBlobUrl) {
   return goog.Promise.resolve().
       then(function() {
-        var mimeType, format;
+        var mimeType;
+        var format;
         if (isTtf) {
           mimeType = 'font/ttf'; // 'application/x-font-ttf';
           format = 'truetype';

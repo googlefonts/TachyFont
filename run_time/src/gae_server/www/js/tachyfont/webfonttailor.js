@@ -91,7 +91,8 @@ tachyfont.webfonttailor.getTachyFontsInfo =
         languages, faces, options);
   }
   var priorityWeights = opt_priorityWeights || [];
-  var priorityFonts = [], nonPriorityFonts = [];
+  var priorityFonts = [];
+  var nonPriorityFonts = [];
   for (var i = 0; i < fontFamlies.length; i++) {
     var fontFamily = fontFamlies[i];
     var languagesInfo = tachyfont.webfonttailor.FontFamliesInfo_[fontFamily];

@@ -97,7 +97,9 @@ tachyfont.IncrementalFontUtils.sanitizeBaseFont =
     var binaryEditor = new tachyfont.BinaryFontEditor(baseFont, 0);
     var glyphOffset = headerInfo.glyphOffset;
     var glyphCount = headerInfo.numGlyphs;
-    var glyphSize, thisOne, nextOne;
+    var glyphSize;
+    var thisOne;
+    var nextOne;
     for (var i = (tachyfont.IncrementalFontUtils.LOCA_BLOCK_SIZE - 1);
         i < glyphCount;
         i += tachyfont.IncrementalFontUtils.LOCA_BLOCK_SIZE) {
@@ -118,7 +120,8 @@ tachyfont.IncrementalFontUtils.sanitizeBaseFont =
     var glyphCount = headerInfo.numGlyphs;
     var lastRealOffset = binaryEditor.getGlyphDataOffset(
         headerInfo.glyphDataOffset, headerInfo.offsetSize, 0);
-    var delta = 0, thisOne;
+    var delta = 0;
+    var thisOne;
     for (var i = 0; i < glyphCount + 1; i++) {
       thisOne = binaryEditor.getGlyphDataOffset(headerInfo.glyphDataOffset,
           headerInfo.offsetSize, i);
