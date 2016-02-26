@@ -2,7 +2,7 @@
 
 /**
  * @license
- * Copyright 2015 Google Inc. All rights reserved.
+ * Copyright 2015-2016 Google Inc. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,12 +18,11 @@
  */
 
 /**
- * @fileoverview Code to parse a CFF dict. For a detailed description of a CFF
- * dict @see
+ * @fileoverview Code to parse a CFF (Adobe's Compact Font Format) dict. For a
+ * detailed description of a CFF dict @see
  * http://wwwimages.adobe.com/content/dam/Adobe/en/devnet/font/pdfs/5176.CFF.pdf
  * For a detailed description of the OpenType font format
  * @see http://www.microsoft.com/typography/otspec/otff.htm
- * @author bstell@google.com (Brian Stell)
  */
 
 goog.provide('tachyfont.CffDict');
@@ -36,7 +35,7 @@ goog.require('tachyfont.utils');
 
 
 /**
- * A class holding the CFF DICT information.
+ * This class reads and can modify a CFF DICT.
  * @param {string} name The name of the DICT
  * @param {!DataView} dataView A DataView for the DICT bytes.
  * @constructor @struct @final
@@ -69,7 +68,7 @@ tachyfont.CffDict = function(name, dataView) {
 
 
 /**
- * Initialize a CFF DICT.
+ * Initializes a CFF DICT.
  * @private
  */
 tachyfont.CffDict.prototype.init_ = function() {
@@ -97,7 +96,7 @@ tachyfont.CffDict.prototype.init_ = function() {
 
 
 /**
- * Load a CFF DICT.
+ * Reads a CFF DICT.
  * @param {string} name The name of the dict.
  * @param {!ArrayBuffer} buffer The font bytes.
  * @param {number} offset The offset in the font bytes to the DICT.
@@ -124,7 +123,7 @@ tachyfont.CffDict.loadDict =
 
 if (goog.DEBUG) {
   /**
-   * For debug set the DICT operators map.
+   * For debug: sets the DICT operators map.
    * @param {!Object.<string,string>} dictOperators The DICT operators map.
    */
   tachyfont.CffDict.prototype.setOperators = function(dictOperators) {
@@ -134,7 +133,7 @@ if (goog.DEBUG) {
 
 
 /**
- * Get the dict name.
+ * Gets the dict name.
  * @return {string} The Dict name.
  */
 tachyfont.CffDict.prototype.getName = function() {
@@ -143,7 +142,7 @@ tachyfont.CffDict.prototype.getName = function() {
 
 
 /**
- * Get the dict operators.
+ * Gets the dict operators.
  * @return {!Array.<string>} The Dict operators.
  */
 tachyfont.CffDict.prototype.getOperators = function() {
@@ -152,7 +151,7 @@ tachyfont.CffDict.prototype.getOperators = function() {
 
 
 /**
- * Get a CFF DICT operands as an array.
+ * Gets the CFF DICT operands for an operator.
  * @param {string} operator The operator of the operands/operator set.
  * @return {!Array.<number>} The array of operands.
  */
@@ -165,7 +164,7 @@ tachyfont.CffDict.prototype.getOperands = function(operator) {
 
 
 /**
- * Get a CFF DICT operand.
+ * Gets a CFF DICT operand.
  * @param {string} operator The operator of the operands/operator.
  * @param {number} index The index of desired operand.
  * @return {number} The operand.
@@ -179,7 +178,7 @@ tachyfont.CffDict.prototype.getOperand = function(operator, index) {
 
 
 /**
- * Get a CFF DICT OperandsOperatorSet.
+ * Gets a CFF DICT OperandsOperatorSet.
  * @param {string} operator The operator of the operands/operator.
  * @return {!tachyfont.CffDict.OperandsOperatorSet_ } The OperandsOperatorSet.
  */
@@ -192,7 +191,7 @@ tachyfont.CffDict.prototype.getOperandsOperatorSet = function(operator) {
 
 
 /**
- * Update a operand entry in a CFF DICT.
+ * Updates a operand entry in a CFF DICT.
  * Note: this does not support modifying nibbles.
  * @param {string} operator The operator.
  * @param {number} index The index of the operand.
@@ -221,7 +220,7 @@ tachyfont.CffDict.prototype.updateDictEntryOperand =
 
 
 /**
- * A class holding an operands/operator set.
+ * A class that holds the information for an operands/operator set.
  * @param {!Array.<number>} operands The operands.
  * @param {string} operator The operator.
  * @param {number} offset The starting offset of the operands/operator.
@@ -245,23 +244,21 @@ tachyfont.CffDict.OperandsOperatorSet_ =
 };
 
 
-/*
- * http://wwwimages.adobe.com/content/dam/Adobe/en/devnet/font/pdfs/5176.CFF.pdf
- *
- * Table 3 Operand Encoding
- * Size   b0-range    Value-range       Value-calculation
- *   1     32-246    -107 to +107       b0-139
- *   2    247-250    +108 to +1131      (b0-247)*256+b1+108
- *   2    251-254   -1131 to -108      -(b0-251)*256-b1-108
- *   3      28     -32768 to +32767     b1<<8|b2
- *   5      29    -(2^31) to +(2^31-1)  b1<<24|b2<<16|b3<<8|b4
- *
- * Reserved operand leading bytes: 22-27, 31, and 255
- */
+// http://wwwimages.adobe.com/content/dam/Adobe/en/devnet/font/pdfs/5176.CFF.pdf
+//
+// Table 3 Operand Encoding
+// Size   b0-range    Value-range       Value-calculation
+//   1     32-246    -107 to +107       b0-139
+//   2    247-250    +108 to +1131      (b0-247)*256+b1+108
+//   2    251-254   -1131 to -108      -(b0-251)*256-b1-108
+//   3      28     -32768 to +32767     b1<<8|b2
+//   5      29    -(2^31) to +(2^31-1)  b1<<24|b2<<16|b3<<8|b4
+//
+// Reserved operand leading bytes: 22-27, 31, and 255
 
 
 /**
- * Give a number and length convert it to an operand.
+ * Given a number and length converts it to an operand.
  * Note: this does not handle nibbles.
  * @param {number} number The number to convert.
  * @param {number} length The length in bytes to convert the number to.
@@ -303,7 +300,7 @@ tachyfont.CffDict.numberToOperand_ = function(number, length) {
 
 
 /**
- * Get a CFF DICT Operands/Operator set.
+ * Reads a CFF DICT Operands/Operator set.
  * @param {!tachyfont.BinaryFontEditor} binaryEditor The binary editor at the
  *     position of the Operands/Operator.
  * @return {!tachyfont.CffDict.OperandsOperatorSet_} The operands operator set.
@@ -374,7 +371,7 @@ tachyfont.CffDict.readOperandsOperator_ = function(binaryEditor) {
 
 
 /**
- * Get a CFF DICT nibble operand.
+ * Reads a CFF DICT nibble operand.
  * @param {!tachyfont.BinaryFontEditor} binaryEditor The binary editor.
  * @param {!Array.<number>} operandLengths The length of the operands.
  * @return {string} The nibble operand.

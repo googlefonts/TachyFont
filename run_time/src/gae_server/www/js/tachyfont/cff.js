@@ -17,14 +17,6 @@
  * the License.
  */
 
-/**
- * @fileoverview Code to parse the CFF table in an OpenType CFF font. This reads
- * the CFF Header and INDEXs. For a detailed description of the CFF format
- * @see http://wwwimages.adobe.com/content/dam/Adobe/en/devnet/font/pdfs/5176.CFF.pdf
- * For a detailed description of the OpenType font format
- * @see http://www.microsoft.com/typography/otspec/otff.htm
- * @author bstell@google.com (Brian Stell)
- */
 
 goog.provide('tachyfont.Cff');
 
@@ -36,7 +28,12 @@ goog.require('tachyfont.CffIndex');
 
 
 /**
- * The class holding the CFF table information.
+ * This class reads and can resize the CharStrings INDEX in a CFF (Adobe's
+ * Compact Font Format) table in an OpenType/CFF font. For a detailed
+ * description of the CFF format @see
+ * http://wwwimages.adobe.com/content/dam/Adobe/en/devnet/font/pdfs/5176.CFF.pdf
+ * For a detailed description of the OpenType font format @see
+ * http://www.microsoft.com/typography/otspec/otff.htm
  * @param {number} offset The offset to the CFF table.
  * @param {!DataView} fontData The font data.
  * @constructor @struct @final
@@ -68,7 +65,9 @@ tachyfont.Cff = function(offset, fontData) {
    */
   this.headerSize_;
 
-  /** @private {number} */
+  /** Offset to the CFF Name INDEX.
+   * @private {number}
+   */
   this.nameIndexOffset_;
 
   /**
@@ -77,7 +76,10 @@ tachyfont.Cff = function(offset, fontData) {
    */
   this.nameIndex_;
 
-  /** @private {number} */
+  /**
+   * Offset to the CFF Top DICT.
+   * @private {number}
+   */
   this.topDictIndexOffset_;
 
   /**
@@ -93,12 +95,13 @@ tachyfont.Cff = function(offset, fontData) {
   this.topDict_;
 
 
-  /**
-   * The offset to the Encodings table.
-   * Note: CFF CID fonts do not have an Encodings table.
-   */
+  // The offset to the Encodings table.
+  // Note: CFF CID fonts do not have an Encodings table.
 
-  /** @private {number} */
+  /**
+   * Offset to the CFF CharStrings INDEX.
+   * @private {number}
+   */
   this.charStringsIndexOffset_;
 
   /**
@@ -117,7 +120,8 @@ tachyfont.Cff = function(offset, fontData) {
 
 
 /**
- * A factory to get the CFF table object.
+ * A factory that reads the CFF table, creates and returns the information in an
+ * object.
  * @param {number} offset The offset the the CFF table.
  * @param {!DataView} fontData The font data.
  * @return {!tachyfont.Cff} The class holding the CFF table information.
@@ -130,7 +134,7 @@ tachyfont.Cff.getCffTable = function(offset, fontData) {
 
 
 /**
- * Initialize the CFF font object.
+ * Initializes the CFF font object.
  * @private
  */
 tachyfont.Cff.prototype.init_ = function() {
@@ -147,7 +151,7 @@ tachyfont.Cff.prototype.init_ = function() {
 
 
 /**
- * Process the CFF header.
+ * Reads the CFF header.
  * @private
  */
 tachyfont.Cff.prototype.readHeader_ = function() {
@@ -161,7 +165,7 @@ tachyfont.Cff.prototype.readHeader_ = function() {
 
 
 /**
- * Process the Name INDEX.
+ * Reads the CFF Name INDEX.
  * @private
  */
 tachyfont.Cff.prototype.readNameIndex_ = function() {
@@ -173,7 +177,7 @@ tachyfont.Cff.prototype.readNameIndex_ = function() {
 
 
 /**
- * Process the Top DICT INDEX.
+ * Reads the CFF Top DICT INDEX.
  * @private
  */
 tachyfont.Cff.prototype.readTopDictIndex_ = function() {
@@ -188,7 +192,7 @@ tachyfont.Cff.prototype.readTopDictIndex_ = function() {
 
 
 /**
- * Process the Font DICT INDEX.
+ * Reads the CFF Font DICT INDEX.
  * This has info on the per-font Private DICTs.
  * @private
  */
@@ -202,7 +206,7 @@ tachyfont.Cff.prototype.readFontDictIndex_ = function() {
 
 
 /**
- * Process the CharStrings INDEX.
+ * Reads the CFF CharStrings INDEX.
  * @private
  */
 tachyfont.Cff.prototype.readCharStringsIndex_ = function() {
@@ -216,7 +220,7 @@ tachyfont.Cff.prototype.readCharStringsIndex_ = function() {
 
 
 /**
- * Get the CharStrings INDEX.
+ * Gets the CharStrings INDEX.
  * @return {!tachyfont.CffIndex}
  */
 tachyfont.Cff.prototype.getCharStringsIndex = function() {
@@ -225,7 +229,7 @@ tachyfont.Cff.prototype.getCharStringsIndex = function() {
 
 
 /**
- * Get a block of the font data.
+ * Gets a block of the font data.
  * @param {number} offset The starting offset.
  * @param {number} length One greater than the last byte.
  * @return {!Uint8Array}
@@ -238,7 +242,7 @@ tachyfont.Cff.prototype.getData = function(offset, length) {
 
 
 /**
- * Get an operand for an operator.
+ * Gets an operand for an operator.
  * @param {string} operator The operator.
  * @param {number} index The index of the operand to get.
  * @return {number}
@@ -250,7 +254,7 @@ tachyfont.Cff.prototype.getTopDictOperand = function(operator, index) {
 
 
 /**
- * Update the CharStrings element size.
+ * Updates the CharStrings element size.
  * @param {number} deltaSize The size change.
  */
 tachyfont.Cff.prototype.updateCharStringsSize = function(deltaSize) {
