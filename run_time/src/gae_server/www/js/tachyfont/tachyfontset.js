@@ -416,10 +416,10 @@ tachyfont.TachyFontSet.prototype.requestUpdateFonts = function(startTime) {
 
 /**
  * Switch the CSS to use a group of TachyFonts
- *
  * @param {number} startTime The time when the chars were added to the DOM. If
  *     the number is negative then an intentional delay was happened.
- * @param {Array.<!Object|DataView>} loadResults The fileInfo and fontData.
+ * @param {!Array.<?Array.<!Object|!DataView>>} loadResults The fileInfo and
+ *     fontData.
  * @return {!goog.Promise}
  * @private
  *
@@ -431,45 +431,58 @@ tachyfont.TachyFontSet.prototype.setFonts_ = function(startTime, loadResults) {
   }
   var allCssSet = [];
   for (var i = 0; i < loadResults.length; i++) {
-    var fontObj = this.fonts[i].incrfont;
-    var weight = fontObj.fontInfo.getWeight();
-    var setFontLogId;
-    if (fontObj.fontInfo.getPriority()) {
-      setFontLogId = tachyfont.TachyFontSet.Log_.SET_FONT_PRIORITY;
-    } else {
-      setFontLogId = tachyfont.TachyFontSet.Log_.SET_FONT;
-    }
     var loadResult = loadResults[i];
-    if (loadResult == null) {
-      // No FOUT so 0 FOUT time.
-      tachyfont.Reporter.addItem(setFontLogId + weight, 0);
-      allCssSet.push(goog.Promise.resolve(null));
-      continue;
-    }
-    // loadResult[0] holds fileInfo.
-    var fontData = loadResult[1];
-    if (goog.DEBUG) {
-      goog.log.fine(tachyfont.Logger.logger, 'updateFonts: setFont: ');
-    }
-    var cssSetResult = fontObj.setFont(fontData).
-        then(function() {
-          if (startTime == 0) {
-            tachyfont.Reporter.addItemTime(
-                tachyfont.TachyFontSet.Log_.SET_FONT_DOM_LOADED + weight);
-          } else if (startTime >= 0) {
-            tachyfont.Reporter.addItem(setFontLogId + weight,
-                goog.now() - startTime);
-          } else {
-            tachyfont.Reporter.addItem(
-                tachyfont.TachyFontSet.Log_.SET_FONT_DELAYED + weight,
-                goog.now() + startTime);
-          }
-          tachyfont.IncrementalFontUtils.setVisibility(this.style,
-              this.fontInfo, true);
-        }.bind(fontObj));
+    var cssSetResult = this.setFont_(i, loadResult, startTime);
     allCssSet.push(cssSetResult);
   }
   return goog.Promise.all(allCssSet);
+};
+
+
+/**
+ * Switch the CSS to use a TachyFont.
+ * @param {number} index The index of the font in the TachyFontSet.
+ * @param {?Array.<!Object|!DataView>} loadResult The fileInfo and fontData.
+ * @param {number} startTime The time when the chars were added to the DOM. If
+ *     the number is negative then an intentional delay was happened.
+ * @return {!goog.Promise}
+ * @private
+ *
+ */
+tachyfont.TachyFontSet.prototype.setFont_ = function(index, loadResult,
+    startTime) {
+  var fontObj = this.fonts[index].incrfont;
+  var weight = fontObj.fontInfo.getWeight();
+  var setFontLogId;
+  if (fontObj.fontInfo.getPriority()) {
+    setFontLogId = tachyfont.TachyFontSet.Log_.SET_FONT_PRIORITY;
+  } else {
+    setFontLogId = tachyfont.TachyFontSet.Log_.SET_FONT;
+  }
+  if (loadResult == null) {
+    // No FOUT so 0 FOUT time.
+    tachyfont.Reporter.addItem(setFontLogId + weight, 0);
+    return goog.Promise.resolve(null);
+  }
+  // loadResult[0] holds fileInfo.
+  var fontData = loadResult[1];
+  var cssSetResult = fontObj.setFont(fontData).
+      then(function() {
+        if (startTime == 0) {
+          tachyfont.Reporter.addItemTime(
+              tachyfont.TachyFontSet.Log_.SET_FONT_DOM_LOADED + weight);
+        } else if (startTime >= 0) {
+          tachyfont.Reporter.addItem(setFontLogId + weight,
+              goog.now() - startTime);
+        } else {
+          tachyfont.Reporter.addItem(
+              tachyfont.TachyFontSet.Log_.SET_FONT_DELAYED + weight,
+              goog.now() + startTime);
+        }
+        tachyfont.IncrementalFontUtils.setVisibility(this.style,
+            this.fontInfo, true);
+      }.bind(fontObj));
+  return cssSetResult;
 };
 
 
