@@ -45,48 +45,18 @@ tachyfont.Cff = function(offset, fontData) {
    */
   this.fontData_ = fontData;
 
-  /**
-   * The offset in the font data to the CFF table.
-   * @private {number}
-   */
-  this.cffTableOffset_ = offset;
 
 
   /**
    * Helper class to edit the binary data.
    * @private {!tachyfont.BinaryFontEditor}
    */
-  this.binaryEditor_ =
-      new tachyfont.BinaryFontEditor(this.fontData_, this.cffTableOffset_);
+  this.binaryEditor_ = new tachyfont.BinaryFontEditor(this.fontData_, offset);
 
-  /**
-   * The CFF Header size.
-   * @private {number}
-   */
-  this.headerSize_;
 
-  /** Offset to the CFF Name INDEX.
-   * @private {number}
-   */
-  this.nameIndexOffset_;
 
-  /**
-   * The CFF Name INDEX.
-   * @private {!tachyfont.CffIndex}
-   */
-  this.nameIndex_;
 
-  /**
-   * Offset to the CFF Top DICT.
-   * @private {number}
-   */
-  this.topDictIndexOffset_;
 
-  /**
-   * The CFF Top DICT INDEX.
-   * @private {!tachyfont.CffIndex}
-   */
-  this.topDictIndex_;
 
   /**
    * The CFF Top DICT.
@@ -138,56 +108,43 @@ tachyfont.Cff.getCffTable = function(offset, fontData) {
  * @private
  */
 tachyfont.Cff.prototype.init_ = function() {
-  this.readHeader_();
+  // Get the offset to the Top DICT INDEX.
+  var offset = this.getHeaderSize_();
+  offset += tachyfont.CffIndex.computeLength(offset, this.binaryEditor_);
 
-  this.readNameIndex_();
+  // Read the Top DICT which gives the offsets to the other tables.
+  this.readTopDictIndex_(offset);
 
-  this.readTopDictIndex_();
-
+  // Read the tables that may be modified.
+  // Note: the offsets for these are in the Top DICT.
   this.readCharStringsIndex_();
-
   this.readFontDictIndex_();
 };
 
 
 /**
- * Reads the CFF header.
+ * Get the CFF header size.
+ * @return {number} The size of the CFF header.
  * @private
  */
-tachyfont.Cff.prototype.readHeader_ = function() {
-  // Skip the major and minor number.
-  this.binaryEditor_.skip(2);
-  this.headerSize_ = this.binaryEditor_.getUint8();
-  // Skip offSize.
-  this.binaryEditor_.skip(1);
-  this.binaryEditor_.seek(this.headerSize_);
-};
-
-
-/**
- * Reads the CFF Name INDEX.
- * @private
- */
-tachyfont.Cff.prototype.readNameIndex_ = function() {
-  this.nameIndexOffset_ = this.headerSize_;
-  this.nameIndex_ = new tachyfont.CffIndex('Name', this.nameIndexOffset_,
-      tachyfont.CffIndex.TYPE_STRING, this.binaryEditor_);
-  this.nameIndex_.loadStrings(this.binaryEditor_);
+tachyfont.Cff.prototype.getHeaderSize_ = function() {
+  this.binaryEditor_.seek(2); // Skip the major and minor number.
+  var headerSize = this.binaryEditor_.getUint8();
+  return headerSize;
 };
 
 
 /**
  * Reads the CFF Top DICT INDEX.
+ * The Top DICT has the offsets to the CharStrings INDEX and Font DICT INDEX.
+ * @param {number} offset The offset in the CFF table to the Top DICT INDEX.
  * @private
  */
-tachyfont.Cff.prototype.readTopDictIndex_ = function() {
-  this.topDictIndexOffset_ =
-      this.nameIndexOffset_ + this.nameIndex_.getLength();
-  this.topDictIndex_ = new tachyfont.CffIndex('TopDICT',
-      this.topDictIndexOffset_, tachyfont.CffIndex.TYPE_DICT,
-      this.binaryEditor_);
-  this.topDictIndex_.loadDicts(this.binaryEditor_);
-  this.topDict_ = this.topDictIndex_.getDictElement(0);
+tachyfont.Cff.prototype.readTopDictIndex_ = function(offset) {
+  var topDictIndex = new tachyfont.CffIndex('TopDICT', offset,
+      tachyfont.CffIndex.TYPE_DICT, this.binaryEditor_);
+  topDictIndex.loadDicts(this.binaryEditor_);
+  this.topDict_ = topDictIndex.getDictElement(0);
 };
 
 

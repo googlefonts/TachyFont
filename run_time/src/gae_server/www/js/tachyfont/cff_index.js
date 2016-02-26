@@ -84,6 +84,39 @@ tachyfont.CffIndex = function(name, offset, type, binaryEditor) {
 
 
 /**
+ * Compute a CFF INDEX's length.
+ * @param {number} offset The offset from start of the CFF table.
+ * @param {!tachyfont.BinaryFontEditor} binaryEditor A binary font editor.
+ * @return {number} The length of the INDEX.
+ */
+tachyfont.CffIndex.computeLength = function(offset, binaryEditor) {
+  // Move the the start of the INDEX.
+  binaryEditor.seek(offset);
+
+  // Get the number of elements (2 bytes).
+  var count = binaryEditor.getUint16();
+
+  // Get the element size (1 byte).
+  var offsetSize = binaryEditor.getUint8();
+
+  // Move to the last offset.
+  binaryEditor.skip(count * offsetSize); // The offsets array field size.
+
+  // Get the elements field size
+  // CFF INDEXs store the actual offset + 1. So the elements field size is the
+  // last offset - 1
+  var elementsSize = binaryEditor.getOffset(offsetSize) - 1;
+
+  // Calculate the table size.
+  var tableSize = 2 + // The count field size.
+      1 + // The offsetSize field size.
+      (count + 1) * offsetSize + // The offset array field size.
+      elementsSize; // The elements field size.
+  return tableSize;
+};
+
+
+/**
  * Indicates the CFF INDEX holds human readable strings.
  * @const {number}
  */
