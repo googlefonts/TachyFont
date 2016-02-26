@@ -128,7 +128,7 @@ tachyfont.Cmap.writeCmap4 = function(fileInfo, baseFontView, weight) {
   var glyphIdArrayLen = (fileInfo.cmap4.length - 16 - segCount * 8) / 2;
   fileInfo.cmap4.segCount = segCount;
   fileInfo.cmap4.glyphIdArrayLen = glyphIdArrayLen;
-  binaryEditor.skip(6); //skip searchRange,entrySelector,rangeShift
+  binaryEditor.skip(6); //skip searchRange, entrySelector, rangeShift
   // Write endCode values.
   for (var i = 0; i < segCount; i++) {
     binaryEditor.setUint16(segments[i][1]);
@@ -161,7 +161,7 @@ tachyfont.Cmap.writeCmap4 = function(fileInfo, baseFontView, weight) {
  * @param {!Object} fileInfo Information about the font file.
  * @param {!DataView} baseFontView Current base font
  * @param {!Object<string, number>} charList The list of characters.
- * @param {!Object.<number, !tachyfont.CharCmapInfo>} cmapMapping Information
+ * @param {!Object<number, !tachyfont.CharCmapInfo>} cmapMapping Information
  *     about the cmap segments for the codepoint.
  * @param {string} weight The font weight for error reporting.
  * @param {boolean} charsLoaded If set check that the chars are loaded.
@@ -331,10 +331,10 @@ tachyfont.Cmap.checkCharacters = function(fileInfo, baseFontView,
  *
  * @param {!Object} fileInfo Information about the font file.
  * @param {!DataView} baseFontView Current base font
- * @param {!Array.<number>} glyphIds The glyph Ids to set.
- * @param {!Object.<number, Array.<number>>} glyphToCodeMap The glyph Id to code
+ * @param {!Array<number>} glyphIds The glyph Ids to set.
+ * @param {!Object<number, Array<number>>} glyphToCodeMap The glyph Id to code
  *     point mapping;
- * @param {!Object.<number, !tachyfont.CharCmapInfo>} cmapMapping Information
+ * @param {!Object<number, !tachyfont.CharCmapInfo>} cmapMapping Information
  *     about the cmap segments for the codepoint.
  * @param {string} weight The font weight for error reporting.
  */
@@ -455,10 +455,10 @@ tachyfont.Cmap.setFormat4GlyphIds = function(fileInfo, baseFontView, glyphIds,
  *
  * @param {!Object} fileInfo Information about the font file.
  * @param {!DataView} baseFontView Current base font
- * @param {!Array.<number>} glyphIds The glyph Ids to set.
- * @param {!Object.<number, Array.<number>>} glyphToCodeMap The glyph Id to code
+ * @param {!Array<number>} glyphIds The glyph Ids to set.
+ * @param {!Object<number, Array<number>>} glyphToCodeMap The glyph Id to code
  *     point mapping;
- * @param {!Object.<number, !tachyfont.CharCmapInfo>} cmapMapping Information
+ * @param {!Object<number, !tachyfont.CharCmapInfo>} cmapMapping Information
  *     about the cmap segments for the codepoint.
  * @param {string} weight The weight of the font.
  */

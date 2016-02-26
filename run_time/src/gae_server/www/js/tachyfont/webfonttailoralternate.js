@@ -27,10 +27,10 @@ goog.require('tachyfont.FontsInfo');
 /**
  * Get the font information for the Play Store experiment.
 
- * @param {!Array.<string>} fontFamlies The suggested list of font families.
- * @param {!Array.<string>} languages The language codes list.
- * @param {!Array.<Object>} faces The faces (eg, slant, weight) list.
- * @param {!Object.<string, string>} options Additional info; eg, stretch.
+ * @param {!Array<string>} fontFamlies The suggested list of font families.
+ * @param {!Array<string>} languages The language codes list.
+ * @param {!Array<Object>} faces The faces (eg, slant, weight) list.
+ * @param {!Object<string, string>} options Additional info; eg, stretch.
  * @return {!tachyfont.FontsInfo} The information describing the fonts, include:
  *     fonts: A list of font.
  *     url: The url to the tachyfont server.

@@ -45,25 +45,17 @@ tachyfont.Cff = function(offset, fontData) {
    */
   this.fontData_ = fontData;
 
-
-
   /**
    * Helper class to edit the binary data.
    * @private {!tachyfont.BinaryFontEditor}
    */
   this.binaryEditor_ = new tachyfont.BinaryFontEditor(this.fontData_, offset);
 
-
-
-
-
-
   /**
    * The CFF Top DICT.
    * @private {!tachyfont.CffDict}
    */
   this.topDict_;
-
 
   // The offset to the Encodings table.
   // Note: CFF CID fonts do not have an Encodings table.

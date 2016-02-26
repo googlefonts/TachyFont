@@ -251,7 +251,7 @@ tachyfont.IncrementalFont.obj_ = function(fontInfo, params, backendService) {
   /**
    * The character to format 4 / format 12 mapping.
    *
-   * @private {!Object.<number, !tachyfont.CharCmapInfo>}
+   * @private {!Object<number, !tachyfont.CharCmapInfo>}
    */
   this.cmapMapping_;
 
@@ -520,7 +520,7 @@ tachyfont.IncrementalFont.obj_.prototype.getBaseFontFromUrl =
 /**
  * Process the font base fetched from a URL.
  * @param {ArrayBuffer} urlBaseBytes The fetched data.
- * @return {Array.<Object>} The fileInfo (information about the font bytes) and
+ * @return {Array<Object>} The fileInfo (information about the font bytes) and
  *     the font data ready for character data to be added.
  * @private
  */
@@ -547,11 +547,11 @@ tachyfont.IncrementalFont.obj_.prototype.processUrlBase_ =
  * Inject glyphs in the glyphData to the baseFontView
  * @param {!DataView} baseFontView Current base font
  * @param {!tachyfont.GlyphBundleResponse} bundleResponse New glyph data
- * @param {!Object.<number, Array.<number>>} glyphToCodeMap An input and output
+ * @param {!Object<number, Array<number>>} glyphToCodeMap An input and output
  *     value.
  *       Input: the glyph Id to code point mapping;
  *       Output: the glyph Ids that were expected but not in the bundleResponse.
- * @param {!Array.<number>} extraGlyphs An output list of the extra glyph Ids.
+ * @param {!Array<number>} extraGlyphs An output list of the extra glyph Ids.
  * @return {!DataView} Updated base font
  */
 tachyfont.IncrementalFont.obj_.prototype.injectCharacters =
@@ -625,7 +625,7 @@ tachyfont.IncrementalFont.obj_.prototype.injectCharacters =
         if (length > 0) {
           baseBinEd.setInt16(-1);
         }else if (length == 0) {
-          /*if it is still zero,then could write -1*/
+          // If it is still zero, then could write -1.
           var currentUint1 = baseBinEd.getUint32(),
               currentUint2 = baseBinEd.getUint32();
           if (currentUint1 == 0 && currentUint2 == 0) {
@@ -743,11 +743,11 @@ tachyfont.IncrementalFont.obj_.prototype.setFont = function(fontData) {
 /**
  * Obfuscate small requests to make it harder for a TachyFont server to
  * determine the content on a page.
- * @param {!Array.<number>} codes The codepoints to add obusfuscation to.
+ * @param {!Array<number>} codes The codepoints to add obusfuscation to.
  * @param {!Object} charlist The chars that have already been requested.
- * @param {!Object.<number, !tachyfont.CharCmapInfo>} cmapMapping A map of the
+ * @param {!Object<number, !tachyfont.CharCmapInfo>} cmapMapping A map of the
  *     characters in the font.
- * @return {!Array.<number>} The codepoints with obusfuscation.
+ * @return {!Array<number>} The codepoints with obusfuscation.
  */
 tachyfont.IncrementalFont.possibly_obfuscate =
     function(codes, charlist, cmapMapping) {
@@ -957,7 +957,7 @@ tachyfont.IncrementalFont.obj_.prototype.calcNeededChars_ = function() {
 /**
  * Fetch glyph data for the requested codepoints.
  *
- * @param {Array.<number>} requestedCodes The codes to be injected.
+ * @param {Array<number>} requestedCodes The codes to be injected.
  * @return {goog.Promise} If successful return a resolved promise.
  * @private
  */
@@ -1023,7 +1023,7 @@ tachyfont.IncrementalFont.obj_.prototype.handleFingerprintMismatch_ =
 /**
  * Inject glyph data and enable the chars in the cmaps.
  *
- * @param {Array.<number>} neededCodes The codes to be injected.
+ * @param {Array<number>} neededCodes The codes to be injected.
  * @param {tachyfont.GlyphBundleResponse} bundleResponse New glyph data
  * @return {goog.Promise} The list of needed chars.
  * @private

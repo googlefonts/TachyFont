@@ -42,7 +42,7 @@ tachyfont.TachyFontSet = function(familyName) {
   /**
    * The TachyFonts managed in this set.
    *
-   * @type {!Array.<tachyfont.TachyFont>}
+   * @type {!Array<tachyfont.TachyFont>}
    */
   this.fonts = [];
 
@@ -52,7 +52,7 @@ tachyfont.TachyFontSet = function(familyName) {
   /**
    * Map of CSS family spec to TachyFont family.
    *
-   * @type {!Object.<string, string>}
+   * @type {!Object<string, string>}
    */
   this.cssFamilyToTachyFontFamily = {};
 
@@ -409,7 +409,7 @@ tachyfont.TachyFontSet.prototype.requestUpdateFonts = function(startTime) {
  * Switch the CSS to use a group of TachyFonts
  * @param {number} startTime The time when the chars were added to the DOM. If
  *     the number is negative then an intentional delay was happened.
- * @param {!Array.<?Array.<!Object|!DataView>>} loadResults The fileInfo and
+ * @param {!Array<?Array<!Object|!DataView>>} loadResults The fileInfo and
  *     fontData.
  * @return {!goog.Promise}
  * @private
@@ -433,7 +433,7 @@ tachyfont.TachyFontSet.prototype.setFonts_ = function(startTime, loadResults) {
 /**
  * Switch the CSS to use a TachyFont.
  * @param {number} index The index of the font in the TachyFontSet.
- * @param {?Array.<!Object|!DataView>} loadResult The fileInfo and fontData.
+ * @param {?Array<!Object|!DataView>} loadResult The fileInfo and fontData.
  * @param {number} startTime The time when the chars were added to the DOM. If
  *     the number is negative then an intentional delay was happened.
  * @return {!goog.Promise}

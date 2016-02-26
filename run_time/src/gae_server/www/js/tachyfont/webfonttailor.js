@@ -28,7 +28,7 @@ goog.require('tachyfont.webfonttailor_alternate');
 /**
  * The list of supported weights for Noto Sans JP normal (upright).
  *
- * @private {!Object.<string, !Object.<string, string>>}
+ * @private {!Object<string, !Object<string, string>>}
  */
 tachyfont.webfonttailor.JaNormalInfo_ = {
   '100': { 'name': 'NotoSansJP-Thin', 'weight': '100' },
@@ -44,7 +44,7 @@ tachyfont.webfonttailor.JaNormalInfo_ = {
 /**
  * This list of supported styles (slants) for Noto Sans JP.
  *
- * @private {!Object.<string, !Object>}
+ * @private {!Object<string, !Object>}
  */
 tachyfont.webfonttailor.JaStyleInfo_ = {
   'normal': tachyfont.webfonttailor.JaNormalInfo_
@@ -54,7 +54,7 @@ tachyfont.webfonttailor.JaStyleInfo_ = {
 /**
  * This list of supported languages for the Noto Sans font family.
  *
- * @private {!Object.<string, !Object>}
+ * @private {!Object<string, !Object>}
  */
 tachyfont.webfonttailor.NotoSansLanguageInfo_ = {
   'ja': tachyfont.webfonttailor.JaStyleInfo_
@@ -64,7 +64,7 @@ tachyfont.webfonttailor.NotoSansLanguageInfo_ = {
 /**
  * This list of supported font families.
  *
- * @private {!Object.<string, !Object>}
+ * @private {!Object<string, !Object>}
  */
 tachyfont.webfonttailor.FontFamliesInfo_ = {
   'Noto Sans': tachyfont.webfonttailor.NotoSansLanguageInfo_
@@ -74,11 +74,11 @@ tachyfont.webfonttailor.FontFamliesInfo_ = {
 /**
  * getTachyFontInfo: get the font information.
  *
- * @param {!Array.<string>} fontFamlies The suggested list of font families.
- * @param {!Array.<string>} languages The language codes list.
- * @param {!Array.<Object>} faces The faces (eg, slant, weight) list.
- * @param {!Object.<string, string>} options Additional info; eg, stretch.
- * @param {!Array.<string>=} opt_priorityWeights Weights to prioritize
+ * @param {!Array<string>} fontFamlies The suggested list of font families.
+ * @param {!Array<string>} languages The language codes list.
+ * @param {!Array<Object>} faces The faces (eg, slant, weight) list.
+ * @param {!Object<string, string>} options Additional info; eg, stretch.
+ * @param {!Array<string>=} opt_priorityWeights Weights to prioritize
  *     (optional).
  * @return {!tachyfont.FontsInfo} The information describing the fonts, include:
  *     fonts: A list of font.

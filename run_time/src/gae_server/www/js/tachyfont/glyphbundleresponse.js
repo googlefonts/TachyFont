@@ -86,7 +86,7 @@ tachyfont.GlyphBundleResponse.prototype.getFlags = function() {
 
 
 /**
- * @return {!Array.<!tachyfont.GlyphBundleResponse.GlyphData>}
+ * @return {!Array<!tachyfont.GlyphBundleResponse.GlyphData>}
  */
 tachyfont.GlyphBundleResponse.prototype.getGlyphDataArray = function() {
   return this.glyphDataArray_;
@@ -100,27 +100,27 @@ tachyfont.GlyphBundleResponse.prototype.getGlyphDataArray = function() {
  * @param {number|undefined} vmtx
  * @param {number} offset
  * @param {number} length
- * @param {!Array.<number>} bytes
+ * @param {!Array<number>} bytes
  * @constructor @final @struct
  */
 tachyfont.GlyphBundleResponse.GlyphData = function(id, hmtx, vmtx, offset,
     length, bytes) {
-  /** @private {number} */
+  /** @private @const {number} */
   this.id_ = id;
 
-  /** @private {number|undefined} */
+  /** @private @const {number|undefined} */
   this.hmtx_ = hmtx;
 
-  /** @private {number|undefined} */
+  /** @private @const {number|undefined} */
   this.vmtx_ = vmtx;
 
-  /** @private {number} */
+  /** @private @const {number} */
   this.offset_ = offset;
 
-  /** @private {number} */
+  /** @private @const {number} */
   this.length_ = length;
 
-  /** @private {!Array.<number>} */
+  /** @private @const {!Array<number>} */
   this.bytes_ = bytes;
 };
 
@@ -172,7 +172,7 @@ tachyfont.GlyphBundleResponse.GlyphData.prototype.getLength = function() {
 
 
 /**
- * @return {!Array.<number>}
+ * @return {!Array<number>}
  */
 tachyfont.GlyphBundleResponse.GlyphData.prototype.getBytes = function() {
   return this.bytes_;

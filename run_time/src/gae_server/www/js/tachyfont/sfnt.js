@@ -50,7 +50,7 @@ tachyfont.Sfnt.Font = function() {
   /** @private {!tachyfont.Sfnt.TableOfContents} */
   this.sortedTableOfContents_;
 
-  /** @private {!Array.<number>} */
+  /** @private {!Array<number>} */
   this.allocatedLengths_ = [];
 };
 
@@ -215,7 +215,7 @@ tachyfont.Sfnt.Font.prototype.getTableData = function(tableTag) {
 /**
  * Replace a table.
  * @param {string} tableTag The name of the table.
- * @param {!Array.<!Array.<!Uint8Array>>} data The new table contents.
+ * @param {!Array<!Array<!Uint8Array>>} data The new table contents.
  */
 tachyfont.Sfnt.Font.prototype.replaceTable = function(tableTag, data) {
   // Add padding if necessary.
@@ -250,7 +250,7 @@ tachyfont.Sfnt.Font.prototype.replaceTable = function(tableTag, data) {
  * Replace a block of data.
  * @param {number} offset Where to insert the new data.
  * @param {number} length How much old data to remove.
- * @param {!Array.<!Array.<!Uint8Array>>} data The new table contents.
+ * @param {!Array<!Array<!Uint8Array>>} data The new table contents.
  * @return {number} The delta size change.
  * @private
  */
@@ -318,16 +318,16 @@ tachyfont.Sfnt.Font.prototype.getCompactOffsets = function() {
  */
 tachyfont.Sfnt.CompactOffsets =
     function(cffOffset, cmapOffset, hmtxOffset, vmtxOffset) {
-  /** @private {number} */
+  /** @private @const {number} */
   this.cffOffset_ = cffOffset;
 
-  /** @private {number} */
+  /** @private @const {number} */
   this.cmapOffset_ = cmapOffset;
 
-  /** @private {number} */
+  /** @private @const {number} */
   this.hmtxOffset_ = hmtxOffset;
 
-  /** @private {number} */
+  /** @private @const {number} */
   this.vmtxOffset_ = vmtxOffset;
 };
 
@@ -362,13 +362,13 @@ tachyfont.Sfnt.CompactOffsets.prototype.getVmtxOffset = function() {
  * @constructor @struct @final @protected
  */
 tachyfont.Sfnt.TableOfContents = function() {
-  /** @private {boolean} */
+  /** @private @const {boolean} */
   this.isCff_ = false;
 
-  /** @private {!Array.<!tachyfont.Sfnt.TableOfContentsEntry>} */
+  /** @private {!Array<!tachyfont.Sfnt.TableOfContentsEntry>} */
   this.items_ = [];
 
-  /** @private {!Object.<string, number>} */
+  /** @private {!Object<string, number>} */
   this.tagIndex_ = {};
 };
 
@@ -406,7 +406,7 @@ tachyfont.Sfnt.TableOfContents.prototype.getIsCff = function() {
 
 
 /**
- * @return {!Array.<!tachyfont.Sfnt.TableOfContentsEntry>}
+ * @return {!Array<!tachyfont.Sfnt.TableOfContentsEntry>}
  */
 tachyfont.Sfnt.TableOfContents.prototype.getItems = function() {
   return this.items_;
@@ -414,7 +414,7 @@ tachyfont.Sfnt.TableOfContents.prototype.getItems = function() {
 
 
 /**
- * @return {!Object.<string, number>}
+ * @return {!Object<string, number>}
  */
 tachyfont.Sfnt.TableOfContents.prototype.getTagsIndex = function() {
   return this.tagIndex_;
@@ -550,13 +550,13 @@ tachyfont.Sfnt.TableOfContents.prototype.getEntry = function(tag) {
  */
 tachyfont.Sfnt.TableOfContentsEntry = function(tag, tagNumber, checksum, offset,
     length) {
-  /** @private {string} */
+  /** @private @const {string} */
   this.tag_ = tag;
 
-  /** @private {number} */
+  /** @private @const {number} */
   this.tagNumber_ = tagNumber;
 
-  /** @private {number} */
+  /** @private @const {number} */
   this.checksum_ = checksum;
 
   /** @private {number} */
