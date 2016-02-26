@@ -151,32 +151,30 @@ tachyfont.CffIndex.type = {
 /**
  * Gets an INDEX element.
  * @param {number} index The index of the element.
- * @return {!tachyfont.CffDict|!DataView|string} A element from the INDEX.
- * @throws RangeError if index is not in the array.
+ * @return {tachyfont.CffDict|DataView|string} A element from the INDEX.
  */
 tachyfont.CffIndex.prototype.getElement = function(index) {
   if (index in this.elements_) {
     return this.elements_[index];
   }
-  throw new RangeError('CFF ' + this.name_ + ' INDEX: invalid index: ' + index);
+  return null;
 };
 
 
 /**
  * Gets an INDEX DICT element.
  * @param {number} index The index of the element.
- * @return {!tachyfont.CffDict} The DICT element from the INDEX.
- * @throws Error if is not a DICT index.
- * @throws RangeError if index is not in the array.
+ * @return {tachyfont.CffDict} The DICT element from the INDEX.
  */
 tachyfont.CffIndex.prototype.getDictElement = function(index) {
+  // TODO(bstell): make subclasses instead of testing for type.
   if (this.type_ != tachyfont.CffIndex.type.DICT) {
-    throw new Error('not a DICT INDEX');
+    return null;
   }
   if (index in this.elements_) {
     return /** @type {!tachyfont.CffDict} */ (this.elements_[index]);
   }
-  throw new RangeError('CFF ' + this.name_ + ' INDEX: invalid index: ' + index);
+  return null;
 };
 
 

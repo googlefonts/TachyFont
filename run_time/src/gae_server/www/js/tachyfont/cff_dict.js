@@ -95,13 +95,13 @@ tachyfont.CffDict.prototype.getName = function() {
 /**
  * Gets the CFF DICT operands for an operator.
  * @param {string} operator The operator of the operands/operator set.
- * @return {!Array<number>} The array of operands.
+ * @return {Array<number>} The array of operands.
  */
 tachyfont.CffDict.prototype.getOperands = function(operator) {
   if (operator in this.dict_) {
     return this.dict_[operator].operands;
   }
-  throw new RangeError(this.name_ + ' getOperands: ' + operator);
+  return null;
 };
 
 
@@ -109,26 +109,26 @@ tachyfont.CffDict.prototype.getOperands = function(operator) {
  * Gets a CFF DICT operand.
  * @param {string} operator The operator of the operands/operator.
  * @param {number} index The index of desired operand.
- * @return {number} The operand.
+ * @return {?number} The operand.
  */
 tachyfont.CffDict.prototype.getOperand = function(operator, index) {
   if (operator in this.dict_ && index < this.dict_[operator].operands.length) {
     return this.dict_[operator].operands[index];
   }
-  throw new RangeError(this.name_ + ' getOperand: ' + operator + '/' + index);
+  return null;
 };
 
 
 /**
  * Gets a CFF DICT OperandsOperatorSet.
  * @param {string} operator The operator of the operands/operator.
- * @return {!tachyfont.CffDict.OperandsOperatorSet} The OperandsOperatorSet.
+ * @return {tachyfont.CffDict.OperandsOperatorSet} The OperandsOperatorSet.
  */
 tachyfont.CffDict.prototype.getOperandsOperatorSet = function(operator) {
   if (operator in this.dict_) {
     return this.dict_[operator];
   }
-  throw new RangeError(this.name_ + ' getOperandsOperatorSet: ' + operator);
+  return null;
 };
 
 
@@ -242,6 +242,8 @@ tachyfont.CffDict.numberToOperand = function(number, length) {
     b4 = number & 0xff;
     return [29, b1, b2, b3, b4];
   }
+  // Library fatal error: the library cannot handle the request which means it
+  // will not be able to modify the font.
   throw new Error('invalid length/number: ' + length + '/' + number);
 };
 
@@ -267,8 +269,9 @@ tachyfont.CffDict.readOperandsOperator = function(binaryEditor) {
     operand = undefined;
     b0 = binaryEditor.getUint8();
     if ((b0 >= 22 && b0 <= 27) || b0 == 31 || b0 == 255) {
-      throw new Error(tachyfont.utils.numberToHex(b0, 2) +
-          'is reserved operand value');
+      // Library fatal error: something is deeply wrong; possibly a bad font.
+      // Recovery is not possible.
+      throw new Error('bad operand: ' + tachyfont.utils.numberToHex(b0, 2));
     }
     if (b0 >= 32 && b0 <= 246) {
       operand = b0 - 139;
@@ -358,10 +361,14 @@ tachyfont.CffDict.parseNibbles_ = function(binaryEditor, operandLengths) {
         operandLengths.push(operandLength);
         return operand;
       } else {
+        // Library fatal error: something is deeply wrong; possibly a bad font
+        // and recovery is not possible.
         throw new Error('invalid nibble');
       }
     }
   }
+  // Library fatal error: something is deeply wrong; possibly a bad font and
+  // recovery is not possible.
   throw new Error('nibble too long');
 };
 
