@@ -81,9 +81,8 @@ tachyfont.IncrementalFont.Log_ = {
 /**
  * Enum for error values.
  * @enum {string}
- * @private
  */
-tachyfont.IncrementalFont.Error_ = {
+tachyfont.IncrementalFont.Error = {
   FILE_ID: 'EIF',
   // 01-15 no longer used.
   LOAD_CHARS_INJECT_CHARS: '16',
@@ -121,7 +120,7 @@ tachyfont.IncrementalFont.reportError_ = function(errNum, errId, errInfo) {
   }
   if (tachyfont.Reporter.isReady()) {
     tachyfont.Reporter.reportError(
-        tachyfont.IncrementalFont.Error_.FILE_ID + errNum, errId, errInfo);
+        tachyfont.IncrementalFont.Error.FILE_ID + errNum, errId, errInfo);
   }
 };
 
@@ -180,7 +179,7 @@ tachyfont.IncrementalFont.createManager = function(fontInfo, dropData, params) {
   goog.Promise.resolve()
       .then(function() {
         if (dropData) {
-          return incrFontMgr.dropDb_();
+          return incrFontMgr.dropDb();
         }
       })
       .then(function() {
@@ -195,7 +194,7 @@ tachyfont.IncrementalFont.createManager = function(fontInfo, dropData, params) {
       .thenCatch(function() {
         // Failed to get database;
         tachyfont.IncrementalFont.reportError_(
-            tachyfont.IncrementalFont.Error_.OPEN_IDB, weight, 'createManager');
+            tachyfont.IncrementalFont.Error.OPEN_IDB, weight, 'createManager');
       });
 
   // Create a class with initial visibility.
@@ -337,11 +336,38 @@ tachyfont.IncrementalFont.obj.prototype.getCmapMapping = function() {
 
 
 /**
+ * Set the cmap mapping
+ * @param {!Object<number, !tachyfont.CharCmapInfo>} cmapMapping The map of
+ *     codepoint to segment mapping.
+ */
+tachyfont.IncrementalFont.obj.prototype.setCmapMapping = function(cmapMapping) {
+  this.cmapMapping_ = cmapMapping;
+};
+
+
+/**
+ * Get the file information.
+ * @return {!Object}
+ */
+tachyfont.IncrementalFont.obj.prototype.getFileInfo = function() {
+  return this.fileInfo_;
+};
+
+
+/**
+ * Set the file information.
+ * @param {!Object} fileInfo The file information.
+ */
+tachyfont.IncrementalFont.obj.prototype.setFileInfo = function(fileInfo) {
+  this.fileInfo_ = fileInfo;
+};
+
+
+/**
  * Get the database handle.
  * @return {goog.Promise} The database handle.
- * @private
  */
-tachyfont.IncrementalFont.obj.prototype.dropDb_ = function() {
+tachyfont.IncrementalFont.obj.prototype.dropDb = function() {
   return this.accessDb_(true);
 };
 
@@ -358,14 +384,14 @@ tachyfont.IncrementalFont.obj.prototype.accessDb_ = function(dropDb) {
   // Close the database if it is open.
   this.closeDb_();
   var weight = this.fontInfo.getWeight();
-  var dbName = this.getDbName_();
+  var dbName = this.getDbName();
   this.getIDB_ = goog.Promise.resolve()
       .then(function() {
         if (dropDb) {
           return tachyfont.Persist.deleteDatabase(dbName, weight)
               .thenCatch(function() {
                 tachyfont.IncrementalFont.reportError_(
-                    tachyfont.IncrementalFont.Error_.DELETE_IDB, weight,
+                    tachyfont.IncrementalFont.Error.DELETE_IDB, weight,
                     'accessDb');
                 return goog.Promise.reject();
               });
@@ -376,7 +402,7 @@ tachyfont.IncrementalFont.obj.prototype.accessDb_ = function(dropDb) {
         return tachyfont.Persist.openIndexedDB(dbName, weight)
             .thenCatch(function() {
               tachyfont.IncrementalFont.reportError_(
-                  tachyfont.IncrementalFont.Error_.OPEN_IDB, weight,
+                  tachyfont.IncrementalFont.Error.OPEN_IDB, weight,
                   'accessDb');
               return goog.Promise.reject('failed to open IDB');
             });
@@ -418,7 +444,7 @@ tachyfont.IncrementalFont.obj.prototype.getBaseFontFromPersistence =
               tachyfont.utils.IDB_BASE)
               .thenCatch(function(e) {
                 tachyfont.IncrementalFont.reportError_(
-                 tachyfont.IncrementalFont.Error_.GET_DATA,
+                 tachyfont.IncrementalFont.Error.GET_DATA,
                  'base ' + this.fontInfo.getWeight(), e);
                 return goog.Promise.reject(e);
               }.bind(this));
@@ -445,7 +471,7 @@ tachyfont.IncrementalFont.obj.prototype.getBaseFontFromPersistence =
             tachyfont.utils.IDB_CHARLIST)
             .thenCatch(function(e) {
               tachyfont.IncrementalFont.reportError_(
-               tachyfont.IncrementalFont.Error_.GET_DATA,
+               tachyfont.IncrementalFont.Error.GET_DATA,
                'charList ' + this.fontInfo.getWeight(), e);
               return goog.Promise.reject(e);
             });
@@ -463,7 +489,7 @@ tachyfont.IncrementalFont.obj.prototype.getBaseFontFromPersistence =
           return goog.Promise.resolve([arr[0], arr[1], arr[2]]);
         } else {
           tachyfont.IncrementalFont.reportError_(
-              tachyfont.IncrementalFont.Error_.NOT_USING_PERSISTED_DATA,
+              tachyfont.IncrementalFont.Error.NOT_USING_PERSISTED_DATA,
               this.fontInfo.getWeight(), '');
           this.charList.resolve({});
           return goog.Promise.resolve(null);
@@ -497,7 +523,7 @@ tachyfont.IncrementalFont.obj.prototype.parseBaseHeader =
   this.fileInfo_ = fileInfo;
   if (!tachyfont.Cmap.isOneCharPerSeg(this.fileInfo_)) {
     tachyfont.IncrementalFont.reportError_(
-        tachyfont.IncrementalFont.Error_.CHARS_PER_SEGMENT,
+        tachyfont.IncrementalFont.Error.CHARS_PER_SEGMENT,
         this.fontInfo.getWeight(), '');
     throw 'not one-char-per-segment';
   }
@@ -517,8 +543,8 @@ tachyfont.IncrementalFont.obj.prototype.getBaseFontFromUrl =
       .then(function(urlBaseBytes) {
         tachyfont.Reporter.addItem(tachyfont.IncrementalFont.Log_.URL_GET_BASE +
             this.fontInfo.getWeight(), goog.now() - this.startTime);
-        var results = this.processUrlBase_(urlBaseBytes);
-        this.persistDelayed_(tachyfont.utils.IDB_BASE);
+        var results = this.processUrlBase(urlBaseBytes);
+        this.persistDelayed(tachyfont.utils.IDB_BASE);
         return results;
       }.bind(this));
   return rslt;
@@ -530,9 +556,8 @@ tachyfont.IncrementalFont.obj.prototype.getBaseFontFromUrl =
  * @param {ArrayBuffer} urlBaseBytes The fetched data.
  * @return {Array<Object>} The fileInfo (information about the font bytes) and
  *     the font data ready for character data to be added.
- * @private
  */
-tachyfont.IncrementalFont.obj.prototype.processUrlBase_ =
+tachyfont.IncrementalFont.obj.prototype.processUrlBase =
     function(urlBaseBytes) {
   var urlBaseData = new DataView(urlBaseBytes);
   this.parseBaseHeader(urlBaseData);
@@ -848,14 +873,14 @@ tachyfont.IncrementalFont.obj.prototype.loadChars = function() {
       .then(function() {
         return this.calcNeededChars_().then(function(neededCodes_) {
           neededCodes = neededCodes_;
-          return this.fetchChars_(neededCodes_);
+          return this.fetchChars(neededCodes_);
         }.bind(this))
             .then(function(bundleResponse) {
-              return this.injectChars_(neededCodes, bundleResponse);
+              return this.injectChars(neededCodes, bundleResponse);
             }.bind(this)).then(function() {
               // Persist the data.
-              this.persistDelayed_(tachyfont.utils.IDB_BASE);
-              this.persistDelayed_(tachyfont.utils.IDB_CHARLIST);
+              this.persistDelayed(tachyfont.utils.IDB_BASE);
+              this.persistDelayed(tachyfont.utils.IDB_CHARLIST);
             }.bind(this))
             .thenCatch(function(e) {
               // No chars to fetch.
@@ -874,7 +899,7 @@ tachyfont.IncrementalFont.obj.prototype.loadChars = function() {
         // Failed to get the char data so release the lock.
         finishPrecedingCharsRequest.reject('finishPrecedingCharsRequest');
         tachyfont.IncrementalFont.reportError_(
-            tachyfont.IncrementalFont.Error_.LOAD_CHARS_GET_LOCK,
+            tachyfont.IncrementalFont.Error.LOAD_CHARS_GET_LOCK,
             this.fontInfo.getWeight(), e);
         return goog.Promise.resolve(false);
       }.bind(this));
@@ -967,19 +992,18 @@ tachyfont.IncrementalFont.obj.prototype.calcNeededChars_ = function() {
  *
  * @param {Array<number>} requestedCodes The codes to be injected.
  * @return {goog.Promise} If successful return a resolved promise.
- * @private
  */
-tachyfont.IncrementalFont.obj.prototype.fetchChars_ =
+tachyfont.IncrementalFont.obj.prototype.fetchChars =
     function(requestedCodes) {
   if (requestedCodes.length == 0) {
     return goog.Promise.reject('no chars to fetch');
   }
   return this.backendService.requestCodepoints(this.fontInfo, requestedCodes)
       .then(function(bundleResponse) {
-        return this.checkFingerprint_(bundleResponse);
+        return this.checkFingerprint(bundleResponse);
       }.bind(this))
       .thenCatch(function(bundleResponse) {
-        return this.handleFingerprintMismatch_();
+        return this.handleFingerprintMismatch();
       }.bind(this));
 };
 
@@ -987,13 +1011,11 @@ tachyfont.IncrementalFont.obj.prototype.fetchChars_ =
 /**
  * Check if the font file fingerprint (SHA-1) from the char request matches the
  * fingerprint in the font base.
- *
  * @param {tachyfont.GlyphBundleResponse} bundleResponse The char request (glyph
  *     bungle) data.
  * @return {goog.Promise} The promise resolves if fingerprint ok else rejects.
- * @private
  */
-tachyfont.IncrementalFont.obj.prototype.checkFingerprint_ = function(
+tachyfont.IncrementalFont.obj.prototype.checkFingerprint = function(
     bundleResponse) {
   // If no char data then no fingerprint to possibly mismatch.
   if (bundleResponse == null) {
@@ -1011,17 +1033,15 @@ tachyfont.IncrementalFont.obj.prototype.checkFingerprint_ = function(
  * Handle the fingerprint mismatch:
  * - close and drop the database
  * - return a rejected promise
- *
  * @return {goog.Promise} Returns a promise which will eventually reject.
- * @private
  */
-tachyfont.IncrementalFont.obj.prototype.handleFingerprintMismatch_ =
+tachyfont.IncrementalFont.obj.prototype.handleFingerprintMismatch =
     function() {
   tachyfont.IncrementalFont.reportError_(
-      tachyfont.IncrementalFont.Error_.FINGERPRINT_MISMATCH,
+      tachyfont.IncrementalFont.Error.FINGERPRINT_MISMATCH,
       this.fontInfo.getWeight(), '');
 
-  return this.dropDb_()
+  return this.dropDb()
       .then(function(db) {
              return goog.Promise.reject('deleted database');
       }.bind(this));
@@ -1034,9 +1054,8 @@ tachyfont.IncrementalFont.obj.prototype.handleFingerprintMismatch_ =
  * @param {Array<number>} neededCodes The codes to be injected.
  * @param {tachyfont.GlyphBundleResponse} bundleResponse New glyph data
  * @return {goog.Promise} The list of needed chars.
- * @private
  */
-tachyfont.IncrementalFont.obj.prototype.injectChars_ = function(neededCodes,
+tachyfont.IncrementalFont.obj.prototype.injectChars = function(neededCodes,
     bundleResponse) {
   return this.getBase
       .then(function(arr) {
@@ -1073,8 +1092,7 @@ tachyfont.IncrementalFont.obj.prototype.injectChars_ = function(neededCodes,
           if (missingCodes.length != 0) {
             missingCodes = missingCodes.slice(0, 5);
             tachyfont.IncrementalFont.reportError_(
-               tachyfont.IncrementalFont.Error_
-               .LOAD_CHARS_INJECT_CHARS_2,
+               tachyfont.IncrementalFont.Error.LOAD_CHARS_INJECT_CHARS_2,
                this.fontInfo.getWeight(), missingCodes.toString());
           }
           if (goog.DEBUG) {
@@ -1111,9 +1129,8 @@ tachyfont.IncrementalFont.obj.prototype.injectChars_ = function(neededCodes,
 /**
  * Get the database name for this font.
  * @return {string} The database name.
- * @private
  */
-tachyfont.IncrementalFont.obj.prototype.getDbName_ = function() {
+tachyfont.IncrementalFont.obj.prototype.getDbName = function() {
   // TODO(bstell): Add style(slant), stretch(width), variant.
   var dbName = tachyfont.IncrementalFont.DB_NAME +
       '/' + this.fontInfo.getName() +
@@ -1126,9 +1143,8 @@ tachyfont.IncrementalFont.obj.prototype.getDbName_ = function() {
  * Save data that needs to be persisted.
  *
  * @param {string} name The name of the data item.
- * @private
  */
-tachyfont.IncrementalFont.obj.prototype.persistDelayed_ = function(name) {
+tachyfont.IncrementalFont.obj.prototype.persistDelayed = function(name) {
   if (!this.persistData) {
     return;
   }
@@ -1197,7 +1213,7 @@ tachyfont.IncrementalFont.obj.prototype.persist_ = function(name) {
                    tachyfont.utils.IDB_BASE, arr[2].buffer)
                    .thenCatch(function(e) {
                      tachyfont.IncrementalFont.reportError_(
-                     tachyfont.IncrementalFont.Error_.SAVE_DATA,
+                     tachyfont.IncrementalFont.Error.SAVE_DATA,
                      'base ' + that.fontInfo.getWeight(), e);
                    });
                  });
@@ -1218,7 +1234,7 @@ tachyfont.IncrementalFont.obj.prototype.persist_ = function(name) {
                    tachyfont.utils.IDB_CHARLIST, arr[1])
                    .thenCatch(function(e) {
                      tachyfont.IncrementalFont.reportError_(
-                     tachyfont.IncrementalFont.Error_.SAVE_DATA,
+                     tachyfont.IncrementalFont.Error.SAVE_DATA,
                      'charList ' + that.fontInfo.getWeight(), e);
                    });
                  });
@@ -1226,7 +1242,7 @@ tachyfont.IncrementalFont.obj.prototype.persist_ = function(name) {
             })
             .thenCatch(function(e) {
               tachyfont.IncrementalFont.reportError_(
-                  tachyfont.IncrementalFont.Error_.PERSIST_SAVE_DATA,
+                  tachyfont.IncrementalFont.Error.PERSIST_SAVE_DATA,
                   that.fontInfo.getWeight(), e);
             })
             .then(function() {
@@ -1239,7 +1255,7 @@ tachyfont.IncrementalFont.obj.prototype.persist_ = function(name) {
             });
       }).thenCatch(function(e) {
         tachyfont.IncrementalFont.reportError_(
-            tachyfont.IncrementalFont.Error_.PERSIST_GET_LOCK,
+            tachyfont.IncrementalFont.Error.PERSIST_GET_LOCK,
             that.fontInfo.getWeight(), e);
         // Release the lock.
         finishedPersisting.reject('persisting');

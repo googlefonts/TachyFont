@@ -70,6 +70,24 @@ tachyfont.Reporter.isReady = function() {
 
 
 /**
+ * Get the reporter instance.
+ * @return {tachyfont.Reporter}
+ */
+tachyfont.Reporter.getInstance = function() {
+  return tachyfont.Reporter.instance_;
+};
+
+
+/**
+ * Set the reporter instance.
+ * @param {tachyfont.Reporter} instance The reporter instance
+ */
+tachyfont.Reporter.setInstance = function(instance) {
+  tachyfont.Reporter.instance_ = instance;
+};
+
+
+/**
  * Initialize the reporter singleton.
  * @param {string} url The base URL to send reports to.
  */

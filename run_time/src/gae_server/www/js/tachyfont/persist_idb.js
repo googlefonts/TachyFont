@@ -29,9 +29,8 @@ goog.require('tachyfont.utils');
 /**
  * Enum for error values.
  * @enum {string}
- * @private
  */
-tachyfont.Persist.Error_ = {
+tachyfont.Persist.Error = {
   FILE_ID: 'EPI',
   OPEN_IDB: '01',
   IDB_ON_UPGRAGE_NEEDED: '02',
@@ -58,7 +57,7 @@ tachyfont.Persist.reportError_ = function(errNum, errId, errInfo) {
   }
   if (tachyfont.Reporter.isReady()) {
     tachyfont.Reporter.reportError(
-        tachyfont.Persist.Error_.FILE_ID + errNum, errId, errInfo);
+        tachyfont.Persist.Error.FILE_ID + errNum, errId, errInfo);
   }
 };
 
@@ -101,7 +100,7 @@ tachyfont.Persist.openIndexedDB = function(dbName, id) {
       resolve(db);
     };
     dbOpen.onerror = function(e) {
-      tachyfont.Persist.reportError_(tachyfont.Persist.Error_.OPEN_IDB,
+      tachyfont.Persist.reportError_(tachyfont.Persist.Error.OPEN_IDB,
           id, '!!! openIndexedDB "' + dbName);
       reject();
     };
@@ -111,7 +110,7 @@ tachyfont.Persist.openIndexedDB = function(dbName, id) {
       var db = e.target.result;
       e.target.transaction.onerror = function(e) {
         tachyfont.Persist.reportError_(
-            tachyfont.Persist.Error_.IDB_ON_UPGRAGE_NEEDED,
+            tachyfont.Persist.Error.IDB_ON_UPGRAGE_NEEDED,
             id, 'onupgradeneeded error: ' + e.value);
         reject();
       };
@@ -141,19 +140,19 @@ tachyfont.Persist.deleteDatabase = function(dbName, id) {
     req.onsuccess = function() {
       // If the user cleared the data something may be wrong.
       tachyfont.Persist.reportError_(
-          tachyfont.Persist.Error_.DELETED_DATA, id,
+          tachyfont.Persist.Error.DELETED_DATA, id,
           'Deleted database successfully');
       resolve();
     };
     req.onerror = function() {
       tachyfont.Persist.reportError_(
-          tachyfont.Persist.Error_.DELETE_DATA_FAILED, id,
+          tachyfont.Persist.Error.DELETE_DATA_FAILED, id,
           'Delete database failed');
       reject(1);
     };
     req.onblocked = function() {
       tachyfont.Persist.reportError_(
-          tachyfont.Persist.Error_.DELETE_DATA_BLOCKED, id,
+          tachyfont.Persist.Error.DELETE_DATA_BLOCKED, id,
           'Delete database blocked');
       reject(2);
     };
