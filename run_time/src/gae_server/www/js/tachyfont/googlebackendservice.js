@@ -120,7 +120,7 @@ GoogleBackendService.prototype.getDataUrl_ =
 
 /**
  * @private
- * @param {Array.<number>} codes list of code points to compress.
+ * @param {Array<number>} codes list of code points to compress.
  * @return {string} compressed code point list.
  */
 GoogleBackendService.prototype.compressedGlyphsList_ = function(codes) {

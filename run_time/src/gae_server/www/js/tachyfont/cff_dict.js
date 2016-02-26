@@ -48,20 +48,20 @@ tachyfont.CffDict = function(name, dataView) {
   this.dataView_ = dataView;
 
   if (goog.DEBUG) {
-    /** @private {!Array.<string>} */
+    /** @private {!Array<string>} */
     this.operators_ = [];
   }
 
   /**
    * Map of operator->operand.
-   * @private {!Object.<string, !tachyfont.CffDict.OperandsOperatorSet_>}
+   * @private {!Object<string, !tachyfont.CffDict.OperandsOperatorSet_>}
    */
   this.dict_ = {};
 
   /**
    * The DICT operators map.
    * This is only used during debugging.
-   * @dict @private {!Object.<string,string>}
+   * @private {!Object<string, string>}
    */
   this.dictOperators_;
 };
@@ -101,7 +101,7 @@ tachyfont.CffDict.prototype.init_ = function() {
  * @param {!ArrayBuffer} buffer The font bytes.
  * @param {number} offset The offset in the font bytes to the DICT.
  * @param {number} length The length of the DICT.
- * @param {!Object.<string,string>=} opt_dictOperators A map of the DICT
+ * @param {!Object<string, string>=} opt_dictOperators A map of the DICT
  *     operators to the logical names.
  * @return {!tachyfont.CffDict}
  */
@@ -113,7 +113,7 @@ tachyfont.CffDict.loadDict =
   if (goog.DEBUG) {
     if (opt_dictOperators) {
       dict.setOperators(
-          /** @type {!Object.<string, string>} */ (opt_dictOperators));
+          /** @type {!Object<string, string>} */ (opt_dictOperators));
     }
   }
   dict.init_();
@@ -124,7 +124,7 @@ tachyfont.CffDict.loadDict =
 if (goog.DEBUG) {
   /**
    * For debug: sets the DICT operators map.
-   * @param {!Object.<string,string>} dictOperators The DICT operators map.
+   * @param {!Object<string, string>} dictOperators The DICT operators map.
    */
   tachyfont.CffDict.prototype.setOperators = function(dictOperators) {
     this.dictOperators_ = dictOperators;
@@ -143,7 +143,7 @@ tachyfont.CffDict.prototype.getName = function() {
 
 /**
  * Gets the dict operators.
- * @return {!Array.<string>} The Dict operators.
+ * @return {!Array<string>} The Dict operators.
  */
 tachyfont.CffDict.prototype.getOperators = function() {
   return this.operators_;
@@ -153,7 +153,7 @@ tachyfont.CffDict.prototype.getOperators = function() {
 /**
  * Gets the CFF DICT operands for an operator.
  * @param {string} operator The operator of the operands/operator set.
- * @return {!Array.<number>} The array of operands.
+ * @return {!Array<number>} The array of operands.
  */
 tachyfont.CffDict.prototype.getOperands = function(operator) {
   if (operator in this.dict_) {
@@ -221,10 +221,10 @@ tachyfont.CffDict.prototype.updateDictEntryOperand =
 
 /**
  * A class that holds the information for an operands/operator set.
- * @param {!Array.<number>} operands The operands.
+ * @param {!Array<number>} operands The operands.
  * @param {string} operator The operator.
  * @param {number} offset The starting offset of the operands/operator.
- * @param {!Array.<number>} operandLengths The lengths of the operands.
+ * @param {!Array<number>} operandLengths The lengths of the operands.
  * @constructor @struct @final
  * @private
  */
@@ -233,13 +233,13 @@ tachyfont.CffDict.OperandsOperatorSet_ =
   /** @type {string} */
   this.operator = operator;
 
-  /** @type {!Array.<number>} */
+  /** @type {!Array<number>} */
   this.operands = operands;
 
   /** @type {number} */
   this.offset = offset;
 
-  /** @type {!Array.<number>} */
+  /** @type {!Array<number>} */
   this.operandLengths = operandLengths;
 };
 
@@ -262,7 +262,7 @@ tachyfont.CffDict.OperandsOperatorSet_ =
  * Note: this does not handle nibbles.
  * @param {number} number The number to convert.
  * @param {number} length The length in bytes to convert the number to.
- * @return {!Array.<number>} The byte values for the operand.
+ * @return {!Array<number>} The byte values for the operand.
  * @private
  */
 tachyfont.CffDict.numberToOperand_ = function(number, length) {
@@ -373,7 +373,7 @@ tachyfont.CffDict.readOperandsOperator_ = function(binaryEditor) {
 /**
  * Reads a CFF DICT nibble operand.
  * @param {!tachyfont.BinaryFontEditor} binaryEditor The binary editor.
- * @param {!Array.<number>} operandLengths The length of the operands.
+ * @param {!Array<number>} operandLengths The length of the operands.
  * @return {string} The nibble operand.
  * @private
  */
@@ -426,7 +426,7 @@ if (goog.DEBUG) {
   /**
    * Top DICT operator to description map.  This map is used to convert the
    * operators to meaningfull text.
-   * @dict {!Object.<string,string>}
+   * {!Object<string, string>}
    */
   tachyfont.CffDict.OperatorDescriptions = {
     '0': 'version',

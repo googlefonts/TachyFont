@@ -116,7 +116,7 @@ tachyfont.BinaryFontEditor.prototype.getInt32_ = function() {
 /**
  * @param {function()} getter One of getUint or getInt functions
  * @param {number} count Size of array
- * @return {!Array.<number>}
+ * @return {!Array<number>}
  */
 tachyfont.BinaryFontEditor.prototype.getArrayOf = function(getter, count) {
   var arr = [];
@@ -129,7 +129,7 @@ tachyfont.BinaryFontEditor.prototype.getArrayOf = function(getter, count) {
 
 /**
  * @param {function(number)} setter One of setUint or setInt functions
- * @param {Array.<number>} arr
+ * @param {Array<number>} arr
  */
 tachyfont.BinaryFontEditor.prototype.setArrayOf = function(setter, arr) {
   var count = arr.length;
@@ -266,7 +266,7 @@ tachyfont.BinaryFontEditor.prototype.nibbleReader = function() {
 /**
  * Starting from current positions read whole extra array table
  * @param {number} extraLen
- * @return {Array.<number>} array of extra numbers
+ * @return {Array<number>} array of extra numbers
  */
 tachyfont.BinaryFontEditor.prototype.readExtraArray = function(extraLen) {
   var readNextNibble = this.nibbleReader(), extraArray = [],
@@ -731,7 +731,7 @@ tachyfont.BinaryFontEditor.prototype.parseBaseHeader = function() {
   }
   var count = this.getUint16();
   var tag, tagOffset, saveOffset,
-      dataStart = count * 8 + 4 + 4 + 4 + 2;//magic,headSize,ver,count
+      dataStart = count * 8 + 4 + 4 + 4 + 2;//magic, headSize, ver, count
   for (var i = 0; i < count; i++) {
     tag = this.readString(4);
     tagOffset = this.getUint32();

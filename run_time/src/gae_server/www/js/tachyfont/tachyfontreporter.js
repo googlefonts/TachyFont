@@ -36,7 +36,7 @@ tachyfont.Reporter = function(url) {
   /** @private {string} */
   this.url_ = url;
 
-  /** @private {!Object.<string, (number|string)>} */
+  /** @private {!Object<string, (number|string)>} */
   this.items_ = {};
 };
 
@@ -224,7 +224,7 @@ tachyfont.Reporter.sendReport = function(opt_okIfNoItems) {
  * Send the gen_204.
  *
  * @param {string} baseUrl The url to send the GET to.
- * @param {Array.<string>} params The URL parameters.
+ * @param {Array<string>} params The URL parameters.
  * @private
  */
 tachyfont.Reporter.sendGen204_ = function(baseUrl, params) {

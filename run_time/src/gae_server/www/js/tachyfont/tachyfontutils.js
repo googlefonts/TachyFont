@@ -89,7 +89,7 @@ tachyfont.utils.fontId = function(family, weight) {
 /**
  * A mapping from css weight names to weights.
  *
- * @type {!Object.<string, string>}
+ * @type {!Object<string, string>}
  */
 tachyfont.utils.cssWeightToNumber = {
   'lighter': '300',
@@ -102,7 +102,7 @@ tachyfont.utils.cssWeightToNumber = {
 /**
  * A map of the codepoints that should be blank.
  *
- * @type {!Object.<number, number>}
+ * @type {!Object<number, number>}
  */
 tachyfont.utils.BLANK_CHARS = {
   // White space characters.
@@ -184,7 +184,7 @@ tachyfont.utils.stringFromCodePoint = function(codePoint) {
  * This function handles surrogate pairs.
  *
  * @param {string} str The input string.
- * @return {!Array.<string>} The array of characters.
+ * @return {!Array<string>} The array of characters.
  */
 tachyfont.utils.stringToChars = function(str) {
   var charArray = [];
@@ -264,7 +264,7 @@ if (goog.DEBUG) {
    * Report the list of codepoints.
    *
    * @param {string} title The title of the codepoint list.
-   * @param {!Array.<number>} codesIn The array of codepoints.
+   * @param {!Array<number>} codesIn The array of codepoints.
    */
   tachyfont.utils.reportCodes = function(title, codesIn) {
     if (goog.DEBUG) {

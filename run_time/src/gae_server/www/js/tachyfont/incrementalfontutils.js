@@ -324,7 +324,7 @@ tachyfont.IncrementalFontUtils.setCssFontRule =
 /**
  * Get the character to glyphId mapping.
  * @param {Object} headerInfo Header information.
- * @return {!Object.<number, !tachyfont.CharCmapInfo>} Map of chars to glyphId,
+ * @return {!Object<number, !tachyfont.CharCmapInfo>} Map of chars to glyphId,
  *     format4Seg, format12Seg.
  */
 tachyfont.IncrementalFontUtils.getCmapMapping = function(headerInfo) {

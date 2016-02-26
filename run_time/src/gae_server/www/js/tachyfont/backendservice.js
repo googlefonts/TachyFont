@@ -64,7 +64,7 @@ tachyfont.BackendService.PROTOCOL_MAJOR_VERSION = '1';
  *
  * @param {!tachyfont.FontInfo} fontInfo containing info on the font; ie:
  *     name, version, ...
- * @param {Array.<number>} codes Codepoints to be requested
+ * @param {Array<number>} codes Codepoints to be requested
  * @return {goog.Promise} Promise to return ArrayBuffer for the response bundle
  */
 BackendService.prototype.requestCodepoints = goog.functions.NULL;

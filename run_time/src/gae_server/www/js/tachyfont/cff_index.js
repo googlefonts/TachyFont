@@ -40,19 +40,19 @@ goog.require('tachyfont.utils');
  * @constructor @struct @final
  */
 tachyfont.CffIndex = function(name, offset, type, binaryEditor) {
-  /** @private {string} */
+  /** @private @const {string} */
   this.name_ = name;
 
-  /** @private {number} */
+  /** @private @const {number} */
   this.offset_ = offset;
 
-  /** @private {number} */
+  /** @private @const {number} */
   this.type_ = type;
 
-  /** @dict @private {!Object.<string,string>} */
+  /** @private {!Object<string, string>} */
   this.dictOperators_;
 
-  /** @private {!Array.<string|!DataView|!tachyfont.CffDict>} */
+  /** @private {!Array<string|!DataView|!tachyfont.CffDict>} */
   this.elements_ = [];
 
   binaryEditor.seek(offset);
@@ -60,16 +60,18 @@ tachyfont.CffIndex = function(name, offset, type, binaryEditor) {
   /** @private {number} */
   this.count_ = binaryEditor.getUint16();
 
+  // Note: not following the CFF spec here.
+  // The spec says an empty INDEX is only 2 bytes long but all the fonts handled
+  // by TachyFont have been processed by fontTools and it always adds a 0x01
+  // byte for offsetSize and a single 0x01 byte for the offsets array.
+
   /**
-   * Note: not following the CFF spec here.
-   * The spec says an empty INDEX is only 2 bytes long but all the fonts handled
-   * by TachyFont have been processed by fontTools and it always adds a 0x01
-   * byte for offsetSize and a single 0x01 byte for the offsets array.
-   * @private {number}
+   * The number of bytes per element in the offset array.
+   * @private @const {number}
    */
   this.offsetSize_ = binaryEditor.getUint8();
 
-  /** @private {!Array.<number>} */
+  /** @private {!Array<number>} */
   this.offsets_ = [];
 
   for (var i = 0; i <= this.count_; i++) {
@@ -77,7 +79,7 @@ tachyfont.CffIndex = function(name, offset, type, binaryEditor) {
     this.offsets_.push(elementOffset);
   }
 
-  /** @private {number} */
+  /** @private @const {number} */
   this.tableLength_ = 2 + 1 + (this.count_ + 1) * this.offsetSize_ +
       this.offsets_[this.count_] - 1;
 };
@@ -174,7 +176,7 @@ if (goog.DEBUG) {
   /**
    * Sets the DICT operators map. The DICT operators map is used to covert the
    * operations to a human readable form.
-   * @param {!Object.<string,string>} dictOperators The DICT operators map.
+   * @param {!Object<string, string>} dictOperators The DICT operators map.
    */
   tachyfont.CffIndex.prototype.setDictOperators = function(dictOperators) {
     this.dictOperators_ = dictOperators;
@@ -202,7 +204,7 @@ tachyfont.CffIndex.prototype.getCount = function() {
 
 /**
  * Gets the elements.
- * @return {!Array.<string|!DataView|!tachyfont.CffDict>} The elements.
+ * @return {!Array<string|!DataView|!tachyfont.CffDict>} The elements.
  */
 tachyfont.CffIndex.prototype.getElements = function() {
   return this.elements_;
@@ -223,7 +225,7 @@ tachyfont.CffIndex.prototype.getAdjustedElementOffset = function(index) {
 
 /**
  * Gets the element offsets.
- * @return {!Array.<number>} The element offsets.
+ * @return {!Array<number>} The element offsets.
  */
 tachyfont.CffIndex.prototype.getOffsets = function() {
   return this.offsets_;

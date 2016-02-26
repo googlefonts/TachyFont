@@ -213,7 +213,7 @@ tachyfont.Log_ = {
  * TODO(bstell): remove the Object type.
  * @param {!tachyfont.FontsInfo} fontsInfo The information about the
  *     fonts.
- * @param {Object.<string, string>=} opt_params Optional parameters.
+ * @param {Object<string, string>=} opt_params Optional parameters.
  * @return {tachyfont.TachyFontSet} The TachyFontSet object.
  */
 tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
@@ -288,7 +288,7 @@ tachyfont.loadFonts_loadAndUse_ = function(tachyFontSet) {
  * TODO(bstell): remove the Object type.
  * @param {!tachyfont.FontsInfo} fontsInfo The information about the
  *     fonts.
- * @param {Object.<string, string>=} opt_params Optional parameters.
+ * @param {Object<string, string>=} opt_params Optional parameters.
  * @return {tachyfont.TachyFontSet} The TachyFontSet object.
  * @private
  */
@@ -332,7 +332,7 @@ tachyfont.loadFonts_init_ = function(familyName, fontsInfo, opt_params) {
 /**
  * Get the base fonts for a list of TachyFonts
  *
- * @param {Array.<tachyfont.TachyFont>} tachyFonts The list of TachyFonts for
+ * @param {Array<tachyfont.TachyFont>} tachyFonts The list of TachyFonts for
  *     which to get the base fonts
  * @return {goog.Promise} The promise for the base fonts (fonts ready to have
  *     character data added).
@@ -369,9 +369,9 @@ tachyfont.loadFonts_getBaseFonts_ = function(tachyFonts) {
 /**
  * Make use of a list of TachyFonts
  *
- * @param {Array.<tachyfont.TachyFont>} tachyFonts The list of TachyFonts for
+ * @param {Array<tachyfont.TachyFont>} tachyFonts The list of TachyFonts for
  *     which to get the base fonts
- * @param {Array.<Array.<Object>>} arrayBaseData The TachyFont base fonts.
+ * @param {Array<Array<Object>>} arrayBaseData The TachyFont base fonts.
  * @return {goog.Promise} The promise for the base fonts (fonts ready to have
  *     character data added).
  * @private
@@ -461,7 +461,7 @@ tachyfont.loadFonts_setupTextListeners_ = function(tachyFontSet) {
  * Note: mutation observers do not look at INPUT field changes.
  *
  * @param {tachyfont.TachyFontSet} tachyFontSet The TachyFont objects.
- * @param {Array.<MutationRecord>} mutations The mutation records.
+ * @param {Array<MutationRecord>} mutations The mutation records.
  * @private
  */
 tachyfont.loadFonts_domMutationObserver_ = function(tachyFontSet, mutations) {
