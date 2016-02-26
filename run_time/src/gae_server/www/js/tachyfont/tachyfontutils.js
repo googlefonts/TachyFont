@@ -392,21 +392,21 @@ if (goog.DEBUG) {
 
   /**
    * Routine to display a range of bytes in a sfnt.
-   * @param {!tachyfont.BinaryFontEditor} binEd The binary editor.
+   * @param {!tachyfont.BinaryFontEditor} binaryEditor The binary editor.
    * @param {number} offset The starting offset to display.
    * @param {number} length The length to display.
    * @return {string}
    */
   tachyfont.utils.binaryEditorBytesToHexComma =
-      function(binEd, offset, length) {
-    binEd.seek(offset);
+      function(binaryEditor, offset, length) {
+    binaryEditor.seek(offset);
     var msg = '';
     var i;
     for (i = 0; i < length; i++) {
       if (i % 8 == 0) {
         msg += '    ';
       }
-      var number = binEd.getUint8();
+      var number = binaryEditor.getUint8();
       msg += tachyfont.utils.uint8ToHex(number) + ', ';
       if (i % 8 == 7) {
         msg += '\n';

@@ -73,10 +73,11 @@ tachyfont.CffDict = function(name, dataView) {
  * @private
  */
 tachyfont.CffDict.prototype.init_ = function() {
-  var binEd = new tachyfont.BinaryFontEditor(this.dataView_, 0);
+  var binaryEditor = new tachyfont.BinaryFontEditor(this.dataView_, 0);
 
-  while (binEd.offset < this.dataView_.byteLength) {
-    var operandsOperatorSet = tachyfont.CffDict.readOperandsOperator_(binEd);
+  while (binaryEditor.offset < this.dataView_.byteLength) {
+    var operandsOperatorSet =
+        tachyfont.CffDict.readOperandsOperator_(binaryEditor);
     if (goog.DEBUG) {
       if (this.dictOperators_ &&
           operandsOperatorSet.operator in this.dictOperators_) {
@@ -209,10 +210,10 @@ tachyfont.CffDict.prototype.updateDictEntryOperand =
   var operandValues = tachyfont.CffDict.numberToOperand_(operand, length);
 
   // Update the operand value.
-  var binEd = new tachyfont.BinaryFontEditor(this.dataView_,
+  var binaryEditor = new tachyfont.BinaryFontEditor(this.dataView_,
       operandsOperatorSet.offset + operandOffset);
   for (var i = 0; i < operandValues.length; i++) {
-    binEd.setUint8(operandValues[i]);
+    binaryEditor.setUint8(operandValues[i]);
   }
   operandsOperatorSet.operands[index] = operand;
 };
@@ -303,20 +304,21 @@ tachyfont.CffDict.numberToOperand_ = function(number, length) {
 
 /**
  * Get a CFF DICT Operands/Operator set.
- * @param {!tachyfont.BinaryFontEditor} binEd The binary editor at the position
- *     of the Operands/Operator.
+ * @param {!tachyfont.BinaryFontEditor} binaryEditor The binary editor at the
+ *     position of the Operands/Operator.
  * @return {!tachyfont.CffDict.OperandsOperatorSet_} The operands operator set.
  * @throws {Error} If a reserved operant is found.
  * @private
  */
-tachyfont.CffDict.readOperandsOperator_ = function(binEd) {
-  var operands = [], operandLengths = [], operator = '', offset = binEd.offset;
+tachyfont.CffDict.readOperandsOperator_ = function(binaryEditor) {
+  var operands = [], operandLengths = [], operator = '',
+      offset = binaryEditor.offset;
 
   var operand = '', b0, b1, b2, b3, b4, op, isUndefined;
   while (operands.length <= 48) {
     // Get the operand.
     operand = isUndefined;
-    b0 = binEd.getUint8();
+    b0 = binaryEditor.getUint8();
     if ((b0 >= 22 && b0 <= 27) || b0 == 31 || b0 == 255) {
       if (goog.DEBUG) {
         goog.log.info(tachyfont.Logger.logger,
@@ -329,27 +331,28 @@ tachyfont.CffDict.readOperandsOperator_ = function(binEd) {
       operand = b0 - 139;
       operandLengths.push(1);
     } else if (b0 >= 247 && b0 <= 250) {
-      b1 = binEd.getUint8();
+      b1 = binaryEditor.getUint8();
       operandLengths.push(2);
       operand = (b0 - 247) * 256 + b1 + 108;
     } else if (b0 >= 251 && b0 <= 254) {
-      b1 = binEd.getUint8();
+      b1 = binaryEditor.getUint8();
       operandLengths.push(2);
       operand = -(b0 - 251) * 256 - b1 - 108;
     } else if (b0 == 28) {
-      b1 = binEd.getUint8();
-      b2 = binEd.getUint8();
+      b1 = binaryEditor.getUint8();
+      b2 = binaryEditor.getUint8();
       operandLengths.push(3);
       operand = b1 << 8 | b2;
     } else if (b0 == 29) {
-      b1 = binEd.getUint8();
-      b2 = binEd.getUint8();
-      b3 = binEd.getUint8();
-      b4 = binEd.getUint8();
+      b1 = binaryEditor.getUint8();
+      b2 = binaryEditor.getUint8();
+      b3 = binaryEditor.getUint8();
+      b4 = binaryEditor.getUint8();
       operandLengths.push(5);
       operand = b1 << 24 | b2 << 16 | b3 << 8 | b4;
     } else if (b0 == 30) {
-      operand = Number(tachyfont.CffDict.parseNibbles_(binEd, operandLengths));
+      operand = Number(tachyfont.CffDict.parseNibbles_(binaryEditor,
+          operandLengths));
     }
     if (operand !== isUndefined) {
       operands.push(operand);
@@ -360,7 +363,7 @@ tachyfont.CffDict.readOperandsOperator_ = function(binEd) {
     op = b0;
     if (op == 12) {
       operator = '12 ';
-      op = binEd.getUint8();
+      op = binaryEditor.getUint8();
     }
     operator += op.toString();
     break;
@@ -372,16 +375,16 @@ tachyfont.CffDict.readOperandsOperator_ = function(binEd) {
 
 /**
  * Get a CFF DICT nibble operand.
- * @param {!tachyfont.BinaryFontEditor} binEd The binary editor.
+ * @param {!tachyfont.BinaryFontEditor} binaryEditor The binary editor.
  * @param {!Array.<number>} operandLengths The length of the operands.
  * @return {string} The nibble operand.
  * @private
  */
-tachyfont.CffDict.parseNibbles_ = function(binEd, operandLengths) {
+tachyfont.CffDict.parseNibbles_ = function(binaryEditor, operandLengths) {
   var operand = '', aByte, nibbles = [], nibble, operandsCnt = 0;
   var operandLength = 1; // Add one for the nibble indicator (30)  byte.
   while (operandsCnt++ <= 48) {
-    aByte = binEd.getUint8();
+    aByte = binaryEditor.getUint8();
     operandLength++;
     nibbles[0] = aByte >> 4;
     nibbles[1] = aByte & 0xf;

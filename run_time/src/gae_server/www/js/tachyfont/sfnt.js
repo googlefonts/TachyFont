@@ -432,13 +432,14 @@ tachyfont.Sfnt.TableOfContents.CFF_VERSION_TAG = 'OTTO';
 /**
  * Factory to get a font table of contents.
  * @param {!DataView} fontData The font data.
- * @param {!tachyfont.BinaryFontEditor} binEd A binary editor for the font.
+ * @param {!tachyfont.BinaryFontEditor} binaryEditor A binary editor for the
+ *     font.
  * @return {!tachyfont.Sfnt.TableOfContents}
  * @private
  */
-tachyfont.Sfnt.parseTableOfContents_ = function(fontData, binEd) {
+tachyfont.Sfnt.parseTableOfContents_ = function(fontData, binaryEditor) {
   var tableOfContents = new tachyfont.Sfnt.TableOfContents();
-  tableOfContents.init_(fontData, binEd);
+  tableOfContents.init_(fontData, binaryEditor);
   return tableOfContents;
 };
 
@@ -446,13 +447,15 @@ tachyfont.Sfnt.parseTableOfContents_ = function(fontData, binEd) {
 /**
  * Initialize the Table Of Contents.
  * @param {!DataView} fontData The font data.
- * @param {!tachyfont.BinaryFontEditor} binEd A binary editor for the font.
+ * @param {!tachyfont.BinaryFontEditor} binaryEditor A binary editor for the
+ *     font.
  * @private
  */
-tachyfont.Sfnt.TableOfContents.prototype.init_ = function(fontData, binEd) {
-  var sfntVersion = binEd.getUint32();
-  binEd.seek(0);
-  var sfntVersionTag = binEd.readString(4);
+tachyfont.Sfnt.TableOfContents.prototype.init_ = function(fontData,
+    binaryEditor) {
+  var sfntVersion = binaryEditor.getUint32();
+  binaryEditor.seek(0);
+  var sfntVersionTag = binaryEditor.readString(4);
   if (sfntVersion == tachyfont.Sfnt.TableOfContents.TTF_VERSION_NUMBER) {
     // TODO(bstell): handle a ttf font.
     this.isCff_ = false;
@@ -462,16 +465,16 @@ tachyfont.Sfnt.TableOfContents.prototype.init_ = function(fontData, binEd) {
   } else {
     throw new Error('invalid font');
   }
-  var numTables = binEd.getUint16();
-  binEd.skip(6); // searchRange, entrySelector, rangeShift
+  var numTables = binaryEditor.getUint16();
+  binaryEditor.skip(6); // searchRange, entrySelector, rangeShift
   for (var i = 0; i < numTables; i++) {
-    var entryOffset = binEd.tell();
-    var tag = binEd.readString(4);
-    binEd.seek(entryOffset);
-    var tagNumber = binEd.getUint32();
-    var checksum = binEd.getUint32();
-    var offset = binEd.getUint32();
-    var length = binEd.getUint32();
+    var entryOffset = binaryEditor.tell();
+    var tag = binaryEditor.readString(4);
+    binaryEditor.seek(entryOffset);
+    var tagNumber = binaryEditor.getUint32();
+    var checksum = binaryEditor.getUint32();
+    var offset = binaryEditor.getUint32();
+    var length = binaryEditor.getUint32();
     var item = new tachyfont.Sfnt.TableOfContentsEntry(tag, tagNumber, checksum,
         offset, length);
     this.items_.push(item);
@@ -482,16 +485,17 @@ tachyfont.Sfnt.TableOfContents.prototype.init_ = function(fontData, binEd) {
 
 /**
  * Update the Table Of Contents.
- * @param {!tachyfont.BinaryFontEditor} binEd A binary editor for the font.
+ * @param {!tachyfont.BinaryFontEditor} binaryEditor A binary editor for the
+ *     font.
  * @param {number} deltaTableLength The amount to change the table size.
  * @param {number} deltaAllocatedLength The amount to change the offset.
  * @param {number} afterOffset Only change offsets that were after this offset.
  * @private
  */
-tachyfont.Sfnt.TableOfContents.prototype.updateOffsets_ =
-    function(binEd, deltaTableLength, deltaAllocatedLength, afterOffset) {
+tachyfont.Sfnt.TableOfContents.prototype.updateOffsets_ = function(
+    binaryEditor, deltaTableLength, deltaAllocatedLength, afterOffset) {
   // Skip sfntVersion, numTables, searchRange, entrySelector, rangeShift.
-  binEd.seek(12);
+  binaryEditor.seek(12);
 
   // The sfnt table of contents:
   // * 32 bit tag (4 8-bit chars)
@@ -501,23 +505,23 @@ tachyfont.Sfnt.TableOfContents.prototype.updateOffsets_ =
   var numTables = this.items_.length;
   for (var i = 0; i < numTables; i++) {
     var entry = this.items_[i];
-    var tag = binEd.readString(4);
+    var tag = binaryEditor.readString(4);
     goog.asserts.assert(tag == entry.tag_);
-    binEd.skip(4); // Skip the checksum.
+    binaryEditor.skip(4); // Skip the checksum.
     if (entry.offset_ == afterOffset) {
       // Skip the offset.
-      binEd.skip(4);
+      binaryEditor.skip(4);
       // Update the length
       entry.length_ += deltaTableLength;
-      binEd.setUint32(entry.length_);
+      binaryEditor.setUint32(entry.length_);
     } else if (entry.offset_ > afterOffset) {
       // Update the offset.
       entry.offset_ += deltaAllocatedLength;
-      binEd.setUint32(entry.offset_);
+      binaryEditor.setUint32(entry.offset_);
       // Skip the length.
-      binEd.skip(4);
+      binaryEditor.skip(4);
     } else {
-      binEd.skip(8); // Skip the offset and length.
+      binaryEditor.skip(8); // Skip the offset and length.
     }
   }
 };

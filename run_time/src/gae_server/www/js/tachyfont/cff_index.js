@@ -40,10 +40,10 @@ goog.require('tachyfont.utils');
  * @param {string} name The table name.
  * @param {number} offset The offset from start of the CFF table.
  * @param {number} type Indicates the data type in the index.
- * @param {!tachyfont.BinaryFontEditor} binEd A binary font editor.
+ * @param {!tachyfont.BinaryFontEditor} binaryEditor A binary font editor.
  * @constructor @struct @final
  */
-tachyfont.CffIndex = function(name, offset, type, binEd) {
+tachyfont.CffIndex = function(name, offset, type, binaryEditor) {
   /** @private {string} */
   this.name_ = name;
 
@@ -59,25 +59,25 @@ tachyfont.CffIndex = function(name, offset, type, binEd) {
   /** @private {!Array.<string|!DataView|!tachyfont.CffDict>} */
   this.elements_ = [];
 
-  binEd.seek(offset);
+  binaryEditor.seek(offset);
 
   /** @private {number} */
-  this.count_ = binEd.getUint16();
+  this.count_ = binaryEditor.getUint16();
 
   /**
    * Note: not following the CFF spec here.
    * The spec says an empty INDEX is only 2 bytes long but all the fonts handled
    * by TachyFont have been processed by fontTools and it always adds a 0x01
-   * byte for offSize and a single 0x01 byte for the offsets array.
+   * byte for offsetSize and a single 0x01 byte for the offsets array.
    * @private {number}
    */
-  this.offsetSize_ = binEd.getUint8();
+  this.offsetSize_ = binaryEditor.getUint8();
 
   /** @private {!Array.<number>} */
   this.offsets_ = [];
 
   for (var i = 0; i <= this.count_; i++) {
-    var elementOffset = binEd.getOffset(this.offsetSize_);
+    var elementOffset = binaryEditor.getOffset(this.offsetSize_);
     this.offsets_.push(elementOffset);
   }
 
@@ -154,10 +154,10 @@ if (goog.DEBUG) {
 
 
 /**
- * Get the offSize of elements.
- * @return {number} The offSize of elements.
+ * Get the offsetSize of elements.
+ * @return {number} The offsetSize of elements.
  */
-tachyfont.CffIndex.prototype.getOffSize = function() {
+tachyfont.CffIndex.prototype.getOffsetSize = function() {
   return this.offsetSize_;
 };
 
@@ -221,19 +221,19 @@ tachyfont.CffIndex.prototype.getType = function() {
 
 /**
  * Load the INDEX strings.
- * @param {!tachyfont.BinaryFontEditor} binEd A binary font editor.
+ * @param {!tachyfont.BinaryFontEditor} binaryEditor A binary font editor.
  */
-tachyfont.CffIndex.prototype.loadStrings = function(binEd) {
+tachyfont.CffIndex.prototype.loadStrings = function(binaryEditor) {
   goog.log.info(tachyfont.Logger.logger, this.name_);
   var dataStart = this.offset_ + 2 + 1 + (this.count_ + 1) * this.offsetSize_;
-  binEd.seek(dataStart);
+  binaryEditor.seek(dataStart);
   for (var i = 0; i < this.count_; i++) {
     var dataLength = this.offsets_[i + 1] - this.offsets_[i];
     if (this.type_ == tachyfont.CffIndex.TYPE_STRING) {
-      var str = binEd.readString(dataLength);
+      var str = binaryEditor.readString(dataLength);
       this.elements_.push(str);
     } else {
-      var dataView = binEd.readDataView(dataLength);
+      var dataView = binaryEditor.readDataView(dataLength);
       this.elements_.push(dataView);
     }
   }
@@ -300,23 +300,23 @@ if (goog.DEBUG) {
 
 /**
  * Load the INDEX DICTs.
- * @param {!tachyfont.BinaryFontEditor} binEd A binary font editor.
+ * @param {!tachyfont.BinaryFontEditor} binaryEditor A binary font editor.
  */
-tachyfont.CffIndex.prototype.loadDicts = function(binEd) {
+tachyfont.CffIndex.prototype.loadDicts = function(binaryEditor) {
   if (this.type_ != tachyfont.CffIndex.TYPE_DICT) {
     throw new Error(this.name_ + ' does not hold DICTS');
   }
   // TODO(bstell): in debug check this is a DICT INDEX.
   goog.log.info(tachyfont.Logger.logger, this.name_);
-  var arrayBuffer = binEd.dataView.buffer;
+  var arrayBuffer = binaryEditor.dataView.buffer;
   var dataStart = this.offset_ + 2 + 1 + (this.count_ + 1) * this.offsetSize_;
   for (var i = 0; i < this.count_; i++) {
     goog.log.info(tachyfont.Logger.logger, 'dict[' + i + ']');
     var name = this.name_ + i;
     var length = this.offsets_[i + 1] - this.offsets_[i];
     // TODO(bstell): make this reusable.
-    var offset = binEd.dataView.byteOffset + binEd.baseOffset + dataStart +
-        this.offsets_[i] - 1;
+    var offset = binaryEditor.dataView.byteOffset + binaryEditor.baseOffset +
+        dataStart + this.offsets_[i] - 1;
     var dict = tachyfont.CffDict.loadDict(name, arrayBuffer, offset, length,
         this.dictOperators_);
     this.elements_.push(dict);

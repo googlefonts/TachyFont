@@ -91,14 +91,14 @@ tachyfont.Cmap.writeCmap12 = function(fileInfo, baseFontView) {
   if (!fileInfo.compact_gos.cmap12) {
     return;
   }
-  var binEd = new tachyfont.BinaryFontEditor(baseFontView,
+  var binaryEditor = new tachyfont.BinaryFontEditor(baseFontView,
       fileInfo.cmap12.offset + 16);
   var nGroups = fileInfo.cmap12.nGroups;
   var segments = fileInfo.compact_gos.cmap12.segments;
   for (var i = 0; i < nGroups; i++) {
-    binEd.setUint32(segments[i][0]);
-    binEd.setUint32(segments[i][0] + segments[i][1] - 1);
-    binEd.setUint32(0);
+    binaryEditor.setUint32(segments[i][0]);
+    binaryEditor.setUint32(segments[i][0] + segments[i][1] - 1);
+    binaryEditor.setUint32(0);
   }
 };
 
@@ -116,9 +116,9 @@ tachyfont.Cmap.writeCmap4 = function(fileInfo, baseFontView, weight) {
   }
   var segments = fileInfo.compact_gos.cmap4.segments;
   var glyphIdArray = fileInfo.compact_gos.cmap4.glyphIdArray;
-  var binEd = new tachyfont.BinaryFontEditor(baseFontView,
+  var binaryEditor = new tachyfont.BinaryFontEditor(baseFontView,
       fileInfo.cmap4.offset + 6);
-  var segCount = binEd.getUint16() / 2;
+  var segCount = binaryEditor.getUint16() / 2;
   if (segCount != segments.length) {
     tachyfont.Cmap.reportError_(
         tachyfont.Cmap.Error_.WRITE_CMAP4_SEGMENT_COUNT,
@@ -128,29 +128,29 @@ tachyfont.Cmap.writeCmap4 = function(fileInfo, baseFontView, weight) {
   var glyphIdArrayLen = (fileInfo.cmap4.length - 16 - segCount * 8) / 2;
   fileInfo.cmap4.segCount = segCount;
   fileInfo.cmap4.glyphIdArrayLen = glyphIdArrayLen;
-  binEd.skip(6); //skip searchRange,entrySelector,rangeShift
+  binaryEditor.skip(6); //skip searchRange,entrySelector,rangeShift
   // Write endCode values.
   for (var i = 0; i < segCount; i++) {
-    binEd.setUint16(segments[i][1]);
+    binaryEditor.setUint16(segments[i][1]);
   }
-  binEd.skip(2);//skip reservePad
+  binaryEditor.skip(2);//skip reservePad
   // Write startCode values.
   for (var i = 0; i < segCount; i++) {
-    binEd.setUint16(segments[i][0]);
+    binaryEditor.setUint16(segments[i][0]);
   }
   // Write idDelta values.
   for (var i = 0; i < segCount; i++) {
     // Make the single code point in this segment point to .notdef.
     var startCode = segments[i][0];
-    binEd.setUint16(0x10000 - startCode);
+    binaryEditor.setUint16(0x10000 - startCode);
   }
   // Write idRangeOffset vValues.
   for (var i = 0; i < segCount; i++) {
-    binEd.setUint16(segments[i][3]);
+    binaryEditor.setUint16(segments[i][3]);
   }
   // Write glyphIdArray values.
   if (glyphIdArrayLen > 0) {
-    binEd.setArrayOf(binEd.setUint16, glyphIdArray);
+    binaryEditor.setArrayOf(binaryEditor.setUint16, glyphIdArray);
   }
 };
 
@@ -344,9 +344,9 @@ tachyfont.Cmap.setFormat4GlyphIds = function(fileInfo, baseFontView, glyphIds,
     return;
   }
   var segments = fileInfo.compact_gos.cmap4.segments;
-  var binEd = new tachyfont.BinaryFontEditor(baseFontView,
+  var binaryEditor = new tachyfont.BinaryFontEditor(baseFontView,
       fileInfo.cmap4.offset + 6);
-  var segCount = binEd.getUint16() / 2;
+  var segCount = binaryEditor.getUint16() / 2;
   if (segCount != segments.length) {
     tachyfont.Cmap.reportError_(
         tachyfont.Cmap.Error_.FORMAT4_SEGMENT_COUNT,
@@ -354,10 +354,10 @@ tachyfont.Cmap.setFormat4GlyphIds = function(fileInfo, baseFontView, glyphIds,
         segments.length);
     return;
   }
-  binEd.seek(8);
+  binaryEditor.seek(8);
   for (var i = 0; i < segCount; i++) {
     // Check the end code.
-    var segmentEndCode = binEd.getUint16();
+    var segmentEndCode = binaryEditor.getUint16();
     if (segmentEndCode != segments[i][1]) {
       tachyfont.Cmap.reportError_(
           tachyfont.Cmap.Error_.FORMAT4_END_CODE,
@@ -374,9 +374,9 @@ tachyfont.Cmap.setFormat4GlyphIds = function(fileInfo, baseFontView, glyphIds,
       return;
     }
   }
-  binEd.skip(2);//skip reservePad
+  binaryEditor.skip(2);//skip reservePad
   for (var i = 0; i < segCount; i++) {
-    var segStartCode = binEd.getUint16();
+    var segStartCode = binaryEditor.getUint16();
     if (segStartCode != segments[i][0]) {
       tachyfont.Cmap.reportError_(
           tachyfont.Cmap.Error_.FORMAT4_START_CODE,
@@ -386,9 +386,9 @@ tachyfont.Cmap.setFormat4GlyphIds = function(fileInfo, baseFontView, glyphIds,
       return;
     }
   }
-  var idDeltaOffset = binEd.tell();
+  var idDeltaOffset = binaryEditor.tell();
   for (var i = 0; i < segCount; i++) {
-    var segIdDelta = binEd.getUint16();
+    var segIdDelta = binaryEditor.getUint16();
     var segGlyphId = (segIdDelta + segments[i][0]) & 0xFFFF;
     if (segGlyphId != 0) {
       tachyfont.Cmap.reportError_(
@@ -405,7 +405,7 @@ tachyfont.Cmap.setFormat4GlyphIds = function(fileInfo, baseFontView, glyphIds,
     }
   }
   for (var i = 0; i < segCount; i++) {
-    var segIdRangeOffset = binEd.getUint16();
+    var segIdRangeOffset = binaryEditor.getUint16();
     if (segIdRangeOffset != 0) {
       tachyfont.Cmap.reportError_(
           tachyfont.Cmap.Error_.FORMAT4_ID_RANGE_OFFSET,
@@ -443,8 +443,8 @@ tachyfont.Cmap.setFormat4GlyphIds = function(fileInfo, baseFontView, glyphIds,
         // Character is not in the format 4 segment.
         continue;
       }
-      binEd.seek(idDeltaOffset + format4Seg * 2);
-      binEd.setUint16(segments[format4Seg][2]);
+      binaryEditor.seek(idDeltaOffset + format4Seg * 2);
+      binaryEditor.setUint16(segments[format4Seg][2]);
     }
   }
 };

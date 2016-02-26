@@ -33,9 +33,9 @@ goog.require('tachyfont.IncrementalFontUtils');
  */
 tachyfont.GlyphBundleResponse = function(version, signature, offset, buffer) {
   var dataView = new DataView(buffer);
-  var binEd = new tachyfont.BinaryFontEditor(dataView, offset);
-  var count = binEd.getUint16();
-  var flags = binEd.getUint16();
+  var binaryEditor = new tachyfont.BinaryFontEditor(dataView, offset);
+  var count = binaryEditor.getUint16();
+  var flags = binaryEditor.getUint16();
 
   this.version = version;
   this.signature = signature;
@@ -44,19 +44,19 @@ tachyfont.GlyphBundleResponse = function(version, signature, offset, buffer) {
   this.glyphDataArray_ = [];
 
   for (var i = 0; i < count; i += 1) {
-    var id = binEd.getUint16();
+    var id = binaryEditor.getUint16();
     var hmtx, vmtx;
     if (flags & tachyfont.IncrementalFontUtils.FLAGS.HAS_HMTX) {
-      hmtx = binEd.getUint16();
+      hmtx = binaryEditor.getUint16();
     }
     if (flags & tachyfont.IncrementalFontUtils.FLAGS.HAS_VMTX) {
-      vmtx = binEd.getUint16();
+      vmtx = binaryEditor.getUint16();
     }
 
-    var bytesOffset = binEd.getUint32();
-    var length = binEd.getUint16();
+    var bytesOffset = binaryEditor.getUint32();
+    var length = binaryEditor.getUint16();
 
-    var bytes = binEd.getArrayOf(binEd.getUint8, length);
+    var bytes = binaryEditor.getArrayOf(binaryEditor.getUint8, length);
 
     var glyphData = new tachyfont.GlyphBundleResponse.GlyphData(id, hmtx, vmtx,
         bytesOffset, length, bytes);
