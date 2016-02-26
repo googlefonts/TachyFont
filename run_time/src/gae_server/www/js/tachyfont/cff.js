@@ -68,12 +68,6 @@ tachyfont.Cff = function(offset, fontData) {
    */
   this.headerSize_;
 
-  /**
-   * The CFF offset size (number of bytes used in a offset) in the font.
-   * @private {number}
-   */
-  this.offsetSize_;
-
   /** @private {number} */
   this.nameIndexOffset_;
 
@@ -98,23 +92,6 @@ tachyfont.Cff = function(offset, fontData) {
    */
   this.topDict_;
 
-  /** @private {number} */
-  this.stringIndexOffset_;
-
-  /**
-   * The CFF String INDEX.
-   * @private {!tachyfont.CffIndex}
-   */
-  this.stringIndex_;
-
-  /** @private {number} */
-  this.globalSubrIndexOffset_;
-
-  /**
-   * The CFF Global Subr INDEX.
-   * @private {!tachyfont.CffIndex}
-   */
-  this.globalSubrIndex_;
 
   /**
    * The offset to the Encodings table.

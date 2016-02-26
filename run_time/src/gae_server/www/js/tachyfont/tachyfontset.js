@@ -67,15 +67,6 @@ tachyfont.TachyFontSet = function(familyName) {
   this.domContentLoaded = false;
 
   /**
-   * The number of chars that need to be loaded.
-   *
-   * TODO(bstell): this is not fully used yet.
-   *
-   * @private {number}
-   */
-  this.pendingChars_ = 0;
-
-  /**
    * Do not need to scan the DOM if there have been mutation events before
    * DOMContentLoaded.
    *
