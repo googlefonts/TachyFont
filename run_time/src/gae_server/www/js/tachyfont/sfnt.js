@@ -204,9 +204,9 @@ tachyfont.Sfnt.getFont = function(fontData) {
  * @return {!Uint8Array} The table contents.
  */
 tachyfont.Sfnt.Font.prototype.getTableData = function(tableTag) {
-  var tocEntry = this.tableOfContents_.getTocEntry(tableTag);
-  var offset = tocEntry.offset_;
-  var length = tocEntry.length_;
+  var tableOfContentsEntry = this.tableOfContents_.getEntry(tableTag);
+  var offset = tableOfContentsEntry.offset_;
+  var length = tableOfContentsEntry.length_;
   var data = new Uint8Array(this.fontData_.buffer, offset, length);
   return data;
 };
@@ -235,7 +235,7 @@ tachyfont.Sfnt.Font.prototype.replaceTable = function(tableTag, data) {
     lastElementArray.push(padding);
   }
 
-  var entry = this.tableOfContents_.getTocEntry(tableTag);
+  var entry = this.tableOfContents_.getEntry(tableTag);
   var deltaTableLength = length - entry.getLength();
   var allocatedLength = this.getAllocatedLength(tableTag);
   var deltaAllocatedLength = this.replaceData_(entry.offset_, allocatedLength,
@@ -532,7 +532,7 @@ tachyfont.Sfnt.TableOfContents.prototype.updateOffsets_ = function(
  * @param {string} tag The 4 character tag for the table.
  * @return {!tachyfont.Sfnt.TableOfContentsEntry} ;
  */
-tachyfont.Sfnt.TableOfContents.prototype.getTocEntry = function(tag) {
+tachyfont.Sfnt.TableOfContents.prototype.getEntry = function(tag) {
   var index = this.tagIndex_[tag];
   return this.items_[index];
 };
