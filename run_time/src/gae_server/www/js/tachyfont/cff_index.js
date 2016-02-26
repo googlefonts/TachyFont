@@ -20,10 +20,7 @@
 
 goog.provide('tachyfont.CffIndex');
 
-goog.require('goog.log');
 goog.require('tachyfont.CffDict');
-goog.require('tachyfont.Logger');
-goog.require('tachyfont.utils');
 
 
 
@@ -43,14 +40,16 @@ tachyfont.CffIndex = function(name, offset, type, binaryEditor) {
   /** @private @const {string} */
   this.name_ = name;
 
-  /** @private @const {number} */
+  /**
+   * The offset in the CFF table to this INDEX.
+   * @private @const {number} */
   this.offset_ = offset;
 
-  /** @private @const {number} */
+  /**
+   * The type of the elements in this INDEX.
+   * @private @const {number}
+   */
   this.type_ = type;
-
-  /** @private {!Object<string, string>} */
-  this.dictOperators_;
 
   /** @private {!Array<string|!DataView|!tachyfont.CffDict>} */
   this.elements_ = [];
@@ -80,8 +79,11 @@ tachyfont.CffIndex = function(name, offset, type, binaryEditor) {
   }
 
   /** @private @const {number} */
-  this.tableLength_ = 2 + 1 + (this.count_ + 1) * this.offsetSize_ +
-      this.offsets_[this.count_] - 1;
+  this.tableLength_ =
+      2 + // 2 count bytes.
+      1 + // 1 offSize byte (indicate the bytes per offset).
+      (this.count_ + 1) * this.offsetSize_ + // The offsets array size.
+      this.offsets_[this.count_] - 1; // The elements size.
 };
 
 
@@ -172,18 +174,6 @@ tachyfont.CffIndex.prototype.getDictElement = function(index) {
 };
 
 
-if (goog.DEBUG) {
-  /**
-   * Sets the DICT operators map. The DICT operators map is used to covert the
-   * operations to a human readable form.
-   * @param {!Object<string, string>} dictOperators The DICT operators map.
-   */
-  tachyfont.CffIndex.prototype.setDictOperators = function(dictOperators) {
-    this.dictOperators_ = dictOperators;
-  };
-}
-
-
 /**
  * Gets the offsetSize of elements.
  * @return {number} The offsetSize of elements.
@@ -255,7 +245,6 @@ tachyfont.CffIndex.prototype.getType = function() {
  * @param {!tachyfont.BinaryFontEditor} binaryEditor A binary font editor.
  */
 tachyfont.CffIndex.prototype.loadStrings = function(binaryEditor) {
-  goog.log.info(tachyfont.Logger.logger, this.name_);
   var dataStart = this.offset_ + 2 + 1 + (this.count_ + 1) * this.offsetSize_;
   binaryEditor.seek(dataStart);
   for (var i = 0; i < this.count_; i++) {
@@ -270,64 +259,6 @@ tachyfont.CffIndex.prototype.loadStrings = function(binaryEditor) {
   }
 };
 
-/*
- * Routines and data useful when debugging.
- */
-if (goog.DEBUG) {
-  /**
-   * @param {boolean} showData If true then include the data in the display.
-   * @param {number} cffTableOffset The offset of the CFF table in the font.
-   */
-  tachyfont.CffIndex.prototype.display = function(showData, cffTableOffset) {
-    goog.log.info(tachyfont.Logger.logger, this.name_ + ':');
-    goog.log.info(tachyfont.Logger.logger,
-        '  elements: ' + this.elements_.length);
-    goog.log.info(tachyfont.Logger.logger, '  offset: ' + this.offset_ + ' / ' +
-        tachyfont.utils.numberToHex(this.offset_) + ' (' +
-        tachyfont.utils.numberToHex(this.offset_ + cffTableOffset) + ')');
-
-    if (this.count_ != this.elements_.length) {
-      goog.log.info(tachyfont.Logger.logger,
-          'this.count_(' + this.count_ + ') != ' +
-          'this.elements_.length(' + this.elements_.length + ')');
-      return;
-    }
-    for (var i = 0; i < this.count_; i++) {
-      var offset = this.offsets_[i];
-      var hexOffset = tachyfont.utils.numberToHex(offset);
-      var displayStr = '  ' + ('   ' + i.toString()).substr(-3) + ': ' +
-          ('  ' + offset).substr(-3) + ' (' + hexOffset + ')';
-      if (showData) {
-        if (this.type_ == tachyfont.CffIndex.TYPE_DICT) {
-          var dict = this.elements_[i];
-          var operators = dict.getOperators();
-          // display the dict operands/operators.
-          for (var j = 0; j < operators.length; j++) {
-            var operator = operators[j];
-            if (dict.dictOperators_) {
-              goog.log.info(tachyfont.Logger.logger,
-                  dict.getOperands(operator) + ' ' +
-                  this.dictOperators_[operator]);
-            } else {
-              goog.log.info(tachyfont.Logger.logger,
-                  dict.getOperands(operator) + ' ' + operator);
-            }
-          }
-        } else {
-          displayStr += ' ';
-          if (this.type_ == tachyfont.CffIndex.TYPE_STRING) {
-            displayStr += '"' + this.elements_[i] + '"';
-          } else {
-            displayStr += tachyfont.utils.dataViewToHex(
-                /** @type {!DataView} */ (this.elements_[i]));
-          }
-          goog.log.info(tachyfont.Logger.logger, displayStr);
-        }
-      }
-    }
-  };
-}
-
 
 /**
  * Loads the INDEX DICTs.
@@ -337,19 +268,15 @@ tachyfont.CffIndex.prototype.loadDicts = function(binaryEditor) {
   if (this.type_ != tachyfont.CffIndex.TYPE_DICT) {
     throw new Error(this.name_ + ' does not hold DICTS');
   }
-  // TODO(bstell): in debug check this is a DICT INDEX.
-  goog.log.info(tachyfont.Logger.logger, this.name_);
   var arrayBuffer = binaryEditor.dataView.buffer;
   var dataStart = this.offset_ + 2 + 1 + (this.count_ + 1) * this.offsetSize_;
   for (var i = 0; i < this.count_; i++) {
-    goog.log.info(tachyfont.Logger.logger, 'dict[' + i + ']');
     var name = this.name_ + i;
     var length = this.offsets_[i + 1] - this.offsets_[i];
     // TODO(bstell): make this reusable.
     var offset = binaryEditor.dataView.byteOffset + binaryEditor.baseOffset +
         dataStart + this.offsets_[i] - 1;
-    var dict = tachyfont.CffDict.loadDict(name, arrayBuffer, offset, length,
-        this.dictOperators_);
+    var dict = tachyfont.CffDict.loadDict(name, arrayBuffer, offset, length);
     this.elements_.push(dict);
   }
 };

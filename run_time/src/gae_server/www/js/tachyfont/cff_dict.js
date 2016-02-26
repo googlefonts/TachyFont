@@ -27,9 +27,7 @@
 
 goog.provide('tachyfont.CffDict');
 
-goog.require('goog.log');
 goog.require('tachyfont.BinaryFontEditor');
-goog.require('tachyfont.Logger');
 goog.require('tachyfont.utils');
 
 
@@ -47,10 +45,6 @@ tachyfont.CffDict = function(name, dataView) {
   /** @private {!DataView} */
   this.dataView_ = dataView;
 
-  if (goog.DEBUG) {
-    /** @private {!Array<string>} */
-    this.operators_ = [];
-  }
 
   /**
    * Map of operator->operand.
@@ -58,12 +52,6 @@ tachyfont.CffDict = function(name, dataView) {
    */
   this.dict_ = {};
 
-  /**
-   * The DICT operators map.
-   * This is only used during debugging.
-   * @private {!Object<string, string>}
-   */
-  this.dictOperators_;
 };
 
 
@@ -77,19 +65,6 @@ tachyfont.CffDict.prototype.init_ = function() {
   while (binaryEditor.offset < this.dataView_.byteLength) {
     var operandsOperatorSet =
         tachyfont.CffDict.readOperandsOperator_(binaryEditor);
-    if (goog.DEBUG) {
-      if (this.dictOperators_ &&
-          operandsOperatorSet.operator in this.dictOperators_) {
-        goog.log.info(tachyfont.Logger.logger, '  ' +
-            operandsOperatorSet.operands + ' ' +
-            this.dictOperators_[operandsOperatorSet.operator]);
-      } else {
-        goog.log.info(tachyfont.Logger.logger, '  ' +
-            operandsOperatorSet.operands + ' ' +
-            operandsOperatorSet.operator);
-      }
-    }
-    this.operators_.push(operandsOperatorSet.operator);
     this.dict_[operandsOperatorSet.operator] = operandsOperatorSet;
   }
 };
@@ -101,35 +76,16 @@ tachyfont.CffDict.prototype.init_ = function() {
  * @param {!ArrayBuffer} buffer The font bytes.
  * @param {number} offset The offset in the font bytes to the DICT.
  * @param {number} length The length of the DICT.
- * @param {!Object<string, string>=} opt_dictOperators A map of the DICT
  *     operators to the logical names.
  * @return {!tachyfont.CffDict}
  */
-tachyfont.CffDict.loadDict =
-    function(name, buffer, offset, length, opt_dictOperators) {
+tachyfont.CffDict.loadDict = function(name, buffer, offset, length) {
   var dataView = new DataView(buffer, offset, length);
   //tachyfont.utils.hexDump(name, dataView);
   var dict = new tachyfont.CffDict(name, dataView);
-  if (goog.DEBUG) {
-    if (opt_dictOperators) {
-      dict.setOperators(
-          /** @type {!Object<string, string>} */ (opt_dictOperators));
-    }
-  }
   dict.init_();
   return dict;
 };
-
-
-if (goog.DEBUG) {
-  /**
-   * For debug: sets the DICT operators map.
-   * @param {!Object<string, string>} dictOperators The DICT operators map.
-   */
-  tachyfont.CffDict.prototype.setOperators = function(dictOperators) {
-    this.dictOperators_ = dictOperators;
-  };
-}
 
 
 /**
@@ -138,15 +94,6 @@ if (goog.DEBUG) {
  */
 tachyfont.CffDict.prototype.getName = function() {
   return this.name_;
-};
-
-
-/**
- * Gets the dict operators.
- * @return {!Array<string>} The Dict operators.
- */
-tachyfont.CffDict.prototype.getOperators = function() {
-  return this.operators_;
 };
 
 
@@ -317,10 +264,6 @@ tachyfont.CffDict.readOperandsOperator_ = function(binaryEditor) {
     operand = isUndefined;
     b0 = binaryEditor.getUint8();
     if ((b0 >= 22 && b0 <= 27) || b0 == 31 || b0 == 255) {
-      if (goog.DEBUG) {
-        goog.log.info(tachyfont.Logger.logger,
-            b0 + ' is a reserved operand value');
-      }
       throw new Error(tachyfont.utils.numberToHex(b0, 2) +
           'is reserved operand value');
     }
@@ -422,56 +365,3 @@ tachyfont.CffDict.Operator = {
 };
 
 
-if (goog.DEBUG) {
-  /**
-   * Top DICT operator to description map.  This map is used to convert the
-   * operators to meaningfull text.
-   * {!Object<string, string>}
-   */
-  tachyfont.CffDict.OperatorDescriptions = {
-    '0': 'version',
-    '1': 'Notice',
-    '12 0': 'Copyright',
-    '2': 'FullName',
-    '3': 'FamilyName',
-    '4': 'Weight',
-    '5': 'FontBBox',
-    '6': 'BlueValues',
-    '7': 'OtherBlue',
-    '10': 'StdHW',
-    '11': 'StdVW',
-    '12 1': 'IsFixedPitch',
-    '12 2': 'ItalicAngle',
-    '12 3': 'UnderlinePosition',
-    '12 4': 'UnderlineThickness',
-    '12 5': 'PaintType',
-    '12 6': 'CharstringType',
-    '12 7': 'FontMatrix',
-    '12 8': 'StrokeWidth',
-    '12 12': 'StemSnapH',
-    '12 13': 'StemSnapV',
-    '12 17': 'LanguageGroup',
-    '13': 'UniqueID',
-    '14': 'XUID',
-    '15': 'charset',
-    '16': 'Encoding',
-    '17': 'CharStrings',
-    '18': 'Private',
-    '19': 'Subrs',
-    '20': 'DefaultWidthX',
-    '21': 'NominalWidthX',
-    '12 20': 'SyntheticBase',
-    '12 21': 'PostScript',
-    '12 22': 'BaseFontName',
-    '12 23': 'BaseFontBlen',
-    '12 30': 'ROS',
-    '12 31': 'CIDFontVersion',
-    '12 32': 'CIDFontRevision',
-    '12 33': 'CIDFontType',
-    '12 34': 'CIDCount',
-    '12 35': 'UIDBase',
-    '12 36': 'FDArray',
-    '12 37': 'FDSelect',
-    '12 38': 'FontName'
-  };
-}
