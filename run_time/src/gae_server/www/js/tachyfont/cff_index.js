@@ -17,14 +17,6 @@
  * the License.
  */
 
-/**
- * @fileoverview Code to parse a CFF INDEX. For a detailed description of a CFF
- * dict @see
- * http://wwwimages.adobe.com/content/dam/Adobe/en/devnet/font/pdfs/5176.CFF.pdf
- * For a detailed description of the OpenType font format
- * @see http://www.microsoft.com/typography/otspec/otff.htm
- * @author bstell@google.com (Brian Stell)
- */
 
 goog.provide('tachyfont.CffIndex');
 
@@ -36,7 +28,11 @@ goog.require('tachyfont.utils');
 
 
 /**
- * A class holding CFF INDEX table information.
+ * This class reads a CFF (Adobe's Compact Font Format) INDEX. For a detailed
+ * description of a CFF dict @see
+ * http://wwwimages.adobe.com/content/dam/Adobe/en/devnet/font/pdfs/5176.CFF.pdf
+ * For a detailed description of the OpenType font format @see
+ * http://www.microsoft.com/typography/otspec/
  * @param {string} name The table name.
  * @param {number} offset The offset from start of the CFF table.
  * @param {number} type Indicates the data type in the index.
@@ -110,7 +106,7 @@ tachyfont.CffIndex.TYPE_DICT = 3;
 
 
 /**
- * Get an INDEX element.
+ * Gets an INDEX element.
  * @param {number} index The index of the element.
  * @return {!tachyfont.CffDict|!DataView|string} A element from the INDEX.
  * @throws RangeError if index is not in the array.
@@ -124,7 +120,7 @@ tachyfont.CffIndex.prototype.getElement = function(index) {
 
 
 /**
- * Get an INDEX DICT element.
+ * Gets an INDEX DICT element.
  * @param {number} index The index of the element.
  * @return {!tachyfont.CffDict} The DICT element from the INDEX.
  * @throws Error if is not a DICT index.
@@ -143,7 +139,7 @@ tachyfont.CffIndex.prototype.getDictElement = function(index) {
 
 if (goog.DEBUG) {
   /**
-   * Set the DICT operators map. The DICT operators map is used to covert the
+   * Sets the DICT operators map. The DICT operators map is used to covert the
    * operations to a human readable form.
    * @param {!Object.<string,string>} dictOperators The DICT operators map.
    */
@@ -154,7 +150,7 @@ if (goog.DEBUG) {
 
 
 /**
- * Get the offsetSize of elements.
+ * Gets the offsetSize of elements.
  * @return {number} The offsetSize of elements.
  */
 tachyfont.CffIndex.prototype.getOffsetSize = function() {
@@ -163,7 +159,7 @@ tachyfont.CffIndex.prototype.getOffsetSize = function() {
 
 
 /**
- * Get the count of elements.
+ * Gets the count of elements.
  * @return {number} The count of elements.
  */
 tachyfont.CffIndex.prototype.getCount = function() {
@@ -172,7 +168,7 @@ tachyfont.CffIndex.prototype.getCount = function() {
 
 
 /**
- * Get the elements.
+ * Gets the elements.
  * @return {!Array.<string|!DataView|!tachyfont.CffDict>} The elements.
  */
 tachyfont.CffIndex.prototype.getElements = function() {
@@ -181,7 +177,7 @@ tachyfont.CffIndex.prototype.getElements = function() {
 
 
 /**
- * Get the element's offset from the beginning of the index.
+ * Gets the element's offset from the beginning of the index.
  * @param {number} index The index to get the offset for.
  * @return {number} The element's offset.
  */
@@ -193,7 +189,7 @@ tachyfont.CffIndex.prototype.getAdjustedElementOffset = function(index) {
 
 
 /**
- * Get the element offsets.
+ * Gets the element offsets.
  * @return {!Array.<number>} The element offsets.
  */
 tachyfont.CffIndex.prototype.getOffsets = function() {
@@ -202,7 +198,7 @@ tachyfont.CffIndex.prototype.getOffsets = function() {
 
 
 /**
- * Get the table length.
+ * Gets the table length.
  * @return {number} The length of the table.
  */
 tachyfont.CffIndex.prototype.getLength = function() {
@@ -211,7 +207,7 @@ tachyfont.CffIndex.prototype.getLength = function() {
 
 
 /**
- * Get the table type.
+ * Gets the table type.
  * @return {number} The type of the table.
  */
 tachyfont.CffIndex.prototype.getType = function() {
@@ -220,7 +216,7 @@ tachyfont.CffIndex.prototype.getType = function() {
 
 
 /**
- * Load the INDEX strings.
+ * Loads the INDEX strings.
  * @param {!tachyfont.BinaryFontEditor} binaryEditor A binary font editor.
  */
 tachyfont.CffIndex.prototype.loadStrings = function(binaryEditor) {
@@ -299,7 +295,7 @@ if (goog.DEBUG) {
 
 
 /**
- * Load the INDEX DICTs.
+ * Loads the INDEX DICTs.
  * @param {!tachyfont.BinaryFontEditor} binaryEditor A binary font editor.
  */
 tachyfont.CffIndex.prototype.loadDicts = function(binaryEditor) {
