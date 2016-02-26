@@ -348,10 +348,10 @@ tachyfontprelude['newFontInfo'] = function(fontFamily, weight, isTtf) {
  * @param {string} cssFontFamily The CSS font-family name.
  * @param {!Array<!tachyfontprelude.FontInfo_>} fontInfos The list of fonts to
  *     load.
+ * @return {!tachyfontprelude.TachyFontPrelude_}
  */
 tachyfontprelude['load'] = function(cssFontFamily, fontInfos) {
-  var tachyFontPreludes =
-      new tachyfontprelude.TachyFontPrelude_(cssFontFamily, fontInfos);
+  return new tachyfontprelude.TachyFontPrelude_(cssFontFamily, fontInfos);
 };
 
 
