@@ -64,7 +64,7 @@ GoogleBackendService.FRAMEWORK_REQUEST_SUFFIX = 'framework';
 GoogleBackendService.prototype.requestCodepoints = function(
     fontInfo, codes) {
   var self = this;
-  return this.requestUrl(this.getDataUrl_(fontInfo,
+  return this.requestUrl(this.getDataUrl(fontInfo,
       GoogleBackendService.GLYPHS_REQUEST_PREFIX,
       GoogleBackendService.GLYPHS_REQUEST_SUFFIX),
       'POST',
@@ -78,7 +78,7 @@ GoogleBackendService.prototype.requestCodepoints = function(
 
 /** @override */
 GoogleBackendService.prototype.requestFontBase = function(fontInfo) {
-  return this.requestUrl(this.getDataUrl_(fontInfo,
+  return this.requestUrl(this.getDataUrl(fontInfo,
       GoogleBackendService.FRAMEWORK_REQUEST_PREFIX,
       GoogleBackendService.FRAMEWORK_REQUEST_SUFFIX),
       'GET', null, {});
@@ -95,7 +95,6 @@ GoogleBackendService.prototype.log = function(message) {
 
 
 /**
- * @private
  * @param {!tachyfont.FontInfo} fontInfo containing info on the font; ie:
  *     fontkit, familyPath = the font's directory; ie. "notosansjapanese", and
  *     name = Unique name for this particular instance of the font
@@ -104,7 +103,7 @@ GoogleBackendService.prototype.log = function(message) {
  * @param {string} suffix Action suffset in the URL.
  * @return {string} URL for the specified font action.
  */
-GoogleBackendService.prototype.getDataUrl_ =
+GoogleBackendService.prototype.getDataUrl =
     function(fontInfo, prefix, suffix) {
   var familyPath = fontInfo.getFamilyPath();
   if (!familyPath) {

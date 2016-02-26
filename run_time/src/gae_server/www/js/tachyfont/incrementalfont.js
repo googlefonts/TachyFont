@@ -140,7 +140,7 @@ tachyfont.IncrementalFont.reportError_ = function(errNum, errId, errInfo) {
  * @param {!tachyfont.FontInfo} fontInfo Info about this font.
  * @param {boolean} dropData If true then drop the persistent data.
  * @param {Object} params Parameters.
- * @return {tachyfont.IncrementalFont.obj_} The incremental font manager object.
+ * @return {tachyfont.IncrementalFont.obj} The incremental font manager object.
  */
 tachyfont.IncrementalFont.createManager = function(fontInfo, dropData, params) {
   var fontName = fontInfo.getName();
@@ -172,7 +172,7 @@ tachyfont.IncrementalFont.createManager = function(fontInfo, dropData, params) {
   style.sheet.insertRule(rule, 0);
 
   var incrFontMgr =
-      new tachyfont.IncrementalFont.obj_(fontInfo, params, backendService);
+      new tachyfont.IncrementalFont.obj(fontInfo, params, backendService);
   tachyfont.Reporter.addItem(
       tachyfont.IncrementalFont.Log_.CREATE_TACHYFONT + weight,
       goog.now() - incrFontMgr.startTime);
@@ -213,15 +213,14 @@ tachyfont.IncrementalFont.createManager = function(fontInfo, dropData, params) {
 
 
 /**
- * IncrFontIDB.obj_ - A class to handle interacting the IndexedDB.
+ * IncrFontIDB.obj - A class to handle interacting the IndexedDB.
  * @param {!tachyfont.FontInfo} fontInfo Info about this font.
  * @param {Object} params Parameters.
  * @param {!tachyfont.BackendService} backendService object used to generate
  *     backend requests.
  * @constructor
- * @private
  */
-tachyfont.IncrementalFont.obj_ = function(fontInfo, params, backendService) {
+tachyfont.IncrementalFont.obj = function(fontInfo, params, backendService) {
   /**
    * The creation time for this TachyFont.
    *
@@ -320,7 +319,7 @@ tachyfont.IncrementalFont.obj_ = function(fontInfo, params, backendService) {
  * @return {goog.Promise} The database handle.
  * @private
  */
-tachyfont.IncrementalFont.obj_.prototype.getDb_ = function() {
+tachyfont.IncrementalFont.obj.prototype.getDb_ = function() {
   if (this.getIDB_) {
     return this.getIDB_;
   }
@@ -329,11 +328,20 @@ tachyfont.IncrementalFont.obj_.prototype.getDb_ = function() {
 
 
 /**
+ * Get the cmap mapping
+ * @return {!Object<number, !tachyfont.CharCmapInfo>}
+ */
+tachyfont.IncrementalFont.obj.prototype.getCmapMapping = function() {
+  return this.cmapMapping_;
+};
+
+
+/**
  * Get the database handle.
  * @return {goog.Promise} The database handle.
  * @private
  */
-tachyfont.IncrementalFont.obj_.prototype.dropDb_ = function() {
+tachyfont.IncrementalFont.obj.prototype.dropDb_ = function() {
   return this.accessDb_(true);
 };
 
@@ -346,7 +354,7 @@ tachyfont.IncrementalFont.obj_.prototype.dropDb_ = function() {
  */
 // TODO(bstell): break this apart an put it into getDb/dropDb and adjust
 // callers.
-tachyfont.IncrementalFont.obj_.prototype.accessDb_ = function(dropDb) {
+tachyfont.IncrementalFont.obj.prototype.accessDb_ = function(dropDb) {
   // Close the database if it is open.
   this.closeDb_();
   var weight = this.fontInfo.getWeight();
@@ -386,7 +394,7 @@ tachyfont.IncrementalFont.obj_.prototype.accessDb_ = function(dropDb) {
  * just drop the handle.
  * @private
  */
-tachyfont.IncrementalFont.obj_.prototype.closeDb_ = function() {
+tachyfont.IncrementalFont.obj.prototype.closeDb_ = function() {
   if (!this.getIDB_) {
     return;
   }
@@ -400,7 +408,7 @@ tachyfont.IncrementalFont.obj_.prototype.closeDb_ = function() {
  * Get the font base from persistent store.
  * @return {goog.Promise} The base bytes in DataView.
  */
-tachyfont.IncrementalFont.obj_.prototype.getBaseFontFromPersistence =
+tachyfont.IncrementalFont.obj.prototype.getBaseFontFromPersistence =
     function() {
   var persistedBase = this.getDb_()
       .then(function(idb) {
@@ -477,7 +485,7 @@ tachyfont.IncrementalFont.obj_.prototype.getBaseFontFromPersistence =
  * Parses base font header, set properties.
  * @param {!DataView} baseFontView Base font with header.
  */
-tachyfont.IncrementalFont.obj_.prototype.parseBaseHeader =
+tachyfont.IncrementalFont.obj.prototype.parseBaseHeader =
     function(baseFontView) {
   var binaryEditor = new tachyfont.BinaryFontEditor(baseFontView, 0);
   var fileInfo = binaryEditor.parseBaseHeader();
@@ -503,7 +511,7 @@ tachyfont.IncrementalFont.obj_.prototype.parseBaseHeader =
  * @param {!tachyfont.FontInfo} fontInfo Info about this font.
  * @return {goog.Promise} The base bytes in DataView.
  */
-tachyfont.IncrementalFont.obj_.prototype.getBaseFontFromUrl =
+tachyfont.IncrementalFont.obj.prototype.getBaseFontFromUrl =
     function(backendService, fontInfo) {
   var rslt = backendService.requestFontBase(fontInfo)
       .then(function(urlBaseBytes) {
@@ -524,7 +532,7 @@ tachyfont.IncrementalFont.obj_.prototype.getBaseFontFromUrl =
  *     the font data ready for character data to be added.
  * @private
  */
-tachyfont.IncrementalFont.obj_.prototype.processUrlBase_ =
+tachyfont.IncrementalFont.obj.prototype.processUrlBase_ =
     function(urlBaseBytes) {
   var urlBaseData = new DataView(urlBaseBytes);
   this.parseBaseHeader(urlBaseData);
@@ -554,7 +562,7 @@ tachyfont.IncrementalFont.obj_.prototype.processUrlBase_ =
  * @param {!Array<number>} extraGlyphs An output list of the extra glyph Ids.
  * @return {!DataView} Updated base font
  */
-tachyfont.IncrementalFont.obj_.prototype.injectCharacters =
+tachyfont.IncrementalFont.obj.prototype.injectCharacters =
     function(baseFontView, bundleResponse, glyphToCodeMap, extraGlyphs) {
   // time_start('inject')
   this.fileInfo_.dirty = true;
@@ -699,7 +707,7 @@ tachyfont.IncrementalFont.obj_.prototype.injectCharacters =
  * @param {!DataView} fontData The font dataview.
  * @return {goog.Promise} The promise resolves when the glyphs are displaying.
  */
-tachyfont.IncrementalFont.obj_.prototype.setFont = function(fontData) {
+tachyfont.IncrementalFont.obj.prototype.setFont = function(fontData) {
   var weight = this.fontInfo.getWeight();
   var msg = this.fontInfo.getName() + ' setFont.' + weight;
   if (goog.DEBUG) {
@@ -822,7 +830,7 @@ tachyfont.IncrementalFont.possibly_obfuscate =
  * TODO(bstell): fix the return value.
  * @return {goog.Promise} Returns the true if characters loaded.
  */
-tachyfont.IncrementalFont.obj_.prototype.loadChars = function() {
+tachyfont.IncrementalFont.obj.prototype.loadChars = function() {
   if (goog.DEBUG) {
     goog.log.fine(tachyfont.Logger.logger, 'loadChars');
   }
@@ -880,7 +888,7 @@ tachyfont.IncrementalFont.obj_.prototype.loadChars = function() {
  * @return {goog.Promise} If successful returns a resolved promise.
  * @private
  */
-tachyfont.IncrementalFont.obj_.prototype.calcNeededChars_ = function() {
+tachyfont.IncrementalFont.obj.prototype.calcNeededChars_ = function() {
   // Check if there are any new characters.
   var charArray = Object.keys(this.charsToLoad);
   if (charArray.length == 0) {
@@ -961,7 +969,7 @@ tachyfont.IncrementalFont.obj_.prototype.calcNeededChars_ = function() {
  * @return {goog.Promise} If successful return a resolved promise.
  * @private
  */
-tachyfont.IncrementalFont.obj_.prototype.fetchChars_ =
+tachyfont.IncrementalFont.obj.prototype.fetchChars_ =
     function(requestedCodes) {
   if (requestedCodes.length == 0) {
     return goog.Promise.reject('no chars to fetch');
@@ -985,7 +993,7 @@ tachyfont.IncrementalFont.obj_.prototype.fetchChars_ =
  * @return {goog.Promise} The promise resolves if fingerprint ok else rejects.
  * @private
  */
-tachyfont.IncrementalFont.obj_.prototype.checkFingerprint_ = function(
+tachyfont.IncrementalFont.obj.prototype.checkFingerprint_ = function(
     bundleResponse) {
   // If no char data then no fingerprint to possibly mismatch.
   if (bundleResponse == null) {
@@ -1007,7 +1015,7 @@ tachyfont.IncrementalFont.obj_.prototype.checkFingerprint_ = function(
  * @return {goog.Promise} Returns a promise which will eventually reject.
  * @private
  */
-tachyfont.IncrementalFont.obj_.prototype.handleFingerprintMismatch_ =
+tachyfont.IncrementalFont.obj.prototype.handleFingerprintMismatch_ =
     function() {
   tachyfont.IncrementalFont.reportError_(
       tachyfont.IncrementalFont.Error_.FINGERPRINT_MISMATCH,
@@ -1028,7 +1036,7 @@ tachyfont.IncrementalFont.obj_.prototype.handleFingerprintMismatch_ =
  * @return {goog.Promise} The list of needed chars.
  * @private
  */
-tachyfont.IncrementalFont.obj_.prototype.injectChars_ = function(neededCodes,
+tachyfont.IncrementalFont.obj.prototype.injectChars_ = function(neededCodes,
     bundleResponse) {
   return this.getBase
       .then(function(arr) {
@@ -1105,7 +1113,7 @@ tachyfont.IncrementalFont.obj_.prototype.injectChars_ = function(neededCodes,
  * @return {string} The database name.
  * @private
  */
-tachyfont.IncrementalFont.obj_.prototype.getDbName_ = function() {
+tachyfont.IncrementalFont.obj.prototype.getDbName_ = function() {
   // TODO(bstell): Add style(slant), stretch(width), variant.
   var dbName = tachyfont.IncrementalFont.DB_NAME +
       '/' + this.fontInfo.getName() +
@@ -1120,7 +1128,7 @@ tachyfont.IncrementalFont.obj_.prototype.getDbName_ = function() {
  * @param {string} name The name of the data item.
  * @private
  */
-tachyfont.IncrementalFont.obj_.prototype.persistDelayed_ = function(name) {
+tachyfont.IncrementalFont.obj.prototype.persistDelayed_ = function(name) {
   if (!this.persistData) {
     return;
   }
@@ -1145,7 +1153,7 @@ tachyfont.IncrementalFont.obj_.prototype.persistDelayed_ = function(name) {
  * @param {string} name The name of the data item.
  * @private
  */
-tachyfont.IncrementalFont.obj_.prototype.persist_ = function(name) {
+tachyfont.IncrementalFont.obj.prototype.persist_ = function(name) {
   var that = this;
   // Wait for any preceding persist operation to finish.
   var msg = this.fontInfo.getName() + ' persist_';
