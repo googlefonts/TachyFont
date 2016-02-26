@@ -232,10 +232,10 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
  * Load and use a list of TachyFonts
  *
  * @param {tachyfont.TachyFontSet} tachyFontSet The list of TachyFonts.
+ * @return {!goog.Promise}
  * @private
  */
 tachyfont.loadFonts_loadAndUse_ = function(tachyFontSet) {
-  var tachyFonts = tachyFontSet.fonts;
   var msg = 'loadFonts';
   if (goog.DEBUG) {
     goog.log.log(tachyfont.Logger.logger, goog.log.Level.FINER,
@@ -244,33 +244,37 @@ tachyfont.loadFonts_loadAndUse_ = function(tachyFontSet) {
   var waitPreviousTime = goog.now();
   var waitForPrecedingPromise =
       tachyFontSet.finishPrecedingUpdateFont.getChainedPromise(msg);
-  waitForPrecedingPromise.getPrecedingPromise().
-      then(function() {
-        tachyfont.Reporter.addItem(tachyfont.Log_.LOAD_FONTS_WAIT_PREVIOUS +
+  return waitForPrecedingPromise.getPrecedingPromise().then(function() {
+    tachyfont.Reporter.addItem(tachyfont.Log_.LOAD_FONTS_WAIT_PREVIOUS +
             '000', goog.now() - waitPreviousTime);
-        if (goog.DEBUG) {
-          goog.log.log(tachyfont.Logger.logger, goog.log.Level.FINER,
-              'loadFonts: done waiting for preceding update');
-        }
-        // Load the fonts from persistent store or URL.
-        tachyfont.loadFonts_getBaseFonts_(tachyFonts)
-            .then(function(arrayBaseData) {
-              return tachyfont.loadFonts_useFonts_(tachyFonts, arrayBaseData);
-            }).
-            then(function(allSetResults) {
-              if (goog.DEBUG) {
-                goog.log.fine(tachyfont.Logger.logger,
-                    'loadFonts: all fonts loaded');
-              }
-              // Allow any pending updates to happen.
-              waitForPrecedingPromise.resolve();
-            }).
-            thenCatch(function(e) {
-              waitForPrecedingPromise.reject();
-              tachyfont.reportError_(tachyfont.Error_.SET_FONT, e);
-            });
-      }).
-      thenCatch(function(e) {
+    return goog.Promise.resolve().then(function() {
+      var serialPromise = goog.Promise.resolve(0);
+      var fonts = tachyFontSet.fonts;
+      for (var i = 0; i < fonts.length; i++) {
+        serialPromise = serialPromise.then(function(index) {
+          var font = fonts[index];
+          // Load the fonts from persistent store or URL.
+          return tachyfont.loadFonts_getBaseFonts_([font])
+              .then(function(baseData) {
+                return tachyfont.loadFonts_useFonts_([font], baseData);
+              })
+              .then(function() {
+                return ++index;
+              });
+        });
+      }
+      return serialPromise;
+    })
+        .then(function(allSetResults) {
+          // Release the lock.
+          waitForPrecedingPromise.resolve();
+        })
+        .thenCatch(function(e) {
+          waitForPrecedingPromise.reject();
+          tachyfont.reportError_(tachyfont.Error_.SET_FONT, e);
+        });
+  })
+      .thenCatch(function(e) {
         tachyfont.reportError_(tachyfont.Error_.GET_BASE, e);
         waitForPrecedingPromise.reject();
       });
@@ -310,7 +314,7 @@ tachyfont.loadFonts_init_ = function(familyName, fontsInfo, opt_params) {
 
   var tachyFontSet = new tachyfont.TachyFontSet(familyName);
   var params = opt_params || {};
-  var fonts = fontsInfo.getFonts();
+  var fonts = fontsInfo.getPrioritySortedFonts();
   for (var i = 0; i < fonts.length; i++) {
     var fontInfo = fonts[i];
     fontInfo.setFamilyName(familyName);
