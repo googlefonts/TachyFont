@@ -74,7 +74,8 @@ tachyfont.Error_ = {
   FILE_ID: 'ETF',
   WINDOW_ON_ERROR: '01',
   SET_FONT: '02',
-  GET_BASE: '03'
+  GET_BASE: '03',
+  MISSING_FEATURE: '04'
 };
 
 
@@ -208,15 +209,20 @@ tachyfont.Log_ = {
 
 /**
  * Load a list of TachyFonts
- *
  * @param {string} familyName The font-family name.
  * TODO(bstell): remove the Object type.
- * @param {!tachyfont.FontsInfo} fontsInfo The information about the
- *     fonts.
+ * @param {!tachyfont.FontsInfo} fontsInfo Information about the fonts.
  * @param {Object<string, string>=} opt_params Optional parameters.
  * @return {tachyfont.TachyFontSet} The TachyFontSet object.
  */
 tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
+  // TODO(bstell): initialize tachyfont.Reporter here so the errors in
+  // isSupportedBrowser can be reported.
+  // Check if this browser has the necessary features to run TachyFont.
+  if (!tachyfont.isSupportedBrowser()) {
+    return null;
+  }
+
   var tachyFontSet =
       tachyfont.loadFonts_init_(familyName, fontsInfo, opt_params);
   tachyfont.loadFonts_loadAndUse_(tachyFontSet);
@@ -225,6 +231,39 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
   tachyfont.loadFonts_setupTextListeners_(tachyFontSet);
 
   return tachyFontSet;
+};
+
+
+/**
+ * Check whether TachyFont will run on this browser.
+ * @param {!Window=} opt_windowObject Optional To support testing pass in a
+ *     window object.
+ * @return {boolean}
+ */
+tachyfont.isSupportedBrowser = function(opt_windowObject) {
+  // Some window values are not overrideable so for testing allow passing in a
+  // regular object.
+  var windowObject = opt_windowObject || window;
+
+  var errorMessage = '';
+  if (typeof windowObject.indexedDB != 'object') {
+    errorMessage += 'ID,';
+  }
+  if (typeof windowObject.MutationObserver != 'function') {
+    errorMessage += 'MO,';
+  }
+  if (typeof windowObject.document.fonts != 'object' ||
+      typeof windowObject.document.fonts.load != 'function') {
+    errorMessage += 'FL,';
+  }
+
+  if (errorMessage) {
+    // TODO(bstell): add this error report once tachyfont.Reporter is
+    // initialized before this call.
+    // tachyfont.reportError_(tachyfont.Error_.MISSING_FEATURE, errorMessage);
+    return false;
+  }
+  return true;
 };
 
 
