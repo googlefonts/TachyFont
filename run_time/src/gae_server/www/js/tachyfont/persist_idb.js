@@ -44,6 +44,7 @@ tachyfont.Persist.Error = {
   SAVE_DONE_PREVIOUS_ACTIVITY: '08',
   SAVE_DONE_METADATA_WRITE: '09',
   MISSING_CREATED_METADATA_TIME: '10',
+  SAVE_BEGIN_AFTER_CREATED_METADATA: '11',
   END_VALUE: '00'
 };
 
@@ -181,9 +182,16 @@ tachyfont.Metadata.beginSave = function(db, id) {
         var metadata = tachyfont.Metadata.cleanUpMetadata(storedMetadata, id);
         if (metadata[tachyfont.MetadataDefines.ACTIVITY] !=
             tachyfont.MetadataDefines.SAVE_DONE) {
-          tachyfont.Persist.reportError(
-              tachyfont.Persist.Error.SAVE_BEGIN_PREVIOUS_ACTIVITY, id,
-              metadata[tachyfont.MetadataDefines.ACTIVITY]);
+          if (metadata[tachyfont.MetadataDefines.ACTIVITY] ==
+              tachyfont.MetadataDefines.CREATED_METADATA) {
+            tachyfont.Persist.reportError(
+                tachyfont.Persist.Error.SAVE_BEGIN_AFTER_CREATED_METADATA, id,
+                metadata[tachyfont.MetadataDefines.ACTIVITY]);
+          } else {
+            tachyfont.Persist.reportError(
+                tachyfont.Persist.Error.SAVE_BEGIN_PREVIOUS_ACTIVITY, id,
+                metadata[tachyfont.MetadataDefines.ACTIVITY]);
+          }
         }
         metadata[tachyfont.MetadataDefines.ACTIVITY] =
             tachyfont.MetadataDefines.BEGIN_SAVE;
