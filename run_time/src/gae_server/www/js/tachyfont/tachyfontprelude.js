@@ -48,7 +48,7 @@
    * the sum of the global and per font stable times.
    * @type {number}
    */
-  var STABLE_DATA_TIME = 2 * 24 * 60 * 60 * 1000;
+  var STABLE_DATA_TIME = 24 * 60 * 60 * 1000;
 
 
   /**
