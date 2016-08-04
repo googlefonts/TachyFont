@@ -72,10 +72,12 @@ tachyfont.TachyFont.prototype.loadNeededChars = function() {
  */
 tachyfont.Error_ = {
   FILE_ID: 'ETF',
-  WINDOW_ON_ERROR: '01',
+  WINDOW_ON_ERROR: '01',// '01' is deprecated.
   SET_FONT: '02',
   GET_BASE: '03',
-  MISSING_FEATURE: '04'
+  MISSING_FEATURE: '04',
+  KNOWN_WINDOW_ON_ERROR: '05',
+  UNKNOWN_WINDOW_ON_ERROR: '06'
 };
 
 
@@ -121,6 +123,11 @@ if (window.addEventListener) {
    * @private
    */
   tachyfont.windowOnError_ = function(error) {
+    if (!error['filename']) {
+      // The information is stripped from the report because of CORS issues.
+      tachyfont.reportError_(tachyfont.Error_.UNKNOWN_WINDOW_ON_ERROR, '');
+      return;
+    }
     var errorObj = {};
     errorObj['message'] = error['message'];
     errorObj['filename'] = error['filename'];
@@ -131,6 +138,7 @@ if (window.addEventListener) {
     }
     var errorStr = JSON.stringify(errorObj);
     tachyfont.reportError_(tachyfont.Error_.WINDOW_ON_ERROR, errorStr);
+    tachyfont.reportError_(tachyfont.Error_.KNOWN_WINDOW_ON_ERROR, errorStr);
   };
   window.addEventListener('error', tachyfont.windowOnError_, false);
 }
