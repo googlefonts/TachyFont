@@ -212,7 +212,7 @@ tachyfont.IncrementalFont.createManager = function(fontInfo, dropData, params) {
  * @param {Object} params Parameters.
  * @param {!tachyfont.BackendService} backendService object used to generate
  *     backend requests.
- * @constructor
+ * @constructor @struct
  */
 tachyfont.IncrementalFont.obj = function(fontInfo, params, backendService) {
   // Get the prelude Blob URL.
@@ -371,7 +371,7 @@ tachyfont.IncrementalFont.obj.prototype.dropDb = function() {
 /**
  * Get the database handle.
  * @param {boolean} dropDb If true then drop the database before opening it.
- * @return {goog.Promise} The database handle.
+ * @return {!goog.Promise<IDBDatabase,string>} The database handle.
  */
 // TODO(bstell): break this apart an put it into getDb/dropDb and adjust
 // callers.
@@ -1078,29 +1078,6 @@ tachyfont.IncrementalFont.obj.prototype.injectChars = function(neededCodes,
             tachyfont.IncrementalFont.reportError(
                tachyfont.IncrementalFont.Error.LOAD_CHARS_INJECT_CHARS_2,
                this.fontInfo.getWeight(), missingCodes.toString());
-          }
-          if (goog.DEBUG) {
-            if (extraGlyphs.length != 0) {
-              // TODO(bstell): this probably belongs somewhere else.
-              if (!this.glyphToCodeMap_) {
-                this.glyphToCodeMap_ = {};
-                var codepoints = Object.keys(this.cmapMapping_);
-                for (var j = 0; j < codepoints.length; j++) {
-                  var codepoint = parseInt(codepoints[j], 10);
-                  var cmapMap = this.cmapMapping_[codepoint];
-                  this.glyphToCodeMap_[cmapMap.glyphId] = codepoint;
-                }
-              }
-              for (var j = 0; j < extraGlyphs.length; j++) {
-                var extraGlyphId = extraGlyphs[j];
-                var codepoint = this.glyphToCodeMap_[extraGlyphId];
-                if (codepoint) {
-                  goog.log.warning(tachyfont.Logger.logger,
-                     'extraGlyphId / codepoint = ' + extraGlyphId +
-                     ' / 0x' + parseInt(codepoint, 10).toString(16));
-                }
-              }
-            }
           }
           return goog.Promise.resolve();
         } else {
