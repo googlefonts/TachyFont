@@ -351,6 +351,15 @@ tachyfont.IncrementalFont.obj.prototype.setFileInfo = function(fileInfo) {
 
 
 /**
+ * Get whether the CSS should be updated.
+ * @return {boolean}
+ */
+tachyfont.IncrementalFont.obj.prototype.getNeedToSetFont = function() {
+  return this.needToSetFont;
+};
+
+
+/**
  * Get the database handle.
  * @return {goog.Promise} The database handle.
  */
