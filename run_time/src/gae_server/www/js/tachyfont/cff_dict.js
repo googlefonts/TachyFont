@@ -65,6 +65,18 @@ tachyfont.CffDict = function(name, dataView) {
 
 
 /**
+ * @typedef {(number|string)}
+ */
+tachyfont.CffDict.Operand;
+
+
+/**
+ * @typedef {{value: !tachyfont.CffDict.Operand, length: number}}
+ */
+tachyfont.CffDict.OperandInfo;
+
+
+/**
  * Gets the DataView.
  * @return {!DataView}
  */
@@ -95,7 +107,7 @@ tachyfont.CffDict.prototype.getName = function() {
 /**
  * Gets the CFF DICT operands for an operator.
  * @param {string} operator The operator of the operands/operator set.
- * @return {Array<number>} The array of operands.
+ * @return {?Array<!tachyfont.CffDict.OperandInfo>} The array of operands.
  */
 tachyfont.CffDict.prototype.getOperands = function(operator) {
   if (operator in this.dict_) {
@@ -109,11 +121,11 @@ tachyfont.CffDict.prototype.getOperands = function(operator) {
  * Gets a CFF DICT operand.
  * @param {string} operator The operator of the operands/operator.
  * @param {number} index The index of desired operand.
- * @return {?number} The operand.
+ * @return {?tachyfont.CffDict.Operand} The operand.
  */
 tachyfont.CffDict.prototype.getOperand = function(operator, index) {
   if (operator in this.dict_ && index < this.dict_[operator].operands.length) {
-    return this.dict_[operator].operands[index];
+    return this.dict_[operator].operands[index].value;
   }
   return null;
 };
@@ -122,7 +134,7 @@ tachyfont.CffDict.prototype.getOperand = function(operator, index) {
 /**
  * Gets a CFF DICT OperandsOperatorSet.
  * @param {string} operator The operator of the operands/operator.
- * @return {tachyfont.CffDict.OperandsOperatorSet} The OperandsOperatorSet.
+ * @return {?tachyfont.CffDict.OperandsOperatorSet} The OperandsOperatorSet.
  */
 tachyfont.CffDict.prototype.getOperandsOperatorSet = function(operator) {
   if (operator in this.dict_) {
@@ -144,13 +156,17 @@ tachyfont.CffDict.prototype.getOperandsOperatorSet = function(operator) {
 tachyfont.CffDict.prototype.updateDictEntryOperand =
     function(operator, index, delta) {
   var operandsOperatorSet = this.dict_[operator];
-  var operand = operandsOperatorSet.operands[index] + delta;
-  var length = operandsOperatorSet.operandLengths[index];
+  var operand = operandsOperatorSet.operands[index].value + delta;
+  if (typeof operand != 'number') {
+    throw new Error('operator is not a number: ' + operator);
+  }
+  var length = operandsOperatorSet.operands[index].length;
   var operandOffset = 0;
   for (var i = 0; i < index; i++) {
-    operandOffset += operandsOperatorSet.operandLengths[i];
+    operandOffset += operandsOperatorSet.operands[i].length;
   }
-  var operandValues = tachyfont.CffDict.numberToOperand(operand, length);
+  var operandValues = tachyfont.CffDict.numberToOperand(
+      /** @type {number} */ (operand), length);
 
   // Update the operand value.
   var binaryEditor = new tachyfont.BinaryFontEditor(this.dataView_,
@@ -158,32 +174,15 @@ tachyfont.CffDict.prototype.updateDictEntryOperand =
   for (var i = 0; i < operandValues.length; i++) {
     binaryEditor.setUint8(operandValues[i]);
   }
-  operandsOperatorSet.operands[index] = operand;
+  operandsOperatorSet.operands[index].value = operand;
 };
 
 
-
 /**
- * A record type that holds the information for an operands/operator set.
- * @record @struct
+ * @typedef {{operator: string, offset: number,
+ *     operands: !Array<!tachyfont.CffDict.OperandInfo>}}
  */
-tachyfont.CffDict.OperandsOperatorSet = function() {};
-
-
-/** @type {string} */
-tachyfont.CffDict.OperandsOperatorSet.prototype.operator;
-
-
-/** @type {!Array<number>} */
-tachyfont.CffDict.OperandsOperatorSet.prototype.operands;
-
-
-/** @type {number} */
-tachyfont.CffDict.OperandsOperatorSet.prototype.offset;
-
-
-/** @type {!Array<number>} */
-tachyfont.CffDict.OperandsOperatorSet.prototype.operandLengths;
+tachyfont.CffDict.OperandsOperatorSet;
 
 
 // Information from
@@ -257,16 +256,17 @@ tachyfont.CffDict.numberToOperand = function(number, length) {
  */
 tachyfont.CffDict.readOperandsOperator = function(binaryEditor) {
   var operands = [];
-  var operandLengths = [];
   var operator = '';
   var offset = binaryEditor.getOffset();
 
   var operand;
+  var operandLength;
   var b0, b1, b2, b3, b4;
   var op;
   while (operands.length <= 48) {
     // Get the operand.
-    operand = undefined;
+    operand = null;
+    operandLength = 0;
     b0 = binaryEditor.getUint8();
     if ((b0 >= 22 && b0 <= 27) || b0 == 31 || b0 == 255) {
       // Library fatal error: something is deeply wrong; possibly a bad font.
@@ -275,33 +275,34 @@ tachyfont.CffDict.readOperandsOperator = function(binaryEditor) {
     }
     if (b0 >= 32 && b0 <= 246) {
       operand = b0 - 139;
-      operandLengths.push(1);
+      operandLength = 1;
     } else if (b0 >= 247 && b0 <= 250) {
       b1 = binaryEditor.getUint8();
-      operandLengths.push(2);
+      operandLength = 2;
       operand = (b0 - 247) * 256 + b1 + 108;
     } else if (b0 >= 251 && b0 <= 254) {
       b1 = binaryEditor.getUint8();
-      operandLengths.push(2);
+      operandLength = 2;
       operand = -(b0 - 251) * 256 - b1 - 108;
     } else if (b0 == 28) {
       b1 = binaryEditor.getUint8();
       b2 = binaryEditor.getUint8();
-      operandLengths.push(3);
+      operandLength = 3;
       operand = b1 << 8 | b2;
     } else if (b0 == 29) {
       b1 = binaryEditor.getUint8();
       b2 = binaryEditor.getUint8();
       b3 = binaryEditor.getUint8();
       b4 = binaryEditor.getUint8();
-      operandLengths.push(5);
+      operandLength = 5;
       operand = b1 << 24 | b2 << 16 | b3 << 8 | b4;
     } else if (b0 == 30) {
-      operand = Number(tachyfont.CffDict.parseNibbles_(binaryEditor,
-          operandLengths));
+      var operandSet = tachyfont.CffDict.parseNibbles_(binaryEditor);
+      operand = Number(operandSet.value);
+      operandLength = operandSet.length;
     }
-    if (operand !== undefined) {
-      operands.push(operand);
+    if (operand !== null) {
+      operands.push({value: operand, length: operandLength});
       continue;
     }
 
@@ -318,8 +319,7 @@ tachyfont.CffDict.readOperandsOperator = function(binaryEditor) {
   return {
     operator: operator,
     operands: operands,
-    offset: offset,
-    operandLengths: operandLengths
+    offset: offset
   };
 };
 
@@ -329,11 +329,10 @@ tachyfont.CffDict.readOperandsOperator = function(binaryEditor) {
  * CFF nibbles are a 4 bit variable length encoding terminated by a 'F' (15
  * decimal) in either the upper nibble or upper nibble.
  * @param {!tachyfont.BinaryFontEditor} binaryEditor The binary editor.
- * @param {!Array<number>} operandLengths The length of the operands.
- * @return {string} The nibble operand.
+ * @return {!tachyfont.CffDict.OperandInfo} The nibble operand.
  * @private
  */
-tachyfont.CffDict.parseNibbles_ = function(binaryEditor, operandLengths) {
+tachyfont.CffDict.parseNibbles_ = function(binaryEditor) {
   var operand = '';
   var aByte;
   var nibbles = [];
@@ -358,8 +357,7 @@ tachyfont.CffDict.parseNibbles_ = function(binaryEditor, operandLengths) {
       } else if (nibble == 0xe) {
         operand += '-';
       } else if (nibble == 0xf) {
-        operandLengths.push(operandLength);
-        return operand;
+        return {value: operand, length: operandLength};
       } else {
         // Library fatal error: something is deeply wrong; possibly a bad font
         // and recovery is not possible.

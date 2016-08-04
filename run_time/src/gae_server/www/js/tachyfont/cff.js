@@ -284,7 +284,7 @@ tachyfont.Cff.prototype.getData = function(offset, length) {
  * (eg, -991 -1050 2930 1810) followed by the FontBBox (5) operator.
  * @param {string} operator The operator.
  * @param {number} index The index of the operand to get.
- * @return {?number}
+ * @return {?tachyfont.CffDict.Operand}
  */
 tachyfont.Cff.prototype.getTopDictOperand = function(operator, index) {
   return this.topDict_.getOperand(operator, index);
