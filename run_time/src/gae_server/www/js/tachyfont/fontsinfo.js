@@ -25,8 +25,7 @@ goog.require('tachyfont.FontInfo');
 
 
 /**
- * The information for a set of fonts.
- *
+ * Holds the information for a set of fonts.
  * @param {!Array<!tachyfont.FontInfo>} fonts .
  * @param {?string} dataUrl The URL of the Tachyfont server.
  * @param {?string} reportUrl The URL to send logging/error reports to.
@@ -56,8 +55,7 @@ tachyfont.FontsInfo = function(fonts, dataUrl, reportUrl) {
 
 
 /**
- * Get the list of information on the TachyFonts.
- *
+ * Gets the list of information on the TachyFonts.
  * @return {Array<tachyfont.FontInfo>} The URL to the TachyFont server.
  */
 tachyfont.FontsInfo.prototype.getPrioritySortedFonts = function() {
@@ -66,8 +64,7 @@ tachyfont.FontsInfo.prototype.getPrioritySortedFonts = function() {
 
 
 /**
- * Get the URL to the TachyFont.
- *
+ * Gets the URL to the TachyFont.
  * @return {string} The URL to the TachyFont server.
  */
 tachyfont.FontsInfo.prototype.getDataUrl = function() {
@@ -76,8 +73,7 @@ tachyfont.FontsInfo.prototype.getDataUrl = function() {
 
 
 /**
- * Get the URL to the TachyFont.
- *
+ * Gets the URL to the TachyFont.
  * @return {string} The URL to send logging/error reports to.
  */
 tachyfont.FontsInfo.prototype.getReportUrl = function() {
