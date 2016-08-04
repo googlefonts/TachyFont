@@ -455,10 +455,6 @@ tachyfont.IncrementalFont.obj.prototype.getBaseFontFromPersistence =
       .then(function(arr) {
         return tachyfont.Persist.getData(arr[0], tachyfont.utils.IDB_CHARLIST)
             .then(function(charList) {
-              //return goog.Promise.all([goog.Promise.resolve(arr[1]),
-              //                         goog.Promise.resolve(arr[2]),
-              //                         goog.Promise.resolve(charList)
-              //                        ]);
               return [arr[1], arr[2], charList];
             },
             function(e) {
@@ -938,7 +934,10 @@ tachyfont.IncrementalFont.obj.prototype.calcNeededChars_ = function() {
           if (goog.DEBUG) {
             goog.log.fine(tachyfont.Logger.logger, 'no new characters');
           }
-          return goog.Promise.reject('no chars to load');
+          return goog.Promise.reject('no chars to load')
+              // Need a '.thenCatch' to stop debugging errors. See
+              // https://bugs.chromium.org/p/v8/issues/detail?id=3093
+              .thenCatch(function() {});
         }
         neededCodes = tachyfont.IncrementalFont.possibly_obfuscate(neededCodes,
             charlist, this.cmapMapping_);
