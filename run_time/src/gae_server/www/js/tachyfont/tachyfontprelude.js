@@ -44,24 +44,24 @@
   var STYLESHEET_ID = 'Incremental\u00A0Font\u00A0Utils';
 
 
-  /** @const {number} Failed to open IndexedDB error. */
-  var ERROR_INDEXEDDB_OPEN = 1;
+  /** @const {string} Failed to open IndexedDB error. */
+  var ERROR_INDEXEDDB_OPEN = '01';
 
 
-  /** @const {number} IndexedDB missing the base field error. */
-  var ERROR_MISSING_IDB_BASE = 2;
+  /** @const {string} IndexedDB missing the base field error. */
+  var ERROR_MISSING_IDB_BASE = '02';
 
 
-  /** @const {number} The magic number (reality check) is bad. */
-  var ERROR_BAD_MAGIC_NUMBER = 3;
+  /** @const {string} The magic number (reality check) is bad. */
+  var ERROR_BAD_MAGIC_NUMBER = '03';
 
 
-  /** @const {number} IndexedDb get BASE returned undefined. */
-  var ERROR_INDEXEDDB_BASE_UNDEFINED = 4;
+  /** @const {string} IndexedDb get BASE returned undefined. */
+  var ERROR_INDEXEDDB_BASE_UNDEFINED = '04';
 
 
-  /** @const {number} The get operation failed. */
-  var ERROR_INDEXEDDB_GET_FAILED = 5;
+  /** @const {string} The get operation failed. */
+  var ERROR_INDEXEDDB_GET_FAILED = '05';
 
 
   /**
@@ -287,13 +287,13 @@
           return setFontNoFlash(cssFontFamily, fontDataView, fontInfo)
              .then(function() {
                // Record the font ready time.
-               reports.push([10 + (new Date()).getTime() - START_TIME,
+               reports.push(['l', (new Date()).getTime() - START_TIME,
                  fontInfo.weight]);
              });
         })
         .then(undefined, function(errorNumber) {
           // Report the error.
-          reports.push([errorNumber, fontInfo.weight]);
+          reports.push(['e', errorNumber, fontInfo.weight]);
           return newResolvedPromise();
         });
   }
