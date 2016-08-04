@@ -30,6 +30,7 @@ goog.require('tachyfont.DemoBackendService');
 goog.require('tachyfont.GoogleBackendService');
 goog.require('tachyfont.IncrementalFontUtils');
 goog.require('tachyfont.Logger');
+goog.require('tachyfont.Metadata');
 goog.require('tachyfont.Persist');
 goog.require('tachyfont.RLEDecoder');
 goog.require('tachyfont.Reporter');
@@ -1135,6 +1136,7 @@ tachyfont.IncrementalFont.obj.prototype.persistDelayed = function(name) {
  */
 tachyfont.IncrementalFont.obj.prototype.persist_ = function(name) {
   var that = this;
+  var id = that.fontInfo.getWeight();
   // Wait for any preceding persist operation to finish.
   var msg = this.fontInfo.getName() + ' persist_';
   if (goog.DEBUG) {
@@ -1160,8 +1162,14 @@ tachyfont.IncrementalFont.obj.prototype.persist_ = function(name) {
         that.persistInfo[tachyfont.utils.IDB_CHARLIST_DIRTY] = false;
 
         // Do the persisting.
-        return goog.Promise.resolve()
-            .then(function() {
+        var metadata;
+        return that.getDb()
+            .then(function(db) {
+              // Set the next activity to begin_save.
+              return tachyfont.Metadata.beginSave(db, id);
+            })
+            .then(function(storedMetadata) {
+              metadata = storedMetadata;
               if (base_dirty) {
                 return that.getBase
                  .then(function(arr) {
@@ -1178,7 +1186,7 @@ tachyfont.IncrementalFont.obj.prototype.persist_ = function(name) {
                    .thenCatch(function(e) {
                      tachyfont.IncrementalFont.reportError(
                      tachyfont.IncrementalFont.Error.SAVE_DATA,
-                     'base ' + that.fontInfo.getWeight(), e);
+                     'base ' + id, e);
                    });
                  });
               }
@@ -1199,10 +1207,16 @@ tachyfont.IncrementalFont.obj.prototype.persist_ = function(name) {
                    .thenCatch(function(e) {
                      tachyfont.IncrementalFont.reportError(
                      tachyfont.IncrementalFont.Error.SAVE_DATA,
-                     'charList ' + that.fontInfo.getWeight(), e);
+                     'charList ' + id, e);
                    });
                  });
               }
+            })
+            .then(function() {
+              // Set the last activity to save_done.
+              return that.getDb().then(function(db) {
+                return tachyfont.Metadata.saveDone(db, metadata, id);
+              });
             })
             .thenCatch(function(e) {
               tachyfont.IncrementalFont.reportError(
@@ -1217,7 +1231,8 @@ tachyfont.IncrementalFont.obj.prototype.persist_ = function(name) {
                 goog.log.fine(tachyfont.Logger.logger, 'persisted ' + name);
               }
             });
-      }).thenCatch(function(e) {
+      })
+      .thenCatch(function(e) {
         tachyfont.IncrementalFont.reportError(
             tachyfont.IncrementalFont.Error.PERSIST_GET_LOCK,
             that.fontInfo.getWeight(), e);

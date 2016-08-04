@@ -17,6 +17,7 @@
  * the License.
  */
 
+goog.provide('tachyfont.MetadataDefines');
 goog.provide('tachyfont.utils');
 goog.provide('tachyfont.utils.IncrementalFontLoader');
 goog.provide('tachyfont.utils.uint8');
@@ -62,29 +63,29 @@ tachyfont.utils.IDB_CHARLIST_DIRTY = 'charlist_dirty';
  * The metadata store name.
  * @const {string}
  */
-tachyfont.utils.IDB_METADATA = 'metadata';
+tachyfont.MetadataDefines.METADATA = 'metadata';
 
 
 /**
- * The last database operation.
+ * The database operation about-to-begin or just-finished.
  * @const {string}
  */
-tachyfont.utils.IDB_LAST_OPERATION = 'last_op';
+tachyfont.MetadataDefines.ACTIVITY = 'activity';
 
 
 /**
- * The time when the last operation was performed.
+ * The time when the activity was reported.
  * The value is the goog.now() number;
  * @const {string}
  */
-tachyfont.utils.IDB_LAST_OPERATION_TIME = 'last_op_time';
+tachyfont.MetadataDefines.ACTIVITY_TIME = 'activity_time';
 
 
 /**
- * The create metadata operation.
+ * The last activity was: created metadata.
  * @const {string}
  */
-tachyfont.utils.IDB_OPERATION_CREATE_METADATA = 'create_metadata';
+tachyfont.MetadataDefines.CREATED_METADATA = 'created_metadata';
 
 
 /**
@@ -92,7 +93,21 @@ tachyfont.utils.IDB_OPERATION_CREATE_METADATA = 'create_metadata';
  * The value is the goog.now() number;
  * @const {string}
  */
-tachyfont.utils.IDB_CREATE_METADATA_TIME = 'create_metadata_time';
+tachyfont.MetadataDefines.CREATED_METADATA_TIME = 'created_metadata_time';
+
+
+/**
+ * About to begin a save operation.
+ * @const {string}
+ */
+tachyfont.MetadataDefines.BEGIN_SAVE = 'begin_save';
+
+
+/**
+ * Finished a save operation.
+ * @const {string}
+ */
+tachyfont.MetadataDefines.SAVE_DONE = 'save_done';
 
 
 /**
