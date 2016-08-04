@@ -30,6 +30,7 @@ goog.require('goog.log.Level');
 goog.require('tachyfont.FontsInfo');
 goog.require('tachyfont.IncrementalFont');
 goog.require('tachyfont.Logger');
+goog.require('tachyfont.MetadataDefines');
 goog.require('tachyfont.Persist');
 goog.require('tachyfont.Reporter');
 goog.require('tachyfont.TachyFontSet');
@@ -233,6 +234,12 @@ tachyfont.Log_ = {
  *     TachyFontSet object or null if the fonts are not loaded.
  */
 tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
+  if (goog.DEBUG) {
+    tachyfont.debugInitialization_();
+  }
+  tachyfont.loadFonts_initReporter(fontsInfo);
+  tachyfont.sendPreludeReports();
+  tachyfont.loadFonts_initFontInfosUrls(fontsInfo);
   return tachyfont.checkSystem()
       .then(function() {
         // Check how much can be stored.
@@ -243,9 +250,6 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
         // Initialize the objects.
         var tachyFontSet =
             tachyfont.loadFonts_init_(familyName, fontsInfo, opt_params);
-        // Send the Prelude reports must be after the tachyfont.Reporter is
-        // initialized in tachyfont.loadFonts_init_.
-        tachyfont.sendPreludeReports();
         // Load the fonts.
         tachyfont.loadFonts_loadAndUse_(tachyFontSet);
 
@@ -276,8 +280,30 @@ tachyfont.checkSystem = function() {
   // Check for TachyFont metadata.
   return tachyfont.Persist.openGlobalDatabase().then(
       function(db) {
-        // TODO(bstell): Check if storage is stable (ie: is not auto clearing).
-        // TODO(bstell): report error if not stable.
+        // Check if storage is stable (ie: is not auto clearing).
+        return tachyfont.Persist.getData(db, tachyfont.MetadataDefines.METADATA)
+            .then(function(metadata) {
+              var name = tachyfont.MetadataDefines.CREATED_METADATA_TIME;
+              if (metadata && metadata[name]) {
+                var dataAge = goog.now() - metadata[name];
+                // The following commented out code is how to see the times in
+                // hours.
+                // var millisSecondsPerHour = 60 * 60 * 1000;
+                // var dataAgeHours =
+                //     (dataAge / millisSecondsPerHour).toFixed(2);
+                // var stableTime = tachyfont.TachyFont.GLOBAL_STABLE_DATA_TIME;
+                // var stableTimeHours =
+                //     (stableTime / millisSecondsPerHour).toFixed(2);
+                // console.log('stableTimeHours = ' + stableTimeHours);
+                // console.log('dataAgeHours = ' + dataAgeHours);
+                if (dataAge >= tachyfont.TachyFont.GLOBAL_STABLE_DATA_TIME) {
+                  return;
+                }
+              }
+              tachyfont.reportError_(
+                  tachyfont.Error.BELOW_GLOBAL_STABLE_TIME, '');
+              return goog.Promise.reject();
+            });
       },
       function(e) {
         tachyfont.reportError_(tachyfont.Error.OPEN_GLOBAL_DATABASE, '');
@@ -588,7 +614,6 @@ tachyfont.loadFonts_initReporter = function(fontsInfo) {
  */
 tachyfont.loadFonts_init_ = function(familyName, fontsInfo, opt_params) {
   if (goog.DEBUG) {
-    tachyfont.debugInitialization_();
     goog.log.fine(tachyfont.Logger.logger, 'loadFonts');
   }
 
