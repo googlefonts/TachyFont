@@ -108,10 +108,15 @@ tachyfontprelude.FontInfo_ = function(fontFamily, weight, isTtf) {
  * @private
  */
 tachyfontprelude.TachyFontPrelude_ = function(cssFontFamily, fontInfos) {
+  // Start a chain of asynchronous operations.
   var lastPromise = tachyfontprelude.newResolvedPromise();
+
+  // Now load whatever fonts are already persisted.
+  var fontInfosCopy = fontInfos.slice();
   for (var i = 0; i < fontInfos.length; i++) {
-    lastPromise =
-        tachyfontprelude.useFont(cssFontFamily, fontInfos[i], lastPromise);
+    lastPromise = lastPromise.then(function() {
+      return tachyfontprelude.useFont(cssFontFamily, fontInfosCopy.shift());
+    });
   }
 };
 
@@ -146,7 +151,7 @@ tachyfontprelude.openIDB = function(fontInfo) {
  * @param {!IDBDatabase} idb The indexedDB handle.
  * @return {Promise} If success promise resolves the header+font ArrayBuffer.
  */
-tachyfontprelude.getDbBase = function(idb) {
+tachyfontprelude.getFontBase = function(idb) {
   return new Promise(function(resolve, reject) {
     var trans;
     try {
@@ -258,18 +263,16 @@ tachyfontprelude.setFontNoFlash =
  * Uses a TachyFont from persistent store if available.
  * @param {string} cssFontFamily The CSS font-family name.
  * @param {!tachyfontprelude.FontInfo_} fontInfo The info on the font to use.
- * @param {Promise} previousPromise Wait for this promise to resolve.
  * @return {!Promise} This promise resolves when the font is used.
  */
-tachyfontprelude.useFont = function(cssFontFamily, fontInfo, previousPromise) {
+tachyfontprelude.useFont = function(cssFontFamily, fontInfo) {
   var idb;
-  return previousPromise.then(function() {
-    return tachyfontprelude.openIDB(fontInfo);
-  }).then(function(db) {
-    idb = db;
-    return db;
-  })
-      .then(tachyfontprelude.getDbBase)
+  return tachyfontprelude.openIDB(fontInfo)
+      .then(function(db) {
+        idb = db;
+        return db;
+      })
+      .then(tachyfontprelude.getFontBase)
       .then(tachyfontprelude.getFontData)
       .then(function(fontDataView) {
         return tachyfontprelude.setFontNoFlash(cssFontFamily, fontDataView,
