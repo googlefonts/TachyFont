@@ -64,7 +64,7 @@ tachyfont.BackendService.PROTOCOL_MAJOR_VERSION = '1';
  *
  * @param {!tachyfont.FontInfo} fontInfo containing info on the font; ie:
  *     name, version, ...
- * @param {Array<number>} codes Codepoints to be requested
+ * @param {!Array<number>} codes Codepoints to be requested
  * @return {?goog.Promise} Promise to return ArrayBuffer for the response bundle
  */
 BackendService.prototype.requestCodepoints = goog.functions.NULL;
@@ -82,7 +82,7 @@ BackendService.prototype.requestFontBase = goog.functions.NULL;
 /**
  * Parses the header of a codepoint response and returns info on it:
  *
- * @param {ArrayBuffer} glyphData from a code point request.
+ * @param {!ArrayBuffer} glyphData from a code point request.
  * @return {!tachyfont.GlyphBundleResponse}
  */
 BackendService.prototype.parseDataHeader = function(glyphData) {
@@ -133,7 +133,7 @@ BackendService.prototype.log = goog.functions.NULL;
  * @param {string} url Destination url
  * @param {string} method Request method
  * @param {?string} postData Request data
- * @param {Object} headers Request headers
+ * @param {?Object} headers Request headers
  * @return {!goog.Promise} Promise to return response
  * @protected
  */

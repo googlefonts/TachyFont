@@ -140,8 +140,8 @@ tachyfont.IncrementalFontUtils.sanitizeBaseFont =
 
 /**
  * Set a style's visibility.
- * @param {Object} style The style object
- * @param {tachyfont.FontInfo} fontInfo The font information object
+ * @param {?Object} style The style object
+ * @param {!tachyfont.FontInfo} fontInfo The font information object
  * @param {boolean} visible True is setting visibility to visible.
  * @return {!Object} New style object for given font and visibility
  */
@@ -173,7 +173,7 @@ tachyfont.IncrementalFontUtils.setVisibility = function(style, fontInfo,
 
 /**
  * Add the '@font-face' rule
- * @param {DataView} data The font data.
+ * @param {!DataView} data The font data.
  * @param {string} mimeType The mime-type of the font.
   * @return {string} The blob URL.
   */
@@ -236,7 +236,7 @@ tachyfont.IncrementalFontUtils.getStyleSheet = function() {
  * Delete a CSS style rule.
  *
  * @param {number} ruleToDelete The rule to delete.
- * @param {CSSStyleSheet} sheet The style sheet.
+ * @param {!CSSStyleSheet} sheet The style sheet.
  */
 tachyfont.IncrementalFontUtils.deleteCssRule = function(ruleToDelete, sheet) {
   if (ruleToDelete != -1) {
@@ -257,7 +257,7 @@ tachyfont.IncrementalFontUtils.deleteCssRule = function(ruleToDelete, sheet) {
  * Find the \@font-face rule for the given font spec.
  *
  * TODO(bstell): Add slant, width, etc.
- * @param {CSSStyleSheet} sheet The style sheet.
+ * @param {!CSSStyleSheet} sheet The style sheet.
  * @param {string} fontFamily The fontFamily.
  * @param {string} weight The weight.
  * @return {number} The rule index; -1 if not found.
@@ -293,7 +293,7 @@ tachyfont.IncrementalFontUtils.findFontFaceRule =
 /**
  * Set the CSS \@font-face rule.
  *
- * @param {CSSStyleSheet} sheet The style sheet.
+ * @param {!CSSStyleSheet} sheet The style sheet.
  * @param {string} fontFamily The fontFamily.
  * @param {string} weight The weight.
  * @param {string} blobUrl The blob URL of the font data.
@@ -320,7 +320,7 @@ tachyfont.IncrementalFontUtils.setCssFontRule =
 
 /**
  * Get the character to glyphId mapping.
- * @param {Object} headerInfo Header information.
+ * @param {!Object} headerInfo Header information.
  * @return {!Object<number, !tachyfont.CharCmapInfo>} Map of chars to glyphId,
  *     format4Seg, format12Seg.
  */
