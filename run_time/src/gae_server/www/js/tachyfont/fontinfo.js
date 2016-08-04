@@ -25,19 +25,27 @@ goog.provide('tachyfont.FontInfo');
  * The information for a font.
  * @param {?string} name The font name.
  * @param {?string} weight The font weight.
+ * @param {boolean} priority Indicates whether this font should be
+ *     prioritized over other fonts.
  * @param {?string=} opt_familyPath The font family path.
  * @param {?string=} opt_version The font version.
  * @param {?string=} opt_fontKit The font kit.
  * @constructor
  */
-tachyfont.FontInfo =
-    function(name, weight, opt_familyPath, opt_version, opt_fontKit) {
+tachyfont.FontInfo = function(name, weight, priority, opt_familyPath,
+    opt_version, opt_fontKit) {
 
   /** @private {string} */
   this.name_ = name || '';
 
   /** @private {string} */
   this.weight_ = weight || '';
+
+  /**
+   * Indicates if this font should be prioritized over other fonts.
+   * @private {boolean}
+   */
+  this.priority_ = priority;
 
   /** @private {string} */
   this.familyPath_ = opt_familyPath || '';
@@ -53,12 +61,6 @@ tachyfont.FontInfo =
 
   /** @private {string} */
   this.dataUrl_ = '';
-
-  /**
-   * Indicates if this font should be serviced ahead of other fonts.
-   * @private {boolean}
-   */
-  this.priority_ = false;
 };
 
 
@@ -152,15 +154,6 @@ tachyfont.FontInfo.prototype.getPriority = function() {
 };
 
 
-/**
- * Sets the priority of this font.
- * @param {?boolean} priority True if is a priority font.
- */
-tachyfont.FontInfo.prototype.setPriority = function(priority) {
-  this.priority_ = priority ? true : false;
-};
-
-
 goog.scope(function() {
 goog.exportSymbol('tachyfont.FontInfo', tachyfont.FontInfo);
 goog.exportProperty(tachyfont.FontInfo.prototype, 'getName',
@@ -183,7 +176,5 @@ goog.exportProperty(tachyfont.FontInfo.prototype, 'setDataUrl',
                     tachyfont.FontInfo.prototype.setDataUrl);
 goog.exportProperty(tachyfont.FontInfo.prototype, 'getPriority',
                     tachyfont.FontInfo.prototype.getPriority);
-goog.exportProperty(tachyfont.FontInfo.prototype, 'setPriority',
-                    tachyfont.FontInfo.prototype.setPriority);
 });  // goog.scope
 
