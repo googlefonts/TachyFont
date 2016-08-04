@@ -73,11 +73,29 @@ tachyfont.FontsInfo.prototype.getDataUrl = function() {
 
 
 /**
+ * Sets the URL to the TachyFont.
+ * @param {string} url The URL to the TachyFont server.
+ */
+tachyfont.FontsInfo.prototype.setDataUrl = function(url) {
+  this.dataUrl_ = url;
+};
+
+
+/**
  * Gets the URL to the TachyFont.
  * @return {string} The URL to send logging/error reports to.
  */
 tachyfont.FontsInfo.prototype.getReportUrl = function() {
   return this.reportUrl_;
+};
+
+
+/**
+ * Sets the URL to the TachyFont.
+ * @param {string} url The URL to send logging/error reports to.
+ */
+tachyfont.FontsInfo.prototype.setReportUrl = function(url) {
+  this.reportUrl_ = url;
 };
 
 
