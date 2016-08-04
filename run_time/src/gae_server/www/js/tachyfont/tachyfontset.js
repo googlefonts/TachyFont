@@ -479,7 +479,7 @@ tachyfont.TachyFontSet.prototype.setFont = function(index, loadResult,
  *     the number is negative then an intentional delay was happened.
  * @param {boolean} allowEarlyUse Allow the font to be used before the page has
  *     finished loading.
- * @return {goog.Promise}
+ * @return {!goog.Promise}
  *
  */
 tachyfont.TachyFontSet.prototype.updateFonts =

@@ -32,7 +32,7 @@ goog.require('tachyfont.Logger');
  * @param {!tachyfont.FontInfo} fontInfo Info about this font.
  * @param {boolean} isTtf True if the font is a TrueType font.
  * @param {?string} oldBlobUrl The previous Blob URL.
- * @return {goog.Promise} The promise resolves when the glyphs are displaying.
+ * @return {!goog.Promise} The promise resolves when the glyphs are displaying.
  */
 tachyfont.Browser.setFont = function(fontData, fontInfo, isTtf, oldBlobUrl) {
   return goog.Promise.resolve().
@@ -81,7 +81,7 @@ tachyfont.Browser.setFont = function(fontData, fontInfo, isTtf, oldBlobUrl) {
  * @param {!tachyfont.FontInfo} fontInfo Info about this font.
  * @param {string} format The \@font-face format.
  * @param {string} blobUrl The blobUrl to the font data.
- * @return {goog.Promise} The promise resolves when the glyphs are displaying.
+ * @return {!goog.Promise} The promise resolves when the glyphs are displaying.
  */
 // TODO(bstell): This is really Chrome specific. Make it more work for other
 // browsers.

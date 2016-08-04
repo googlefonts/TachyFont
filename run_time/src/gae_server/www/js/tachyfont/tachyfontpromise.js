@@ -40,7 +40,7 @@ tachyfont.promise = function(opt_container, opt_msg) {
   /**
    * The promise.
    *
-   * @private {goog.Promise}
+   * @private {!goog.Promise}
    */
   this.promise_ = new goog.Promise(function(resolve, reject) {
     this.resolver_ = resolve;
@@ -53,9 +53,9 @@ tachyfont.promise = function(opt_container, opt_msg) {
    * If this is being used to serialize promises then this is the preceeding
    * promise that the current thread needs to wait for.
    *
-   * @private {goog.Promise|undefined}
+   * @private {?goog.Promise}
    */
-  this.precedingPromise_;
+  this.precedingPromise_ = null;
 };
 
 
@@ -100,7 +100,7 @@ tachyfont.promise.reportError_ = function(errNum, errInfo) {
 /**
  * Get the actual goog.Promise.
  *
- * @return {goog.Promise}
+ * @return {!goog.Promise}
  */
 tachyfont.promise.prototype.getPromise = function() {
   return this.promise_;
@@ -110,7 +110,7 @@ tachyfont.promise.prototype.getPromise = function() {
 /**
  * Get the preceding/chained goog.Promise.
  *
- * @return {goog.Promise|undefined}
+ * @return {?goog.Promise}
  */
 tachyfont.promise.prototype.getPrecedingPromise = function() {
   if (!this.precedingPromise_) {
@@ -249,7 +249,7 @@ tachyfont.chainedPromises = function(msg) {
  * Get a chained promise.
  *
  * @param {string} msg Information about the caller.
- * @return {tachyfont.promise}
+ * @return {!tachyfont.promise}
  */
 tachyfont.chainedPromises.prototype.getChainedPromise = function(msg) {
   this.chainedCount_++;
