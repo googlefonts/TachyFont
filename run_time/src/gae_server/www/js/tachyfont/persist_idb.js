@@ -223,7 +223,7 @@ tachyfont.Metadata.initializePerFont = function(store) {
   if (goog.DEBUG) {
     // To allow immediate testing make the data appear old enough to make it
     // seem stable.
-    createTime = goog.now() - 2 * 24 * 60 * 60 * 1000 + 30 * 1000;
+    createTime = goog.now() - 24 * 60 * 60 * 1000 + 30 * 1000;
   }
   tachyfont.Metadata.initialize(store, createTime);
 };
