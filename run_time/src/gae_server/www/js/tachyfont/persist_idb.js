@@ -43,7 +43,6 @@ tachyfont.Persist.Error = {
 
 /**
  * The error reporter for this file.
- *
  * @param {string} errNum The error number;
  * @param {string} errId Identifies the error.
  * @param {*} errInfo The error object;
@@ -63,10 +62,10 @@ tachyfont.Persist.reportError = function(errNum, errId, errInfo) {
 
 /**
  * Save a data item.
- * @param {Object} idb The IndexedDB object.
+ * @param {!IDBDatabase} idb The IndexedDB object.
  * @param {string} name The name of the item.
- * @param {Array} data The data.
- * @return {goog.Promise} Operation completion.
+ * @param {!*} data The data.
+ * @return {!goog.Promise<undefined,?>} Operation completion.
  */
 tachyfont.Persist.saveData = function(idb, name, data) {
   return new goog.Promise(function(resolve, reject) {
@@ -91,13 +90,22 @@ tachyfont.Persist.saveData = function(idb, name, data) {
  */
 tachyfont.Persist.openIndexedDB = function(dbName, id) {
   var openIdb = new goog.Promise(function(resolve, reject) {
-    var dbOpen = window.indexedDB.open(dbName,
-        tachyfont.utils.IDB_VERSION);
+    var needToInitializeMetadata = false;
+    var dbOpen = window.indexedDB.open(dbName, tachyfont.utils.IDB_VERSION);
 
     dbOpen.onsuccess = function(e) {
       var db = e.target.result;
-      resolve(db);
+      return goog.Promise.resolve()
+          .then(function() {
+            if (needToInitializeMetadata) {
+              return tachyfont.Persist.initializeMetadata(db);
+            }
+          })
+          .then(function() {
+            resolve(db);
+          });
     };
+
     dbOpen.onerror = function(e) {
       tachyfont.Persist.reportError(tachyfont.Persist.Error.OPEN_IDB,
           id, '!!! openIndexedDB "' + dbName);
@@ -119,9 +127,29 @@ tachyfont.Persist.openIndexedDB = function(dbName, id) {
       if (!db.objectStoreNames.contains(tachyfont.utils.IDB_CHARLIST)) {
         db.createObjectStore(tachyfont.utils.IDB_CHARLIST);
       }
+      if (!db.objectStoreNames.contains(tachyfont.utils.IDB_METADATA)) {
+        db.createObjectStore(tachyfont.utils.IDB_METADATA);
+        needToInitializeMetadata = true;
+      }
     };
   });
   return openIdb;
+};
+
+
+/**
+ * Initialize the metadata table.
+ * @param {!IDBDatabase} db The IndexedDB database object.
+ * @return {!goog.Promise<?,?>} The font DB.
+ */
+tachyfont.Persist.initializeMetadata = function(db) {
+  // TODO(bstell): make the metadata a real object or struct.
+  var metadata = {};
+  metadata[tachyfont.utils.IDB_LAST_OPERATION] =
+      tachyfont.utils.IDB_OPERATION_CREATE_METADATA;
+  metadata[tachyfont.utils.IDB_LAST_OPERATION_TIME] =
+      metadata[tachyfont.utils.IDB_CREATE_METADATA_TIME] = goog.now();
+  return tachyfont.Persist.saveData(db, tachyfont.utils.IDB_METADATA, metadata);
 };
 
 
@@ -160,7 +188,6 @@ tachyfont.Persist.deleteDatabase = function(dbName, id) {
 
 /**
  * Get a part of the font.
- *
  * @param {Object} idb The IndexedDB object.
  * @param {string} name The name of the font data to get.
  * @return {goog.Promise} Promise to return the data.
