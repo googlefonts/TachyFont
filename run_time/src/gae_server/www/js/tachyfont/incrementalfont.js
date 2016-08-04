@@ -229,11 +229,10 @@ tachyfont.IncrementalFont.createManager = function(fontInfo, dropData, params) {
 tachyfont.IncrementalFont.obj = function(fontInfo, params, backendService) {
   var weight = fontInfo.getWeight();
 
-  // Get the prelude Blob URL.
+  // Get the prelude data.
   var prelude = window['tachyfontprelude'] || {};
-  var preludeBlobUrl = prelude[weight] || null;
-  // Clear the 'dangling reference'.
-  prelude[weight] = undefined;
+  var preludeUrls = prelude['urls'] || {};
+  var preludeLoaded = prelude['loaded'] || {};
 
   /**
    * Whether the font should be compacted.
@@ -264,7 +263,9 @@ tachyfont.IncrementalFont.obj = function(fontInfo, params, backendService) {
    * The current Blob URL. Free this when creating a new one.
    * @private {?string}
    */
-  this.blobUrl_ = preludeBlobUrl;
+  this.blobUrl_ = preludeUrls[weight] || null;
+  // Clear the 'dangling reference'.
+  preludeUrls[weight] = undefined;
 
   /**
    * Information about the fonts
@@ -288,10 +289,11 @@ tachyfont.IncrementalFont.obj = function(fontInfo, params, backendService) {
   this.req_size = params['req_size'] || 2200;
 
   /**
-   * True if new characters have been loaded since last setFont
+   * If the Prelude code did not set the font then set it even if no new
+   * characters are needed.
    * @type {boolean}
    */
-  this.needToSetFont = true;
+  this.needToSetFont = !preludeLoaded[weight];
 
   this.url = fontInfo.getDataUrl();
   this.charsURL = '/incremental_fonts/request';
