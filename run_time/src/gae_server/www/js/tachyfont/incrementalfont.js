@@ -227,11 +227,26 @@ tachyfont.IncrementalFont.createManager = function(fontInfo, dropData, params) {
  * @constructor @struct
  */
 tachyfont.IncrementalFont.obj = function(fontInfo, params, backendService) {
+  var weight = fontInfo.getWeight();
+
   // Get the prelude Blob URL.
   var prelude = window['tachyfontprelude'] || {};
-  var preludeBlobUrl = prelude[fontInfo.getWeight()] || null;
+  var preludeBlobUrl = prelude[weight] || null;
   // Clear the 'dangling reference'.
-  prelude[fontInfo.getWeight()] = undefined;
+  prelude[weight] = undefined;
+
+  /**
+   * Whether the font should be compacted.
+   * @private {boolean}
+   */
+  // TODO(bstell): fix this hack.
+  this.shouldBeCompact_ = parseInt(weight, 10) > 650;
+
+  /**
+   * Whether the font is compacted.
+   * @private {boolean}
+   */
+  this.isCompact_ = false;
 
   /**
    * The creation time for this TachyFont.
@@ -315,6 +330,24 @@ tachyfont.IncrementalFont.obj = function(fontInfo, params, backendService) {
    */
   this.finishPrecedingSetFont_ =
       new tachyfont.chainedPromises('finishPrecedingSetFont_');
+};
+
+
+/**
+ * Gets whether the font should be compacted.
+ * @return {boolean}
+ */
+tachyfont.IncrementalFont.obj.prototype.getShouldBeCompact = function() {
+  return this.shouldBeCompact_;
+};
+
+
+/**
+ * Gets whether the font is compacted.
+ * @return {boolean}
+ */
+tachyfont.IncrementalFont.obj.prototype.isCompact = function() {
+  return this.isCompact_;
 };
 
 
@@ -635,18 +668,8 @@ tachyfont.IncrementalFont.obj.prototype.injectCharacters =
     var id = glyphData.getId();
     glyphIds.push(id);
     var nextId = id + 1;
-    var hmtx;
-    var vmtx;
-    if (flags & tachyfont.IncrementalFontUtils.FLAGS.HAS_HMTX) {
-      hmtx = glyphData.getHmtx();
-      baseBinaryEditor.setMtxSideBearing(this.fileInfo_.hmtxOffset,
-          this.fileInfo_.hmetricCount, id, hmtx);
-    }
-    if (flags & tachyfont.IncrementalFontUtils.FLAGS.HAS_VMTX) {
-      vmtx = glyphData.getVmtx();
-      baseBinaryEditor.setMtxSideBearing(this.fileInfo_.vmtxOffset,
-          this.fileInfo_.vmetricCount, id, vmtx);
-    }
+    this.setMtx(flags, glyphData, baseBinaryEditor);
+
     var offset = glyphData.getOffset();
     var length = glyphData.getLength();
 
@@ -750,6 +773,29 @@ tachyfont.IncrementalFont.obj.prototype.injectCharacters =
   // time_end('inject')
 
   return baseFontView;
+};
+
+
+/**
+ * Set the Horizontal/Vertical metrics.
+ * @param {number} flags Indicates what is in the glyphData.
+ * @param {!tachyfont.GlyphBundleResponse.GlyphData} glyphData An object holding
+ *     the glyph data.
+ * @param {!tachyfont.BinaryFontEditor} baseBinaryEditor A font editor.
+ */
+tachyfont.IncrementalFont.obj.prototype.setMtx = function(flags,
+    glyphData, baseBinaryEditor) {
+  var id = glyphData.getId();
+  if (flags & tachyfont.IncrementalFontUtils.FLAGS.HAS_HMTX) {
+    var hmtx = glyphData.getHmtx();
+    baseBinaryEditor.setMtxSideBearing(this.fileInfo_.hmtxOffset,
+        this.fileInfo_.hmetricCount, id, hmtx);
+  }
+  if (flags & tachyfont.IncrementalFontUtils.FLAGS.HAS_VMTX) {
+    var vmtx = glyphData.getVmtx();
+    baseBinaryEditor.setMtxSideBearing(this.fileInfo_.vmtxOffset,
+        this.fileInfo_.vmetricCount, id, vmtx);
+  }
 };
 
 
