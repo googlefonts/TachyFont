@@ -275,6 +275,9 @@ tachyfontprelude.setFontNoFlash =
 
   var fontStr = '400 20px ' + tmpFontFamily;
   return document.fonts.load(fontStr)
+      .then(undefined, function() {
+        // Ignore errors of fonts that do not load.
+      })
       .then(function(value) {
         tachyfontprelude.setCssFontRule(sheet, cssFontFamily,
             fontInfo.weight, blobUrl, format);
