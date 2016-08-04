@@ -132,7 +132,7 @@ tachyfont.TachyFontSet.Error = {
 tachyfont.TachyFontSet.reportError_ = function(errNum, errObj) {
   if (goog.DEBUG) {
     if (!tachyfont.Reporter.isReady()) {
-      debugger; // Failed to report the error.
+      debugger;  // Failed to report the error.
       goog.log.error(tachyfont.Logger.logger, 'failed to report error');
     }
   }

@@ -337,10 +337,10 @@ tachyfont.sendPreludeReports = function() {
     }
     var reportType = report[0];
     var id = report[2];
-    if (reportType == 'e') { // Error report.
+    if (reportType == 'e') {  // Error report.
       var errorNumber = report[1];
       tachyfont.Reporter.reportError('EPL' + errorNumber, id, '');
-    } else if (reportType == 'l') { // Log report.
+    } else if (reportType == 'l') {  // Log report.
       var time = report[1];
       tachyfont.Reporter.addItem('LPLLT.' + id, time);
     }

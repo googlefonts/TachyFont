@@ -86,7 +86,7 @@ tachyfont.promise.Error_ = {
 tachyfont.promise.reportError_ = function(errNum, errInfo) {
   if (goog.DEBUG) {
     if (!tachyfont.Reporter.isReady()) {
-      debugger; // Failed to report error.
+      debugger;  // Failed to report error.
       goog.log.error(tachyfont.Logger.logger, 'failed to report error');
     }
   }

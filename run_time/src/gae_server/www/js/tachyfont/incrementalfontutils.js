@@ -345,13 +345,13 @@ tachyfont.IncrementalFontUtils.getCmapMapping = function(headerInfo) {
           glyphId = (code + idDelta) % 65536;
         } else {
           if (goog.DEBUG) {
-            debugger; // TODO(bstell): verify this code.
+            debugger;  // TODO(bstell): verify this code.
           }
           glyphId = glyphIdArray[glyphIdIndex++];
           if (glyphId == 0) {
             // This code is not mapped in the font.
             if (goog.DEBUG) {
-              debugger; // TODO(bstell): verify this code.
+              debugger;  // TODO(bstell): verify this code.
             }
             continue;
           }
@@ -365,7 +365,7 @@ tachyfont.IncrementalFontUtils.getCmapMapping = function(headerInfo) {
 
   if (!headerInfo.compact_gos.cmap12) {
     if (goog.DEBUG) {
-      debugger; // TODO(bstell): need to handle this.
+      debugger;  // TODO(bstell): need to handle this.
     }
     return cmapMapping;
   }

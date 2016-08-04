@@ -471,7 +471,7 @@ tachyfont.Sfnt.TableOfContents.prototype.init_ = function(fontData,
     throw new Error('invalid font');
   }
   var numTables = binaryEditor.getUint16();
-  binaryEditor.skip(6); // searchRange, entrySelector, rangeShift
+  binaryEditor.skip(6);  // searchRange, entrySelector, rangeShift
   for (var i = 0; i < numTables; i++) {
     var entryOffset = binaryEditor.tell();
     var tag = binaryEditor.readString(4);
@@ -512,7 +512,7 @@ tachyfont.Sfnt.TableOfContents.prototype.updateOffsets_ = function(
     var entry = this.items_[i];
     var tag = binaryEditor.readString(4);
     goog.asserts.assert(tag == entry.tag_);
-    binaryEditor.skip(4); // Skip the checksum.
+    binaryEditor.skip(4);  // Skip the checksum.
     if (entry.offset_ == afterOffset) {
       // Skip the offset.
       binaryEditor.skip(4);
@@ -526,7 +526,7 @@ tachyfont.Sfnt.TableOfContents.prototype.updateOffsets_ = function(
       // Skip the length.
       binaryEditor.skip(4);
     } else {
-      binaryEditor.skip(8); // Skip the offset and length.
+      binaryEditor.skip(8);  // Skip the offset and length.
     }
   }
 };
