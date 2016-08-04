@@ -115,10 +115,10 @@ tachyfont.webfonttailor.getTachyFontsInfo =
           var weight = weights[l];
           var font = weightsInfo[weight];
           if (font) {
+            var priority = priorityWeights.indexOf(weight) != -1;
             var fontInfo = new tachyfont.FontInfo(weightsInfo.familyName.name,
-                font['weight']);
-            if (priorityWeights.indexOf(weight) != -1) {
-              fontInfo.setPriority(true);
+                font['weight'], priority);
+            if (priority) {
               priorityFonts.push(fontInfo);
             } else {
               nonPriorityFonts.push(fontInfo);

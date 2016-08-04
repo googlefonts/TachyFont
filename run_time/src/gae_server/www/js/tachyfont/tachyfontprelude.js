@@ -90,15 +90,23 @@
    * The information needed to load a font.
    * @param {string} fontFamily The font name.
    * @param {string} weight The font weight.
+   * @param {boolean} priority Whether this is a priority font.
    * @param {boolean} isTtf True is TTF and false if OTF.
    * @constructor
    */
-  function FontInfo(fontFamily, weight, isTtf) {
+  function FontInfo(fontFamily, weight, priority, isTtf) {
     /** @type {string} The font name. */
     this.fontFamily = fontFamily;
 
     /** @type {string} The font weight. */
     this.weight = weight;
+
+    /**
+     * True if this is a priority font that should be prioritized ahead of other
+     * fonts.
+     * @type {boolean}
+     */
+    this.priority = priority;
 
     /** @type {boolean} isTtf True is TTF and false if OTF. */
     this.isTtf = isTtf;

@@ -31,7 +31,7 @@
   for (var i = 0; i < weights.length; i++) {
     fontInfos.push(
         /* FontInfo */ new tachyfontprelude['FontInfo'](
-            fontFamily, weights[i], /* isTtf */ false));
+            fontFamily, weights[i], false, /* isTtf */ false));
   }
   tachyfontprelude['load'](cssFontFamily, fontInfos);
 })();
