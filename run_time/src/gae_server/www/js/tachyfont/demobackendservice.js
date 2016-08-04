@@ -46,7 +46,11 @@ DemoBackendService.prototype.requestCodepoints = function(fontInfo, codes) {
   return this.requestUrl(
       this.baseUrl + '/incremental_fonts/request',
       'POST',
-      JSON.stringify({'font': fontInfo.getName(), 'arr': codes}),
+      JSON.stringify({
+        'name': fontInfo.getName(),
+        'weight': fontInfo.getWeight(),
+        'arr': codes
+      }),
       // Google App Engine servers do not support CORS so we cannot say
       // the 'Content-Type' is 'application/json'.
       //{'Content-Type': 'application/json'},
@@ -59,8 +63,9 @@ DemoBackendService.prototype.requestCodepoints = function(fontInfo, codes) {
 
 /** @override */
 DemoBackendService.prototype.requestFontBase = function(fontInfo) {
-  return this.requestUrl(this.baseUrl +
-      '/incremental_fonts/incrfonts/' + fontInfo.getName() + '/base', 'GET',
+  return this.requestUrl(this.baseUrl + '/incremental_fonts/incrfonts/' +
+      fontInfo.getName() + '/' + fontInfo.getWeight() +
+      '/base', 'GET',
       null, {});
 };
 
