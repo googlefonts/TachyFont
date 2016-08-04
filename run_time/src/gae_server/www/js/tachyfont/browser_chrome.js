@@ -134,7 +134,7 @@ tachyfont.Browser.setFontNoFlash = function(fontInfo, format, blobUrl) {
 /**
  * Switch from the temporary font to the target font.
  *
- * @param {CSSStyleSheet} sheet The CSS style sheet.
+ * @param {!CSSStyleSheet} sheet The CSS style sheet.
  * @param {string} tmpFontFamily The temporary font-family that is loading the
  *     blob.
  * @param {string} fontFamily The target font-family.

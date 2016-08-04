@@ -28,7 +28,7 @@ goog.require('tachyfont.IncrementalFontUtils');
  * @param {string} version
  * @param {string} signature
  * @param {number} offset Offset to the GlyphBundle Bytes
- * @param {ArrayBuffer} buffer The glyph response buffer.
+ * @param {!ArrayBuffer} buffer The glyph response buffer.
  * @constructor @final @struct
  */
 tachyfont.GlyphBundleResponse = function(version, signature, offset, buffer) {

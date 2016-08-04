@@ -180,7 +180,7 @@ tachyfont.BinaryFontEditor.prototype.getArrayOf = function(getter, count) {
 
 /**
  * @param {function(number)} setter One of setUint or setInt functions
- * @param {Array<number>} arr
+ * @param {!Array<number>} arr
  */
 tachyfont.BinaryFontEditor.prototype.setArrayOf = function(setter, arr) {
   var count = arr.length;
@@ -504,14 +504,14 @@ tachyfont.BinaryFontEditor.BASE_VERSION = 1;
 
 /**
  * Reading operations for the header
- * @type {Object}
+ * @type {!Object}
  */
 tachyfont.BinaryFontEditor.readOps = {};
 
 
 /**
- * @param {tachyfont.BinaryFontEditor} editor Editor used to parse header
- * @param {tachyfont.utils.IncrementalFontLoader} font Font loader object
+ * @param {!tachyfont.BinaryFontEditor} editor Editor used to parse header
+ * @param {!tachyfont.utils.IncrementalFontLoader} font Font loader object
  */
 tachyfont.BinaryFontEditor.readOps.GLOF = function(editor, font) {
   font.glyphOffset = editor.getUint32();
@@ -519,8 +519,8 @@ tachyfont.BinaryFontEditor.readOps.GLOF = function(editor, font) {
 
 
 /**
- * @param {tachyfont.BinaryFontEditor} editor Editor used to parse header
- * @param {tachyfont.utils.IncrementalFontLoader} font Font loader object
+ * @param {!tachyfont.BinaryFontEditor} editor Editor used to parse header
+ * @param {!tachyfont.utils.IncrementalFontLoader} font Font loader object
  */
 tachyfont.BinaryFontEditor.readOps.GLCN = function(editor, font) {
   font.numGlyphs = editor.getUint16();
@@ -528,8 +528,8 @@ tachyfont.BinaryFontEditor.readOps.GLCN = function(editor, font) {
 
 
 /**
- * @param {tachyfont.BinaryFontEditor} editor Editor used to parse header
- * @param {tachyfont.utils.IncrementalFontLoader} font Font loader object
+ * @param {!tachyfont.BinaryFontEditor} editor Editor used to parse header
+ * @param {!tachyfont.utils.IncrementalFontLoader} font Font loader object
  */
 tachyfont.BinaryFontEditor.readOps.LCOF = function(editor, font) {
   font.glyphDataOffset = editor.getUint32();
@@ -537,8 +537,8 @@ tachyfont.BinaryFontEditor.readOps.LCOF = function(editor, font) {
 
 
 /**
- * @param {tachyfont.BinaryFontEditor} editor Editor used to parse header
- * @param {tachyfont.utils.IncrementalFontLoader} font Font loader object
+ * @param {!tachyfont.BinaryFontEditor} editor Editor used to parse header
+ * @param {!tachyfont.utils.IncrementalFontLoader} font Font loader object
  */
 tachyfont.BinaryFontEditor.readOps.LCFM = function(editor, font) {
   font.offsetSize = editor.getUint8();
@@ -546,8 +546,8 @@ tachyfont.BinaryFontEditor.readOps.LCFM = function(editor, font) {
 
 
 /**
- * @param {tachyfont.BinaryFontEditor} editor Editor used to parse header
- * @param {tachyfont.utils.IncrementalFontLoader} font Font loader object
+ * @param {!tachyfont.BinaryFontEditor} editor Editor used to parse header
+ * @param {!tachyfont.utils.IncrementalFontLoader} font Font loader object
  */
 tachyfont.BinaryFontEditor.readOps.HMOF = function(editor, font) {
   font.hmtxOffset = editor.getUint32();
@@ -555,8 +555,8 @@ tachyfont.BinaryFontEditor.readOps.HMOF = function(editor, font) {
 
 
 /**
- * @param {tachyfont.BinaryFontEditor} editor Editor used to parse header
- * @param {tachyfont.utils.IncrementalFontLoader} font Font loader object
+ * @param {!tachyfont.BinaryFontEditor} editor Editor used to parse header
+ * @param {!tachyfont.utils.IncrementalFontLoader} font Font loader object
  */
 tachyfont.BinaryFontEditor.readOps.VMOF = function(editor, font) {
   font.vmtxOffset = editor.getUint32();
@@ -564,8 +564,8 @@ tachyfont.BinaryFontEditor.readOps.VMOF = function(editor, font) {
 
 
 /**
- * @param {tachyfont.BinaryFontEditor} editor Editor used to parse header
- * @param {tachyfont.utils.IncrementalFontLoader} font Font loader object
+ * @param {!tachyfont.BinaryFontEditor} editor Editor used to parse header
+ * @param {!tachyfont.utils.IncrementalFontLoader} font Font loader object
  */
 tachyfont.BinaryFontEditor.readOps.HMMC = function(editor, font) {
   font.hmetricCount = editor.getUint16();
@@ -573,8 +573,8 @@ tachyfont.BinaryFontEditor.readOps.HMMC = function(editor, font) {
 
 
 /**
- * @param {tachyfont.BinaryFontEditor} editor Editor used to parse header
- * @param {tachyfont.utils.IncrementalFontLoader} font Font loader object
+ * @param {!tachyfont.BinaryFontEditor} editor Editor used to parse header
+ * @param {!tachyfont.utils.IncrementalFontLoader} font Font loader object
  */
 tachyfont.BinaryFontEditor.readOps.VMMC = function(editor, font) {
   font.vmetricCount = editor.getUint16();
@@ -582,8 +582,8 @@ tachyfont.BinaryFontEditor.readOps.VMMC = function(editor, font) {
 
 
 /**
- * @param {tachyfont.BinaryFontEditor} editor Editor used to parse header
- * @param {tachyfont.utils.IncrementalFontLoader} font Font loader object
+ * @param {!tachyfont.BinaryFontEditor} editor Editor used to parse header
+ * @param {!tachyfont.utils.IncrementalFontLoader} font Font loader object
  */
 tachyfont.BinaryFontEditor.readOps.TYPE = function(editor, font) {
   font.isTtf = editor.getUint8();
@@ -591,8 +591,8 @@ tachyfont.BinaryFontEditor.readOps.TYPE = function(editor, font) {
 
 
 /**
- * @param {tachyfont.BinaryFontEditor} editor Editor used to parse header
- * @param {tachyfont.utils.IncrementalFontLoader} font Font loader object
+ * @param {!tachyfont.BinaryFontEditor} editor Editor used to parse header
+ * @param {!tachyfont.utils.IncrementalFontLoader} font Font loader object
  */
 tachyfont.BinaryFontEditor.readOps.CM12 = function(editor, font) {
   var cmap12 = {};
@@ -603,8 +603,8 @@ tachyfont.BinaryFontEditor.readOps.CM12 = function(editor, font) {
 
 
 /**
- * @param {tachyfont.BinaryFontEditor} editor Editor used to parse header
- * @param {tachyfont.utils.IncrementalFontLoader} font Font loader object
+ * @param {!tachyfont.BinaryFontEditor} editor Editor used to parse header
+ * @param {!tachyfont.utils.IncrementalFontLoader} font Font loader object
  */
 tachyfont.BinaryFontEditor.readOps.CM04 = function(editor, font) {
   var cmap4 = {};
@@ -615,8 +615,8 @@ tachyfont.BinaryFontEditor.readOps.CM04 = function(editor, font) {
 
 
 /**
- * @param {tachyfont.BinaryFontEditor} editor Editor used to parse header
- * @param {tachyfont.utils.IncrementalFontLoader} font Font loader object
+ * @param {!tachyfont.BinaryFontEditor} editor Editor used to parse header
+ * @param {!tachyfont.utils.IncrementalFontLoader} font Font loader object
  */
 tachyfont.BinaryFontEditor.readOps.CCMP = function(editor, font) {
   var compact_gos = {};
@@ -703,8 +703,8 @@ tachyfont.BinaryFontEditor.readOps.CCMP = function(editor, font) {
 
 
 /**
- * @param {tachyfont.BinaryFontEditor} editor Editor used to parse header
- * @param {tachyfont.utils.IncrementalFontLoader} font Font loader object
+ * @param {!tachyfont.BinaryFontEditor} editor Editor used to parse header
+ * @param {!tachyfont.utils.IncrementalFontLoader} font Font loader object
  */
 tachyfont.BinaryFontEditor.readOps.CS02 = function(editor, font) {
   var charset = {};
@@ -715,8 +715,8 @@ tachyfont.BinaryFontEditor.readOps.CS02 = function(editor, font) {
 
 
 /**
- * @param {tachyfont.BinaryFontEditor} editor Editor used to parse header
- * @param {tachyfont.utils.IncrementalFontLoader} font Font loader object
+ * @param {!tachyfont.BinaryFontEditor} editor Editor used to parse header
+ * @param {!tachyfont.utils.IncrementalFontLoader} font Font loader object
  */
 tachyfont.BinaryFontEditor.readOps.SHA1 = function(editor, font) {
   var sha1_fingerprint = editor.readString(40);
@@ -726,7 +726,7 @@ tachyfont.BinaryFontEditor.readOps.SHA1 = function(editor, font) {
 
 /**
  * Tags defined in the header of the basefont
- * @enum {Object}
+ * @enum {!Object}
  */
 tachyfont.BinaryFontEditor.TAGS = {
   'GLOF':
