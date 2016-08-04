@@ -1182,7 +1182,7 @@ tachyfont.IncrementalFont.obj.prototype.persist_ = function(name) {
                      goog.log.fine(tachyfont.Logger.logger, 'save base');
                    }
                    return tachyfont.Persist.saveData(arr[0],
-                   tachyfont.utils.IDB_BASE, arr[2].buffer)
+                   [tachyfont.utils.IDB_BASE], [arr[2].buffer])
                    .thenCatch(function(e) {
                      tachyfont.IncrementalFont.reportError(
                      tachyfont.IncrementalFont.Error.SAVE_DATA,
@@ -1203,7 +1203,7 @@ tachyfont.IncrementalFont.obj.prototype.persist_ = function(name) {
                      goog.log.fine(tachyfont.Logger.logger, 'save charlist');
                    }
                    return tachyfont.Persist.saveData(arr[0],
-                   tachyfont.utils.IDB_CHARLIST, arr[1])
+                   [tachyfont.utils.IDB_CHARLIST], [arr[1]])
                    .thenCatch(function(e) {
                      tachyfont.IncrementalFont.reportError(
                      tachyfont.IncrementalFont.Error.SAVE_DATA,
