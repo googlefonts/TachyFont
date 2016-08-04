@@ -17,11 +17,13 @@
  * the License.
  */
 
+goog.provide('tachyfont.Metadata');
 goog.provide('tachyfont.Persist');
 
 goog.require('goog.Promise');
 goog.require('goog.log');
 goog.require('tachyfont.Logger');
+goog.require('tachyfont.MetadataDefines');
 goog.require('tachyfont.Reporter');
 goog.require('tachyfont.utils');
 
@@ -37,6 +39,11 @@ tachyfont.Persist.Error = {
   DELETED_DATA: '03',
   DELETE_DATA_FAILED: '04',
   DELETE_DATA_BLOCKED: '05',
+  SAVE_BEGIN_PREVIOUS_ACTIVITY: '06',
+  SAVE_BEGIN_METADATA_WRITE: '07',
+  SAVE_DONE_PREVIOUS_ACTIVITY: '08',
+  SAVE_DONE_METADATA_WRITE: '09',
+  MISSING_CREATED_METADATA_TIME: '10',
   END_VALUE: '00'
 };
 
@@ -119,9 +126,10 @@ tachyfont.Persist.openIndexedDB = function(dbName, id) {
         var charListStore = db.createObjectStore(tachyfont.utils.IDB_CHARLIST);
         tachyfont.Persist.initializeCharList(charListStore);
       }
-      if (!db.objectStoreNames.contains(tachyfont.utils.IDB_METADATA)) {
-        var metadataStore = db.createObjectStore(tachyfont.utils.IDB_METADATA);
-        tachyfont.Persist.initializeMetadata(metadataStore);
+      if (!db.objectStoreNames.contains(tachyfont.MetadataDefines.METADATA)) {
+        var metadataStore =
+            db.createObjectStore(tachyfont.MetadataDefines.METADATA);
+        tachyfont.Metadata.initialize(metadataStore);
       }
     };
   });
@@ -130,30 +138,123 @@ tachyfont.Persist.openIndexedDB = function(dbName, id) {
 
 
 /**
- * Initialize the char list table.
+ * Initializes the char list table.
  * @param {!IDBObjectStore} store The IndexedDB object store.
  */
 // TODO(bstell): this is a 'policy' function so move it out of the db layer;
-// move it to a file like metadata.js
+// move it to a file like incrementalfont.js
 tachyfont.Persist.initializeCharList = function(store) {
   store.put({}, 0);
 };
 
 
 /**
- * Initialize the metadata table.
+ * Initializes the metadata table.
  * @param {!IDBObjectStore} store The IndexedDB object store.
  */
 // TODO(bstell): this is a 'policy' function so move it out of the db layer;
 // move it to a file like metadata.js
-tachyfont.Persist.initializeMetadata = function(store) {
+tachyfont.Metadata.initialize = function(store) {
   // TODO(bstell): make the metadata a real object or struct.
   var metadata = {};
-  metadata[tachyfont.utils.IDB_LAST_OPERATION] =
-      tachyfont.utils.IDB_OPERATION_CREATE_METADATA;
-  metadata[tachyfont.utils.IDB_LAST_OPERATION_TIME] =
-      metadata[tachyfont.utils.IDB_CREATE_METADATA_TIME] = goog.now();
+  metadata[tachyfont.MetadataDefines.ACTIVITY] =
+      tachyfont.MetadataDefines.CREATED_METADATA;
+  metadata[tachyfont.MetadataDefines.ACTIVITY_TIME] =
+      metadata[tachyfont.MetadataDefines.CREATED_METADATA_TIME] = goog.now();
   store.put(metadata, 0);
+};
+
+
+/**
+ * Records that a save data operation is about to begin.
+ * @param {!IDBDatabase} db The IndexedDB handle.
+ * @param {string} id Identifies the font.
+ * @return {!goog.Promise<!Object,?>} Resolves when the metadata has been
+ *     recorded.
+ */
+// TODO(bstell): this is a 'policy' function so move it out of the db layer;
+// move it to a file like metadata.js
+tachyfont.Metadata.beginSave = function(db, id) {
+  var name = tachyfont.MetadataDefines.METADATA;
+  return tachyfont.Persist.getData(db, name)
+      .then(function(storedMetadata) {
+        var metadata = tachyfont.Metadata.cleanUpMetadata(storedMetadata, id);
+        if (metadata[tachyfont.MetadataDefines.ACTIVITY] !=
+            tachyfont.MetadataDefines.SAVE_DONE) {
+          tachyfont.Persist.reportError(
+              tachyfont.Persist.Error.SAVE_BEGIN_PREVIOUS_ACTIVITY, id,
+              metadata[tachyfont.MetadataDefines.ACTIVITY]);
+        }
+        metadata[tachyfont.MetadataDefines.ACTIVITY] =
+            tachyfont.MetadataDefines.BEGIN_SAVE;
+        metadata[tachyfont.MetadataDefines.ACTIVITY_TIME] = goog.now();
+        return tachyfont.Persist.saveData(db, name, metadata)
+            .then(function() {
+              return metadata;
+            });
+      })
+      .thenCatch(function(e) {
+        tachyfont.Persist.reportError(
+           tachyfont.Persist.Error.SAVE_BEGIN_METADATA_WRITE, id, e);
+        console.log('beginSave FAILED TO WRITE the activity');
+      });
+};
+
+
+/**
+ * Records that a save data operation just finished.
+ * @param {!IDBDatabase} db The IndexedDB handle.
+ * @param {!Object} metadata The metadata.
+ * @param {string} id Identifies the font.
+ * @return {!goog.Promise<?,?>} Resolves when the metadata has been recorded.
+ */
+// TODO(bstell): this is a 'policy' function so move it out of the db layer;
+// move it to a file like metadata.js
+tachyfont.Metadata.saveDone = function(db, metadata, id) {
+  var name = tachyfont.MetadataDefines.METADATA;
+  if (metadata[tachyfont.MetadataDefines.ACTIVITY] !=
+      tachyfont.MetadataDefines.BEGIN_SAVE) {
+    tachyfont.Persist.reportError(
+        tachyfont.Persist.Error.SAVE_DONE_PREVIOUS_ACTIVITY, id,
+        metadata[tachyfont.MetadataDefines.ACTIVITY]);
+  }
+  metadata[tachyfont.MetadataDefines.ACTIVITY] =
+      tachyfont.MetadataDefines.SAVE_DONE;
+  metadata[tachyfont.MetadataDefines.ACTIVITY_TIME] = goog.now();
+
+  return tachyfont.Persist.saveData(db, name, metadata)
+      .thenCatch(function(e) {
+        tachyfont.Persist.reportError(
+           tachyfont.Persist.Error.SAVE_DONE_METADATA_WRITE, id, e);
+      });
+};
+
+
+/**
+ * Cleans up the metadata by:
+ *   - removing no longer used fields
+ *   - adding missing new fields
+ * @param {!Object} inputMetadata The incoming metadata.
+ * @param {string} id Identifies the font.
+ * @return {!Object}
+ */
+// TODO(bstell): this is a 'policy' function so move it out of the db layer;
+// move it to a file like metadata.js
+tachyfont.Metadata.cleanUpMetadata = function(inputMetadata, id) {
+  var outputMetadata = {};
+  if (!inputMetadata[tachyfont.MetadataDefines.CREATED_METADATA_TIME]) {
+    inputMetadata[tachyfont.MetadataDefines.CREATED_METADATA_TIME] = goog.now();
+    tachyfont.Persist.reportError(
+        tachyfont.Persist.Error.MISSING_CREATED_METADATA_TIME, id, '');
+  }
+  outputMetadata[tachyfont.MetadataDefines.CREATED_METADATA_TIME] =
+      inputMetadata[tachyfont.MetadataDefines.CREATED_METADATA_TIME];
+  outputMetadata[tachyfont.MetadataDefines.ACTIVITY] =
+      inputMetadata[tachyfont.MetadataDefines.ACTIVITY] ||
+      tachyfont.MetadataDefines.CREATED_METADATA;
+  outputMetadata[tachyfont.MetadataDefines.ACTIVITY_TIME] =
+      inputMetadata[tachyfont.MetadataDefines.ACTIVITY_TIME] || goog.now();
+  return outputMetadata;
 };
 
 
