@@ -32,14 +32,6 @@
 
 
   /**
-   * The db store name for the list of loaded characters.
-   *
-   * @const {string}
-   */
-  var CHARLIST = 'charlist';
-
-
-  /**
    * The TachyFont magic (reality check) number.
    * The magic number is the 4 numbers in the string 'BSAC': 0x42 0x53 0x41 0x43
    *
@@ -155,11 +147,6 @@
     return new Promise(function(resolve, reject) {
       var request = window.indexedDB.open(
           DB_NAME_PREFIX + '/' + fontInfo.fontFamily + '/' + fontInfo.weight);
-      request.onupgradeneeded = function(e) {
-        var idb = e.target.result;
-        idb.createObjectStore(BASE);
-        idb.createObjectStore(CHARLIST);
-      };
 
       request.onerror = function(event) {
         reject(ERROR_INDEXEDDB_OPEN);
