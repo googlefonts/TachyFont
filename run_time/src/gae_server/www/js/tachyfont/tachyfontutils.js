@@ -323,7 +323,7 @@ if (goog.DEBUG) {
       if (codesIn.constructor != Array) {
         console.log('tachyfont.utils.codesIn: expected Array but got ' +
             codesIn.constructor);
-        debugger; // For debugging a utility function.
+        debugger;  // For debugging a utility function.
         return;
       }
       var codes = codesIn.slice();
@@ -337,7 +337,7 @@ if (goog.DEBUG) {
         var code = codes[i];
         if (typeof codes[i] != 'number') {
           console.log(title + '[' + i + '] not a number: ' + typeof codes[0]);
-          debugger; // For debugging a utility function.
+          debugger;  // For debugging a utility function.
           return;
         }
         formattedOutput +=

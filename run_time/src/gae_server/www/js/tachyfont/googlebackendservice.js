@@ -126,7 +126,7 @@ GoogleBackendService.prototype.compressedGlyphsList_ = function(codes) {
   var result = '';
   for (var i = 0; i < codes.length; i++) {
     var cp = codes[i];
-    if (cp != 45) { // Dash
+    if (cp != 45) {  // Dash
       result = result + tachyfont.utils.stringFromCodePoint(cp);
     } else {
       // Dash is a special character in the compressed glyph list and must

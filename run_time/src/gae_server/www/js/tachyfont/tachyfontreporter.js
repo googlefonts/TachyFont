@@ -180,7 +180,7 @@ tachyfont.Reporter.reportError = function(errNum, id, errInfo) {
       goog.log.error(tachyfont.Logger.logger, '    ' + name + ': ' +
           tachyfont.Reporter.instance_.items_[name]);
     }
-    // debugger; // Enable this when debugging the reporter.
+    // debugger;  // Enable this when debugging the reporter.
   }
   tachyfont.Reporter.sendReport();
 
