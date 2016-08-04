@@ -90,20 +90,11 @@ tachyfont.Persist.saveData = function(idb, name, data) {
  */
 tachyfont.Persist.openIndexedDB = function(dbName, id) {
   var openIdb = new goog.Promise(function(resolve, reject) {
-    var needToInitializeMetadata = false;
     var dbOpen = window.indexedDB.open(dbName, tachyfont.utils.IDB_VERSION);
 
     dbOpen.onsuccess = function(e) {
       var db = e.target.result;
-      return goog.Promise.resolve()
-          .then(function() {
-            if (needToInitializeMetadata) {
-              return tachyfont.Persist.initializeMetadata(db);
-            }
-          })
-          .then(function() {
-            resolve(db);
-          });
+      resolve(db);
     };
 
     dbOpen.onerror = function(e) {
@@ -125,11 +116,12 @@ tachyfont.Persist.openIndexedDB = function(dbName, id) {
         db.createObjectStore(tachyfont.utils.IDB_BASE);
       }
       if (!db.objectStoreNames.contains(tachyfont.utils.IDB_CHARLIST)) {
-        db.createObjectStore(tachyfont.utils.IDB_CHARLIST);
+        var charListStore = db.createObjectStore(tachyfont.utils.IDB_CHARLIST);
+        tachyfont.Persist.initializeCharList(charListStore);
       }
       if (!db.objectStoreNames.contains(tachyfont.utils.IDB_METADATA)) {
-        db.createObjectStore(tachyfont.utils.IDB_METADATA);
-        needToInitializeMetadata = true;
+        var metadataStore = db.createObjectStore(tachyfont.utils.IDB_METADATA);
+        tachyfont.Persist.initializeMetadata(metadataStore);
       }
     };
   });
@@ -138,18 +130,30 @@ tachyfont.Persist.openIndexedDB = function(dbName, id) {
 
 
 /**
- * Initialize the metadata table.
- * @param {!IDBDatabase} db The IndexedDB database object.
- * @return {!goog.Promise<?,?>} The font DB.
+ * Initialize the char list table.
+ * @param {!IDBObjectStore} store The IndexedDB object store.
  */
-tachyfont.Persist.initializeMetadata = function(db) {
+// TODO(bstell): this is a 'policy' function so move it out of the db layer;
+// move it to a file like metadata.js
+tachyfont.Persist.initializeCharList = function(store) {
+  store.put({}, 0);
+};
+
+
+/**
+ * Initialize the metadata table.
+ * @param {!IDBObjectStore} store The IndexedDB object store.
+ */
+// TODO(bstell): this is a 'policy' function so move it out of the db layer;
+// move it to a file like metadata.js
+tachyfont.Persist.initializeMetadata = function(store) {
   // TODO(bstell): make the metadata a real object or struct.
   var metadata = {};
   metadata[tachyfont.utils.IDB_LAST_OPERATION] =
       tachyfont.utils.IDB_OPERATION_CREATE_METADATA;
   metadata[tachyfont.utils.IDB_LAST_OPERATION_TIME] =
       metadata[tachyfont.utils.IDB_CREATE_METADATA_TIME] = goog.now();
-  return tachyfont.Persist.saveData(db, tachyfont.utils.IDB_METADATA, metadata);
+  store.put(metadata, 0);
 };
 
 
