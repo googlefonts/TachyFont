@@ -80,7 +80,9 @@ tachyfont.Error = {
   UNKNOWN_WINDOW_ON_ERROR: '06',
   NOT_ENOUGH_STORAGE: '07',
   STORAGE_INFORMATION_FUNCTION: '08',
-  GET_STORAGE_INFORMATION: '09'
+  GET_STORAGE_INFORMATION: '09',
+  NO_PRELUDE_REPORTS: '10',
+  PRELUDE_REPORT_TYPE: '11'
 };
 
 
@@ -232,6 +234,9 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
     // Initialize the objects.
     var tachyFontSet =
         tachyfont.loadFonts_init_(familyName, fontsInfo, opt_params);
+    // Send the Prelude reports must be after the tachyfont.Reporter is
+    // initialized in tachyfont.loadFonts_init_.
+    tachyfont.sendPreludeReports();
     // Load the fonts.
     tachyfont.loadFonts_loadAndUse_(tachyFontSet);
 
@@ -240,6 +245,38 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
 
     return tachyFontSet;
   });
+};
+
+
+/**
+ * Sends the Prelude logs and errors.
+ */
+tachyfont.sendPreludeReports = function() {
+  var reports;
+  var prelude = window['tachyfontprelude'];
+  if (prelude) {
+    reports = prelude['reports'];
+  }
+  if (!reports || reports.constructor.name != 'Array') {
+    tachyfont.reportError_(tachyfont.Error.NO_PRELUDE_REPORTS, '');
+    return;
+  }
+  for (var i = 0; i < reports.length; i++) {
+    var report = reports[i];
+    if (!report || report.constructor.name != 'Array' || report.length != 3) {
+      tachyfont.reportError_(tachyfont.Error.PRELUDE_REPORT_TYPE, '');
+      return;
+    }
+    var reportType = report[0];
+    var id = report[2];
+    if (reportType == 'e') { // Error report.
+      var errorNumber = report[1];
+      tachyfont.Reporter.reportError('EPL' + errorNumber, id, '');
+    } else if (reportType == 'l') { // Log report.
+      var time = report[1];
+      tachyfont.Reporter.addItem('LPLLT.' + id, time);
+    }
+  }
 };
 
 
