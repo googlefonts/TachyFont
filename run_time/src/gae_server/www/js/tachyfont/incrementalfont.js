@@ -372,7 +372,7 @@ tachyfont.IncrementalFont.obj.prototype.accessDb_ = function(dropDb) {
   // Close the database if it is open.
   this.closeDb_();
   var weight = this.fontInfo.getWeight();
-  var dbName = this.getDbName();
+  var dbName = tachyfont.IncrementalFont.getDbName(this.fontInfo);
   this.getIDB_ = goog.Promise.resolve()
       .then(function() {
         if (dropDb) {
@@ -1114,13 +1114,13 @@ tachyfont.IncrementalFont.obj.prototype.injectChars = function(neededCodes,
 
 /**
  * Get the database name for this font.
+ * @param {!tachyfont.FontInfo} fontInfo Info about the font.
  * @return {string} The database name.
  */
-tachyfont.IncrementalFont.obj.prototype.getDbName = function() {
+tachyfont.IncrementalFont.getDbName = function(fontInfo) {
   // TODO(bstell): Add style(slant), stretch(width), variant.
-  var dbName = tachyfont.IncrementalFont.DB_NAME +
-      '/' + this.fontInfo.getName() +
-      '/' + this.fontInfo.getWeight();
+  var dbName = tachyfont.IncrementalFont.DB_NAME + '/' + fontInfo.getName() +
+      '/' + fontInfo.getWeight();
   return dbName;
 };
 

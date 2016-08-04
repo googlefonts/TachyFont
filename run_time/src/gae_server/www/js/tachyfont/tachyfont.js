@@ -78,7 +78,7 @@ tachyfont.Error_ = {
   MISSING_FEATURE: '04',
   KNOWN_WINDOW_ON_ERROR: '05',
   UNKNOWN_WINDOW_ON_ERROR: '06',
-  NOT_ENOUGH_STORAGE_AVAILABLE: '07',
+  NOT_ENOUGH_STORAGE: '07',
   MISSING_STORAGE_INFORMATION_FUNCTION: '08',
   GET_STORAGE_INFORMATION_FUNCTION_FAILED: '09'
 };
@@ -140,8 +140,8 @@ if (window.addEventListener) {
       errorObj['stack'] = error['error']['stack'].substring(0, 1000);
     }
     var errorStr = JSON.stringify(errorObj);
-    tachyfont.reportError_(tachyfont.Error_.WINDOW_ON_ERROR, errorStr);
     tachyfont.reportError_(tachyfont.Error_.KNOWN_WINDOW_ON_ERROR, errorStr);
+    tachyfont.reportError_(tachyfont.Error_.WINDOW_ON_ERROR, errorStr);
   };
   window.addEventListener('error', tachyfont.windowOnError_, false);
 }
@@ -255,6 +255,7 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
  * Gets the used/quota storage information.
  * @return {!goog.Promise<!Array<number>>}
  */
+// TODO(bstell): move the to persist_idb.js
 tachyfont.getStorageInfo = function() {
   return new goog
       .Promise(function(resolve, reject) {
@@ -295,42 +296,98 @@ tachyfont.getStorageInfo = function() {
  * The intent is to handle low memory by only loading the fonts that can be
  * stored.
  * @param {!Array<!tachyfont.FontInfo>} fontInfos Information about the fonts.
- * @return {!goog.Promise}
+ * @return {!goog.Promise<number,?>}
  */
 tachyfont.manageStorageUsage = function(fontInfos) {
-  return new goog
-      .Promise(function(resolve, reject) {
-        // Get the storage usage and quota.
-        tachyfont.getStorageInfo().then(
-            function(storageInfo) {
-              var used = storageInfo[0];
-              var quota = storageInfo[1];
-              resolve(quota - used);
-            },
-            function(e) { reject(e); });
+  return tachyfont.getAvailableStorage()
+      .then(function(available) {
+        var previousPromise = goog.Promise.resolve(available);
+        for (var i = 0; i < fontInfos.length; i++) {
+          previousPromise =
+              tachyfont.manageFontStorage(fontInfos[i], previousPromise);
+        }
+        return previousPromise;
       })
       .then(function(available) {
-        // TODO(bstell): get the actual font sizes.
-        var neededSpace = fontInfos.length * (5 * 1000 * 1000);
-        // TODO(bstell): remove the space for the fonts that are already in
-        // storage.
-        var haveEnoughSpace = available >= neededSpace;
-        // TODO(bstell): it there is not enough space then indicate that some of
-        // the
-        // fonts should not be loaded.
-        if (!haveEnoughSpace) {
+        if (available < 0) {
           tachyfont.reportError_(
-              tachyfont.Error_.NOT_ENOUGH_STORAGE_AVAILABLE,
-              '' + (neededSpace - available));
+              tachyfont.Error_.NOT_ENOUGH_STORAGE, '' + available);
         }
-        return haveEnoughSpace;
+        return available;
       })
       .thenCatch(function(e) {
-        // The errors were reported in getStorageInfo.
         // Unable to determine if there is enough storage space so just assume
         // there is enough and keep going.
-        return true;
       });
+};
+
+
+/**
+ * Checks the available space against the space needed by the font.
+ * If font is not already stored then checks if there is enough space to load
+ * the font. If there is not enough space then marks the font not to be loaded.
+ * @param {!tachyfont.FontInfo} fontInfo The font info.
+ * @param {!goog.Promise<number,?>} previousPromise The promise to wait for.
+ * @return {!goog.Promise<number,?>}
+ */
+// TODO(bstell): move the to persist_idb.js
+// But first need to move Logger and Reporter into utils.
+tachyfont.manageFontStorage = function(fontInfo, previousPromise) {
+  return previousPromise.then(function(available) {
+    var dbName = tachyfont.IncrementalFont.getDbName(fontInfo);
+    return tachyfont.isFontStored(dbName).then(function(isStored) {
+      var size = fontInfo.getSize();
+      if (!isStored && size > available) {
+        fontInfo.setShouldLoad(false);
+        tachyfont.reportError_(
+            tachyfont.Error_.NOT_ENOUGH_STORAGE, fontInfo.getWeight());
+      }
+      return available - size;
+    });
+  });
+};
+
+
+/**
+ * Gets the available storage space.
+ * @return {!goog.Promise<number>}
+ */
+// TODO(bstell): move the to persist_idb.js
+tachyfont.getAvailableStorage = function() {
+  return new goog.Promise(function(resolve, reject) {
+    // Get the storage usage and quota.
+    tachyfont.getStorageInfo().then(
+        function(storageInfo) {
+          var used = storageInfo[0];
+          var quota = storageInfo[1];
+          resolve(quota - used);
+        },
+        function(e) { reject(e); });
+  });
+};
+
+
+/**
+ * Determines if the font is already loaded.
+ * @param {string} dbName The data storage name.
+ * @return {!goog.Promise<boolean,?>}
+ */
+// TODO(bstell): move the to persist_idb.js
+tachyfont.isFontStored = function(dbName) {
+  return new goog.Promise(function(resolve) {
+    var request = window.indexedDB.open(dbName);
+    request.onsuccess = function(event) {
+      var db = event.target.result;
+      var objectStoreNames = db.objectStoreNames;
+      var isStored = objectStoreNames.contains(tachyfont.utils.IDB_BASE) &&
+          objectStoreNames.contains(tachyfont.utils.IDB_CHARLIST);
+      resolve(isStored);
+    };
+    request.onerror = function(e) {
+      // Something is wrong with storage so assume the font is not loaded.
+      resolve(false);
+    };
+  });
 };
 
 
