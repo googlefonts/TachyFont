@@ -170,7 +170,7 @@ tachyfont.Cmap.checkCharacters = function(fileInfo, baseFontView,
     charList, cmapMapping, weight, charsLoaded) {
 
   var charsOkay = true;
-  var baseBinEd = new tachyfont.BinaryFontEditor(baseFontView, 0);
+  var baseBinaryEditor = new tachyfont.BinaryFontEditor(baseFontView, 0);
   var segEd = new tachyfont.BinaryFontEditor(baseFontView,
       fileInfo.cmap12.offset + 16);
   var chars = Object.keys(charList);
@@ -251,9 +251,9 @@ tachyfont.Cmap.checkCharacters = function(fileInfo, baseFontView,
       // See the (!isCFF) section in injectCharacters() for code that adds a
       // char to the font.
     } else {
-      var glyphOffset = baseBinEd.getGlyphDataOffset(
+      var glyphOffset = baseBinaryEditor.getGlyphDataOffset(
           fileInfo.glyphDataOffset, fileInfo.offsetSize, glyphId);
-      var nextGlyphOffset = baseBinEd.getGlyphDataOffset(
+      var nextGlyphOffset = baseBinaryEditor.getGlyphDataOffset(
           fileInfo.glyphDataOffset, fileInfo.offsetSize,
           glyphId + 1);
       var glyphLength = nextGlyphOffset - glyphOffset;
@@ -271,8 +271,8 @@ tachyfont.Cmap.checkCharacters = function(fileInfo, baseFontView,
           }
           continue;
         }
-        baseBinEd.seek(fileInfo.glyphOffset + glyphOffset);
-        var glyphByte = baseBinEd.getUint8();
+        baseBinaryEditor.seek(fileInfo.glyphOffset + glyphOffset);
+        var glyphByte = baseBinaryEditor.getUint8();
         if (!codeIsBlank && glyphByte == 14) {
           charsOkay = false;
           if (glyphDataErrors.length < 5) {

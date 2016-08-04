@@ -576,7 +576,7 @@ tachyfont.IncrementalFont.obj.prototype.injectCharacters =
     function(baseFontView, bundleResponse, glyphToCodeMap, extraGlyphs) {
   // time_start('inject')
   this.fileInfo_.dirty = true;
-  var baseBinEd = new tachyfont.BinaryFontEditor(baseFontView, 0);
+  var baseBinaryEditor = new tachyfont.BinaryFontEditor(baseFontView, 0);
 
   var count = bundleResponse.getGlyphCount();
   var flags = bundleResponse.getFlags();
@@ -599,12 +599,12 @@ tachyfont.IncrementalFont.obj.prototype.injectCharacters =
     var vmtx;
     if (flags & tachyfont.IncrementalFontUtils.FLAGS.HAS_HMTX) {
       hmtx = glyphData.getHmtx();
-      baseBinEd.setMtxSideBearing(this.fileInfo_.hmtxOffset,
+      baseBinaryEditor.setMtxSideBearing(this.fileInfo_.hmtxOffset,
           this.fileInfo_.hmetricCount, id, hmtx);
     }
     if (flags & tachyfont.IncrementalFontUtils.FLAGS.HAS_VMTX) {
       vmtx = glyphData.getVmtx();
-      baseBinEd.setMtxSideBearing(this.fileInfo_.vmtxOffset,
+      baseBinaryEditor.setMtxSideBearing(this.fileInfo_.vmtxOffset,
           this.fileInfo_.vmetricCount, id, vmtx);
     }
     var offset = glyphData.getOffset();
@@ -612,21 +612,21 @@ tachyfont.IncrementalFont.obj.prototype.injectCharacters =
 
     if (!isCff) {
       // Set the loca for this glyph.
-      baseBinEd.setGlyphDataOffset(this.fileInfo_.glyphDataOffset,
+      baseBinaryEditor.setGlyphDataOffset(this.fileInfo_.glyphDataOffset,
           this.fileInfo_.offsetSize, id, offset / offsetDivisor);
-      var oldNextOne = baseBinEd.getGlyphDataOffset(
+      var oldNextOne = baseBinaryEditor.getGlyphDataOffset(
           this.fileInfo_.glyphDataOffset, this.fileInfo_.offsetSize, nextId);
       var newNextOne = offset + length;
       // Set the length of the current glyph (at the loca of nextId).
-      baseBinEd.setGlyphDataOffset(this.fileInfo_.glyphDataOffset,
+      baseBinaryEditor.setGlyphDataOffset(this.fileInfo_.glyphDataOffset,
           this.fileInfo_.offsetSize, nextId, newNextOne / offsetDivisor);
 
       // Fix the sparse loca values before this new value.
       var prev_id = id - 1;
       while (prev_id >= 0 &&
-              baseBinEd.getGlyphDataOffset(this.fileInfo_.glyphDataOffset,
+          baseBinaryEditor.getGlyphDataOffset(this.fileInfo_.glyphDataOffset,
           this.fileInfo_.offsetSize, prev_id) > offset) {
-        baseBinEd.setGlyphDataOffset(this.fileInfo_.glyphDataOffset,
+        baseBinaryEditor.setGlyphDataOffset(this.fileInfo_.glyphDataOffset,
             this.fileInfo_.offsetSize, prev_id, offset / offsetDivisor);
         prev_id--;
       }
@@ -640,43 +640,43 @@ tachyfont.IncrementalFont.obj.prototype.injectCharacters =
       isChanged = isChanged && nextId < this.fileInfo_.numGlyphs;
       if (isChanged) {
         // Fix the loca value after this one.
-        baseBinEd.seek(this.fileInfo_.glyphOffset + newNextOne);
+        baseBinaryEditor.seek(this.fileInfo_.glyphOffset + newNextOne);
         if (length > 0) {
-          baseBinEd.setInt16(-1);
+          baseBinaryEditor.setInt16(-1);
         }else if (length == 0) {
           // If it is still zero, then could write -1.
-          var currentUint1 = baseBinEd.getUint32(),
-              currentUint2 = baseBinEd.getUint32();
+          var currentUint1 = baseBinaryEditor.getUint32(),
+              currentUint2 = baseBinaryEditor.getUint32();
           if (currentUint1 == 0 && currentUint2 == 0) {
-            baseBinEd.seek(this.fileInfo_.glyphOffset + newNextOne);
-            baseBinEd.setInt16(-1);
+            baseBinaryEditor.seek(this.fileInfo_.glyphOffset + newNextOne);
+            baseBinaryEditor.setInt16(-1);
           }
         }
       }
     } else {
-      baseBinEd.setGlyphDataOffset(this.fileInfo_.glyphDataOffset,
+      baseBinaryEditor.setGlyphDataOffset(this.fileInfo_.glyphDataOffset,
           this.fileInfo_.offsetSize, id, offset);
-      var oldNextOne = baseBinEd.getGlyphDataOffset(
+      var oldNextOne = baseBinaryEditor.getGlyphDataOffset(
           this.fileInfo_.glyphDataOffset, this.fileInfo_.offsetSize, nextId);
-      baseBinEd.setGlyphDataOffset(this.fileInfo_.glyphDataOffset,
+      baseBinaryEditor.setGlyphDataOffset(this.fileInfo_.glyphDataOffset,
           this.fileInfo_.offsetSize, nextId, offset + length);
       nextId = id + 2;
       var offsetCount = this.fileInfo_.numGlyphs + 1;
       var currentIdOffset = offset + length, nextIdOffset;
       if (oldNextOne < currentIdOffset && nextId - 1 < offsetCount - 1) {
-        baseBinEd.seek(this.fileInfo_.glyphOffset + currentIdOffset);
-        baseBinEd.setUint8(14);
+        baseBinaryEditor.seek(this.fileInfo_.glyphOffset + currentIdOffset);
+        baseBinaryEditor.setUint8(14);
       }
       while (nextId < offsetCount) {
-        nextIdOffset = baseBinEd.getGlyphDataOffset(
+        nextIdOffset = baseBinaryEditor.getGlyphDataOffset(
             this.fileInfo_.glyphDataOffset, this.fileInfo_.offsetSize, nextId);
         if (nextIdOffset <= currentIdOffset) {
           currentIdOffset++;
-          baseBinEd.setGlyphDataOffset(this.fileInfo_.glyphDataOffset,
+          baseBinaryEditor.setGlyphDataOffset(this.fileInfo_.glyphDataOffset,
               this.fileInfo_.offsetSize, nextId, currentIdOffset);
           if (nextId < offsetCount - 1) {
-            baseBinEd.seek(this.fileInfo_.glyphOffset + currentIdOffset);
-            baseBinEd.setUint8(14);
+            baseBinaryEditor.seek(this.fileInfo_.glyphOffset + currentIdOffset);
+            baseBinaryEditor.setUint8(14);
           }
           nextId++;
         } else {
@@ -686,8 +686,8 @@ tachyfont.IncrementalFont.obj.prototype.injectCharacters =
     }
 
     var bytes = glyphData.getBytes();
-    baseBinEd.seek(this.fileInfo_.glyphOffset + offset);
-    baseBinEd.setArrayOf(baseBinEd.setUint8, bytes);
+    baseBinaryEditor.seek(this.fileInfo_.glyphOffset + offset);
+    baseBinaryEditor.setArrayOf(baseBinaryEditor.setUint8, bytes);
   }
   // Set the glyph Ids in the cmap format 12 subtable;
   tachyfont.Cmap.setFormat12GlyphIds(this.fileInfo_, baseFontView,
