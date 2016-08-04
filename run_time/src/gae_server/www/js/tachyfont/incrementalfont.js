@@ -48,7 +48,6 @@ tachyfont.IncrementalFont.MAX_HIDDEN_MILLISECONDS = 3000;
 
 /**
  * The database name.
- *
  * @type {string}
  */
 tachyfont.IncrementalFont.DB_NAME = 'incrfonts';
@@ -56,7 +55,6 @@ tachyfont.IncrementalFont.DB_NAME = 'incrfonts';
 
 /**
  * The time in milliseconds to wait before persisting the data.
- *
  * @type {number}
  */
 tachyfont.IncrementalFont.PERSIST_TIMEOUT = 1000;
@@ -106,7 +104,6 @@ tachyfont.IncrementalFont.Error = {
 
 /**
  * The error reporter for this file.
- *
  * @param {string} errNum The error number;
  * @param {string} errId Identifies the error.
  * @param {*} errInfo The error object;
@@ -135,7 +132,6 @@ tachyfont.IncrementalFont.reportError_ = function(errNum, errId, errInfo) {
  * 5. Start the operation to get the list of fetched/not-fetched chars.
  * 6. Create a "@font-face" rule (need the data to make the blob URL).
  * 7. When the base is available set the class visibility=visible
- *
  * @param {!tachyfont.FontInfo} fontInfo Info about this font.
  * @param {boolean} dropData If true then drop the persistent data.
  * @param {Object} params Parameters.
@@ -222,21 +218,18 @@ tachyfont.IncrementalFont.createManager = function(fontInfo, dropData, params) {
 tachyfont.IncrementalFont.obj = function(fontInfo, params, backendService) {
   /**
    * The creation time for this TachyFont.
-   *
    * @type {number}
    */
   this.startTime = goog.now();
 
   /**
-   * The current Blob URL;
-   *
+   * The current Blob URL. Free this when creating a new one.
    * @private {?string}
    */
   this.blobUrl_ = null;
 
   /**
    * Information about the fonts
-   *
    * @type {!tachyfont.FontInfo}
    */
   this.fontInfo = fontInfo;
@@ -248,7 +241,6 @@ tachyfont.IncrementalFont.obj = function(fontInfo, params, backendService) {
 
   /**
    * The character to format 4 / format 12 mapping.
-   *
    * @private {!Object<number, !tachyfont.CharCmapInfo>}
    */
   this.cmapMapping_;
@@ -259,7 +251,6 @@ tachyfont.IncrementalFont.obj = function(fontInfo, params, backendService) {
 
   /**
    * True if new characters have been loaded since last setFont
-   *
    * @type {boolean}
    */
   this.needToSetFont = false;
@@ -289,7 +280,6 @@ tachyfont.IncrementalFont.obj = function(fontInfo, params, backendService) {
 
   /**
    * The persist operation takes time so serialize them.
-   *
    * @private {!tachyfont.chainedPromises}
    */
   this.finishPersistingData_ =
@@ -297,7 +287,6 @@ tachyfont.IncrementalFont.obj = function(fontInfo, params, backendService) {
 
   /**
    * The character request operation takes time so serialize them.
-   *
    * @private {!tachyfont.chainedPromises}
    */
   this.finishPrecedingCharsRequest_ =
@@ -305,7 +294,6 @@ tachyfont.IncrementalFont.obj = function(fontInfo, params, backendService) {
 
   /**
    * The setFont operation takes time so serialize them.
-   *
    * @private {!tachyfont.chainedPromises}
    */
   this.finishPrecedingSetFont_ =
@@ -415,7 +403,6 @@ tachyfont.IncrementalFont.obj.prototype.accessDb_ = function(dropDb) {
 
 /**
  * Close the database handle.
- *
  * Closing the database can cause pending transactions to fail so
  * just drop the handle.
  * @private
@@ -597,9 +584,9 @@ tachyfont.IncrementalFont.obj.prototype.injectCharacters =
   var flags = bundleResponse.getFlags();
   var glyphDataArray = bundleResponse.getGlyphDataArray();
 
-  var isCFF = flags & tachyfont.IncrementalFontUtils.FLAGS.HAS_CFF;
+  var isCff = flags & tachyfont.IncrementalFontUtils.FLAGS.HAS_CFF;
   var offsetDivisor = 1;
-  if (!isCFF && this.fileInfo_.offsetSize == 2) {
+  if (!isCff && this.fileInfo_.offsetSize == 2) {
     // For the loca "short version":
     //   "The actual local offset divided by 2 is stored."
     offsetDivisor = 2;
@@ -625,7 +612,7 @@ tachyfont.IncrementalFont.obj.prototype.injectCharacters =
     var offset = glyphData.getOffset();
     var length = glyphData.getLength();
 
-    if (!isCFF) {
+    if (!isCff) {
       // Set the loca for this glyph.
       baseBinEd.setGlyphDataOffset(this.fileInfo_.glyphDataOffset,
           this.fileInfo_.offsetSize, id, offset / offsetDivisor);
@@ -852,7 +839,6 @@ tachyfont.IncrementalFont.possibly_obfuscate =
 
 /**
  * Load the data for needed chars.
- *
  * TODO(bstell): fix the return value.
  * @return {goog.Promise} Returns the true if characters loaded.
  */
@@ -910,7 +896,6 @@ tachyfont.IncrementalFont.obj.prototype.loadChars = function() {
 
 /**
  * Determine the codepoints that are in the font but not yet loaded.
- *
  * @return {goog.Promise} If successful returns a resolved promise.
  * @private
  */
@@ -956,8 +941,9 @@ tachyfont.IncrementalFont.obj.prototype.calcNeededChars_ = function() {
         neededCodes = tachyfont.IncrementalFont.possibly_obfuscate(neededCodes,
             charlist, this.cmapMapping_);
         if (goog.DEBUG) {
-          goog.log.info(tachyfont.Logger.logger, this.fontInfo.getName() +
-              ': load ' + neededCodes.length + ' codes:');
+          goog.log.info(tachyfont.Logger.logger, this.fontInfo.getName() + ' ' +
+              this.fontInfo.getWeight() + ': load ' + neededCodes.length +
+              ' codes:');
           goog.log.log(tachyfont.Logger.logger, goog.log.Level.FINER, '' +
               neededCodes);
         }
@@ -990,7 +976,6 @@ tachyfont.IncrementalFont.obj.prototype.calcNeededChars_ = function() {
 
 /**
  * Fetch glyph data for the requested codepoints.
- *
  * @param {Array<number>} requestedCodes The codes to be injected.
  * @return {goog.Promise} If successful return a resolved promise.
  */
@@ -1051,7 +1036,6 @@ tachyfont.IncrementalFont.obj.prototype.handleFingerprintMismatch =
 
 /**
  * Inject glyph data and enable the chars in the cmaps.
- *
  * @param {Array<number>} neededCodes The codes to be injected.
  * @param {tachyfont.GlyphBundleResponse} bundleResponse New glyph data
  * @return {goog.Promise} The list of needed chars.
@@ -1142,7 +1126,6 @@ tachyfont.IncrementalFont.obj.prototype.getDbName = function() {
 
 /**
  * Save data that needs to be persisted.
- *
  * @param {string} name The name of the data item.
  */
 tachyfont.IncrementalFont.obj.prototype.persistDelayed = function(name) {
