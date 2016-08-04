@@ -79,7 +79,7 @@ tachyfont.IncrementalFont.PERSIST_TIMEOUT = 1000;
  */
 tachyfont.IncrementalFont.Log_ = {
   CREATE_TACHYFONT: 'LIFCT.',
-  DB_OPEN: 'LIFOI.',
+  DB_OPEN: 'LIFDO.',
   IDB_GET_BASE: 'LIFIB.',
   PARSE_HEADER: 'LIFPH.',
   URL_GET_BASE: 'LIFUB.',
