@@ -302,12 +302,12 @@
 
   /**
    * Gets a resolved promise.
-   * @param {*=} value The value the promise resolves to.
+   * @param {*=} opt_value The value the promise resolves to.
    * @return {!Promise}
    */
-  function newResolvedPromise(value) {
+  function newResolvedPromise(opt_value) {
     return new Promise(function(resolve) {
-      resolve(value);
+      resolve(opt_value);
     });
   }
 
