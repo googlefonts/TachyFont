@@ -427,8 +427,7 @@ tachyfont.IncrementalFont.obj.prototype.getBaseFontFromPersistence =
       .then(function(idb) {
         var filedata;
         if (tachyfont.utils.persistData) {
-          filedata = tachyfont.Persist.getData(idb,
-              tachyfont.utils.IDB_BASE)
+          filedata = tachyfont.Persist.getData(idb, tachyfont.utils.IDB_BASE)
               .thenCatch(function(e) {
                 tachyfont.IncrementalFont.reportError_(
                  tachyfont.IncrementalFont.Error.GET_DATA,
@@ -454,18 +453,20 @@ tachyfont.IncrementalFont.obj.prototype.getBaseFontFromPersistence =
         return goog.Promise.resolve([idb, this.fileInfo_, fontData]);
       }.bind(this))
       .then(function(arr) {
-        var charList = tachyfont.Persist.getData(arr[0],
-            tachyfont.utils.IDB_CHARLIST)
-            .thenCatch(function(e) {
+        return tachyfont.Persist.getData(arr[0], tachyfont.utils.IDB_CHARLIST)
+            .then(function(charList) {
+              //return goog.Promise.all([goog.Promise.resolve(arr[1]),
+              //                         goog.Promise.resolve(arr[2]),
+              //                         goog.Promise.resolve(charList)
+              //                        ]);
+              return [arr[1], arr[2], charList];
+            },
+            function(e) {
               tachyfont.IncrementalFont.reportError_(
                tachyfont.IncrementalFont.Error.GET_DATA,
                'charList ' + this.fontInfo.getWeight(), e);
               return goog.Promise.reject(e);
-            });
-        return goog.Promise.all([
-          goog.Promise.resolve(arr[1]),
-          goog.Promise.resolve(arr[2]),
-          charList]);
+            }.bind(this));
       }.bind(this))
       .then(function(arr) {
         var isOkay = tachyfont.Cmap.checkCharacters(
@@ -531,6 +532,7 @@ tachyfont.IncrementalFont.obj.prototype.getBaseFontFromUrl =
         tachyfont.Reporter.addItem(tachyfont.IncrementalFont.Log_.URL_GET_BASE +
             this.fontInfo.getWeight(), goog.now() - this.startTime);
         var results = this.processUrlBase(urlBaseBytes);
+        this.persistDelayed(tachyfont.utils.IDB_CHARLIST);
         this.persistDelayed(tachyfont.utils.IDB_BASE);
         return results;
       }.bind(this));
