@@ -79,8 +79,8 @@ tachyfont.Error = {
   KNOWN_WINDOW_ON_ERROR: '05',
   UNKNOWN_WINDOW_ON_ERROR: '06',
   NOT_ENOUGH_STORAGE: '07',
-  MISSING_STORAGE_INFORMATION_FUNCTION: '08',
-  GET_STORAGE_INFORMATION_FUNCTION_FAILED: '09'
+  STORAGE_INFORMATION_FUNCTION: '08',
+  GET_STORAGE_INFORMATION: '09'
 };
 
 
@@ -260,7 +260,7 @@ tachyfont.getStorageInfo = function() {
             window['navigator']['webkitTemporaryStorage'] || null :
             null;
         if (!storageInfo) {
-          reject([tachyfont.Error.MISSING_STORAGE_INFORMATION_FUNCTION, '']);
+          reject([tachyfont.Error.STORAGE_INFORMATION_FUNCTION, '']);
           return;
         }
         storageInfo.queryUsageAndQuota(
@@ -269,7 +269,7 @@ tachyfont.getStorageInfo = function() {
             },
             function(e) {
               reject([
-                tachyfont.Error.GET_STORAGE_INFORMATION_FUNCTION_FAILED, e
+                tachyfont.Error.GET_STORAGE_INFORMATION, e
               ]);
             });
       })

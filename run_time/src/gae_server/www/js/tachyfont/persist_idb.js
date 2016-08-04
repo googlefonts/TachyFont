@@ -32,7 +32,7 @@ goog.require('tachyfont.utils');
  */
 tachyfont.Persist.Error = {
   FILE_ID: 'EPI',
-  OPEN_IDB: '01',
+  IDB_OPEN: '01',
   IDB_ON_UPGRAGE_NEEDED: '02',
   DELETED_DATA: '03',
   DELETE_DATA_FAILED: '04',
@@ -98,7 +98,7 @@ tachyfont.Persist.openIndexedDB = function(dbName, id) {
     };
 
     dbOpen.onerror = function(e) {
-      tachyfont.Persist.reportError(tachyfont.Persist.Error.OPEN_IDB,
+      tachyfont.Persist.reportError(tachyfont.Persist.Error.IDB_OPEN,
           id, '!!! openIndexedDB "' + dbName);
       reject();
     };

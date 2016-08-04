@@ -67,7 +67,7 @@ tachyfont.IncrementalFont.PERSIST_TIMEOUT = 1000;
  */
 tachyfont.IncrementalFont.Log_ = {
   CREATE_TACHYFONT: 'LIFCT.',
-  OPEN_IDB: 'LIFOI.',
+  DB_OPEN: 'LIFOI.',
   IDB_GET_BASE: 'LIFIB.',
   PARSE_HEADER: 'LIFPH.',
   URL_GET_BASE: 'LIFUB.',
@@ -82,15 +82,14 @@ tachyfont.IncrementalFont.Log_ = {
  */
 tachyfont.IncrementalFont.Error = {
   FILE_ID: 'EIF',
-  // 01-15 no longer used.
-  LOAD_CHARS_INJECT_CHARS: '16',
+  // 01-16 no longer used.
   LOAD_CHARS_INJECT_CHARS_2: '17',
   LOAD_CHARS_GET_LOCK: '18',
   PERSIST_SAVE_DATA: '19',
   PERSIST_GET_LOCK: '21',
   SAVE_DATA: '22',
   // 23-24 no longer used.
-  OPEN_IDB: '25',
+  DB_OPEN: '25',
   // 26 no longer used.
   GET_DATA: '27',
   // 28-40 no longer used.
@@ -183,13 +182,13 @@ tachyfont.IncrementalFont.createManager = function(fontInfo, dropData, params) {
       .then(function() {
         // TODO(bstell): probably want to remove this time reporting code.
         tachyfont.Reporter.addItem(
-            tachyfont.IncrementalFont.Log_.OPEN_IDB + weight,
+            tachyfont.IncrementalFont.Log_.DB_OPEN + weight,
             goog.now() - incrFontMgr.startTime);
       })
       .thenCatch(function() {
         // Failed to get database;
         tachyfont.IncrementalFont.reportError(
-            tachyfont.IncrementalFont.Error.OPEN_IDB, weight, 'createManager');
+            tachyfont.IncrementalFont.Error.DB_OPEN, weight, 'createManager');
       });
 
   // Create a class with initial visibility.
@@ -382,7 +381,7 @@ tachyfont.IncrementalFont.obj.prototype.accessDb = function(dropDb) {
         return tachyfont.Persist.openIndexedDB(dbName, weight)
             .thenCatch(function() {
               tachyfont.IncrementalFont.reportError(
-                  tachyfont.IncrementalFont.Error.OPEN_IDB, weight,
+                  tachyfont.IncrementalFont.Error.DB_OPEN, weight,
                   'accessDb');
               return goog.Promise.reject('failed to open IDB');
             });
