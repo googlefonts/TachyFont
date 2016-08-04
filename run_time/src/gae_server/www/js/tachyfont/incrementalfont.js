@@ -215,6 +215,12 @@ tachyfont.IncrementalFont.createManager = function(fontInfo, dropData, params) {
  * @constructor
  */
 tachyfont.IncrementalFont.obj = function(fontInfo, params, backendService) {
+  // Get the prelude Blob URL.
+  var prelude = window['tachyfontprelude'] || {};
+  var preludeBlobUrl = prelude[fontInfo.getWeight()] || null;
+  // Clear the 'dangling reference'.
+  prelude[fontInfo.getWeight()] = undefined;
+
   /**
    * The creation time for this TachyFont.
    * @type {number}
@@ -225,7 +231,7 @@ tachyfont.IncrementalFont.obj = function(fontInfo, params, backendService) {
    * The current Blob URL. Free this when creating a new one.
    * @private {?string}
    */
-  this.blobUrl_ = null;
+  this.blobUrl_ = preludeBlobUrl;
 
   /**
    * Information about the fonts
