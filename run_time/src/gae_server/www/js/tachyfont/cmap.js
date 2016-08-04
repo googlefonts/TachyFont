@@ -38,7 +38,6 @@ tachyfont.Cmap.Error = {
   FORMAT4_END_CODE: '03',
   FORMAT4_SEGMENT_LENGTH: '04',
   FORMAT4_START_CODE: '05',
-  FORMAT4_GLYPH_ID_ALREADY_SET: '06',
   FORMAT4_ID_RANGE_OFFSET: '07',
   FORMAT4_CHAR_CMAP_INFO: '08',
   FORMAT4_SEGMENT: '09',
@@ -46,7 +45,6 @@ tachyfont.Cmap.Error = {
   FORMAT12_START_CODE: '11',
   FORMAT12_END_CODE: '12',
   FORMAT12_SEGMENT_LENGTH: '13',
-  FORMAT12_GLYPH_ID_ALREADY_SET: '14',
   FORMAT12_GLYPH_ID_MISMATCH: '15',
   FORMAT12_CMAP_ERROR: '16',
   FORMAT12_GLYPH_LENGTH_ERROR: '17',
@@ -385,23 +383,10 @@ tachyfont.Cmap.setFormat4GlyphIds = function(fileInfo, baseFontView, glyphIds,
     }
   }
   var idDeltaOffset = binaryEditor.tell();
-  for (var i = 0; i < segCount; i++) {
-    var segIdDelta = binaryEditor.getUint16();
-    var segGlyphId = (segIdDelta + segments[i][0]) & 0xFFFF;
-    if (segGlyphId != 0) {
-      tachyfont.Cmap.reportError(
-          tachyfont.Cmap.Error.FORMAT4_GLYPH_ID_ALREADY_SET,
-          weight, 'format 4 segment ' + i + ': segIdDelta (' + segIdDelta +
-          ') != segments[' + i + '][1] (' + segments[i][2] + ')');
-      if (goog.DEBUG) {
-        if (segIdDelta == segments[i][2]) {
-          goog.log.info(tachyfont.Logger.logger, 'format 4 segment ' + i +
-              ': segIdDelta already set');
-        }
-        return;
-      }
-    }
-  }
+  // No longer reporting "already set" glyphs. This was never really an error as
+  // multiple composed characters could load the same sub-glyphs; eg, the acute
+  // used by a-acute, i-acute, o-acute, etc. Clients that had automatic site
+  // data clearing made this report very noisy.
   for (var i = 0; i < segCount; i++) {
     var segIdRangeOffset = binaryEditor.getUint16();
     if (segIdRangeOffset != 0) {
@@ -518,13 +503,12 @@ tachyfont.Cmap.setFormat12GlyphIds = function(fileInfo, baseFontView, glyphIds,
             weight, 'format 12 code ' + code + ', seg ' + format12Seg +
             ': length != 1');
       }
+      // No longer reporting "already set" glyphs. This was never really an
+      // error as multiple composed characters could load the same sub-glyphs;
+      // eg, the acute used by a-acute, i-acute, o-acute, etc. Clients that have
+      // automatic site data clearing made that report very noisy.
       if (inMemoryGlyphId != 0) {
-        if (inMemoryGlyphId == segStartGlyphId) {
-          tachyfont.Cmap.reportError(
-              tachyfont.Cmap.Error.FORMAT12_GLYPH_ID_ALREADY_SET,
-              weight, 'format 12 code ' + code + ', seg ' + format12Seg +
-              ' glyphId already set');
-        } else {
+        if (inMemoryGlyphId != segStartGlyphId) {
           tachyfont.Cmap.reportError(
               tachyfont.Cmap.Error.FORMAT12_GLYPH_ID_MISMATCH,
               weight, 'format 12 code ' + code + ', seg ' + format12Seg +
