@@ -242,6 +242,7 @@
   function setFontNoFlash(cssFontFamily, fontDataView, fontInfo) {
     var mimeType;
     var format;
+    var weight = fontInfo.weight;
     if (fontInfo.isTtf) {
       mimeType = 'font/ttf'; // 'application/x-font-ttf';
       format = 'truetype';
@@ -258,18 +259,24 @@
       document.head.appendChild(style);
     }
     var sheet = style.sheet;
-    var tmpFontFamily = 'tmp-' + fontInfo.weight + '-' + cssFontFamily;
+    var tmpFontFamily = 'tmp-' + weight + '-' + cssFontFamily;
 
-    setCssFontRule(sheet, tmpFontFamily, fontInfo.weight, blobUrl, format);
+    setCssFontRule(sheet, tmpFontFamily, weight, blobUrl, format);
 
     var fontStr = '400 20px ' + tmpFontFamily;
     return document.fonts.load(fontStr)
-        .then(undefined, function() {
-          // Ignore errors of fonts that do not load.
-        })
+        .then(
+            undefined,
+            function() {
+              // Ignore errors of fonts that do not load.
+            })
         .then(function(value) {
-          setCssFontRule(sheet, cssFontFamily, fontInfo.weight, blobUrl,
-              format);
+          setCssFontRule(sheet, cssFontFamily, weight, blobUrl, format);
+          var oldBlobUrl = tachyfontprelude[weight];
+          if (oldBlobUrl) {
+            URL.revokeObjectURL(oldBlobUrl);
+          }
+          tachyfontprelude[weight] = blobUrl;
         });
   }
 
