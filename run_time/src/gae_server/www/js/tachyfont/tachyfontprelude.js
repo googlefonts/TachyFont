@@ -44,10 +44,11 @@
    * If the data was only recently created then it could be the first time the
    * client has ever used TachyFont. This should be fairly infrequent. However,
    * it is also possible that the data was recently created because the client
-   * has an auto clean feature that is automatically deleting the data.
+   * has an auto clean feature that is automatically deleting the data. This is
+   * the sum of the global and per font stable times.
    * @type {number}
    */
-  var STABLE_DATA_TIME = 24 * 60 * 60 * 1000;
+  var STABLE_DATA_TIME = 2 * 24 * 60 * 60 * 1000;
 
 
   /**
@@ -64,26 +65,26 @@
 
 
   /** @const {string} Failed to open IndexedDB error. */
-  var ERROR_INDEXEDDB_OPEN = '01';
+  var ERROR_PRELUDE_INDEXEDDB_OPEN = '01';
 
 
   /** @const {string} IndexedDB missing the base field error. */
-  var ERROR_MISSING_BASE = '02';
+  var ERROR_PRELUDE_MISSING_BASE = '02';
 
 
   /** @const {string} The magic number (reality check) is bad. */
-  var ERROR_BAD_MAGIC_NUMBER = '03';
+  var ERROR_PRELUDE_BAD_MAGIC_NUMBER = '03';
 
 
   /** @const {string} IndexedDB missing the metadata field error. */
-  var ERROR_MISSING_METADATA = '06';
+  var ERROR_PRELUDE_MISSING_METADATA = '06';
 
 
   /**
    * Indicates the data is younger than the 'stable' time.
    * @const {string}
    */
-  var ERROR_BELOW_STABLE_TIME = '07';
+  var ERROR_PRELUDE_BELOW_STABLE_TIME = '07';
 
 
   /**
@@ -172,7 +173,7 @@
           DB_NAME_PREFIX + '/' + fontInfo.fontFamily + '/' + fontInfo.weight);
 
       request.onerror = function(event) {
-        reject(ERROR_INDEXEDDB_OPEN);
+        reject(ERROR_PRELUDE_INDEXEDDB_OPEN);
       };
 
       request.onsuccess = function(event) {
@@ -225,12 +226,12 @@
                 var age = START_TIME -
                     (metadata[CREATED_METADATA_TIME] || START_TIME);
                 if (age < STABLE_DATA_TIME) {
-                  return newRejectedPromise(ERROR_BELOW_STABLE_TIME);
+                  return newRejectedPromise(ERROR_PRELUDE_BELOW_STABLE_TIME);
                 }
                 return db;
               },
               function() {
-                return newRejectedPromise(ERROR_MISSING_METADATA);
+                return newRejectedPromise(ERROR_PRELUDE_MISSING_METADATA);
               });
         })
         .then(function(db) {
@@ -239,7 +240,7 @@
                 // Convert to font data.
                 var fileData = new DataView(bytes);
                 if (fileData.getUint32(0) != MAGIC_NUMBER) {
-                  return newRejectedPromise(ERROR_BAD_MAGIC_NUMBER);
+                  return newRejectedPromise(ERROR_PRELUDE_BAD_MAGIC_NUMBER);
                 }
                 return new DataView(
                     bytes,
@@ -247,7 +248,7 @@
               },
               function() {
                 // No data.
-                return newRejectedPromise(ERROR_MISSING_BASE);
+                return newRejectedPromise(ERROR_PRELUDE_MISSING_BASE);
               });
         });
   }
