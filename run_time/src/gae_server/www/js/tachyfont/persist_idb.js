@@ -113,14 +113,12 @@ tachyfont.Persist.openIndexedDB = function(dbName, id) {
             id, 'onupgradeneeded error: ' + e.value);
         reject();
       };
-      if (db.objectStoreNames.contains(tachyfont.utils.IDB_BASE)) {
-        db.deleteObjectStore(tachyfont.utils.IDB_BASE);
+      if (!db.objectStoreNames.contains(tachyfont.utils.IDB_BASE)) {
+        db.createObjectStore(tachyfont.utils.IDB_BASE);
       }
-      if (db.objectStoreNames.contains(tachyfont.utils.IDB_CHARLIST)) {
-        db.deleteObjectStore(tachyfont.utils.IDB_CHARLIST);
+      if (!db.objectStoreNames.contains(tachyfont.utils.IDB_CHARLIST)) {
+        db.createObjectStore(tachyfont.utils.IDB_CHARLIST);
       }
-      db.createObjectStore(tachyfont.utils.IDB_BASE);
-      db.createObjectStore(tachyfont.utils.IDB_CHARLIST);
     };
   });
   return openIdb;
