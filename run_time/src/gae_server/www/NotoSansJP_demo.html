@@ -6,14 +6,15 @@
   <script src="js/closure-library/closure/goog/base.js"></script>
   <script src="js/closure_deps.js"></script>
   <script src="js/tachyfont/webfonttailor.js"></script>
-  <script src="js/tachyfont/tachyfont.js"></script>
+  <!-- <script src="js/tachyfont/tachyfont.js"></script> -->
 </head>
 
 <body style='font-family: NotoSansJP;'>
   <script>
     // Because of the way Closure includes javascript file this has to be after
     // the head section.
-    var fontsInfo = webfonttailor.getTachyFontsInfo( ['Noto Sans'], ['ja'],
+    var fontsInfo = tachyfont.webfonttailor.getTachyFontsInfo(
+        ['Noto Sans'], ['ja'],
         [ { 'style': 'normal', 
             'weights': [ '100', '300', '350', '400', '500', '700', '900' ],
           },
