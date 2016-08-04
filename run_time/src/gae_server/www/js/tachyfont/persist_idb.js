@@ -132,7 +132,7 @@ tachyfont.Persist.openIndexedDB = function(dbName, id) {
       if (!db.objectStoreNames.contains(tachyfont.MetadataDefines.METADATA)) {
         var metadataStore =
             db.createObjectStore(tachyfont.MetadataDefines.METADATA);
-        tachyfont.Metadata.initialize(metadataStore);
+        tachyfont.Metadata.initializePerFont(metadataStore);
       }
     };
   });
@@ -201,30 +201,48 @@ tachyfont.Persist.initializeCharList = function(store) {
 // TODO(bstell): this is a 'policy' function so move it out of the db layer;
 // move it to a file like metadata.js
 tachyfont.Metadata.initializeGlobal = function(store) {
-  tachyfont.Metadata.initialize(store);
+  var createTime = goog.now();
+  if (goog.DEBUG) {
+    // To allow immediate testing make the data appear old enough to make it
+    // seem stable.
+    createTime = goog.now() - 24 * 60 * 60 * 1000 + 15 * 1000;
+  }
+  tachyfont.Metadata.initialize(store, createTime);
+};
+
+
+/**
+ * Initializes the global metadata table.
+ * Currently this is the same as the per font metadata store.
+ * @param {!IDBObjectStore} store The IndexedDB object store.
+ */
+// TODO(bstell): this is a 'policy' function so move it out of the db layer;
+// move it to a file like metadata.js
+tachyfont.Metadata.initializePerFont = function(store) {
+  var createTime = goog.now();
+  if (goog.DEBUG) {
+    // To allow immediate testing make the data appear old enough to make it
+    // seem stable.
+    createTime = goog.now() - 2 * 24 * 60 * 60 * 1000 + 30 * 1000;
+  }
+  tachyfont.Metadata.initialize(store, createTime);
 };
 
 
 /**
  * Initializes the per font metadata table.
  * @param {!IDBObjectStore} store The IndexedDB object store.
+ * @param {number} createTime The timestable to use for the create time.
  */
 // TODO(bstell): this is a 'policy' function so move it out of the db layer;
 // move it to a file like metadata.js
-tachyfont.Metadata.initialize = function(store) {
+tachyfont.Metadata.initialize = function(store, createTime) {
   // TODO(bstell): make the metadata a real object or struct.
   var metadata = {};
   metadata[tachyfont.MetadataDefines.ACTIVITY] =
       tachyfont.MetadataDefines.CREATED_METADATA;
   metadata[tachyfont.MetadataDefines.ACTIVITY_TIME] =
-      metadata[tachyfont.MetadataDefines.CREATED_METADATA_TIME] = goog.now();
-  if (goog.DEBUG) {
-    // To allow immediate testing make the data appear old enough to make it
-    // seem stable.
-    metadata[tachyfont.MetadataDefines.ACTIVITY_TIME] =
-        metadata[tachyfont.MetadataDefines.CREATED_METADATA_TIME] =
-        goog.now() - 24 * 60 * 60 * 1000 + 15 * 1000;
-  }
+      metadata[tachyfont.MetadataDefines.CREATED_METADATA_TIME] = createTime;
   store.put(metadata, 0);
 };
 
