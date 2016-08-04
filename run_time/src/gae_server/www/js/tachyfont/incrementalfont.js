@@ -178,7 +178,7 @@ tachyfont.IncrementalFont.createManager = function(fontInfo, dropData, params) {
         }
       })
       .then(function() {
-        return incrFontMgr.getDb_();
+        return incrFontMgr.getDb();
       })
       .then(function() {
         // TODO(bstell): probably want to remove this time reporting code.
@@ -298,13 +298,12 @@ tachyfont.IncrementalFont.obj = function(fontInfo, params, backendService) {
 /**
  * Get the database handle.
  * @return {goog.Promise} The database handle.
- * @private
  */
-tachyfont.IncrementalFont.obj.prototype.getDb_ = function() {
+tachyfont.IncrementalFont.obj.prototype.getDb = function() {
   if (this.getIDB_) {
     return this.getIDB_;
   }
-  return this.accessDb_(false);
+  return this.accessDb(false);
 };
 
 
@@ -350,7 +349,7 @@ tachyfont.IncrementalFont.obj.prototype.setFileInfo = function(fileInfo) {
  * @return {goog.Promise} The database handle.
  */
 tachyfont.IncrementalFont.obj.prototype.dropDb = function() {
-  return this.accessDb_(true);
+  return this.accessDb(true);
 };
 
 
@@ -358,13 +357,12 @@ tachyfont.IncrementalFont.obj.prototype.dropDb = function() {
  * Get the database handle.
  * @param {boolean} dropDb If true then drop the database before opening it.
  * @return {goog.Promise} The database handle.
- * @private
  */
 // TODO(bstell): break this apart an put it into getDb/dropDb and adjust
 // callers.
-tachyfont.IncrementalFont.obj.prototype.accessDb_ = function(dropDb) {
+tachyfont.IncrementalFont.obj.prototype.accessDb = function(dropDb) {
   // Close the database if it is open.
-  this.closeDb_();
+  this.closeDb();
   var weight = this.fontInfo.getWeight();
   var dbName = tachyfont.IncrementalFont.getDbName(this.fontInfo);
   this.getIDB_ = goog.Promise.resolve()
@@ -399,9 +397,8 @@ tachyfont.IncrementalFont.obj.prototype.accessDb_ = function(dropDb) {
  * Close the database handle.
  * Closing the database can cause pending transactions to fail so
  * just drop the handle.
- * @private
  */
-tachyfont.IncrementalFont.obj.prototype.closeDb_ = function() {
+tachyfont.IncrementalFont.obj.prototype.closeDb = function() {
   if (!this.getIDB_) {
     return;
   }
@@ -417,7 +414,7 @@ tachyfont.IncrementalFont.obj.prototype.closeDb_ = function() {
  */
 tachyfont.IncrementalFont.obj.prototype.getBaseFontFromPersistence =
     function() {
-  var persistedBase = this.getDb_()
+  var persistedBase = this.getDb()
       .then(function(idb) {
         var filedata;
         filedata = tachyfont.Persist.getData(idb, tachyfont.utils.IDB_BASE)
@@ -855,7 +852,7 @@ tachyfont.IncrementalFont.obj.prototype.loadChars = function() {
             }.bind(this))
             .thenCatch(function(e) {
               // No chars to fetch.
-              this.closeDb_();
+              this.closeDb();
             }.bind(this));
       }.bind(this))
       .then(function() {
@@ -1169,7 +1166,7 @@ tachyfont.IncrementalFont.obj.prototype.persist_ = function(name) {
               if (base_dirty) {
                 return that.getBase
                  .then(function(arr) {
-                   return goog.Promise.all([that.getDb_(),
+                   return goog.Promise.all([that.getDb(),
                      goog.Promise.resolve(arr[0]),
                      goog.Promise.resolve(arr[1])]);
                  })
@@ -1191,7 +1188,7 @@ tachyfont.IncrementalFont.obj.prototype.persist_ = function(name) {
               if (charlist_dirty) {
                 return that.getCharList
                  .then(function(charlist) {
-                   return goog.Promise.all([that.getDb_(),
+                   return goog.Promise.all([that.getDb(),
                      goog.Promise.resolve(charlist)]);
                  })
                  .then(function(arr) {
@@ -1215,7 +1212,7 @@ tachyfont.IncrementalFont.obj.prototype.persist_ = function(name) {
             })
             .then(function() {
               // Done persisting so close the db and release the lock.
-              that.closeDb_();
+              that.closeDb();
               finishedPersisting.resolve();
               if (goog.DEBUG) {
                 goog.log.fine(tachyfont.Logger.logger, 'persisted ' + name);
