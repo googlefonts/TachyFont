@@ -162,6 +162,13 @@ tachyfont.Metadata.initialize = function(store) {
       tachyfont.MetadataDefines.CREATED_METADATA;
   metadata[tachyfont.MetadataDefines.ACTIVITY_TIME] =
       metadata[tachyfont.MetadataDefines.CREATED_METADATA_TIME] = goog.now();
+  if (goog.DEBUG) {
+    // To allow immediate testing make the data appear old enough to make it
+    // seem stable.
+    metadata[tachyfont.MetadataDefines.ACTIVITY_TIME] =
+        metadata[tachyfont.MetadataDefines.CREATED_METADATA_TIME] =
+        goog.now() - 24 * 60 * 60 * 1000 + 60 * 1000;
+  }
   store.put(metadata, 0);
 };
 
