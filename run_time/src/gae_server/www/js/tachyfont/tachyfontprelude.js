@@ -108,9 +108,7 @@ tachyfontprelude.FontInfo_ = function(fontFamily, weight, isTtf) {
  * @private
  */
 tachyfontprelude.TachyFontPrelude_ = function(cssFontFamily, fontInfos) {
-  var lastPromise = new Promise(function(resolve, reject) {
-    resolve();
-  });
+  var lastPromise = tachyfontprelude.newResolvedPromise();
   for (var i = 0; i < fontInfos.length; i++) {
     lastPromise =
         tachyfontprelude.useFont(cssFontFamily, fontInfos[i], lastPromise);
@@ -175,7 +173,7 @@ tachyfontprelude.getDbBase = function(idb) {
 
 
 /**
- * Uses a TachyFont from persistent store if available.
+ * Gets the font DataView if valid.
  * @param {!ArrayBuffer} fileBuffer The header+font ArrayBuffer.
  * @return {Promise} If success the promise resolves the font dataview.
  */
@@ -191,21 +189,7 @@ tachyfontprelude.getFontData = function(fileBuffer) {
   }
   var headerSize = fileData.getInt32(4);
   var fontDataView = new DataView(fileBuffer, headerSize);
-  return new Promise(function(resolve) {
-    resolve(fontDataView);
-  });
-};
-
-
-/**
- * Get a Blob URL for the font.
- * @param {!DataView} fontDataView The font data.
- * @param {string} mimeType True if the font is a ttf (not an otf).
- * @return {string} The Blob URL.
- */
-tachyfontprelude.getBlobUrl = function(fontDataView, mimeType) {
-  var blob = new Blob([fontDataView], { type: mimeType });
-  return window.URL.createObjectURL(blob);
+  return tachyfontprelude.newResolvedPromise(fontDataView);
 };
 
 
@@ -247,7 +231,8 @@ tachyfontprelude.setFontNoFlash =
     mimeType = 'font/otf'; // 'application/font-sfnt';
     format = 'opentype';
   }
-  var blobUrl = tachyfontprelude.getBlobUrl(fontDataView, mimeType);
+  var blob = new Blob([fontDataView], { type: mimeType });
+  var blobUrl = window.URL.createObjectURL(blob);
   var style = document.getElementById(tachyfontprelude.STYLESHEET_ID);
   if (!style) {
     style = document.createElement('style');
@@ -274,7 +259,7 @@ tachyfontprelude.setFontNoFlash =
  * @param {string} cssFontFamily The CSS font-family name.
  * @param {!tachyfontprelude.FontInfo_} fontInfo The info on the font to use.
  * @param {Promise} previousPromise Wait for this promise to resolve.
- * @return {Promise} This promise resolves when the font is used.
+ * @return {!Promise} This promise resolves when the font is used.
  */
 tachyfontprelude.useFont = function(cssFontFamily, fontInfo, previousPromise) {
   var idb;
@@ -289,10 +274,9 @@ tachyfontprelude.useFont = function(cssFontFamily, fontInfo, previousPromise) {
       .then(function(fontDataView) {
         return tachyfontprelude.setFontNoFlash(cssFontFamily, fontDataView,
             fontInfo);
-      }).then(
-      // Record the font ready time.
-      function() {
+      }).then(function() {
         idb.close();
+        // Record the font ready time.
         tachyfontprelude.reports_.push(
             [10 + (new Date()).getTime() - tachyfontprelude.START_TIME,
              fontInfo.weight]);
@@ -302,10 +286,9 @@ tachyfontprelude.useFont = function(cssFontFamily, fontInfo, previousPromise) {
         if (idb) {
           idb.close();
         }
+        // Report the error.
         tachyfontprelude.reports_.push([errorNumber, fontInfo.weight]);
-        return new Promise(function(resolve) {
-          resolve();
-        });
+        return tachyfontprelude.newResolvedPromise();
       });
 };
 
@@ -319,6 +302,18 @@ tachyfontprelude.getDbName = function(fontInfo) {
   return tachyfontprelude.DB_NAME +
       '/' + fontInfo.fontFamily +
       '/' + fontInfo.weight;
+};
+
+
+/**
+ * Gets a resolved promise.
+ * @param {*=} value The value the promise resolves to.
+ * @return {!Promise}
+ */
+tachyfontprelude.newResolvedPromise = function(value) {
+  return new Promise(function(resolve) {
+    resolve(value);
+  });
 };
 
 
