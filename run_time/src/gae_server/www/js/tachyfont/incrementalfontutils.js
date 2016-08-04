@@ -28,12 +28,6 @@ goog.require('tachyfont.Logger');
 
 
 /**
- * Incremental font loader utilities. A separate namespace is not longer needed.
- */
-tachyfont.IncrementalFontUtils = {};
-
-
-/**
  * Enum for flags in the coming glyph bundle
  * @enum {number}
  */

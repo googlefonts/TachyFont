@@ -30,15 +30,17 @@ goog.provide('tachyfont.FontInfo');
  * @param {?string=} opt_familyPath The font family path.
  * @param {?string=} opt_version The font version.
  * @param {?string=} opt_fontKit The font kit.
+ * @param {?number=} opt_size The size of the font in bytes.
  * @constructor
  */
-tachyfont.FontInfo = function(name, weight, priority, opt_familyPath,
-    opt_version, opt_fontKit) {
+tachyfont.FontInfo = function(
+    name, weight, priority, opt_familyPath, opt_version, opt_fontKit,
+    opt_size) {
 
-  /** @private {string} */
+  /** @private @const {string} */
   this.name_ = name || '';
 
-  /** @private {string} */
+  /** @private @const {string} */
   this.weight_ = weight || '';
 
   /**
@@ -47,14 +49,27 @@ tachyfont.FontInfo = function(name, weight, priority, opt_familyPath,
    */
   this.priority_ = priority;
 
-  /** @private {string} */
+  /**
+   * Indicates if this font should be loaded.
+   * If systems resources are limited then some fonts may be chosen not to load.
+   * @private {boolean}
+   */
+  this.shouldLoad_ = true;
+
+  /** @private @const {string} */
   this.familyPath_ = opt_familyPath || '';
 
-  /** @private {string} */
+  /** @private @const {string} */
   this.version_ = opt_version || '';
 
-  /** @private {string} */
+  /** @private @const {string} */
   this.fontKit_ = opt_fontKit || '';
+
+  /**
+   * The size of the fully filled out font.
+   * @private @const {number}
+   */
+  this.size_ = opt_size || 5 * 1000 * 1000;
 
   /** @private {string} */
   this.familyName_ = '';
@@ -84,7 +99,7 @@ tachyfont.FontInfo.prototype.getWeight = function() {
 
 /**
  * Gets the font directory of the TachyFont.
- * @return {string|undefined} The font directory of the TachyFont.
+ * @return {string} The font directory of the TachyFont.
  */
 tachyfont.FontInfo.prototype.getFamilyPath = function() {
   return this.familyPath_;
@@ -93,7 +108,7 @@ tachyfont.FontInfo.prototype.getFamilyPath = function() {
 
 /**
  * Gets the version of the TachyFont.
- * @return {string|undefined} The version of the TachyFont.
+ * @return {string} The version of the TachyFont.
  */
 tachyfont.FontInfo.prototype.getVersion = function() {
   return this.version_;
@@ -102,10 +117,19 @@ tachyfont.FontInfo.prototype.getVersion = function() {
 
 /**
  * Gets the font kit of the TachyFont.
- * @return {string|undefined} The font kit of the TachyFont server.
+ * @return {string} The font kit of the TachyFont server.
  */
 tachyfont.FontInfo.prototype.getFontKit = function() {
   return this.fontKit_;
+};
+
+
+/**
+ * Gets the fully filled out size of the font.
+ * @return {number} The font kit of the TachyFont server.
+ */
+tachyfont.FontInfo.prototype.getSize = function() {
+  return this.size_;
 };
 
 
@@ -151,6 +175,24 @@ tachyfont.FontInfo.prototype.setDataUrl = function(dataUrl) {
  */
 tachyfont.FontInfo.prototype.getPriority = function() {
   return this.priority_;
+};
+
+
+/**
+ * Gets the "should load" setting for this font.
+ * @return {boolean}
+ */
+tachyfont.FontInfo.prototype.getShouldLoad = function() {
+  return this.shouldLoad_;
+};
+
+
+/**
+ * Sets the "should load" setting for this font.
+ * @param {boolean} setting Whether to load this font.
+ */
+tachyfont.FontInfo.prototype.setShouldLoad = function(setting) {
+  this.shouldLoad_ = setting;
 };
 
 
