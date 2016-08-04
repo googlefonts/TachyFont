@@ -31,6 +31,7 @@ goog.require('tachyfont.GoogleBackendService');
 goog.require('tachyfont.IncrementalFontUtils');
 goog.require('tachyfont.Logger');
 goog.require('tachyfont.Metadata');
+goog.require('tachyfont.MetadataDefines');
 goog.require('tachyfont.Persist');
 goog.require('tachyfont.RLEDecoder');
 goog.require('tachyfont.Reporter');
@@ -52,6 +53,16 @@ tachyfont.IncrementalFont.MAX_HIDDEN_MILLISECONDS = 3000;
  * @type {string}
  */
 tachyfont.IncrementalFont.DB_NAME = 'incrfonts';
+
+
+/**
+ * The persistence 'stable' time.
+ * If the data has been in persistent store longer than this then the data is
+ * considered to be stable; ie: not being automatically cleared. The time is in
+ * milliseconds.
+ * @type {number}
+ */
+tachyfont.IncrementalFont.STABLE_DATA_TIME = 24 * 60 * 60 * 1000;
 
 
 /**
@@ -98,6 +109,7 @@ tachyfont.IncrementalFont.Error = {
   FINGERPRINT_MISMATCH: '42',
   CHARS_PER_SEGMENT: '43',
   DELETE_IDB: '44',
+  BELOW_STABLE_TIME: '45',
   END: '00'
 };
 
@@ -228,6 +240,12 @@ tachyfont.IncrementalFont.obj = function(fontInfo, params, backendService) {
   this.startTime = goog.now();
 
   /**
+   * Indicates whether the data is stable; ie: not being constantly cleared.
+   * @private {boolean}
+   */
+  this.isStableData_ = false;
+
+  /**
    * The current Blob URL. Free this when creating a new one.
    * @private {?string}
    */
@@ -355,7 +373,7 @@ tachyfont.IncrementalFont.obj.prototype.setFileInfo = function(fileInfo) {
  * @return {boolean}
  */
 tachyfont.IncrementalFont.obj.prototype.getNeedToSetFont = function() {
-  return this.needToSetFont;
+  return this.needToSetFont && this.isStableData_;
 };
 
 
@@ -395,6 +413,31 @@ tachyfont.IncrementalFont.obj.prototype.accessDb = function(dropDb) {
       }.bind(this))
       .then(function() {
         return tachyfont.Persist.openIndexedDB(dbName, weight)
+            .then(function(db) {
+              return tachyfont.Persist
+                  .getData(db, tachyfont.MetadataDefines.METADATA)
+                  .then(function(metadata) {
+                    var name = tachyfont.MetadataDefines.CREATED_METADATA_TIME;
+                    if (metadata && metadata[name]) {
+                      var dataAge = goog.now() - metadata[name];
+                      if (dataAge >=
+                          tachyfont.IncrementalFont.STABLE_DATA_TIME) {
+                        this.isStableData_ = true;
+                      } else {
+                        tachyfont.IncrementalFont.reportError(
+                            tachyfont.IncrementalFont.Error
+                            .BELOW_STABLE_TIME,
+                            weight, '');
+                      }
+                    }
+                    return db;
+                  }.bind(this))
+                  .thenCatch(function() {
+                    // Return the db handle even if there was a problem getting
+                    // the age of the data.
+                    return db;
+                  });
+                }.bind(this))
             .thenCatch(function() {
               tachyfont.IncrementalFont.reportError(
                   tachyfont.IncrementalFont.Error.DB_OPEN, weight,
