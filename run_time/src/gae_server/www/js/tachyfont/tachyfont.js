@@ -214,8 +214,8 @@ tachyfont.Log_ = {
  * TODO(bstell): remove the Object type.
  * @param {!tachyfont.FontsInfo} fontsInfo Information about the fonts.
  * @param {Object<string, string>=} opt_params Optional parameters.
- * @return {!goog.Promise<!tachyfont.TachyFontSet>} A promise that returns the
- *     TachyFontSet object.
+ * @return {!goog.Promise<?tachyfont.TachyFontSet,?>} A promise that returns the
+ *     TachyFontSet object or null if the fonts are not loaded.
  */
 tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
   return tachyfont.checkSystem()
@@ -547,7 +547,7 @@ tachyfont.loadFonts_init_ = function(familyName, fontsInfo, opt_params) {
   }
 
   var serverUrl = window.location.protocol + '//' + window.location.hostname +
-        (window.location.port ? ':' + window.location.port : '');
+      (window.location.port ? ':' + window.location.port : '');
   if (!fontsInfo.getDataUrl()) {
     fontsInfo.setDataUrl(serverUrl);
   }
