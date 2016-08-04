@@ -154,6 +154,7 @@ tachyfont.FontInfo.prototype.getPriority = function() {
 
 /**
  * Sets the priority of this font.
+ *
  * @param {?boolean} priority True if is a priority font.
  */
 tachyfont.FontInfo.prototype.setPriority = function(priority) {
