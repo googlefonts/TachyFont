@@ -291,7 +291,7 @@ tachyfont.IncrementalFont.obj = function(fontInfo, params, backendService) {
    * True if new characters have been loaded since last setFont
    * @type {boolean}
    */
-  this.needToSetFont = false;
+  this.needToSetFont = true;
 
   this.url = fontInfo.getDataUrl();
   this.charsURL = '/incremental_fonts/request';
