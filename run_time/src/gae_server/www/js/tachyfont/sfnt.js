@@ -82,7 +82,7 @@ tachyfont.Sfnt.Font.prototype.getFontData = function() {
 /**
  * @return {!tachyfont.BinaryFontEditor}
  */
-tachyfont.Sfnt.Font.prototype.getBinEd = function() {
+tachyfont.Sfnt.Font.prototype.getBinaryEditor = function() {
   return this.binaryEditor_;
 };
 

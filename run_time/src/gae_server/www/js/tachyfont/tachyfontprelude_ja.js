@@ -29,10 +29,9 @@
   var fontInfos = [];
   var tachyfontprelude = window['tachyfontprelude'];
   for (var i = 0; i < weights.length; i++) {
-    var isTtf = false;
-    var fontInfo =
-        tachyfontprelude['newFontInfo'](fontFamily, weights[i], isTtf);
-    fontInfos.push(fontInfo);
+    fontInfos.push(
+        /* FontInfo */ new tachyfontprelude['FontInfo'](
+            fontFamily, weights[i], /* isTtf */ false));
   }
   tachyfontprelude['load'](cssFontFamily, fontInfos);
 })();
