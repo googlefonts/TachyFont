@@ -31,6 +31,25 @@
   var BASE = 'base';
 
 
+  /** @const {string} The db store name for the metadata. */
+  var META = 'metadata';
+
+
+  /** @const {string} The db store name for the metadata. */
+  var CREATED_METADATA_TIME = 'created_metadata_time';
+
+
+  /**
+   * The persistence 'stable' time in milliseconds.
+   * If the data was only recently created then it could be the first time the
+   * client has ever used TachyFont. This should be fairly infrequent. However,
+   * it is also possible that the data was recently created because the client
+   * has an auto clean feature that is automatically deleting the data.
+   * @type {number}
+   */
+  var STABLE_DATA_TIME = 24 * 60 * 60 * 1000;
+
+
   /**
    * The TachyFont magic (reality check) number.
    * The magic number is the 4 numbers in the string 'BSAC': 0x42 0x53 0x41 0x43
@@ -49,19 +68,22 @@
 
 
   /** @const {string} IndexedDB missing the base field error. */
-  var ERROR_MISSING_IDB_BASE = '02';
+  var ERROR_MISSING_BASE = '02';
 
 
   /** @const {string} The magic number (reality check) is bad. */
   var ERROR_BAD_MAGIC_NUMBER = '03';
 
 
-  /** @const {string} IndexedDb get BASE returned undefined. */
-  var ERROR_INDEXEDDB_BASE_UNDEFINED = '04';
+  /** @const {string} IndexedDB missing the metadata field error. */
+  var ERROR_MISSING_METADATA = '06';
 
 
-  /** @const {string} The get operation failed. */
-  var ERROR_INDEXEDDB_GET_FAILED = '05';
+  /**
+   * Indicates the data is younger than the 'stable' time.
+   * @const {string}
+   */
+  var ERROR_BELOW_STABLE_TIME = '07';
 
 
   /**
@@ -122,7 +144,8 @@
     var fontInfos1 = fontInfos.slice();
     for (var i = 0; i < fontInfos.length; i++) {
       lastPromise = lastPromise.then(function() {
-        return setFontNoFlash(cssFontFamily, fontDataView, fontInfos1.shift());
+        return setFontNoFlash(
+            cssFontFamily, fontDataView, fontInfos1.shift(), false);
       });
     }
 
@@ -160,56 +183,73 @@
 
 
   /**
-   * Get the font data from the indexedDB.
-   * @param {!FontInfo} fontInfo Info about this font.
-   * @return {Promise} If success promise resolves the header+font ArrayBuffer.
+   * Get data from the database.
+   * @param {!IDBDatabase} db The database handle.
+   * @param {string} name The store name.
+   * @return {!Promise<!ArrayBuffer,?>}
    */
-  function getBaseBytes(fontInfo) {
-    return openIDB(fontInfo)
-        .then(function(db) {
-          return db;
-        })
-        .then(function(db) {
-          return new Promise(function(resolve, reject) {
-            var trans;
-            try {
-              trans = db.transaction([BASE], 'readonly');
-            } catch (e) {
-              reject(ERROR_MISSING_IDB_BASE);
-              return;
-            }
-            var store = trans.objectStore(BASE);
-            var request = store.get(0);
-            request.onsuccess = function(e) {
-              if (e.target.result != undefined) {
-                resolve(e.target.result);
-              } else {
-                reject(ERROR_INDEXEDDB_BASE_UNDEFINED);
-              }
-            };
-            request.onerror = function(e) {
-              reject(ERROR_INDEXEDDB_GET_FAILED);
-            };
-          });
-        });
+  function getData(db, name) {
+    return new Promise(function(resolve, reject) {
+      var trans;
+      try {
+        trans = db.transaction([name], 'readonly');
+      } catch (e) {
+        reject();
+        return;
+      }
+      var store = trans.objectStore(name);
+      var request = store.get(0);
+      request.onsuccess = function(e) {
+        if (e.target.result != undefined) {
+          resolve(e.target.result);
+        } else {
+          reject();
+        }
+      };
+      request.onerror = function(e) { reject(); };
+    });
   }
 
 
   /**
-   * Gets the font DataView if valid.
-   * @param {!ArrayBuffer} fileBuffer The header+font ArrayBuffer.
-   * @return {Promise} If success the promise resolves the font dataview.
+   * Get the font data from the indexedDB.
+   * @param {!FontInfo} fontInfo Info about this font.
+   * @return {Promise} If success promise resolves the header+font ArrayBuffer.
    */
-  function getFontData(fileBuffer) {
-    var fileData = new DataView(fileBuffer);
-    if (fileData.getUint32(0) != MAGIC_NUMBER) {
-      return new Promise(function(resolve, reject) {
-        reject(ERROR_BAD_MAGIC_NUMBER);
-      });
-    }
-    var fontDataView = new DataView(fileBuffer,
-        /* headerSize */ fileData.getInt32(4));
-    return newResolvedPromise(fontDataView);
+  function getFontData(fontInfo) {
+    return openIDB(fontInfo)
+        .then(function(db) {
+          return getData(db, META).then(
+              function(metadata) {
+                // Check metadata age.
+                var age = START_TIME -
+                    (metadata[CREATED_METADATA_TIME] || START_TIME);
+                if (age < STABLE_DATA_TIME) {
+                  return newRejectedPromise(ERROR_BELOW_STABLE_TIME);
+                }
+                return db;
+              },
+              function() {
+                return newRejectedPromise(ERROR_MISSING_METADATA);
+              });
+        })
+        .then(function(db) {
+          return getData(db, BASE).then(
+              function(bytes) {
+                // Convert to font data.
+                var fileData = new DataView(bytes);
+                if (fileData.getUint32(0) != MAGIC_NUMBER) {
+                  return newRejectedPromise(ERROR_BAD_MAGIC_NUMBER);
+                }
+                return new DataView(
+                    bytes,
+                    /* headerSize */ fileData.getInt32(4));
+              },
+              function() {
+                // No data.
+                return newRejectedPromise(ERROR_MISSING_BASE);
+              });
+        });
   }
 
 
@@ -237,9 +277,11 @@
    * @param {string} cssFontFamily The CSS font-family name.
    * @param {!DataView} fontDataView The font data.
    * @param {!FontInfo} fontInfo Info about this font.
+   * @param {boolean} reportLoadTime Whether to report the load time.
    * @return {!Promise} The promise resolves when the glyphs are displaying.
    */
-  function setFontNoFlash(cssFontFamily, fontDataView, fontInfo) {
+  function setFontNoFlash(
+      cssFontFamily, fontDataView, fontInfo, reportLoadTime) {
     var mimeType;
     var format;
     var weight = fontInfo.weight;
@@ -272,6 +314,10 @@
             })
         .then(function(value) {
           setCssFontRule(sheet, cssFontFamily, weight, blobUrl, format);
+          if (reportLoadTime) {
+            // Record the font ready time.
+            reports.push(['l', (new Date()).getTime() - START_TIME, weight]);
+          }
           var oldBlobUrl = tachyfontprelude[weight];
           if (oldBlobUrl) {
             URL.revokeObjectURL(oldBlobUrl);
@@ -288,15 +334,9 @@
    * @return {!Promise} This promise resolves when the font is used.
    */
   function useFont(cssFontFamily, fontInfo) {
-    return getBaseBytes(fontInfo)
-        .then(getFontData)
+    return getFontData(fontInfo)
         .then(function(fontDataView) {
-          return setFontNoFlash(cssFontFamily, fontDataView, fontInfo)
-             .then(function() {
-               // Record the font ready time.
-               reports.push(['l', (new Date()).getTime() - START_TIME,
-                 fontInfo.weight]);
-             });
+          return setFontNoFlash(cssFontFamily, fontDataView, fontInfo, true);
         })
         .then(undefined, function(errorNumber) {
           // Report the error.
@@ -315,6 +355,16 @@
     return new Promise(function(resolve) {
       resolve(opt_value);
     });
+  }
+
+
+  /**
+   * Gets a rejected promise.
+   * @param {*=} opt_value The value the promise rejects with.
+   * @return {!Promise}
+   */
+  function newRejectedPromise(opt_value) {
+    return new Promise(function(resolve, reject) { reject(opt_value); });
   }
 
 
@@ -418,5 +468,4 @@
   tachyfontprelude['reports'] = reports;
   tachyfontprelude['FontInfo'] = FontInfo;
   tachyfontprelude['load'] = load;
-
 })();
