@@ -30,7 +30,6 @@ goog.require('goog.log.Level');
 /** @suppress {extraRequire} */
 goog.require('tachyfont.FontsInfo');
 goog.require('tachyfont.IncrementalFont');
-goog.require('tachyfont.IncrementalFontUtils');
 goog.require('tachyfont.Logger');
 goog.require('tachyfont.Reporter');
 goog.require('tachyfont.TachyFontSet');
@@ -207,8 +206,7 @@ if (goog.DEBUG) {
 tachyfont.Log_ = {
   LOAD_FONTS: 'LTFLF.',
   LOAD_FONTS_WAIT_PREVIOUS: 'LTFLW.',
-  SWITCH_FONT: 'LTFSE.',
-  SWITCH_FONT_DELTA_TIME: 'LTFSD.'
+  END: ''
 };
 
 
@@ -488,13 +486,9 @@ tachyfont.loadFonts_loadAndUse_ = function(tachyFontSet) {
         serialPromise = serialPromise.then(function(index) {
           var font = fonts[index];
           // Load the fonts from persistent store or URL.
-          return tachyfont.loadFonts_getBaseFonts_([font])
-              .then(function(baseData) {
-                return tachyfont.loadFonts_useFonts_([font], baseData);
-              })
-              .then(function() {
-                return ++index;
-              });
+          return tachyfont.loadFonts_getBaseFonts_([font]).then(function() {
+            return ++index;
+          });
         });
       }
       return serialPromise;
@@ -586,8 +580,6 @@ tachyfont.loadFonts_getBaseFonts_ = function(tachyFonts) {
           var loadedBase = arrayBaseData[i];
           var incrfont = tachyFonts[i].incrfont;
           if (loadedBase != null) {
-            incrfont.alreadyPersisted = true;
-            incrfont.needToSetFont = true;
             arrayBaseData[i] = goog.Promise.resolve(loadedBase);
           } else {
             // If not persisted the fetch the base from the URL.
@@ -596,64 +588,14 @@ tachyfont.loadFonts_getBaseFonts_ = function(tachyFonts) {
           }
         }
         return goog.Promise.all(arrayBaseData);
+      })
+      .then(function(arrayBaseData) {
+        for (var i = 0; i < tachyFonts.length; i++) {
+          var loadedBase = arrayBaseData[i];
+          var incrFont = tachyFonts[i].incrfont;
+          incrFont.base.resolve(loadedBase);
+        }
       });
-};
-
-
-/**
- * Make use of a list of TachyFonts
- *
- * @param {Array<tachyfont.TachyFont>} tachyFonts The list of TachyFonts for
- *     which to get the base fonts
- * @param {Array<Array<Object>>} arrayBaseData The TachyFont base fonts.
- * @return {goog.Promise} The promise for the base fonts (fonts ready to have
- *     character data added).
- * @private
- */
-tachyfont.loadFonts_useFonts_ = function(tachyFonts, arrayBaseData) {
-  var allCssSet = [];
-  for (var i = 0; i < tachyFonts.length; i++) {
-    var incrFont = tachyFonts[i].incrfont;
-    var loadedBase = arrayBaseData[i];
-    incrFont.base.resolve(loadedBase);
-    // If not persisted then need to wait for DOMContentLoaded to
-    // set the font.
-    if (!incrFont.alreadyPersisted) {
-      if (goog.DEBUG) {
-        goog.log.fine(tachyfont.Logger.logger, 'loadFonts: not persisted');
-      }
-      allCssSet.push(goog.Promise.resolve(null));
-      continue;
-    }
-    // The font was in persistent store so:
-    // * it is very likely that the font _already_ has the UI text
-    //   so immediately show the UI in the TachyFont.
-    if (goog.DEBUG) {
-      goog.log.fine(tachyfont.Logger.logger, 'loadFonts: setFont_');
-    }
-    // TODO(bstell): only set the font if there are characters.
-    var sfeStart = goog.now();
-    var cssSet = incrFont.setFont(/** @type {!DataView} */ (loadedBase[1])).
-        then(function() {
-          // Report Set Font Early.
-          var weight = this.fontInfo.getWeight();
-          tachyfont.Reporter.addItem(tachyfont.Log_.SWITCH_FONT +
-              weight, goog.now() - incrFont.startTime);
-          var deltaTime = goog.now() - sfeStart;
-          tachyfont.Reporter.addItem(
-              tachyfont.Log_.SWITCH_FONT_DELTA_TIME + weight,
-              deltaTime);
-          if (goog.DEBUG) {
-            goog.log.fine(tachyfont.Logger.logger, 'loadFonts: setFont_ done');
-          }
-          tachyfont.IncrementalFontUtils.setVisibility(this.style,
-              this.fontInfo, true);
-          // Release other operations to proceed.
-          this.base.resolve(loadedBase);
-        }.bind(incrFont));
-    allCssSet.push(cssSet);
-  }
-  return goog.Promise.all(allCssSet);
 };
 
 

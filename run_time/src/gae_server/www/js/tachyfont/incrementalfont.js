@@ -280,7 +280,6 @@ tachyfont.IncrementalFont.obj = function(fontInfo, params, backendService) {
 
   this.url = fontInfo.getDataUrl();
   this.charsURL = '/incremental_fonts/request';
-  this.alreadyPersisted = false;
   this.persistInfo = {};
   this.persistInfo[tachyfont.utils.IDB_BASE_DIRTY] = false;
   this.persistInfo[tachyfont.utils.IDB_CHARLIST_DIRTY] = false;
