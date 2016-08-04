@@ -524,25 +524,11 @@ tachyfont.TachyFontSet.prototype.updateFonts =
         var fontsData = [];
         for (var i = 0; i < this.fonts.length; i++) {
           var fontObj = this.fonts[i].incrfont;
-          var needToSetFont = fontObj.needToSetFont;
-          // It takes significant time to pass the font data from Javascript to
-          // the browser. So unless specifically told to do so, do not update
-          // the font before the page finishes loading.
-          // if (!this.domContentLoaded) {
-          //   if (!allowEarlyUse) {
-          //     needToSetFont = false;
-          //   }
-          // }
-          // TODO(bstell): check the font has loaded char data. If no char data
-          // was ever loaded then don't waste CPU and time loading a useless
-          // font.
-          var fontData;
-          if (needToSetFont) {
-            fontData = fontObj.getBase;
+          if (fontObj.getNeedToSetFont()) {
+            fontsData.push(fontObj.getBase);
           } else {
-            fontData = goog.Promise.resolve(null);
+            fontsData.push(goog.Promise.resolve(null));
           }
-          fontsData.push(fontData);
         }
         if (goog.DEBUG) {
           goog.log.log(tachyfont.Logger.logger, goog.log.Level.FINER,
