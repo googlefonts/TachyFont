@@ -613,7 +613,7 @@ tachyfont.loadFonts_initReporter = function(fontsInfo) {
  * @param {!tachyfont.FontsInfo} fontsInfo The information about the
  *     fonts.
  * @param {Object<string, string>=} opt_params Optional parameters.
- * @return {tachyfont.TachyFontSet} The TachyFontSet object.
+ * @return {!tachyfont.TachyFontSet} The TachyFontSet object.
  * @private
  */
 tachyfont.loadFonts_init_ = function(familyName, fontsInfo, opt_params) {
@@ -652,7 +652,7 @@ tachyfont.loadFonts_init_ = function(familyName, fontsInfo, opt_params) {
  *
  * @param {Array<tachyfont.TachyFont>} tachyFonts The list of TachyFonts for
  *     which to get the base fonts
- * @return {goog.Promise} The promise for the base fonts (fonts ready to have
+ * @return {!goog.Promise} The promise for the base fonts (fonts ready to have
  *     character data added).
  * @private
  */

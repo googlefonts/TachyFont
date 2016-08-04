@@ -71,7 +71,7 @@ tachyfont.Reporter.isReady = function() {
 
 /**
  * Get the reporter instance.
- * @return {tachyfont.Reporter}
+ * @return {?tachyfont.Reporter}
  */
 tachyfont.Reporter.getInstance = function() {
   return tachyfont.Reporter.instance_;

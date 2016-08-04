@@ -151,7 +151,7 @@ tachyfont.CffIndex.type = {
 /**
  * Gets an INDEX element.
  * @param {number} index The index of the element.
- * @return {tachyfont.CffDict|DataView|string} A element from the INDEX.
+ * @return {!tachyfont.CffDict|DataView|string} A element from the INDEX.
  */
 tachyfont.CffIndex.prototype.getElement = function(index) {
   if (index in this.elements_) {
@@ -164,7 +164,7 @@ tachyfont.CffIndex.prototype.getElement = function(index) {
 /**
  * Gets an INDEX DICT element.
  * @param {number} index The index of the element.
- * @return {tachyfont.CffDict} The DICT element from the INDEX.
+ * @return {?tachyfont.CffDict} The DICT element from the INDEX.
  */
 tachyfont.CffIndex.prototype.getDictElement = function(index) {
   // TODO(bstell): make subclasses instead of testing for type.

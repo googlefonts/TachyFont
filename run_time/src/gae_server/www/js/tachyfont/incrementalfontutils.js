@@ -143,7 +143,7 @@ tachyfont.IncrementalFontUtils.sanitizeBaseFont =
  * @param {Object} style The style object
  * @param {tachyfont.FontInfo} fontInfo The font information object
  * @param {boolean} visible True is setting visibility to visible.
- * @return {Object} New style object for given font and visibility
+ * @return {!Object} New style object for given font and visibility
  */
 tachyfont.IncrementalFontUtils.setVisibility = function(style, fontInfo,
     visible) {
@@ -216,7 +216,7 @@ tachyfont.IncrementalFontUtils.trimFamilyName = function(familyName) {
 /**
  * Get the TachyFont style sheet.
  *
- * @return {CSSStyleSheet} The style sheet.
+ * @return {!CSSStyleSheet} The style sheet.
  */
 tachyfont.IncrementalFontUtils.getStyleSheet = function() {
   // TODO(bstell): consider caching this.

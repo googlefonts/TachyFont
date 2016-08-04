@@ -96,7 +96,7 @@ tachyfont.Persist.saveData = function(idb, names, datas) {
  * Get the fontDB.
  * @param {string} dbName The name of the database.
  * @param {string} id For error reporting: the id of the font.
- * @return {goog.Promise} The font DB.
+ * @return {!goog.Promise} The font DB.
  */
 tachyfont.Persist.openIndexedDB = function(dbName, id) {
   var openIdb = new goog.Promise(function(resolve, reject) {
@@ -355,7 +355,7 @@ tachyfont.Metadata.cleanUpMetadata = function(inputMetadata, id) {
  * Delete the fontDB.
  * @param {string} dbName The database name.
  * @param {string} id An additional identifier of the data.
- * @return {goog.Promise} The font DB.
+ * @return {!goog.Promise} The font DB.
  */
 tachyfont.Persist.deleteDatabase = function(dbName, id) {
   var deleteDb = new goog.Promise(function(resolve, reject) {
@@ -388,7 +388,7 @@ tachyfont.Persist.deleteDatabase = function(dbName, id) {
  * Get a part of the font.
  * @param {Object} idb The IndexedDB object.
  * @param {string} name The name of the font data to get.
- * @return {goog.Promise} Promise to return the data.
+ * @return {!goog.Promise} Promise to return the data.
  */
 tachyfont.Persist.getData = function(idb, name) {
   var getData = new goog.Promise(function(resolve, reject) {

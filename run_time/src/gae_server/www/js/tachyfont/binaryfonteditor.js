@@ -88,7 +88,7 @@ tachyfont.BinaryFontEditor.prototype.getOffset = function() {
 
 
 /**
- * @return {tachyfont.utils.uint8} Unsigned byte
+ * @return {!tachyfont.utils.uint8} Unsigned byte
  */
 tachyfont.BinaryFontEditor.prototype.getUint8 = function() {
   var data = this.dataView_.getUint8(this.baseOffset_ + this.offset_);
@@ -320,7 +320,7 @@ tachyfont.BinaryFontEditor.prototype.nibbleReader = function() {
 /**
  * Starting from current positions read whole extra array table
  * @param {number} extraLen
- * @return {Array<number>} array of extra numbers
+ * @return {!Array<number>} array of extra numbers
  */
 tachyfont.BinaryFontEditor.prototype.readExtraArray = function(extraLen) {
   var readNextNibble = this.nibbleReader();
@@ -351,7 +351,7 @@ tachyfont.BinaryFontEditor.prototype.readExtraArray = function(extraLen) {
 
 /**
  * Read following group of segments
- * @return {Object} Group of Segments returned
+ * @return {!Object} Group of Segments returned
  */
 tachyfont.BinaryFontEditor.prototype.readNextGOS = function() {
   var gos = {};
@@ -791,7 +791,7 @@ tachyfont.BinaryFontEditor.TAGS = {
 /**
  * Parse the header of the base font.
  * Set information as attributes in given loader object
- * @return {Object} Results of parsing the header.
+ * @return {!Object} Results of parsing the header.
  */
 tachyfont.BinaryFontEditor.prototype.parseBaseHeader = function() {
   var magic = this.readString(4);
