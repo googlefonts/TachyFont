@@ -467,18 +467,19 @@ tachyfont.IncrementalFont.obj.prototype.getBaseFontFromPersistence =
         return goog.Promise.resolve([idb, this.fileInfo_, fontData]);
       }.bind(this))
       .then(function(arr) {
-        var charList = tachyfont.Persist.getData(arr[0],
+        return tachyfont.Persist.getData(arr[0],
             tachyfont.utils.IDB_CHARLIST)
+            .then(function(charList) {
+              return goog.Promise.all([goog.Promise.resolve(arr[1]),
+                 goog.Promise.resolve(arr[2]),
+                 goog.Promise.resolve(charList)]);
+            })
             .thenCatch(function(e) {
               tachyfont.IncrementalFont.reportError_(
                tachyfont.IncrementalFont.Error.GET_DATA,
                'charList ' + this.fontInfo.getWeight(), e);
               return goog.Promise.reject(e);
-            });
-        return goog.Promise.all([
-          goog.Promise.resolve(arr[1]),
-          goog.Promise.resolve(arr[2]),
-          charList]);
+            }.bind(this));
       }.bind(this))
       .then(function(arr) {
         var isOkay = tachyfont.Cmap.checkCharacters(
