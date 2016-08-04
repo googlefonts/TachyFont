@@ -185,6 +185,10 @@ tachyfont.Metadata.initialize = function(store) {
 tachyfont.Metadata.beginSave = function(db, id) {
   var name = tachyfont.MetadataDefines.METADATA;
   return tachyfont.Persist.getData(db, name)
+      .thenCatch(function(e) {
+        // Tolerate missing metadata.
+        return {};
+      })
       .then(function(storedMetadata) {
         var metadata = tachyfont.Metadata.cleanUpMetadata(storedMetadata, id);
         if (metadata[tachyfont.MetadataDefines.ACTIVITY] !=

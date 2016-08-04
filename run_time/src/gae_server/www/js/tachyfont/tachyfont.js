@@ -632,14 +632,14 @@ tachyfont.loadFonts_useFonts_ = function(tachyFonts, arrayBaseData) {
       goog.log.fine(tachyfont.Logger.logger, 'loadFonts: setFont_');
     }
     // TODO(bstell): only set the font if there are characters.
-    incrFont.sfeStart_ = goog.now();
+    var sfeStart = goog.now();
     var cssSet = incrFont.setFont(/** @type {!DataView} */ (loadedBase[1])).
         then(function() {
           // Report Set Font Early.
           var weight = this.fontInfo.getWeight();
           tachyfont.Reporter.addItem(tachyfont.Log_.SWITCH_FONT +
               weight, goog.now() - incrFont.startTime);
-          var deltaTime = goog.now() - this.sfeStart_;
+          var deltaTime = goog.now() - sfeStart;
           tachyfont.Reporter.addItem(
               tachyfont.Log_.SWITCH_FONT_DELTA_TIME + weight,
               deltaTime);
