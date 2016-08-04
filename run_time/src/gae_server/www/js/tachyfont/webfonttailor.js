@@ -31,6 +31,7 @@ goog.require('tachyfont.webfonttailor_alternate');
  * @private {!Object<string, !Object<string, string>>}
  */
 tachyfont.webfonttailor.JaNormalInfo_ = {
+  'familyName': { 'name': 'Noto Sans JP' },
   '100': { 'name': 'NotoSansJP-Thin', 'weight': '100' },
   '300': { 'name': 'NotoSansJP-Light', 'weight': '300' },
   '350': { 'name': 'NotoSansJP-DemiLight', 'weight': '350' },
