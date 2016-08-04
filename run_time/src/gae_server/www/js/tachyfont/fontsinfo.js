@@ -56,7 +56,7 @@ tachyfont.FontsInfo = function(fonts, dataUrl, reportUrl) {
 
 /**
  * Gets the list of information on the TachyFonts.
- * @return {Array<tachyfont.FontInfo>} The URL to the TachyFont server.
+ * @return {!Array<!tachyfont.FontInfo>} The URL to the TachyFont server.
  */
 tachyfont.FontsInfo.prototype.getPrioritySortedFonts = function() {
   return this.prioritySortedFonts_;
