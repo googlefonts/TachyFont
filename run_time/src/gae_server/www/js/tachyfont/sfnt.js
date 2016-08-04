@@ -200,11 +200,11 @@ tachyfont.Sfnt.getFont = function(fontData) {
 
 
 /**
- * Get a table.
+ * Get a table's bytes.
  * @param {string} tableTag The name of the table.
  * @return {!Uint8Array} The table contents.
  */
-tachyfont.Sfnt.Font.prototype.getTableData = function(tableTag) {
+tachyfont.Sfnt.Font.prototype.getTableBytes = function(tableTag) {
   var tableOfContentsEntry = this.tableOfContents_.getEntry(tableTag);
   var offset = tableOfContentsEntry.offset_;
   var length = tableOfContentsEntry.length_;
