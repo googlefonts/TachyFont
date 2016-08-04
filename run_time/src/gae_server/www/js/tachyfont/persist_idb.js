@@ -71,19 +71,19 @@ tachyfont.Persist.reportError = function(errNum, errId, errInfo) {
 /**
  * Save a data item.
  * @param {!IDBDatabase} idb The IndexedDB object.
- * @param {string} name The name of the item.
- * @param {!*} data The data.
+ * @param {!Array<string>} names The names of the items.
+ * @param {!Array<!*>} datas The data of the items.
  * @return {!goog.Promise<undefined,?>} Operation completion.
  */
-tachyfont.Persist.saveData = function(idb, name, data) {
+tachyfont.Persist.saveData = function(idb, names, datas) {
   return new goog.Promise(function(resolve, reject) {
-    var trans = idb.transaction([name], 'readwrite');
-    var store = trans.objectStore(name);
-    var request = store.put(data, 0);
-    request.onsuccess = function(e) {
+    var trans = idb.transaction(names, 'readwrite');
+    var store = trans.objectStore(names[0]);
+    store.put(datas[0], 0);
+    trans.oncomplete = function(e) {
       resolve();
     };
-    request.onerror = function(e) {
+    trans.onerror = function(e) {
       reject(e);
     };
   });
@@ -196,7 +196,7 @@ tachyfont.Metadata.beginSave = function(db, id) {
         metadata[tachyfont.MetadataDefines.ACTIVITY] =
             tachyfont.MetadataDefines.BEGIN_SAVE;
         metadata[tachyfont.MetadataDefines.ACTIVITY_TIME] = goog.now();
-        return tachyfont.Persist.saveData(db, name, metadata)
+        return tachyfont.Persist.saveData(db, [name], [metadata])
             .then(function() {
               return metadata;
             });
@@ -230,7 +230,7 @@ tachyfont.Metadata.saveDone = function(db, metadata, id) {
       tachyfont.MetadataDefines.SAVE_DONE;
   metadata[tachyfont.MetadataDefines.ACTIVITY_TIME] = goog.now();
 
-  return tachyfont.Persist.saveData(db, name, metadata)
+  return tachyfont.Persist.saveData(db, [name], [metadata])
       .thenCatch(function(e) {
         tachyfont.Persist.reportError(
            tachyfont.Persist.Error.SAVE_DONE_METADATA_WRITE, id, e);
