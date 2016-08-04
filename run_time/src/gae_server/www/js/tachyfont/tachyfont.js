@@ -66,6 +66,16 @@ tachyfont.TachyFont.prototype.loadNeededChars = function() {
 
 
 /**
+ * The persistence 'stable' time.
+ * If the data has been in persistent store longer than this then the data is
+ * considered to be stable; ie: not being automatically cleared. The time is in
+ * milliseconds.
+ * @type {number}
+ */
+tachyfont.TachyFont.GLOBAL_STABLE_DATA_TIME = 24 * 60 * 60 * 1000;
+
+
+/**
  * Enum for error values.
  * @enum {string}
  */
@@ -81,7 +91,13 @@ tachyfont.Error = {
   STORAGE_INFORMATION_FUNCTION: '08',
   GET_STORAGE_INFORMATION: '09',
   NO_PRELUDE_REPORTS: '10',
-  PRELUDE_REPORT_TYPE: '11'
+  PRELUDE_REPORT_TYPE: '11',
+  BELOW_GLOBAL_STABLE_TIME: '12',
+  OPEN_GLOBAL_DATABASE: '13',
+  NO_INDEXED_DB: '14',
+  NO_MUTATION_OBSERVER: '15',
+  NO_FONT_LOADER: '16',
+  END: '00'
 };
 
 
@@ -211,7 +227,6 @@ tachyfont.Log_ = {
 /**
  * Load a list of TachyFonts
  * @param {string} familyName The font-family name.
- * TODO(bstell): remove the Object type.
  * @param {!tachyfont.FontsInfo} fontsInfo Information about the fonts.
  * @param {Object<string, string>=} opt_params Optional parameters.
  * @return {!goog.Promise<?tachyfont.TachyFontSet,?>} A promise that returns the
@@ -238,6 +253,10 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
         tachyfont.loadFonts_setupTextListeners_(tachyFontSet);
 
         return tachyFontSet;
+      })
+      .thenCatch(function() {
+        // Catch any errors.
+        return null;
       });
 };
 
@@ -261,7 +280,8 @@ tachyfont.checkSystem = function() {
         // TODO(bstell): report error if not stable.
       },
       function(e) {
-        //TODO:(bstell): report error opening global database
+        tachyfont.reportError_(tachyfont.Error.OPEN_GLOBAL_DATABASE, '');
+        return goog.Promise.reject();
       });
 };
 
@@ -457,26 +477,23 @@ tachyfont.isSupportedBrowser = function(opt_windowObject) {
   // Some window values are not overrideable so for testing allow passing in a
   // regular object.
   var windowObject = opt_windowObject || window;
+  var isSupported = true;
 
-  var errorMessage = '';
   if (typeof windowObject.indexedDB != 'object') {
-    errorMessage += 'ID,';
+    tachyfont.reportError_(tachyfont.Error.NO_INDEXED_DB, '');
+    isSupported = false;
   }
   if (typeof windowObject.MutationObserver != 'function') {
-    errorMessage += 'MO,';
+    tachyfont.reportError_(tachyfont.Error.NO_MUTATION_OBSERVER, '');
+    isSupported = false;
   }
   if (typeof windowObject.document.fonts != 'object' ||
       typeof windowObject.document.fonts.load != 'function') {
-    errorMessage += 'FL,';
+    tachyfont.reportError_(tachyfont.Error.NO_FONT_LOADER, '');
+    isSupported = false;
   }
 
-  if (errorMessage) {
-    // TODO(bstell): add this error report once tachyfont.Reporter is
-    // initialized before this call.
-    // tachyfont.reportError_(achyfont.Error_.MISSING_FEATURE, errorMessage);
-    return false;
-  }
-  return true;
+  return isSupported;
 };
 
 
@@ -530,6 +547,35 @@ tachyfont.loadFonts_loadAndUse_ = function(tachyFontSet) {
 
 
 /**
+ * Initializes the FontInfos URLs.
+ * @param {!tachyfont.FontsInfo} fontsInfo The information about the
+ *     fonts.
+ */
+tachyfont.loadFonts_initFontInfosUrls = function(fontsInfo) {
+  var serverUrl = window.location.protocol + '//' + window.location.hostname +
+      (window.location.port ? ':' + window.location.port : '');
+  if (!fontsInfo.getDataUrl()) {
+    fontsInfo.setDataUrl(serverUrl);
+  }
+  if (!fontsInfo.getReportUrl()) {
+    fontsInfo.setReportUrl(fontsInfo.getDataUrl());
+  }
+};
+
+
+/**
+ * Initializes the TachyFont reporter.
+ * @param {!tachyfont.FontsInfo} fontsInfo The information about the
+ *     fonts.
+ */
+tachyfont.loadFonts_initReporter = function(fontsInfo) {
+  var reportUrl = fontsInfo.getReportUrl();
+  tachyfont.Reporter.initReporter(reportUrl);
+  tachyfont.Reporter.addItemTime(tachyfont.Log_.LOAD_FONTS + '000');
+};
+
+
+/**
  * Initialization before loading a list of TachyFonts
  *
  * @param {string} familyName The font-family name.
@@ -546,18 +592,9 @@ tachyfont.loadFonts_init_ = function(familyName, fontsInfo, opt_params) {
     goog.log.fine(tachyfont.Logger.logger, 'loadFonts');
   }
 
-  var serverUrl = window.location.protocol + '//' + window.location.hostname +
-      (window.location.port ? ':' + window.location.port : '');
-  if (!fontsInfo.getDataUrl()) {
-    fontsInfo.setDataUrl(serverUrl);
-  }
+  tachyfont.loadFonts_initFontInfosUrls(fontsInfo);
   var dataUrl = fontsInfo.getDataUrl();
-  if (!fontsInfo.getReportUrl()) {
-    fontsInfo.setReportUrl(dataUrl);
-  }
-  var reportUrl = fontsInfo.getReportUrl();
-  tachyfont.Reporter.initReporter(reportUrl);
-  tachyfont.Reporter.addItemTime(tachyfont.Log_.LOAD_FONTS + '000');
+  tachyfont.loadFonts_initReporter(fontsInfo);
 
   // Check if the persistent stores should be dropped.
   var uri = goog.Uri.parse(window.location.href);
