@@ -157,8 +157,9 @@ def prepare_bundle(request, major, minor):
     string: the glyph and metadata
   """
   glyph_request = _parse_json(request.body)
-  font = glyph_request['font']
-  zip_path = fontname_to_zipfile(font)
+  family = glyph_request['name']
+  weight = glyph_request['weight']
+  zip_path = fontname_to_zipfile(family, weight)
   codepoints = glyph_request['arr']
   elapsed_time('prepare_bundle for {0} characters'.format(len(codepoints)),
                True)
