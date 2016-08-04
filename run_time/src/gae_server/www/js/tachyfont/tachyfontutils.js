@@ -25,15 +25,13 @@ goog.provide('tachyfont.utils.uint8');
 /**
  * The IndexedDB version.
  * Increment this number every time there is a change in the schema.
- *
  * @const {number}
  */
-tachyfont.utils.IDB_VERSION = 2;
+tachyfont.utils.IDB_VERSION = 3;
 
 
 /**
- * The base name.
- *
+ * The base store name.
  * @const {string}
  */
 tachyfont.utils.IDB_BASE = 'base';
@@ -41,15 +39,13 @@ tachyfont.utils.IDB_BASE = 'base';
 
 /**
  * The base is dirty (needs to be persisted) key.
- *
  * @const {string}
  */
 tachyfont.utils.IDB_BASE_DIRTY = 'base_dirty';
 
 
 /**
- * The char list name.
- *
+ * The char list store name.
  * @const {string}
  */
 tachyfont.utils.IDB_CHARLIST = 'charlist';
@@ -57,15 +53,50 @@ tachyfont.utils.IDB_CHARLIST = 'charlist';
 
 /**
  * The charlist is dirty (needs to be persisted) key.
- *
  * @const {string}
  */
 tachyfont.utils.IDB_CHARLIST_DIRTY = 'charlist_dirty';
 
 
 /**
+ * The metadata store name.
+ * @const {string}
+ */
+tachyfont.utils.IDB_METADATA = 'metadata';
+
+
+/**
+ * The last database operation.
+ * @const {string}
+ */
+tachyfont.utils.IDB_LAST_OPERATION = 'last_op';
+
+
+/**
+ * The time when the last operation was performed.
+ * The value is the goog.now() number;
+ * @const {string}
+ */
+tachyfont.utils.IDB_LAST_OPERATION_TIME = 'last_op_time';
+
+
+/**
+ * The create metadata operation.
+ * @const {string}
+ */
+tachyfont.utils.IDB_OPERATION_CREATE_METADATA = 'create_metadata';
+
+
+/**
+ * The time when the metadata was created.
+ * The value is the goog.now() number;
+ * @const {string}
+ */
+tachyfont.utils.IDB_CREATE_METADATA_TIME = 'create_metadata_time';
+
+
+/**
  * Enable/disable using/saving persisted data.
- *
  * @type {boolean}
  */
 tachyfont.utils.persistData = true;
@@ -88,7 +119,6 @@ tachyfont.utils.fontId = function(family, weight) {
 
 /**
  * A mapping from css weight names to weights.
- *
  * @type {!Object<string, string>}
  */
 tachyfont.utils.cssWeightToNumber = {
@@ -101,7 +131,6 @@ tachyfont.utils.cssWeightToNumber = {
 
 /**
  * A map of the codepoints that should be blank.
- *
  * @type {!Object<number, number>}
  */
 tachyfont.utils.BLANK_CHARS = {
@@ -130,7 +159,6 @@ tachyfont.utils.BLANK_CHARS = {
 /**
  * If the number of characters in the request is less than this count then add
  * additional characters to obfuscate the actual request.
- *
  * @type {number}
  */
 tachyfont.utils.MINIMUM_NON_OBFUSCATION_LENGTH = 20;
@@ -138,7 +166,6 @@ tachyfont.utils.MINIMUM_NON_OBFUSCATION_LENGTH = 20;
 
 /**
  * The range of characters to pick from.
- *
  * @type {number}
  */
 tachyfont.utils.OBFUSCATION_RANGE = 256;
@@ -158,12 +185,9 @@ tachyfont.utils.IncrementalFontLoader;
 
 /**
  * Convert a codepoint to a string.
- *
  * This duplicates the String.fromCodePoint function in ES6.
- *
  * Chrome supports this function but the Closure compiler does not recognize
  * this.
- *
  * @param {number} codePoint The codepoint.
  * @return {string}
  */
@@ -182,7 +206,6 @@ tachyfont.utils.stringFromCodePoint = function(codePoint) {
 /**
  * Convert a string to an array of characters.
  * This function handles surrogate pairs.
- *
  * @param {string} str The input string.
  * @return {!Array<string>} The array of characters.
  */
@@ -204,7 +227,6 @@ tachyfont.utils.stringToChars = function(str) {
 /**
  * Convert a char to its codepoint.
  * This function handles surrogate pairs.
- *
  * @param {string} inputChar The input char (string).
  * @return {number} The numeric value.
  */
@@ -262,7 +284,6 @@ if (goog.DEBUG) {
 
   /**
    * Report the list of codepoints.
-   *
    * @param {string} title The title of the codepoint list.
    * @param {!Array<number>} codesIn The array of codepoints.
    */
