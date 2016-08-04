@@ -546,12 +546,16 @@ tachyfont.loadFonts_init_ = function(familyName, fontsInfo, opt_params) {
     goog.log.fine(tachyfont.Logger.logger, 'loadFonts');
   }
 
-  var dataUrl = fontsInfo.getDataUrl();
-  if (!dataUrl) {
-    dataUrl = window.location.protocol + '//' + window.location.hostname +
+  var serverUrl = window.location.protocol + '//' + window.location.hostname +
         (window.location.port ? ':' + window.location.port : '');
+  if (!fontsInfo.getDataUrl()) {
+    fontsInfo.setDataUrl(serverUrl);
   }
-  var reportUrl = fontsInfo.getReportUrl() || dataUrl;
+  var dataUrl = fontsInfo.getDataUrl();
+  if (!fontsInfo.getReportUrl()) {
+    fontsInfo.setReportUrl(dataUrl);
+  }
+  var reportUrl = fontsInfo.getReportUrl();
   tachyfont.Reporter.initReporter(reportUrl);
   tachyfont.Reporter.addItemTime(tachyfont.Log_.LOAD_FONTS + '000');
 
