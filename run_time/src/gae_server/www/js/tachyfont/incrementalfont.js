@@ -257,7 +257,6 @@ tachyfont.IncrementalFont.obj = function(fontInfo, params, backendService) {
   this.url = fontInfo.getDataUrl();
   this.charsURL = '/incremental_fonts/request';
   this.alreadyPersisted = false;
-  this.persistData = true;
   this.persistInfo = {};
   this.persistInfo[tachyfont.utils.IDB_BASE_DIRTY] = false;
   this.persistInfo[tachyfont.utils.IDB_CHARLIST_DIRTY] = false;
@@ -265,10 +264,6 @@ tachyfont.IncrementalFont.obj = function(fontInfo, params, backendService) {
 
   /** @type {!tachyfont.BackendService} */
   this.backendService = backendService;
-
-  if (params['persistData'] == false || !tachyfont.utils.persistData) {
-    this.persistData = false;
-  }
 
   // Promises
   this.getIDB_ = null;
@@ -425,21 +420,13 @@ tachyfont.IncrementalFont.obj.prototype.getBaseFontFromPersistence =
   var persistedBase = this.getDb_()
       .then(function(idb) {
         var filedata;
-        if (tachyfont.utils.persistData) {
-          filedata = tachyfont.Persist.getData(idb, tachyfont.utils.IDB_BASE)
-              .thenCatch(function(e) {
-                tachyfont.IncrementalFont.reportError(
-                 tachyfont.IncrementalFont.Error.GET_DATA,
-                 'base ' + this.fontInfo.getWeight(), e);
-                return goog.Promise.reject(e);
-              }.bind(this));
-        } else {
-          if (goog.DEBUG) {
-            goog.log.fine(tachyfont.Logger.logger,
-                'not using persisting data: ' + this.fontName);
-          }
-          filedata = goog.Promise.reject(null);
-        }
+        filedata = tachyfont.Persist.getData(idb, tachyfont.utils.IDB_BASE)
+            .thenCatch(function(e) {
+              tachyfont.IncrementalFont.reportError(
+               tachyfont.IncrementalFont.Error.GET_DATA,
+               'base ' + this.fontInfo.getWeight(), e);
+              return goog.Promise.reject(e);
+            }.bind(this));
         return goog.Promise.all([goog.Promise.resolve(idb), filedata]);
       }.bind(this))
       .then(function(arr) {
@@ -1129,9 +1116,6 @@ tachyfont.IncrementalFont.getDbName = function(fontInfo) {
  * @param {string} name The name of the data item.
  */
 tachyfont.IncrementalFont.obj.prototype.persistDelayed = function(name) {
-  if (!this.persistData) {
-    return;
-  }
   var that = this;
 
   // Note what needs to be persisted.

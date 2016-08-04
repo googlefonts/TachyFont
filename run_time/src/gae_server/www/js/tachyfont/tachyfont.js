@@ -188,14 +188,6 @@ if (goog.DEBUG) {
     tachyfont.utils.noObfuscate = noObfuscateStr.toLowerCase() == 'true';
 
     /**
-     * Disable using persistent store. This is useful for forcing the base and
-     * char data to be fetched regardless on what is in persistent store.
-     */
-    var persistDataStr = uri.getParameterValue('TachyFontPersistData') || '';
-    /** @type {boolean} */
-    tachyfont.persistData = persistDataStr.toLowerCase() != 'false';
-
-    /**
      * Enable checking cmap against fileInfo and charList.
      */
     var checkCmapStr = uri.getParameterValue('TachyFontCheckCmap') || '';
