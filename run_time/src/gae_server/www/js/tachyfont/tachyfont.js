@@ -72,12 +72,15 @@ tachyfont.TachyFont.prototype.loadNeededChars = function() {
  */
 tachyfont.Error_ = {
   FILE_ID: 'ETF',
-  WINDOW_ON_ERROR: '01',// '01' is deprecated.
+  WINDOW_ON_ERROR: '01',  // '01' is deprecated.
   SET_FONT: '02',
   GET_BASE: '03',
   MISSING_FEATURE: '04',
   KNOWN_WINDOW_ON_ERROR: '05',
-  UNKNOWN_WINDOW_ON_ERROR: '06'
+  UNKNOWN_WINDOW_ON_ERROR: '06',
+  NOT_ENOUGH_STORAGE_AVAILABLE: '07',
+  MISSING_STORAGE_INFORMATION_FUNCTION: '08',
+  GET_STORAGE_INFORMATION_FUNCTION_FAILED: '09'
 };
 
 
@@ -221,24 +224,113 @@ tachyfont.Log_ = {
  * TODO(bstell): remove the Object type.
  * @param {!tachyfont.FontsInfo} fontsInfo Information about the fonts.
  * @param {Object<string, string>=} opt_params Optional parameters.
- * @return {tachyfont.TachyFontSet} The TachyFontSet object.
+ * @return {!goog.Promise<!tachyfont.TachyFontSet>} A promise that returns the
+ *     TachyFontSet object.
  */
 tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
   // TODO(bstell): initialize tachyfont.Reporter here so the errors in
   // isSupportedBrowser can be reported.
   // Check if this browser has the necessary features to run TachyFont.
   if (!tachyfont.isSupportedBrowser()) {
-    return null;
+    return goog.Promise.reject('unsupported browser');
   }
 
-  var tachyFontSet =
-      tachyfont.loadFonts_init_(familyName, fontsInfo, opt_params);
-  tachyfont.loadFonts_loadAndUse_(tachyFontSet);
+  var fontInfos = fontsInfo.getPrioritySortedFonts();
+  return tachyfont.manageStorageUsage(fontInfos).then(function() {
+    // Initialize the objects.
+    var tachyFontSet =
+        tachyfont.loadFonts_init_(familyName, fontsInfo, opt_params);
+    // Load the fonts.
+    tachyfont.loadFonts_loadAndUse_(tachyFontSet);
 
-  // Run this in parallel with loading the fonts.
-  tachyfont.loadFonts_setupTextListeners_(tachyFontSet);
+    // Run this in parallel with loading the fonts.
+    tachyfont.loadFonts_setupTextListeners_(tachyFontSet);
 
-  return tachyFontSet;
+    return tachyFontSet;
+  });
+};
+
+
+/**
+ * Gets the used/quota storage information.
+ * @return {!goog.Promise<!Array<number>>}
+ */
+tachyfont.getStorageInfo = function() {
+  return new goog
+      .Promise(function(resolve, reject) {
+        /**
+         * Chrome storage object. See
+         * https://developers.google.com/chrome/whitepapers/storage for details.
+         * @type {StorageQuota}
+         */
+        var storageInfo = window['navigator'] ?
+            window['navigator']['webkitTemporaryStorage'] || null :
+            null;
+        if (!storageInfo) {
+          reject([tachyfont.Error_.MISSING_STORAGE_INFORMATION_FUNCTION, '']);
+          return;
+        }
+        storageInfo.queryUsageAndQuota(
+            function(used, quota) {
+              resolve([used, quota]);
+            },
+            function(e) {
+              reject([
+                tachyfont.Error_.GET_STORAGE_INFORMATION_FUNCTION_FAILED, e
+              ]);
+            });
+      })
+      .thenCatch(function(errorInfo) {
+        tachyfont.reportError_(
+            /* errorNumber */ errorInfo[0],
+            /* errorMessage */ errorInfo[1]);
+        // Failed to get the storage info so pretend there is plenty.
+        return [/* used */ 0, /* quota */ 10000000000];
+      });
+};
+
+
+/**
+ * Manages the persistent storage usage.
+ * The intent is to handle low memory by only loading the fonts that can be
+ * stored.
+ * @param {!Array<!tachyfont.FontInfo>} fontInfos Information about the fonts.
+ * @return {!goog.Promise}
+ */
+tachyfont.manageStorageUsage = function(fontInfos) {
+  return new goog
+      .Promise(function(resolve, reject) {
+        // Get the storage usage and quota.
+        tachyfont.getStorageInfo().then(
+            function(storageInfo) {
+              var used = storageInfo[0];
+              var quota = storageInfo[1];
+              resolve(quota - used);
+            },
+            function(e) { reject(e); });
+      })
+      .then(function(available) {
+        // TODO(bstell): get the actual font sizes.
+        var neededSpace = fontInfos.length * (5 * 1000 * 1000);
+        // TODO(bstell): remove the space for the fonts that are already in
+        // storage.
+        var haveEnoughSpace = available >= neededSpace;
+        // TODO(bstell): it there is not enough space then indicate that some of
+        // the
+        // fonts should not be loaded.
+        if (!haveEnoughSpace) {
+          tachyfont.reportError_(
+              tachyfont.Error_.NOT_ENOUGH_STORAGE_AVAILABLE,
+              '' + (neededSpace - available));
+        }
+        return haveEnoughSpace;
+      })
+      .thenCatch(function(e) {
+        // The errors were reported in getStorageInfo.
+        // Unable to determine if there is enough storage space so just assume
+        // there is enough and keep going.
+        return true;
+      });
 };
 
 
@@ -361,9 +453,9 @@ tachyfont.loadFonts_init_ = function(familyName, fontsInfo, opt_params) {
 
   var tachyFontSet = new tachyfont.TachyFontSet(familyName);
   var params = opt_params || {};
-  var fonts = fontsInfo.getPrioritySortedFonts();
-  for (var i = 0; i < fonts.length; i++) {
-    var fontInfo = fonts[i];
+  var fontInfos = fontsInfo.getPrioritySortedFonts();
+  for (var i = 0; i < fontInfos.length; i++) {
+    var fontInfo = fontInfos[i];
     fontInfo.setFamilyName(familyName);
     fontInfo.setDataUrl(dataUrl);
     var tachyFont = new tachyfont.TachyFont(fontInfo, dropData, params);
