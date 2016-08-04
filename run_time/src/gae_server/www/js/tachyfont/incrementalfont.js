@@ -107,9 +107,8 @@ tachyfont.IncrementalFont.Error = {
  * @param {string} errNum The error number;
  * @param {string} errId Identifies the error.
  * @param {*} errInfo The error object;
- * @private
  */
-tachyfont.IncrementalFont.reportError_ = function(errNum, errId, errInfo) {
+tachyfont.IncrementalFont.reportError = function(errNum, errId, errInfo) {
   if (goog.DEBUG) {
     if (!tachyfont.Reporter.isReady()) {
       goog.log.error(tachyfont.Logger.logger, 'failed to report error');
@@ -189,7 +188,7 @@ tachyfont.IncrementalFont.createManager = function(fontInfo, dropData, params) {
       })
       .thenCatch(function() {
         // Failed to get database;
-        tachyfont.IncrementalFont.reportError_(
+        tachyfont.IncrementalFont.reportError(
             tachyfont.IncrementalFont.Error.OPEN_IDB, weight, 'createManager');
       });
 
@@ -378,7 +377,7 @@ tachyfont.IncrementalFont.obj.prototype.accessDb_ = function(dropDb) {
         if (dropDb) {
           return tachyfont.Persist.deleteDatabase(dbName, weight)
               .thenCatch(function() {
-                tachyfont.IncrementalFont.reportError_(
+                tachyfont.IncrementalFont.reportError(
                     tachyfont.IncrementalFont.Error.DELETE_IDB, weight,
                     'accessDb');
                 return goog.Promise.reject();
@@ -389,7 +388,7 @@ tachyfont.IncrementalFont.obj.prototype.accessDb_ = function(dropDb) {
       .then(function() {
         return tachyfont.Persist.openIndexedDB(dbName, weight)
             .thenCatch(function() {
-              tachyfont.IncrementalFont.reportError_(
+              tachyfont.IncrementalFont.reportError(
                   tachyfont.IncrementalFont.Error.OPEN_IDB, weight,
                   'accessDb');
               return goog.Promise.reject('failed to open IDB');
@@ -429,7 +428,7 @@ tachyfont.IncrementalFont.obj.prototype.getBaseFontFromPersistence =
         if (tachyfont.utils.persistData) {
           filedata = tachyfont.Persist.getData(idb, tachyfont.utils.IDB_BASE)
               .thenCatch(function(e) {
-                tachyfont.IncrementalFont.reportError_(
+                tachyfont.IncrementalFont.reportError(
                  tachyfont.IncrementalFont.Error.GET_DATA,
                  'base ' + this.fontInfo.getWeight(), e);
                 return goog.Promise.reject(e);
@@ -458,7 +457,7 @@ tachyfont.IncrementalFont.obj.prototype.getBaseFontFromPersistence =
               return [arr[1], arr[2], charList];
             },
             function(e) {
-              tachyfont.IncrementalFont.reportError_(
+              tachyfont.IncrementalFont.reportError(
                tachyfont.IncrementalFont.Error.GET_DATA,
                'charList ' + this.fontInfo.getWeight(), e);
               return goog.Promise.reject(e);
@@ -472,7 +471,7 @@ tachyfont.IncrementalFont.obj.prototype.getBaseFontFromPersistence =
           this.charList.resolve(arr[2]);
           return goog.Promise.resolve([arr[0], arr[1], arr[2]]);
         } else {
-          tachyfont.IncrementalFont.reportError_(
+          tachyfont.IncrementalFont.reportError(
               tachyfont.IncrementalFont.Error.NOT_USING_PERSISTED_DATA,
               this.fontInfo.getWeight(), '');
           this.charList.resolve({});
@@ -506,7 +505,7 @@ tachyfont.IncrementalFont.obj.prototype.parseBaseHeader =
   }
   this.fileInfo_ = fileInfo;
   if (!tachyfont.Cmap.isOneCharPerSeg(this.fileInfo_)) {
-    tachyfont.IncrementalFont.reportError_(
+    tachyfont.IncrementalFont.reportError(
         tachyfont.IncrementalFont.Error.CHARS_PER_SEGMENT,
         this.fontInfo.getWeight(), '');
     throw 'not one-char-per-segment';
@@ -883,7 +882,7 @@ tachyfont.IncrementalFont.obj.prototype.loadChars = function() {
       .thenCatch(function(e) {
         // Failed to get the char data so release the lock.
         finishPrecedingCharsRequest.reject('finishPrecedingCharsRequest');
-        tachyfont.IncrementalFont.reportError_(
+        tachyfont.IncrementalFont.reportError(
             tachyfont.IncrementalFont.Error.LOAD_CHARS_GET_LOCK,
             this.fontInfo.getWeight(), e);
         return goog.Promise.resolve(false);
@@ -1024,7 +1023,7 @@ tachyfont.IncrementalFont.obj.prototype.checkFingerprint = function(
  */
 tachyfont.IncrementalFont.obj.prototype.handleFingerprintMismatch =
     function() {
-  tachyfont.IncrementalFont.reportError_(
+  tachyfont.IncrementalFont.reportError(
       tachyfont.IncrementalFont.Error.FINGERPRINT_MISMATCH,
       this.fontInfo.getWeight(), '');
 
@@ -1077,7 +1076,7 @@ tachyfont.IncrementalFont.obj.prototype.injectChars = function(neededCodes,
           var missingCodes = Object.keys(glyphToCodeMap);
           if (missingCodes.length != 0) {
             missingCodes = missingCodes.slice(0, 5);
-            tachyfont.IncrementalFont.reportError_(
+            tachyfont.IncrementalFont.reportError(
                tachyfont.IncrementalFont.Error.LOAD_CHARS_INJECT_CHARS_2,
                this.fontInfo.getWeight(), missingCodes.toString());
           }
@@ -1197,7 +1196,7 @@ tachyfont.IncrementalFont.obj.prototype.persist_ = function(name) {
                    return tachyfont.Persist.saveData(arr[0],
                    tachyfont.utils.IDB_BASE, arr[2].buffer)
                    .thenCatch(function(e) {
-                     tachyfont.IncrementalFont.reportError_(
+                     tachyfont.IncrementalFont.reportError(
                      tachyfont.IncrementalFont.Error.SAVE_DATA,
                      'base ' + that.fontInfo.getWeight(), e);
                    });
@@ -1218,7 +1217,7 @@ tachyfont.IncrementalFont.obj.prototype.persist_ = function(name) {
                    return tachyfont.Persist.saveData(arr[0],
                    tachyfont.utils.IDB_CHARLIST, arr[1])
                    .thenCatch(function(e) {
-                     tachyfont.IncrementalFont.reportError_(
+                     tachyfont.IncrementalFont.reportError(
                      tachyfont.IncrementalFont.Error.SAVE_DATA,
                      'charList ' + that.fontInfo.getWeight(), e);
                    });
@@ -1226,7 +1225,7 @@ tachyfont.IncrementalFont.obj.prototype.persist_ = function(name) {
               }
             })
             .thenCatch(function(e) {
-              tachyfont.IncrementalFont.reportError_(
+              tachyfont.IncrementalFont.reportError(
                   tachyfont.IncrementalFont.Error.PERSIST_SAVE_DATA,
                   that.fontInfo.getWeight(), e);
             })
@@ -1239,7 +1238,7 @@ tachyfont.IncrementalFont.obj.prototype.persist_ = function(name) {
               }
             });
       }).thenCatch(function(e) {
-        tachyfont.IncrementalFont.reportError_(
+        tachyfont.IncrementalFont.reportError(
             tachyfont.IncrementalFont.Error.PERSIST_GET_LOCK,
             that.fontInfo.getWeight(), e);
         // Release the lock.

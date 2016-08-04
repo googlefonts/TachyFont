@@ -18,6 +18,7 @@
  */
 
 goog.provide('tachyfont');
+goog.provide('tachyfont.Error');
 goog.provide('tachyfont.TachyFont');
 
 goog.require('goog.Promise');
@@ -68,9 +69,8 @@ tachyfont.TachyFont.prototype.loadNeededChars = function() {
 /**
  * Enum for error values.
  * @enum {string}
- * @private
  */
-tachyfont.Error_ = {
+tachyfont.Error = {
   FILE_ID: 'ETF',
   WINDOW_ON_ERROR: '01',  // '01' is deprecated.
   SET_FONT: '02',
@@ -93,7 +93,7 @@ tachyfont.Error_ = {
  */
 tachyfont.reportError_ = function(errNum, errInfo) {
   if (tachyfont.Reporter.isReady()) {
-    tachyfont.Reporter.reportError(tachyfont.Error_.FILE_ID + errNum, '000',
+    tachyfont.Reporter.reportError(tachyfont.Error.FILE_ID + errNum, '000',
         errInfo);
   } else {
     var obj = {};
@@ -128,7 +128,7 @@ if (window.addEventListener) {
   tachyfont.windowOnError_ = function(error) {
     if (!error['filename']) {
       // The information is stripped from the report because of CORS issues.
-      tachyfont.reportError_(tachyfont.Error_.UNKNOWN_WINDOW_ON_ERROR, '');
+      tachyfont.reportError_(tachyfont.Error.UNKNOWN_WINDOW_ON_ERROR, '');
       return;
     }
     var errorObj = {};
@@ -140,8 +140,8 @@ if (window.addEventListener) {
       errorObj['stack'] = error['error']['stack'].substring(0, 1000);
     }
     var errorStr = JSON.stringify(errorObj);
-    tachyfont.reportError_(tachyfont.Error_.KNOWN_WINDOW_ON_ERROR, errorStr);
-    tachyfont.reportError_(tachyfont.Error_.WINDOW_ON_ERROR, errorStr);
+    tachyfont.reportError_(tachyfont.Error.KNOWN_WINDOW_ON_ERROR, errorStr);
+    tachyfont.reportError_(tachyfont.Error.WINDOW_ON_ERROR, errorStr);
   };
   window.addEventListener('error', tachyfont.windowOnError_, false);
 }
@@ -268,7 +268,7 @@ tachyfont.getStorageInfo = function() {
             window['navigator']['webkitTemporaryStorage'] || null :
             null;
         if (!storageInfo) {
-          reject([tachyfont.Error_.MISSING_STORAGE_INFORMATION_FUNCTION, '']);
+          reject([tachyfont.Error.MISSING_STORAGE_INFORMATION_FUNCTION, '']);
           return;
         }
         storageInfo.queryUsageAndQuota(
@@ -277,7 +277,7 @@ tachyfont.getStorageInfo = function() {
             },
             function(e) {
               reject([
-                tachyfont.Error_.GET_STORAGE_INFORMATION_FUNCTION_FAILED, e
+                tachyfont.Error.GET_STORAGE_INFORMATION_FUNCTION_FAILED, e
               ]);
             });
       })
@@ -301,6 +301,17 @@ tachyfont.getStorageInfo = function() {
 tachyfont.manageStorageUsage = function(fontInfos) {
   return tachyfont.getAvailableStorage()
       .then(function(available) {
+        // Determine if there is enough storage even if we needed to store every
+        // font.
+        var totalNeeded = 0;
+        for (var i = 0; i < fontInfos.length; i++) {
+          var fontInfo = fontInfos[i];
+          totalNeeded += fontInfo.getSize();
+        }
+        if (available > totalNeeded) {
+          return available - totalNeeded;
+        }
+
         var previousPromise = goog.Promise.resolve(available);
         for (var i = 0; i < fontInfos.length; i++) {
           previousPromise =
@@ -311,7 +322,7 @@ tachyfont.manageStorageUsage = function(fontInfos) {
       .then(function(available) {
         if (available < 0) {
           tachyfont.reportError_(
-              tachyfont.Error_.NOT_ENOUGH_STORAGE, '' + available);
+              tachyfont.Error.NOT_ENOUGH_STORAGE, '' + available);
         }
         return available;
       })
@@ -339,8 +350,6 @@ tachyfont.manageFontStorage = function(fontInfo, previousPromise) {
       var size = fontInfo.getSize();
       if (!isStored && size > available) {
         fontInfo.setShouldLoad(false);
-        tachyfont.reportError_(
-            tachyfont.Error_.NOT_ENOUGH_STORAGE, fontInfo.getWeight());
       }
       return available - size;
     });
@@ -417,7 +426,7 @@ tachyfont.isSupportedBrowser = function(opt_windowObject) {
   if (errorMessage) {
     // TODO(bstell): add this error report once tachyfont.Reporter is
     // initialized before this call.
-    // tachyfont.reportError_(tachyfont.Error_.MISSING_FEATURE, errorMessage);
+    // tachyfont.reportError_(achyfont.Error_.MISSING_FEATURE, errorMessage);
     return false;
   }
   return true;
@@ -467,11 +476,11 @@ tachyfont.loadFonts_loadAndUse_ = function(tachyFontSet) {
         })
         .thenCatch(function(e) {
           waitForPrecedingPromise.reject();
-          tachyfont.reportError_(tachyfont.Error_.SET_FONT, e);
+          tachyfont.reportError_(tachyfont.Error.SET_FONT, e);
         });
   })
       .thenCatch(function(e) {
-        tachyfont.reportError_(tachyfont.Error_.GET_BASE, e);
+        tachyfont.reportError_(tachyfont.Error.GET_BASE, e);
         waitForPrecedingPromise.reject();
       });
 };
