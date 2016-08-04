@@ -23,7 +23,6 @@ goog.provide('tachyfont.FontInfo');
 
 /**
  * The information for a font.
- *
  * @param {?string} name The font name.
  * @param {?string} weight The font weight.
  * @param {?string=} opt_familyPath The font family path.
@@ -55,14 +54,16 @@ tachyfont.FontInfo =
   /** @private {string} */
   this.dataUrl_ = '';
 
-  /** @private {boolean} */
+  /**
+   * Indicates if this font should be serviced ahead of other fonts.
+   * @private {boolean}
+   */
   this.priority_ = false;
 };
 
 
 /**
- * Get the name of the TachyFont.
- *
+ * Gets the name of the TachyFont.
  * @return {string} The name of the TachyFont.
  */
 tachyfont.FontInfo.prototype.getName = function() {
@@ -71,8 +72,7 @@ tachyfont.FontInfo.prototype.getName = function() {
 
 
 /**
- * Get the weight of the TachyFont.
- *
+ * Gets the weight of the TachyFont.
  * @return {string} The weight of the TachyFont.
  */
 tachyfont.FontInfo.prototype.getWeight = function() {
@@ -81,8 +81,7 @@ tachyfont.FontInfo.prototype.getWeight = function() {
 
 
 /**
- * Get the font directory of the TachyFont.
- *
+ * Gets the font directory of the TachyFont.
  * @return {string|undefined} The font directory of the TachyFont.
  */
 tachyfont.FontInfo.prototype.getFamilyPath = function() {
@@ -91,8 +90,7 @@ tachyfont.FontInfo.prototype.getFamilyPath = function() {
 
 
 /**
- * Get the version of the TachyFont.
- *
+ * Gets the version of the TachyFont.
  * @return {string|undefined} The version of the TachyFont.
  */
 tachyfont.FontInfo.prototype.getVersion = function() {
@@ -101,8 +99,7 @@ tachyfont.FontInfo.prototype.getVersion = function() {
 
 
 /**
- * Get the font kit of the TachyFont.
- *
+ * Gets the font kit of the TachyFont.
  * @return {string|undefined} The font kit of the TachyFont server.
  */
 tachyfont.FontInfo.prototype.getFontKit = function() {
@@ -111,8 +108,7 @@ tachyfont.FontInfo.prototype.getFontKit = function() {
 
 
 /**
- * Get the family name of the TachyFont.
- *
+ * Gets the family name of the TachyFont.
  * @return {string} The family name of the TachyFont.
  */
 tachyfont.FontInfo.prototype.getFamilyName = function() {
@@ -121,8 +117,7 @@ tachyfont.FontInfo.prototype.getFamilyName = function() {
 
 
 /**
- * Set the family name of the TachyFont.
- *
+ * Sets the family name of the TachyFont.
  * @param {string} familyName The family name of the TachyFont.
  */
 tachyfont.FontInfo.prototype.setFamilyName = function(familyName) {
@@ -131,8 +126,7 @@ tachyfont.FontInfo.prototype.setFamilyName = function(familyName) {
 
 
 /**
- * Get the URL to the TachyFont.
- *
+ * Gets the URL to the TachyFont.
  * @return {string} The URL to the TachyFont server.
  */
 tachyfont.FontInfo.prototype.getDataUrl = function() {
@@ -141,8 +135,7 @@ tachyfont.FontInfo.prototype.getDataUrl = function() {
 
 
 /**
- * Set the URL to the TachyFont.
- *
+ * Sets the URL to the TachyFont.
  * @param {string} dataUrl The URL to the TachyFont server.
  */
 tachyfont.FontInfo.prototype.setDataUrl = function(dataUrl) {
@@ -151,8 +144,7 @@ tachyfont.FontInfo.prototype.setDataUrl = function(dataUrl) {
 
 
 /**
- * Get the priority of this font.
- *
+ * Gets the priority of this font.
  * @return {boolean} Whether this is a priority font.
  */
 tachyfont.FontInfo.prototype.getPriority = function() {
@@ -161,7 +153,7 @@ tachyfont.FontInfo.prototype.getPriority = function() {
 
 
 /**
- * Set the priority of this font.
+ * Sets the priority of this font.
  *
  * @param {?boolean} priority True if is a priority font.
  */

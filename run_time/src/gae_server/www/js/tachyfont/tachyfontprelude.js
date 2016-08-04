@@ -100,7 +100,7 @@ tachyfontprelude.FontInfo_ = function(fontFamily, weight, isTtf) {
 
 
 /**
- * Load the TachyFonts from persistent store if avaiable.
+ * Loads the TachyFonts from persistent store if available.
  * @param {string} cssFontFamily The CSS font-family name.
  * @param {!Array<!tachyfontprelude.FontInfo_>} fontInfos The list of fonts to
  *     load.
@@ -119,7 +119,7 @@ tachyfontprelude.TachyFontPrelude_ = function(cssFontFamily, fontInfos) {
 
 
 /**
- * Use a TachyFont from persistent store if avaiable.
+ * Uses a TachyFont from persistent store if available.
  * @param {!tachyfontprelude.FontInfo_} fontInfo The info on the font to use.
  * @return {Promise} This promise resolves when the font is used.
  */
@@ -175,7 +175,7 @@ tachyfontprelude.getDbBase = function(idb) {
 
 
 /**
- * Use a TachyFont from persistent store if avaiable.
+ * Uses a TachyFont from persistent store if available.
  * @param {!ArrayBuffer} fileBuffer The header+font ArrayBuffer.
  * @return {Promise} If success the promise resolves the font dataview.
  */
@@ -270,7 +270,7 @@ tachyfontprelude.setFontNoFlash =
 
 
 /**
- * Use a TachyFont from persistent store if avaiable.
+ * Uses a TachyFont from persistent store if available.
  * @param {string} cssFontFamily The CSS font-family name.
  * @param {!tachyfontprelude.FontInfo_} fontInfo The info on the font to use.
  * @param {Promise} previousPromise Wait for this promise to resolve.
@@ -311,7 +311,7 @@ tachyfontprelude.useFont = function(cssFontFamily, fontInfo, previousPromise) {
 
 
 /**
- * Use a TachyFont from persistent store if avaiable.
+ * Uses a TachyFont from persistent store if available.
  * @param {!tachyfontprelude.FontInfo_} fontInfo The info on the font to use.
  * @return {string} This database name
  */
