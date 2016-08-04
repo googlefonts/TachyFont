@@ -45,6 +45,8 @@ tachyfont.Persist.Error = {
   SAVE_DONE_METADATA_WRITE: '09',
   MISSING_CREATED_METADATA_TIME: '10',
   SAVE_BEGIN_AFTER_CREATED_METADATA: '11',
+  IDB_GLOBAL_OPEN: '12',
+  IDB_GLOBAL_ON_UPGRAGE_NEEDED: '13',
   END_VALUE: '00'
 };
 
@@ -139,6 +141,48 @@ tachyfont.Persist.openIndexedDB = function(dbName, id) {
 
 
 /**
+ * Get the TachyFont global Database.
+ * @return {!goog.Promise<!IDBDatabase,?>} A promise for global TachyFont
+ *     Database.
+ */
+tachyfont.Persist.openGlobalDatabase = function() {
+  var openIdb = new goog.Promise(function(resolve, reject) {
+    var dbOpen = window.indexedDB.open(tachyfont.utils.IDB_GLOBAL_NAME,
+        tachyfont.utils.IDB_GLOBAL_VERSION);
+
+    dbOpen.onsuccess = function(e) {
+      var db = e.target.result;
+      // TODO(bstell): record that the database was accessed.
+      resolve(db);
+    };
+
+    dbOpen.onerror = function(e) {
+      tachyfont.Persist.reportError(tachyfont.Persist.Error.IDB_GLOBAL_OPEN,
+          '', '!!! openIndexedDB "' + tachyfont.utils.IDB_GLOBAL_NAME);
+      reject();
+    };
+
+    // Will get called when the version changes.
+    dbOpen.onupgradeneeded = function(e) {
+      var db = e.target.result;
+      e.target.transaction.onerror = function(e) {
+        tachyfont.Persist.reportError(
+            tachyfont.Persist.Error.IDB_GLOBAL_ON_UPGRAGE_NEEDED,
+            '', 'onupgradeneeded error: ' + e.value);
+        reject();
+      };
+      if (!db.objectStoreNames.contains(tachyfont.MetadataDefines.METADATA)) {
+        var metadataStore =
+            db.createObjectStore(tachyfont.MetadataDefines.METADATA);
+        tachyfont.Metadata.initializeGlobal(metadataStore);
+      }
+    };
+  });
+  return openIdb;
+};
+
+
+/**
  * Initializes the char list table.
  * @param {!IDBObjectStore} store The IndexedDB object store.
  */
@@ -150,7 +194,19 @@ tachyfont.Persist.initializeCharList = function(store) {
 
 
 /**
- * Initializes the metadata table.
+ * Initializes the global metadata table.
+ * Currently this is the same as the per font metadata store.
+ * @param {!IDBObjectStore} store The IndexedDB object store.
+ */
+// TODO(bstell): this is a 'policy' function so move it out of the db layer;
+// move it to a file like metadata.js
+tachyfont.Metadata.initializeGlobal = function(store) {
+  tachyfont.Metadata.initialize(store);
+};
+
+
+/**
+ * Initializes the per font metadata table.
  * @param {!IDBObjectStore} store The IndexedDB object store.
  */
 // TODO(bstell): this is a 'policy' function so move it out of the db layer;

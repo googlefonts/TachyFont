@@ -30,6 +30,7 @@ goog.require('goog.log.Level');
 goog.require('tachyfont.FontsInfo');
 goog.require('tachyfont.IncrementalFont');
 goog.require('tachyfont.Logger');
+goog.require('tachyfont.Persist');
 goog.require('tachyfont.Reporter');
 goog.require('tachyfont.TachyFontSet');
 goog.require('tachyfont.utils');
@@ -217,6 +218,35 @@ tachyfont.Log_ = {
  *     TachyFontSet object.
  */
 tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
+  return tachyfont.checkSystem()
+      .then(function() {
+        // Check how much can be stored.
+        var fontInfos = fontsInfo.getPrioritySortedFonts();
+        return tachyfont.manageStorageUsage(fontInfos);
+      })
+      .then(function() {
+        // Initialize the objects.
+        var tachyFontSet =
+            tachyfont.loadFonts_init_(familyName, fontsInfo, opt_params);
+        // Send the Prelude reports must be after the tachyfont.Reporter is
+        // initialized in tachyfont.loadFonts_init_.
+        tachyfont.sendPreludeReports();
+        // Load the fonts.
+        tachyfont.loadFonts_loadAndUse_(tachyFontSet);
+
+        // Run this in parallel with loading the fonts.
+        tachyfont.loadFonts_setupTextListeners_(tachyFontSet);
+
+        return tachyFontSet;
+      });
+};
+
+
+/**
+ * Checks that the system can use TachyFont.
+ * @return {!goog.Promise<?,?>}
+ */
+tachyfont.checkSystem = function() {
   // TODO(bstell): initialize tachyfont.Reporter here so the errors in
   // isSupportedBrowser can be reported.
   // Check if this browser has the necessary features to run TachyFont.
@@ -224,22 +254,15 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
     return goog.Promise.reject('unsupported browser');
   }
 
-  var fontInfos = fontsInfo.getPrioritySortedFonts();
-  return tachyfont.manageStorageUsage(fontInfos).then(function() {
-    // Initialize the objects.
-    var tachyFontSet =
-        tachyfont.loadFonts_init_(familyName, fontsInfo, opt_params);
-    // Send the Prelude reports must be after the tachyfont.Reporter is
-    // initialized in tachyfont.loadFonts_init_.
-    tachyfont.sendPreludeReports();
-    // Load the fonts.
-    tachyfont.loadFonts_loadAndUse_(tachyFontSet);
-
-    // Run this in parallel with loading the fonts.
-    tachyfont.loadFonts_setupTextListeners_(tachyFontSet);
-
-    return tachyFontSet;
-  });
+  // Check for TachyFont metadata.
+  return tachyfont.Persist.openGlobalDatabase().then(
+      function(db) {
+        // TODO(bstell): Check if storage is stable (ie: is not auto clearing).
+        // TODO(bstell): report error if not stable.
+      },
+      function(e) {
+        //TODO:(bstell): report error opening global database
+      });
 };
 
 

@@ -24,7 +24,22 @@ goog.provide('tachyfont.utils.uint8');
 
 
 /**
- * The IndexedDB version.
+ * The global IndexedDB version.
+ * Increment this number every time there is a change in the schema.
+ * @const {number}
+ */
+tachyfont.utils.IDB_GLOBAL_VERSION = 1;
+
+
+/**
+ * The global database name.
+ * @const {string}
+ */
+tachyfont.utils.IDB_GLOBAL_NAME = 'tachyfont';
+
+
+/**
+ * The per font IndexedDB version.
  * Increment this number every time there is a change in the schema.
  * @const {number}
  */
@@ -32,7 +47,7 @@ tachyfont.utils.IDB_VERSION = 3;
 
 
 /**
- * The base store name.
+ * The per font base store name.
  * @const {string}
  */
 tachyfont.utils.IDB_BASE = 'base';
@@ -46,7 +61,7 @@ tachyfont.utils.IDB_BASE_DIRTY = 'base_dirty';
 
 
 /**
- * The char list store name.
+ * The per font char list store name.
  * @const {string}
  */
 tachyfont.utils.IDB_CHARLIST = 'charlist';
@@ -61,6 +76,7 @@ tachyfont.utils.IDB_CHARLIST_DIRTY = 'charlist_dirty';
 
 /**
  * The metadata store name.
+ * Used for both the global and per font data.
  * @const {string}
  */
 tachyfont.MetadataDefines.METADATA = 'metadata';
