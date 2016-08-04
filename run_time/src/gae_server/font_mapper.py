@@ -21,14 +21,35 @@ tachyfont_minor_version = 0
 
 BASE_DIR = path.dirname(__file__)
 
-def fontname_to_zipfile(fontname):
+def fontname_to_zipfile(family, weight):
   family_dir = ''
-  if fontname[0:10] == 'NotoSansJP':
+  filename = ''
+  if family == 'Noto Sans JP':
     family_dir = 'NotoSansJP/'
-  elif fontname[0:8] == 'NotoSans':
+    if weight == '100':
+      filename = 'NotoSansJP-Thin'
+    elif weight == '300':
+      filename = 'NotoSansJP-Light'
+    elif weight == '350':
+      filename = 'NotoSansJP-DemiLight'
+    elif weight == '400':
+      filename = 'NotoSansJP-Regular'
+    elif weight == '500':
+      filename = 'NotoSansJP-Medium'
+    elif weight == '700':
+      filename = 'NotoSansJP-Bold'
+    elif weight == '900':
+      filename = 'NotoSansJP-Black'
+    else:
+      print 'unsupported family/weight: "{}"/{}'.format(family, weight)
+  elif family == 'Noto Sans':
+    # TODO(bstell): make this work.
+    print 'unsupported family/weight: "{}"/{}'.format(family, weight)
     family_dir = 'NotoSans/'
-  elif fontname[0:5] == 'Arimo':
+  elif family == 'Arimo':
+    # TODO(bstell): make this work.
+    print 'unsupported family/weight: "{}"/{}'.format(family, weight)
     family_dir = 'Arimo/'
-  zip_path = BASE_DIR + '/fonts/' + family_dir + fontname + '.TachyFont.jar'
+  zip_path = BASE_DIR + '/fonts/' + family_dir + '/' + filename + '.TachyFont.jar'
   return zip_path
 

@@ -79,8 +79,10 @@ class IncrFont(webapp2.RequestHandler):
     bandwidth = self.request.headers.get('X-TachyFont-bandwidth', '0')
     self.response.headers['Content-Type'] = 'text/plain'
     self.response.headers['Content-Type'] = 'text/richtext'
-    basename = fontname.split('/')[0]
-    zip_path = fontname_to_zipfile(basename)
+    parts = fontname.split('/')
+    family = parts[0]
+    weight = parts[1]
+    zip_path = fontname_to_zipfile(family, weight)
     zf = zipfile.ZipFile(zip_path, 'r')
     # base = zf.open('base', 'r')
     # display_file(base)
