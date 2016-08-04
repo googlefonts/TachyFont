@@ -23,6 +23,12 @@
   // visible.
   var tachyfontprelude = {};
 
+  /** @type {!Object} Indicates which fonts were loaded */
+  tachyfontprelude['loaded'] = {};
+
+  /** @type {!Object} The URL for the fonts which were loaded */
+  tachyfontprelude['urls'] = {};
+
   /** @const {string} The database name prefix. */
   var DB_NAME_PREFIX = 'incrfonts';
 
@@ -323,7 +329,8 @@
           if (oldBlobUrl) {
             URL.revokeObjectURL(oldBlobUrl);
           }
-          tachyfontprelude[weight] = blobUrl;
+          tachyfontprelude['urls'][weight] = blobUrl;
+          tachyfontprelude['loaded'][weight] = true;
         });
   }
 
