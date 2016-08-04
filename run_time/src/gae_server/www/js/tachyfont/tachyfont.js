@@ -98,6 +98,7 @@ tachyfont.Error = {
   NO_INDEXED_DB: '14',
   NO_MUTATION_OBSERVER: '15',
   NO_FONT_LOADER: '16',
+  PAGE_LOADED: '17',
   END: '00'
 };
 
@@ -238,6 +239,9 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
     tachyfont.debugInitialization_();
   }
   tachyfont.loadFonts_initReporter(fontsInfo);
+  // Sent an "errro" report so the number of page loads can be determined on the
+  // dashboard.
+  tachyfont.reportError_(tachyfont.Error.PAGE_LOADED, '');
   tachyfont.sendPreludeReports();
   tachyfont.loadFonts_initFontInfosUrls(fontsInfo);
   return tachyfont.checkSystem()
