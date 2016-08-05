@@ -280,7 +280,7 @@ tachyfont.IncrementalFont.obj = function(fontInfo, params, backendService) {
 
   /**
    * The character to format 4 / format 12 mapping.
-   * @private {!Object<number, !tachyfont.CharCmapInfo>}
+   * @private {!tachyfont.typedef.CmapMapping}
    */
   this.cmapMapping_;
 
@@ -367,7 +367,7 @@ tachyfont.IncrementalFont.obj.prototype.getDb = function() {
 
 /**
  * Get the cmap mapping
- * @return {!Object<number, !tachyfont.CharCmapInfo>}
+ * @return {!tachyfont.typedef.CmapMapping}
  */
 tachyfont.IncrementalFont.obj.prototype.getCmapMapping = function() {
   return this.cmapMapping_;
@@ -376,7 +376,7 @@ tachyfont.IncrementalFont.obj.prototype.getCmapMapping = function() {
 
 /**
  * Set the cmap mapping
- * @param {!Object<number, !tachyfont.CharCmapInfo>} cmapMapping The map of
+ * @param {!tachyfont.typedef.CmapMapping} cmapMapping The map of
  *     codepoint to segment mapping.
  */
 tachyfont.IncrementalFont.obj.prototype.setCmapMapping = function(cmapMapping) {
@@ -586,7 +586,7 @@ tachyfont.IncrementalFont.obj.prototype.parseBaseHeader =
         this.fontInfo.getWeight(), '');
     throw 'not one-char-per-segment';
   }
-  this.cmapMapping_ = tachyfont.IncrementalFontUtils.getCmapMapping(fileInfo);
+  this.cmapMapping_ = tachyfont.BinaryFontEditor.getCmapMapping(fileInfo);
 };
 
 
@@ -852,7 +852,7 @@ tachyfont.IncrementalFont.obj.prototype.setFont = function(fontData) {
  * determine the content on a page.
  * @param {!Array<number>} codes The codepoints to add obusfuscation to.
  * @param {!Object} charlist The chars that have already been requested.
- * @param {!Object<number, !tachyfont.CharCmapInfo>} cmapMapping A map of the
+ * @param {!tachyfont.typedef.CmapMapping} cmapMapping A map of the
  *     characters in the font.
  * @return {!Array<number>} The codepoints with obusfuscation.
  */

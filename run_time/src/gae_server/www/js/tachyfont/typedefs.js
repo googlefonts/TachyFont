@@ -24,6 +24,7 @@
 goog.provide('tachyfont.typedef');
 goog.provide('tachyfont.typedef.CMap12');
 goog.provide('tachyfont.typedef.CMap4');
+goog.provide('tachyfont.typedef.CmapMapping');
 goog.provide('tachyfont.typedef.FileInfo');
 goog.provide('tachyfont.typedef.uint8');
 
@@ -75,3 +76,7 @@ tachyfont.typedef.charset;
  * }}
  */
 tachyfont.typedef.FileInfo;
+
+
+/** @typedef {Object<number, !tachyfont.CharCmapInfo>} */
+tachyfont.typedef.CmapMapping;
