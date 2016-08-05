@@ -19,8 +19,6 @@
 
 goog.provide('tachyfont.MetadataDefines');
 goog.provide('tachyfont.utils');
-goog.provide('tachyfont.utils.IncrementalFontLoader');
-goog.provide('tachyfont.utils.uint8');
 
 
 /**
@@ -200,18 +198,6 @@ tachyfont.utils.MINIMUM_NON_OBFUSCATION_LENGTH = 20;
  * @type {number}
  */
 tachyfont.utils.OBFUSCATION_RANGE = 256;
-
-
-/**
- * @typedef {number}
- */
-tachyfont.utils.uint8;
-
-
-/**
- * @typedef {Object}
- */
-tachyfont.utils.IncrementalFontLoader;
 
 
 /**

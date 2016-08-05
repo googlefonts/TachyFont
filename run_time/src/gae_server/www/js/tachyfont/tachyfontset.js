@@ -42,7 +42,7 @@ tachyfont.TachyFontSet = function(familyName) {
   /**
    * The TachyFonts managed in this set.
    *
-   * @type {!Array<tachyfont.TachyFont>}
+   * @type {!Array<!tachyfont.TachyFont>}
    */
   this.fonts = [];
 
