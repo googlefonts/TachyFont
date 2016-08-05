@@ -107,7 +107,7 @@ tachyfont.Cff = function(cffTableOffset, fontData) {
    * The CFF Top DICT.
    * The Top DICT has the offsets to other items with the CFF table (as well as
    * other meta information about the font).
-   * @private {!tachyfont.CffDict}
+   * @private @const {!tachyfont.CffDict}
    */
   this.topDict_ = /** @type {!tachyfont.CffDict} */ (topDict);
 
@@ -118,7 +118,7 @@ tachyfont.Cff = function(cffTableOffset, fontData) {
    * This item is poorly named:
    *   - 'Char': this holds data about glyphs not about chars.
    *   - 'Strings': this hold binary data not human readable strings.
-   * @private {!tachyfont.CffIndex}
+   * @private @const {!tachyfont.CffIndex}
    */
   this.charStringsIndex_ =
       tachyfont.Cff.readCharStringsIndex(this.topDict_, this.binaryEditor_);
@@ -128,7 +128,7 @@ tachyfont.Cff = function(cffTableOffset, fontData) {
    * The CFF Font DICT INDEX:
    *   - found by an offset in the Top DICT
    *   - holds per-font information such as 'nominal width' of the glyphs.
-   * @private {!tachyfont.CffIndex}
+   * @private @const {!tachyfont.CffIndex}
    */
   this.fontDictIndex_ =
       tachyfont.Cff.readFontDictIndex(this.topDict_, this.binaryEditor_);
@@ -294,8 +294,7 @@ tachyfont.Cff.prototype.getTopDictOperand = function(operator, index) {
 /**
  * Lists the items in the CFF table whose offsets can change when the
  * CharStrings INDEX is resized.
- * @const
- * @private {Array<string>}
+ * @private @const {!Array<string>}
  */
 tachyfont.Cff.repositionedItemsOperators_ = [
   tachyfont.CffDict.Operator.CHARSET,

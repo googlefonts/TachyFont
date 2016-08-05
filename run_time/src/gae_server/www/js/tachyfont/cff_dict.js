@@ -42,16 +42,16 @@ goog.require('tachyfont.utils');
  * @constructor @struct @final
  */
 tachyfont.CffDict = function(name, dataView) {
-  /** @private {string} */
+  /** @private @const {string} */
   this.name_ = name;
 
-  /** @private {!DataView} */
+  /** @private @const {!DataView} */
   this.dataView_ = dataView;
 
 
   /**
    * Map of operator->operand(s).
-   * @private {!Object<string, !tachyfont.CffDict.OperandsOperatorSet>}
+   * @private @const {!Object<string, !tachyfont.CffDict.OperandsOperatorSet>}
    */
   this.dict_ = {};
   var binaryEditor = new tachyfont.BinaryFontEditor(this.dataView_, 0);
