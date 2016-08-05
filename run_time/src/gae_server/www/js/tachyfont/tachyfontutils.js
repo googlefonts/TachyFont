@@ -72,7 +72,7 @@ tachyfont.utils.COMPACT_FONT = 'compact_font';
  * This contains the original file info.
  * @const {string}
  */
-tachyfont.utils.COMPACT_FILE_INFO = 'file_info';
+tachyfont.utils.COMPACT_FILE_INFO = 'compact_file_info';
 
 
 /**
@@ -86,7 +86,7 @@ tachyfont.utils.COMPACT_METADATA = 'compact_metadata';
  * The compact font char list store name.
  * @const {string}
  */
-tachyfont.utils.COMPACT_CHARS_LIST = 'compact_chars_list';
+tachyfont.utils.COMPACT_CHAR_LIST = 'compact_char_list';
 
 
 /**
