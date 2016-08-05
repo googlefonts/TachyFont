@@ -97,7 +97,7 @@
    * The errors encounter while loading the Tachyfont preludes.
    * These will be reported by the TachyFont library.
    *
-   * @type {Array<Array<string|number>>}
+   * @type {!Array<Array<string|number>>}
    */
   var reports = [];
 
@@ -171,7 +171,7 @@
   /**
    * Uses a TachyFont from persistent store if available.
    * @param {!FontInfo} fontInfo The info on the font to use.
-   * @return {Promise} This promise resolves when the font is used.
+   * @return {!Promise} This promise resolves when the font is used.
    */
   function openIDB(fontInfo) {
     return new Promise(function(resolve, reject) {
@@ -221,7 +221,7 @@
   /**
    * Get the font data from the indexedDB.
    * @param {!FontInfo} fontInfo Info about this font.
-   * @return {Promise} If success promise resolves the header+font ArrayBuffer.
+   * @return {!Promise} If success promise resolves the header+font ArrayBuffer.
    */
   function getFontData(fontInfo) {
     return openIDB(fontInfo)
@@ -263,7 +263,7 @@
   /**
    * Set the CSS \@font-face rule.
    *
-   * @param {CSSStyleSheet} sheet The style sheet.
+   * @param {!CSSStyleSheet} sheet The style sheet.
    * @param {string} fontFamily The fontFamily.
    * @param {string} weight The weight.
    * @param {string} blobUrl The blob URL of the font data.
@@ -293,10 +293,10 @@
     var format;
     var weight = fontInfo.weight;
     if (fontInfo.isTtf) {
-      mimeType = 'font/ttf'; // 'application/x-font-ttf';
+      mimeType = 'font/ttf';  // 'application/x-font-ttf';
       format = 'truetype';
     } else {
-      mimeType = 'font/otf'; // 'application/font-sfnt';
+      mimeType = 'font/otf';  // 'application/font-sfnt';
       format = 'opentype';
     }
     var blob = new Blob([fontDataView], { type: mimeType });
@@ -397,7 +397,7 @@
    * Publically visible so it can be used during testing.
    * @type {number}
    */
-  tachyfontprelude.zeroRunBase = 71; // 'G'
+  tachyfontprelude.zeroRunBase = 71;  // 'G'
 
 
   /**
@@ -414,7 +414,7 @@
    * Publically visible so it can be used during testing.
    * @type {number}
    */
-  tachyfontprelude.singleZeroBase = 103; // 'g'
+  tachyfontprelude.singleZeroBase = 103;  // 'g'
 
 
   /**
