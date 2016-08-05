@@ -274,7 +274,7 @@ tachyfont.IncrementalFont.obj = function(fontInfo, params, backendService) {
 
   this.fontName = fontInfo.getName();
 
-  /** @private {!Object} Information about the font file */
+  /** @private {!tachyfont.typedef.FileInfo} Information about the font file */
   this.fileInfo_;
 
 
@@ -380,7 +380,7 @@ tachyfont.IncrementalFont.obj.prototype.setCmapMapping = function(cmapMapping) {
 
 /**
  * Get the file information.
- * @return {!Object}
+ * @return {!tachyfont.typedef.FileInfo}
  */
 tachyfont.IncrementalFont.obj.prototype.getFileInfo = function() {
   return this.fileInfo_;
@@ -389,7 +389,7 @@ tachyfont.IncrementalFont.obj.prototype.getFileInfo = function() {
 
 /**
  * Set the file information.
- * @param {!Object} fileInfo The file information.
+ * @param {!tachyfont.typedef.FileInfo} fileInfo The file information.
  */
 tachyfont.IncrementalFont.obj.prototype.setFileInfo = function(fileInfo) {
   this.fileInfo_ = fileInfo;
