@@ -386,7 +386,7 @@ tachyfont.Persist.deleteDatabase = function(dbName, id) {
 
 /**
  * Get a part of the font.
- * @param {Object} idb The IndexedDB object.
+ * @param {!Object} idb The IndexedDB object.
  * @param {string} name The name of the font data to get.
  * @return {!goog.Promise} Promise to return the data.
  */

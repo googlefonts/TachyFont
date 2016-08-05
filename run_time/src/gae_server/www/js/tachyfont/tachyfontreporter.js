@@ -55,7 +55,7 @@ tachyfont.Reporter.startTime_ = goog.now();
 /**
  * TachyFont singleton object.
  *
- * @private {tachyfont.Reporter}
+ * @private {?tachyfont.Reporter}
  */
 tachyfont.Reporter.instance_ = null;
 
@@ -80,7 +80,7 @@ tachyfont.Reporter.getInstance = function() {
 
 /**
  * Set the reporter instance.
- * @param {tachyfont.Reporter} instance The reporter instance
+ * @param {?tachyfont.Reporter} instance The reporter instance
  */
 tachyfont.Reporter.setInstance = function(instance) {
   tachyfont.Reporter.instance_ = instance;
@@ -242,7 +242,7 @@ tachyfont.Reporter.sendReport = function(opt_okIfNoItems) {
  * Send the gen_204.
  *
  * @param {string} baseUrl The url to send the GET to.
- * @param {Array<string>} params The URL parameters.
+ * @param {!Array<string>} params The URL parameters.
  * @private
  */
 tachyfont.Reporter.sendGen204_ = function(baseUrl, params) {

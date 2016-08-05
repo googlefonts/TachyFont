@@ -42,7 +42,7 @@ goog.require('tachyfont.utils');
  * TachyFont - A namespace.
  * @param {!tachyfont.FontInfo} fontInfo The font info.
  * @param {boolean} dropData If true then drop the persistent store data.
- * @param {Object=} opt_params Optional parameters.
+ * @param {!Object=} opt_params Optional parameters.
  * @constructor
  */
 tachyfont.TachyFont = function(fontInfo, dropData, opt_params) {
@@ -128,7 +128,7 @@ tachyfont.reportError_ = function(errNum, errInfo) {
 /**
  * Re-run the error report.
  *
- * @param {Object} obj An object holding the parameters for the error report.
+ * @param {!Object} obj An object holding the parameters for the error report.
  * @private
  */
 tachyfont.delayedReportError_ = function(obj) {
@@ -141,7 +141,7 @@ if (window.addEventListener) {
   /**
    * Report any uncaught errors.
    *
-   * @param {Event} error The error information.
+   * @param {!Event} error The error information.
    * @private
    */
   tachyfont.windowOnError_ = function(error) {
@@ -230,7 +230,7 @@ tachyfont.Log_ = {
  * Load a list of TachyFonts
  * @param {string} familyName The font-family name.
  * @param {!tachyfont.FontsInfo} fontsInfo Information about the fonts.
- * @param {Object<string, string>=} opt_params Optional parameters.
+ * @param {!Object<string, string>=} opt_params Optional parameters.
  * @return {!goog.Promise<?tachyfont.TachyFontSet,?>} A promise that returns the
  *     TachyFontSet object or null if the fonts are not loaded.
  */
@@ -359,7 +359,7 @@ tachyfont.getStorageInfo = function() {
         /**
          * Chrome storage object. See
          * https://developers.google.com/chrome/whitepapers/storage for details.
-         * @type {StorageQuota}
+         * @type {!StorageQuota}
          */
         var storageInfo = window['navigator'] ?
             window['navigator']['webkitTemporaryStorage'] || null :
@@ -530,7 +530,7 @@ tachyfont.isSupportedBrowser = function(opt_windowObject) {
 /**
  * Load and use a list of TachyFonts
  *
- * @param {tachyfont.TachyFontSet} tachyFontSet The list of TachyFonts.
+ * @param {!tachyfont.TachyFontSet} tachyFontSet The list of TachyFonts.
  * @return {!goog.Promise}
  * @private
  */
@@ -612,7 +612,7 @@ tachyfont.loadFonts_initReporter = function(fontsInfo) {
  * TODO(bstell): remove the Object type.
  * @param {!tachyfont.FontsInfo} fontsInfo The information about the
  *     fonts.
- * @param {Object<string, string>=} opt_params Optional parameters.
+ * @param {!Object<string, string>=} opt_params Optional parameters.
  * @return {!tachyfont.TachyFontSet} The TachyFontSet object.
  * @private
  */
@@ -650,7 +650,7 @@ tachyfont.loadFonts_init_ = function(familyName, fontsInfo, opt_params) {
 /**
  * Get the base fonts for a list of TachyFonts
  *
- * @param {Array<tachyfont.TachyFont>} tachyFonts The list of TachyFonts for
+ * @param {?Array<tachyfont.TachyFont>} tachyFonts The list of TachyFonts for
  *     which to get the base fonts
  * @return {!goog.Promise} The promise for the base fonts (fonts ready to have
  *     character data added).
@@ -692,7 +692,7 @@ tachyfont.loadFonts_getBaseFonts_ = function(tachyFonts) {
 /**
  * Make use of a list of TachyFonts
  *
- * @param {tachyfont.TachyFontSet} tachyFontSet The TachyFont objects.
+ * @param {!tachyfont.TachyFontSet} tachyFontSet The TachyFont objects.
  * @private
  */
 tachyfont.loadFonts_setupTextListeners_ = function(tachyFontSet) {
@@ -726,13 +726,16 @@ tachyfont.loadFonts_setupTextListeners_ = function(tachyFontSet) {
  * This records the changes on a per-font basis.
  * Note: mutation observers do not look at INPUT field changes.
  *
- * @param {tachyfont.TachyFontSet} tachyFontSet The TachyFont objects.
- * @param {Array<MutationRecord>} mutations The mutation records.
+ * @param {!tachyfont.TachyFontSet} tachyFontSet The TachyFont objects.
+ * @param {?Array<MutationRecord>} mutations The mutation records.
  * @private
  */
 tachyfont.loadFonts_domMutationObserver_ = function(tachyFontSet, mutations) {
   if (goog.DEBUG) {
     goog.log.fine(tachyfont.Logger.logger, 'MutationObserver');
+  }
+  if (!mutations) {
+    return;
   }
   var mutationTime = goog.now();
   mutations.forEach(function(mutation) {
@@ -784,8 +787,8 @@ tachyfont.loadFonts_domMutationObserver_ = function(tachyFontSet, mutations) {
  * This records the changes on a per-font basis.
  * Note: mutation observers do not look at INPUT field changes.
  *
- * @param {tachyfont.TachyFontSet} tachyFontSet The TachyFont objects.
- * @param {Event} event The DOMContentLoaded event.
+ * @param {!tachyfont.TachyFontSet} tachyFontSet The TachyFont objects.
+ * @param {!Event} event The DOMContentLoaded event.
  * @private
  */
 tachyfont.loadFonts_handleDomContentLoaded_ = function(tachyFontSet, event) {

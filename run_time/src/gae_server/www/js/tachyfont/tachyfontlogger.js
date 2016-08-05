@@ -39,7 +39,7 @@ if (goog.DEBUG) {
 
   /**
    * Initialize the logger.
-   * @param {goog.debug.Logger.Level} debugLevel The desired debug level.
+   * @param {?goog.debug.Logger.Level} debugLevel The desired debug level.
    */
   tachyfont.Logger.init = function(debugLevel) {
     if (tachyfont.Logger.hasInitialized_) {
@@ -49,7 +49,7 @@ if (goog.DEBUG) {
     tachyfont.Logger.hasInitialized_ = true;
 
     /**
-     * @type {goog.debug.Logger}
+     * @type {?goog.debug.Logger}
      */
     tachyfont.Logger.logger = goog.log.getLogger('tachyfont', debugLevel);
   };
