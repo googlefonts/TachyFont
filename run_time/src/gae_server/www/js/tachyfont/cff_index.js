@@ -33,7 +33,7 @@ goog.require('tachyfont.CffDict');
  * http://www.microsoft.com/typography/otspec/
  * @param {string} name The table name.
  * @param {number} offset The offset from start of the CFF table.
- * @param {number} type Indicates the data type in the index.
+ * @param {tachyfont.CffIndex.type} type Indicates the data type in the index.
  * @param {!tachyfont.BinaryFontEditor} binaryEditor A binary font editor.
  * @constructor @struct @final
  */
@@ -49,7 +49,7 @@ tachyfont.CffIndex = function(name, offset, type, binaryEditor) {
   /**
    * The type of the elements in this INDEX.
    * Possible types are STRING, BINARY_STRING, and (CFF) DICT.
-   * @private @const {number}
+   * @private @const {tachyfont.CffIndex.type}
    */
   this.type_ = type;
 

@@ -252,7 +252,6 @@ tachyfont.CffDict.numberToOperand = function(number, length) {
  * @param {!tachyfont.BinaryFontEditor} binaryEditor The binary editor at the
  *     position of the Operands/Operator.
  * @return {!tachyfont.CffDict.OperandsOperatorSet} The operands operator set.
- * @throws {Error} If a reserved operant is found.
  */
 tachyfont.CffDict.readOperandsOperator = function(binaryEditor) {
   var operands = [];
