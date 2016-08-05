@@ -80,7 +80,7 @@ tachyfont.Cmap.reportError = function(errNum, errId, errInfo) {
 /**
  * Writes the format 12 cmap into the font.
  *
- * @param {!Object} fileInfo Information about the font file.
+ * @param {!tachyfont.typedef.FileInfo} fileInfo Info about the font file.
  * @param {!DataView} baseFontView Base font with header.
  */
 tachyfont.Cmap.writeCmap12 = function(fileInfo, baseFontView) {
@@ -102,7 +102,7 @@ tachyfont.Cmap.writeCmap12 = function(fileInfo, baseFontView) {
 /**
  * Writes the format 4 cmap into the font.
  *
- * @param {!Object} fileInfo Information about the font file.
+ * @param {!tachyfont.typedef.FileInfo} fileInfo Info about the font file.
  * @param {!DataView} baseFontView Base font with header.
  * @param {string} weight The font weight for error reporting.
  */
@@ -523,7 +523,7 @@ tachyfont.Cmap.setFormat12GlyphIds = function(
  * segment. Fonts with this arrangement easily support keeping the cmap
  * accurate as character data is added.
  *
- * @param {!Object} fileInfo Information about the font file.
+ * @param {!tachyfont.typedef.FileInfo} fileInfo Info about the font file.
  * @return {boolean} Whether there is only one char per segment.
  */
 tachyfont.Cmap.isOneCharPerSeg = function(fileInfo) {

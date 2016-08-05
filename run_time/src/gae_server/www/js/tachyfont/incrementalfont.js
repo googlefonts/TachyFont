@@ -571,42 +571,41 @@ tachyfont.IncrementalFont.obj.prototype.getBaseFontFromPersistence =
  * @param {!tachyfont.FontInfo} fontInfo Info about this font.
  * @return {!goog.Promise} The base bytes in DataView.
  */
-tachyfont.IncrementalFont.obj.prototype.getBaseFontFromUrl =
-    function(backendService, fontInfo) {
-  var rslt = backendService.requestFontBase(fontInfo)
-      .then(function(urlBaseBytes) {
-        tachyfont.Reporter.addItem(tachyfont.IncrementalFont.Log_.URL_GET_BASE +
-            this.fontInfo.getWeight(), goog.now() - this.startTime);
-        var results = this.processUrlBase(urlBaseBytes);
-        this.persistDelayed(tachyfont.utils.IDB_CHARLIST);
-        this.persistDelayed(tachyfont.utils.IDB_BASE);
-        return results;
-      }.bind(this));
-  return rslt;
+tachyfont.IncrementalFont.obj.prototype.getBaseFontFromUrl = function(
+    backendService, fontInfo) {
+  return backendService.requestFontBase(fontInfo).then(function(urlBaseBytes) {
+    var weight = this.fontInfo.getWeight();
+    tachyfont.Reporter.addItem(
+        tachyfont.IncrementalFont.Log_.URL_GET_BASE + weight,
+        goog.now() - this.startTime);
+    var results =
+        tachyfont.IncrementalFont.processUrlBase(urlBaseBytes, weight);
+    this.persistDelayed(tachyfont.utils.IDB_CHARLIST);
+    this.persistDelayed(tachyfont.utils.IDB_BASE);
+    return results;
+  }.bind(this));
 };
 
 
 /**
  * Process the font base fetched from a URL.
  * @param {!ArrayBuffer} urlBaseBytes The fetched data.
- * @return {!Array<!Object>} The fileInfo (information about the font bytes) and
+ * @param {string} fontId A font identifier for error messages.
+ * @return {!Array<(!tachyfont.typedef.FileInfo|!DataView)>} The fileInfo and
  *     the font data ready for character data to be added.
  */
-tachyfont.IncrementalFont.obj.prototype.processUrlBase =
-    function(urlBaseBytes) {
-  this.fileInfo_ = tachyfont.BinaryFontEditor.parseBaseHeader(urlBaseBytes);
-  var headerData = new DataView(urlBaseBytes, 0, this.fileInfo_.headSize);
-  var rleFontData = new DataView(urlBaseBytes, this.fileInfo_.headSize);
+tachyfont.IncrementalFont.processUrlBase = function(urlBaseBytes, fontId) {
+  var fileInfo = tachyfont.BinaryFontEditor.parseBaseHeader(urlBaseBytes);
+  var headerData = new DataView(urlBaseBytes, 0, fileInfo.headSize);
+  var rleFontData = new DataView(urlBaseBytes, fileInfo.headSize);
   var raw_base = tachyfont.RLEDecoder.rleDecode([headerData, rleFontData]);
   var raw_basefont = new DataView(raw_base.buffer, headerData.byteLength);
-  tachyfont.Cmap.writeCmap12(this.fileInfo_, raw_basefont);
-  tachyfont.Cmap.writeCmap4(this.fileInfo_, raw_basefont,
-      this.fontInfo.getWeight());
-  tachyfont.IncrementalFontUtils.writeCharsetFormat2(raw_basefont,
-      this.fileInfo_);
-  var basefont = tachyfont.IncrementalFontUtils.sanitizeBaseFont(this.fileInfo_,
-      raw_basefont);
-  return [this.fileInfo_, basefont];
+  tachyfont.Cmap.writeCmap12(fileInfo, raw_basefont);
+  tachyfont.Cmap.writeCmap4(fileInfo, raw_basefont, fontId);
+  tachyfont.IncrementalFontUtils.writeCharsetFormat2(raw_basefont, fileInfo);
+  var basefont =
+      tachyfont.IncrementalFontUtils.sanitizeBaseFont(fileInfo, raw_basefont);
+  return [fileInfo, basefont];
 };
 
 
@@ -614,8 +613,8 @@ tachyfont.IncrementalFont.obj.prototype.processUrlBase =
  * Inject glyphs in the glyphData to the baseFontView
  * @param {!DataView} baseFontView Current base font
  * @param {!tachyfont.GlyphBundleResponse} bundleResponse New glyph data
- * @param {!Object<number, !Array<number>>} glyphToCodeMap An input and output
- *     value.
+ * @param {!Object<number, !Array<number>>} glyphToCodeMap This is both an
+ *     input and an output:
  *       Input: the glyph Id to code point mapping;
  *       Output: the glyph Ids that were expected but not in the bundleResponse.
  * @param {!Array<number>} extraGlyphs An output list of the extra glyph Ids.
