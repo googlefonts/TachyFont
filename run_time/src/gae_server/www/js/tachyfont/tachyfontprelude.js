@@ -97,7 +97,7 @@
    * The errors encounter while loading the Tachyfont preludes.
    * These will be reported by the TachyFont library.
    *
-   * @type {!Array<Array<string|number>>}
+   * @type {!Array<!Array<string|number>>}
    */
   var reports = [];
 
