@@ -213,15 +213,14 @@ tachyfont.Cff.readTopDictIndex = function(offset, binaryEditor) {
  * @return {!tachyfont.CffIndex}
  */
 tachyfont.Cff.readFontDictIndex = function(topDict, binaryEditor) {
-  var fontDictIndexOffset =
-      topDict.getOperand(tachyfont.CffDict.Operator.FD_ARRAY, 0);
+  var fontDictIndexOffset = /** @type {?number} */ (
+      topDict.getOperand(tachyfont.CffDict.Operator.FD_ARRAY, 0));
   if (fontDictIndexOffset == null) {
     // Library fatal error: without the (Private) Font DICT offset the CFF font
     // cannot be read nor modified.
-    throw new Error('FD_ARRAY operator');
+    throw new Error('missing FD_ARRAY operator');
   }
-  var fontDictIndex = new tachyfont.CffIndex('FontDICT',
-      /** @type {number} */ (fontDictIndexOffset),
+  var fontDictIndex = new tachyfont.CffIndex('FontDICT', fontDictIndexOffset,
       tachyfont.CffIndex.type.DICT, binaryEditor);
   fontDictIndex.loadDicts(binaryEditor);
   return fontDictIndex;
@@ -243,7 +242,7 @@ tachyfont.Cff.readCharStringsIndex = function(topDict, binaryEditor) {
   if (charStringsIndexOffset == null) {
     // Library fatal error: without the CharStrings INDEX offset the CFF font
     // cannot be read nor modified.
-    throw new Error('CHAR_STRINGS operator');
+    throw new Error('missing CHAR_STRINGS operator');
   }
   var charStringsIndex = new tachyfont.CffIndex('CharStrings',
       /** @type {number} */ (charStringsIndexOffset),
@@ -322,7 +321,7 @@ tachyfont.Cff.prototype.updateCharStringsSize = function(deltaSize) {
     if (dict == null) {
       // Library fatal error: something is deeply wrong and recovery is not
       // possible.
-      throw new Error('Private DICT ' + i);
+      throw new Error('missing Private DICT ' + i);
     }
     var offset = dict.getOperand(tachyfont.CffDict.Operator.PRIVATE, 1);
     if (offset > charStringsIndexOffset) {
