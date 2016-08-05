@@ -385,7 +385,7 @@ tachyfont.BinaryFontEditor.readOps.VMMC = function(editor, fileInfo) {
  * @param {!tachyfont.typedef.FileInfo} fileInfo The FileInfo object.
  */
 tachyfont.BinaryFontEditor.readOps.TYPE = function(editor, fileInfo) {
-  fileInfo.isTtf = editor.getUint8();
+  fileInfo.isTtf = !!editor.getUint8();
 };
 
 
