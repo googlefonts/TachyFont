@@ -40,10 +40,10 @@ tachyfont.Browser.setFont = function(fontData, fontInfo, isTtf, oldBlobUrl) {
         var mimeType;
         var format;
         if (isTtf) {
-          mimeType = 'font/ttf'; // 'application/x-font-ttf';
+          mimeType = 'font/ttf';  // 'application/x-font-ttf';
           format = 'truetype';
         } else {
-          mimeType = 'font/otf'; // 'application/font-sfnt';
+          mimeType = 'font/otf';  // 'application/font-sfnt';
           format = 'opentype';
         }
         if (oldBlobUrl) {

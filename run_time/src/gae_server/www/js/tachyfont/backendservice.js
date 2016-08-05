@@ -104,7 +104,7 @@ BackendService.prototype.parseDataHeader = function(glyphData) {
         majorVersion + ') does not match expected: ' +
         tachyfont.BackendService.PROTOCOL_MAJOR_VERSION);
   }
-  offset += 2; // Skip reserved section.
+  offset += 2;  // Skip reserved section.
   var signature = '';
   for (var i = 0; i < 20; i++) {
     var thisByteStr = dataView.getUint8(offset++).toString(16);

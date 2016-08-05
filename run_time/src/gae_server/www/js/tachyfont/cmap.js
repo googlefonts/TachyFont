@@ -124,7 +124,7 @@ tachyfont.Cmap.writeCmap4 = function(fileInfo, baseFontView, weight) {
   var glyphIdArrayLen = (fileInfo.cmap4.length - 16 - segCount * 8) / 2;
   fileInfo.cmap4.segCount = segCount;
   fileInfo.cmap4.glyphIdArrayLen = glyphIdArrayLen;
-  binaryEditor.skip(6); //skip searchRange, entrySelector, rangeShift
+  binaryEditor.skip(6);  //skip searchRange, entrySelector, rangeShift
   // Write endCode values.
   for (var i = 0; i < segCount; i++) {
     binaryEditor.setUint16(segments[i][1]);
@@ -497,7 +497,7 @@ tachyfont.Cmap.setFormat12GlyphIds = function(fileInfo, baseFontView, glyphIds,
             weight, 'format 12 code ' + code + ', seg ' + format12Seg +
             ': endCode mismatch');
       }
-      if (segStartCode != segmentEndCode) { // TODO(bstell): check length
+      if (segStartCode != segmentEndCode) {  // TODO(bstell): check length
         tachyfont.Cmap.reportError(
             tachyfont.Cmap.Error.FORMAT12_SEGMENT_LENGTH,
             weight, 'format 12 code ' + code + ', seg ' + format12Seg +

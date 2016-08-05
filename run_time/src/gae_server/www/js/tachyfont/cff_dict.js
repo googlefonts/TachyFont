@@ -338,7 +338,7 @@ tachyfont.CffDict.parseNibbles_ = function(binaryEditor) {
   var nibbles = [];
   var nibble;
   var operandsCnt = 0;
-  var operandLength = 1; // Add one for the nibble indicator (30)  byte.
+  var operandLength = 1;  // Add one for the nibble indicator (30)  byte.
   while (operandsCnt++ <= 48) {
     aByte = binaryEditor.getUint8();
     operandLength++;
