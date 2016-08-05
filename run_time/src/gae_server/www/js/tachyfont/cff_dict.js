@@ -164,8 +164,7 @@ tachyfont.CffDict.prototype.updateDictEntryOperand =
   for (var i = 0; i < index; i++) {
     operandOffset += operandsOperatorSet.operands[i].length;
   }
-  var operandValues = tachyfont.CffDict.numberToOperand(
-      /** @type {number} */ (operand), length);
+  var operandValues = tachyfont.CffDict.numberToOperand(operand, length);
 
   // Update the operand value.
   var binaryEditor = new tachyfont.BinaryFontEditor(this.dataView_,
@@ -372,7 +371,7 @@ tachyfont.CffDict.parseNibbles_ = function(binaryEditor) {
 /**
  * Defines the CFF DICT operators used in by tachyfont when lazily loading glyph
  * data.
- * @type {Object<string, string>}
+ * @const {!Object<string, string>}
  */
 tachyfont.CffDict.Operator = {
   FD_ARRAY: '12 36',
@@ -381,5 +380,3 @@ tachyfont.CffDict.Operator = {
   CHARSET: '15',
   PRIVATE: '18'
 };
-
-
