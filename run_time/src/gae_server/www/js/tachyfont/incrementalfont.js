@@ -75,9 +75,8 @@ tachyfont.IncrementalFont.PERSIST_TIMEOUT = 1000;
 /**
  * Enum for logging values.
  * @enum {string}
- * @private
  */
-tachyfont.IncrementalFont.Log_ = {
+tachyfont.IncrementalFont.Log = {
   CREATE_TACHYFONT: 'LIFCT.',
   DB_OPEN: 'LIFDO.',
   IDB_GET_BASE: 'LIFIB.',
@@ -109,6 +108,7 @@ tachyfont.IncrementalFont.Error = {
   CHARS_PER_SEGMENT: '43',
   DELETE_IDB: '44',
   BELOW_STABLE_TIME: '45',
+  GET_COMPACT_DATA: '46',
   END: '00'
 };
 
@@ -179,7 +179,7 @@ tachyfont.IncrementalFont.createManager = function(fontInfo, dropData, params) {
   var incrFontMgr =
       new tachyfont.IncrementalFont.obj(fontInfo, params, backendService);
   tachyfont.Reporter.addItem(
-      tachyfont.IncrementalFont.Log_.CREATE_TACHYFONT + weight,
+      tachyfont.IncrementalFont.Log.CREATE_TACHYFONT + weight,
       goog.now() - incrFontMgr.startTime);
 
   goog.Promise.resolve()
@@ -194,7 +194,7 @@ tachyfont.IncrementalFont.createManager = function(fontInfo, dropData, params) {
       .then(function() {
         // TODO(bstell): probably want to remove this time reporting code.
         tachyfont.Reporter.addItem(
-            tachyfont.IncrementalFont.Log_.DB_OPEN + weight,
+            tachyfont.IncrementalFont.Log.DB_OPEN + weight,
             goog.now() - incrFontMgr.startTime);
       })
       .thenCatch(function() {
@@ -515,7 +515,7 @@ tachyfont.IncrementalFont.obj.prototype.getBaseFontFromPersistence =
           }.bind(this))
           .then(function(arr) {
             tachyfont.Reporter.addItem(
-                tachyfont.IncrementalFont.Log_.IDB_GET_BASE +
+                tachyfont.IncrementalFont.Log.IDB_GET_BASE +
                     this.fontInfo.getWeight(),
                 goog.now() - this.startTime);
             var idb = arr[0];
@@ -566,6 +566,56 @@ tachyfont.IncrementalFont.obj.prototype.getBaseFontFromPersistence =
 
 
 /**
+ * Get the compact font base from persistent store.
+ * @return {!goog.Promise<tachyfont.typedef.CompactFontWorkingData,?>} The
+ *     Compact font's data, charlist, and metadata.
+ */
+tachyfont.IncrementalFont.obj.prototype.getCompactFontFromPersistence =
+    function() {
+  var fontId = this.fontInfo.getWeight();
+  // TODO(bstell): make this fully work
+  var db;
+  var fontBytes;
+  var fileInfo;
+  var charList;
+  // TODO(bstell): make a call that loads multiple items in a single
+  // transaction.
+  return this.getDb()
+      .then(function(result) {
+        db = result;
+        return tachyfont.Persist.getData(db, tachyfont.utils.COMPACT_FONT);
+      })
+      .then(function(result) {
+        fontBytes = result;
+        return tachyfont.Persist.getData(db, tachyfont.utils.COMPACT_FILE_INFO);
+      })
+      .then(function(result) {
+        fileInfo = result;
+        return tachyfont.Persist.getData(db, tachyfont.utils.COMPACT_CHAR_LIST);
+      })
+      .then(function(result) { charList = result; })
+      .then(function(arr) {
+        // Check there was data.
+        if (!fontBytes || !fileInfo || !charList) {
+          return goog.Promise.reject();
+        }
+        var isOkay = tachyfont.Cmap.checkCharacters(
+            fileInfo, fontBytes, charList, fontId, true);
+        if (!isOkay) {
+          return goog.Promise.reject();
+        }
+        return {data: fontBytes, fileInfo: fileInfo, charList: charList};
+      })
+      .thenCatch(function(e) {
+        tachyfont.IncrementalFont.reportError(
+            tachyfont.IncrementalFont.Error.GET_COMPACT_DATA, 'base ' + fontId,
+            e);
+        return goog.Promise.reject(e);
+      }.bind(this));
+};
+
+
+/**
  * Get the font base from a URL.
  * @param {!Object} backendService The object that interacts with the backend.
  * @param {!tachyfont.FontInfo} fontInfo Info about this font.
@@ -576,7 +626,7 @@ tachyfont.IncrementalFont.obj.prototype.getBaseFontFromUrl = function(
   return backendService.requestFontBase(fontInfo).then(function(urlBaseBytes) {
     var weight = this.fontInfo.getWeight();
     tachyfont.Reporter.addItem(
-        tachyfont.IncrementalFont.Log_.URL_GET_BASE + weight,
+        tachyfont.IncrementalFont.Log.URL_GET_BASE + weight,
         goog.now() - this.startTime);
     var results =
         tachyfont.IncrementalFont.processUrlBase(urlBaseBytes, weight);
@@ -584,6 +634,38 @@ tachyfont.IncrementalFont.obj.prototype.getBaseFontFromUrl = function(
     this.persistDelayed(tachyfont.utils.IDB_BASE);
     return results;
   }.bind(this));
+};
+
+
+/**
+ * Get the font base from a URL.
+ * @param {!Object} backendService The object that interacts with the backend.
+ * @param {!tachyfont.FontInfo} fontInfo Info about this font.
+ * @return {!goog.Promise<tachyfont.typedef.CompactFontWorkingData,?>} The
+ *     compact font data, fileInfo, and charList.
+ */
+tachyfont.IncrementalFont.obj.prototype.getCompactFontFromUrl = function(
+    backendService, fontInfo) {
+  return backendService
+      .requestFontBase(fontInfo)  // Curse you clang formatter.
+      .then(function(urlBaseBytes) {
+        var weight = this.fontInfo.getWeight();
+        tachyfont.Reporter.addItem(
+            tachyfont.IncrementalFont.Log.URL_GET_BASE + weight,
+            goog.now() - this.startTime);
+        var results =
+            tachyfont.IncrementalFont.processUrlBase(urlBaseBytes, weight);
+        // TODO(bstell): need to compact the data
+        // TODO(bstell): need to store the compact data
+        // TODO(bstell): need to initialize the compact charlist
+        // TODO(bstell): need to update the compact metadata
+        var compactWorkingData = {
+          data: results[1],
+          charList: {},
+          fileInfo: results[0]
+        };
+        return compactWorkingData;
+      }.bind(this));
 };
 
 
@@ -990,9 +1072,9 @@ tachyfont.IncrementalFont.obj.prototype.calcNeededChars_ = function() {
         var missRate = (neededCodes.length * 100) / charArray.length;
         var weight = this.fontInfo.getWeight();
         tachyfont.Reporter.addItem(
-           tachyfont.IncrementalFont.Log_.MISS_COUNT + weight, missCount);
+            tachyfont.IncrementalFont.Log.MISS_COUNT + weight, missCount);
         tachyfont.Reporter.addItem(
-           tachyfont.IncrementalFont.Log_.MISS_RATE + weight, missRate);
+            tachyfont.IncrementalFont.Log.MISS_RATE + weight, missRate);
         if (neededCodes.length == 0) {
           if (goog.DEBUG) {
             goog.log.fine(tachyfont.Logger.logger, 'no new characters');
