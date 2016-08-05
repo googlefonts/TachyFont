@@ -588,7 +588,19 @@ tachyfont.BinaryFontEditor.TAGS = {
 
 
 /**
- * Parse the header of the base font.
+ * A static routine that parses the header of the base font.
+ * @param {!ArrayBuffer} headerBytes
+ * @return {!tachyfont.typedef.FileInfo}
+ */
+tachyfont.BinaryFontEditor.parseBaseHeader = function(headerBytes) {
+  var binaryEditor =
+      new tachyfont.BinaryFontEditor(new DataView(headerBytes), 0);
+  return binaryEditor.parseBaseHeader();
+};
+
+
+/**
+ * Parses the header of the base font.
  * Set information as attributes in given loader object
  * @return {!tachyfont.typedef.FileInfo} Results of parsing the header.
  */
@@ -598,11 +610,14 @@ tachyfont.BinaryFontEditor.prototype.parseBaseHeader = function() {
     throw 'magic number mismatch: expected ' +
         tachyfont.BinaryFontEditor.magicHead + ' but got ' + magic;
   }
-  var results = {};
-  results.headSize = this.getInt32();
-  results.version = this.getInt32();
-  if (results.version != tachyfont.BinaryFontEditor.BASE_VERSION) {
-    throw 'Incompatible Base Font Version detected!';
+  var fileInfo = {};
+  fileInfo.headSize = this.getInt32();
+  if (!fileInfo.headSize) {
+    throw 'Invalid head size!';
+  }
+  fileInfo.version = this.getInt32();
+  if (fileInfo.version != tachyfont.BinaryFontEditor.BASE_VERSION) {
+    throw 'Incompatible Base Font Version!';
   }
   var count = this.getUint16();
   var tag;
@@ -617,11 +632,14 @@ tachyfont.BinaryFontEditor.prototype.parseBaseHeader = function() {
     }
     saveOffset = this.tell();
     this.seek(dataStart + tagOffset);
-    tachyfont.BinaryFontEditor.TAGS[tag]['fn'](this, results);
+    tachyfont.BinaryFontEditor.TAGS[tag]['fn'](this, fileInfo);
     this.seek(saveOffset);
   }
+  fileInfo.cmapMapping = tachyfont.BinaryFontEditor.getCmapMapping(
+      /** @type {!tachyfont.typedef.FileInfo} */ (fileInfo));
+
   // The compiler does not know what got set by the tags calls.
-  return /** @type {!tachyfont.typedef.FileInfo} */ (results);
+  return /** @type {!tachyfont.typedef.FileInfo} */ (fileInfo);
 };
 
 

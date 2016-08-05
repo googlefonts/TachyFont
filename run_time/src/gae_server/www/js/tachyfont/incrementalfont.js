@@ -81,7 +81,6 @@ tachyfont.IncrementalFont.Log_ = {
   CREATE_TACHYFONT: 'LIFCT.',
   DB_OPEN: 'LIFDO.',
   IDB_GET_BASE: 'LIFIB.',
-  PARSE_HEADER: 'LIFPH.',
   URL_GET_BASE: 'LIFUB.',
   MISS_COUNT: 'LIFMC.',
   MISS_RATE: 'LIFMR.'
@@ -278,11 +277,6 @@ tachyfont.IncrementalFont.obj = function(fontInfo, params, backendService) {
   /** @private {!Object} Information about the font file */
   this.fileInfo_;
 
-  /**
-   * The character to format 4 / format 12 mapping.
-   * @private {!tachyfont.typedef.CmapMapping}
-   */
-  this.cmapMapping_;
 
   this.charsToLoad = {};
   //TODO(bstell): need to fix the request size.
@@ -370,7 +364,7 @@ tachyfont.IncrementalFont.obj.prototype.getDb = function() {
  * @return {!tachyfont.typedef.CmapMapping}
  */
 tachyfont.IncrementalFont.obj.prototype.getCmapMapping = function() {
-  return this.cmapMapping_;
+  return this.fileInfo_.cmapMapping;
 };
 
 
@@ -380,7 +374,7 @@ tachyfont.IncrementalFont.obj.prototype.getCmapMapping = function() {
  *     codepoint to segment mapping.
  */
 tachyfont.IncrementalFont.obj.prototype.setCmapMapping = function(cmapMapping) {
-  this.cmapMapping_ = cmapMapping;
+  this.fileInfo_.cmapMapping = cmapMapping;
 };
 
 
@@ -522,8 +516,7 @@ tachyfont.IncrementalFont.obj.prototype.getBaseFontFromPersistence =
         tachyfont.Reporter.addItem(tachyfont.IncrementalFont.Log_.IDB_GET_BASE +
             this.fontInfo.getWeight(), goog.now() - this.startTime);
         var idb = arr[0];
-        var filedata = new DataView(arr[1]);
-        this.parseBaseHeader(filedata);
+        this.fileInfo_ = tachyfont.BinaryFontEditor.parseBaseHeader(arr[1]);
         var fontData = new DataView(arr[1], this.fileInfo_.headSize);
         return goog.Promise.resolve([idb, this.fileInfo_, fontData]);
       }.bind(this))
@@ -541,7 +534,7 @@ tachyfont.IncrementalFont.obj.prototype.getBaseFontFromPersistence =
       }.bind(this))
       .then(function(arr) {
         var isOkay = tachyfont.Cmap.checkCharacters(
-            this.fileInfo_, arr[1], arr[2], this.cmapMapping_,
+            this.fileInfo_, arr[1], arr[2], this.fileInfo_.cmapMapping,
             this.fontInfo.getWeight(), true);
         if (isOkay) {
           this.charList.resolve(arr[2]);
@@ -563,30 +556,6 @@ tachyfont.IncrementalFont.obj.prototype.getBaseFontFromPersistence =
         return goog.Promise.resolve(null);
       }.bind(this));
   return persistedBase;
-};
-
-
-/**
- * Parses base font header, set properties.
- * @param {!DataView} baseFontView Base font with header.
- */
-tachyfont.IncrementalFont.obj.prototype.parseBaseHeader =
-    function(baseFontView) {
-  var binaryEditor = new tachyfont.BinaryFontEditor(baseFontView, 0);
-  var fileInfo = binaryEditor.parseBaseHeader();
-  if (!fileInfo.headSize) {
-    tachyfont.Reporter.addItem(tachyfont.IncrementalFont.Log_.PARSE_HEADER +
-        this.fontInfo.getWeight(), goog.now() - this.startTime);
-    throw 'missing header info';
-  }
-  this.fileInfo_ = fileInfo;
-  if (!tachyfont.Cmap.isOneCharPerSeg(this.fileInfo_)) {
-    tachyfont.IncrementalFont.reportError(
-        tachyfont.IncrementalFont.Error.CHARS_PER_SEGMENT,
-        this.fontInfo.getWeight(), '');
-    throw 'not one-char-per-segment';
-  }
-  this.cmapMapping_ = tachyfont.BinaryFontEditor.getCmapMapping(fileInfo);
 };
 
 
@@ -619,8 +588,7 @@ tachyfont.IncrementalFont.obj.prototype.getBaseFontFromUrl =
  */
 tachyfont.IncrementalFont.obj.prototype.processUrlBase =
     function(urlBaseBytes) {
-  var urlBaseData = new DataView(urlBaseBytes);
-  this.parseBaseHeader(urlBaseData);
+  this.fileInfo_ = tachyfont.BinaryFontEditor.parseBaseHeader(urlBaseBytes);
   var headerData = new DataView(urlBaseBytes, 0, this.fileInfo_.headSize);
   var rleFontData = new DataView(urlBaseBytes, this.fileInfo_.headSize);
   var raw_base = tachyfont.RLEDecoder.rleDecode([headerData, rleFontData]);
@@ -755,12 +723,12 @@ tachyfont.IncrementalFont.obj.prototype.injectCharacters =
     baseBinaryEditor.setArrayOf(baseBinaryEditor.setUint8, bytes);
   }
   // Set the glyph Ids in the cmap format 12 subtable;
-  tachyfont.Cmap.setFormat12GlyphIds(this.fileInfo_, baseFontView,
-      glyphIds, glyphToCodeMap, this.cmapMapping_, this.fontInfo.getWeight());
+  tachyfont.Cmap.setFormat12GlyphIds(this.fileInfo_, baseFontView, glyphIds,
+      glyphToCodeMap, this.fileInfo_.cmapMapping, this.fontInfo.getWeight());
 
   // Set the glyph Ids in the cmap format 4 subtable;
-  tachyfont.Cmap.setFormat4GlyphIds(this.fileInfo_, baseFontView,
-      glyphIds, glyphToCodeMap, this.cmapMapping_, this.fontInfo.getWeight());
+  tachyfont.Cmap.setFormat4GlyphIds(this.fileInfo_, baseFontView, glyphIds,
+      glyphToCodeMap, this.fileInfo_.cmapMapping, this.fontInfo.getWeight());
 
   // Remove the glyph Ids that were in the bundleResponse and record
   // the extra glyphs.
@@ -1004,7 +972,7 @@ tachyfont.IncrementalFont.obj.prototype.calcNeededChars_ = function() {
           var c = charArray[i];
           var code = tachyfont.utils.charToCode(c);
           // Check if the font supports the char and it is not loaded.
-          if (this.cmapMapping_[code] && !tmp_charlist[c]) {
+          if (this.fileInfo_.cmapMapping[code] && !tmp_charlist[c]) {
             neededCodes.push(code);
             tmp_charlist[c] = 1;
           }
@@ -1028,7 +996,7 @@ tachyfont.IncrementalFont.obj.prototype.calcNeededChars_ = function() {
               .thenCatch(function() {});
         }
         neededCodes = tachyfont.IncrementalFont.possibly_obfuscate(neededCodes,
-            charlist, this.cmapMapping_);
+            charlist, this.fileInfo_.cmapMapping);
         if (goog.DEBUG) {
           goog.log.info(tachyfont.Logger.logger, this.fontInfo.getName() + ' ' +
               this.fontInfo.getWeight() + ': load ' + neededCodes.length +
@@ -1143,7 +1111,7 @@ tachyfont.IncrementalFont.obj.prototype.injectChars = function(neededCodes,
           var glyphToCodeMap = {};
           for (var i = 0; i < neededCodes.length; i++) {
             var code = neededCodes[i];
-            var charCmapInfo = this.cmapMapping_[code];
+            var charCmapInfo = this.fileInfo_.cmapMapping[code];
             if (charCmapInfo) {
               // Handle multiple codes sharing a glyphId.
               if (glyphToCodeMap[charCmapInfo.glyphId] ==

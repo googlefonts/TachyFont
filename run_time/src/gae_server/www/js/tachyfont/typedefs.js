@@ -68,10 +68,11 @@ tachyfont.typedef.charset;
  *     hmetricCount: number,
  *     vmetricCount: number,
  *     isTtf: number,
- *     cmap12: tachyfont.typedef.CMap12,
- *     cmap4: tachyfont.typedef.CMap4,
- *     compact_gos: tachyfont.typedef.compact_gos,
- *     charset_fmt: tachyfont.typedef.charset,
+ *     cmap12: !tachyfont.typedef.CMap12,
+ *     cmap4: !tachyfont.typedef.CMap4,
+ *     compact_gos: !tachyfont.typedef.compact_gos,
+ *     cmapMapping: !tachyfont.typedef.CmapMapping,
+ *     charset_fmt: !tachyfont.typedef.charset,
  *     sha1_fingerprint: string
  * }}
  */
