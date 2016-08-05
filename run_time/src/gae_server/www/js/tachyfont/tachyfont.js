@@ -553,9 +553,8 @@ tachyfont.loadFonts_loadAndUse_ = function(tachyFontSet) {
         serialPromise = serialPromise.then(function(index) {
           var font = fonts[index];
           // Load the fonts from persistent store or URL.
-          return tachyfont.loadFonts_getBaseFonts_([font]).then(function() {
-            return ++index;
-          });
+          return tachyfont.loadFonts_getBaseFont_(font.incrfont)
+              .then(function() { return ++index; });
         });
       }
       return serialPromise;
@@ -649,41 +648,25 @@ tachyfont.loadFonts_init_ = function(familyName, fontsInfo, opt_params) {
 
 /**
  * Get the base fonts for a list of TachyFonts
- * @param {?Array<!tachyfont.TachyFont>} tachyFonts The list of TachyFonts for
- *     which to get the base fonts.
- * @return {!goog.Promise} The promise for the base fonts (fonts ready to have
- *     character data added).
+ * @param {!tachyfont.IncrementalFont.obj} incrfont The TachyFont object for
+ *     which to get the base font.
+ * @return {!goog.Promise<?,?>}
  * @private
  */
-tachyfont.loadFonts_getBaseFonts_ = function(tachyFonts) {
+tachyfont.loadFonts_getBaseFont_ = function(incrfont) {
   // Try to get the base from persistent store.
-  var bases = [];
-  for (var i = 0; i < tachyFonts.length; i++) {
-    var incrfont = tachyFonts[i].incrfont;
-    var persistedBase = incrfont.getBaseFontFromPersistence();
-    bases.push(persistedBase);
-  }
-  return goog.Promise.all(bases)
-      .then(function(arrayBaseData) {
-        for (var i = 0; i < tachyFonts.length; i++) {
-          var loadedBase = arrayBaseData[i];
-          var incrfont = tachyFonts[i].incrfont;
-          if (loadedBase != null) {
-            arrayBaseData[i] = goog.Promise.resolve(loadedBase);
-          } else {
-            // If not persisted the fetch the base from the URL.
-            arrayBaseData[i] = incrfont.getBaseFontFromUrl(
-               incrfont.backendService, incrfont.fontInfo);
-          }
+  return incrfont.getBaseFontFromPersistence()
+      .then(function(loadedBase) {
+        if (loadedBase != null) {
+          return loadedBase;
         }
-        return goog.Promise.all(arrayBaseData);
+        // Not persisted so fetch from the URL.
+        return incrfont.getBaseFontFromUrl(
+            incrfont.backendService, incrfont.fontInfo);
       })
-      .then(function(arrayBaseData) {
-        for (var i = 0; i < tachyFonts.length; i++) {
-          var loadedBase = arrayBaseData[i];
-          var incrFont = tachyFonts[i].incrfont;
-          incrFont.base.resolve(loadedBase);
-        }
+      .then(function(loadedBase) {
+        // Get the font data ready for use.
+        incrfont.base.resolve(loadedBase);
       });
 };
 
