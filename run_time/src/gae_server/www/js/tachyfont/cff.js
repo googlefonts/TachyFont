@@ -73,7 +73,6 @@ goog.require('tachyfont.CffIndex');
  *     table.
  * @param {!DataView} fontData The font data.
  * @constructor @struct @final
- * @throws {Error}
  */
 tachyfont.Cff = function(cffTableOffset, fontData) {
 
@@ -99,10 +98,10 @@ tachyfont.Cff = function(cffTableOffset, fontData) {
   // Read the Top DICT INDEX.
   var topDictIndex = tachyfont.Cff.readTopDictIndex(offset, this.binaryEditor_);
   var topDict = topDictIndex.getDictElement(0);
-  if (topDict == null) {
+  if (!topDict) {
     // Library fatal error: without a Top DICT the font cannot be read nor
     // modified.
-    throw new Error('Top DICT');
+    throw new Error('missing Top DICT: font cannot be processed');
   }
   /**
    * The CFF Top DICT.
@@ -110,7 +109,7 @@ tachyfont.Cff = function(cffTableOffset, fontData) {
    * other meta information about the font).
    * @private @const {!tachyfont.CffDict}
    */
-  this.topDict_ = /** @type {!tachyfont.CffDict} */ (topDict);
+  this.topDict_ = topDict;
 
   /**
    * The CFF CharStrings INDEX:
@@ -212,7 +211,6 @@ tachyfont.Cff.readTopDictIndex = function(offset, binaryEditor) {
  *     CharStrings INDEX.
  * @param {!tachyfont.BinaryFontEditor} binaryEditor Helper class to edit the
  * @return {!tachyfont.CffIndex}
- * @throws {Error}
  */
 tachyfont.Cff.readFontDictIndex = function(topDict, binaryEditor) {
   var fontDictIndexOffset =
@@ -238,7 +236,6 @@ tachyfont.Cff.readFontDictIndex = function(topDict, binaryEditor) {
  *     CharStrings INDEX.
  * @param {!tachyfont.BinaryFontEditor} binaryEditor Helper class to edit the
  * @return {!tachyfont.CffIndex}
- * @throws {Error}
  */
 tachyfont.Cff.readCharStringsIndex = function(topDict, binaryEditor) {
   var charStringsIndexOffset =
@@ -307,7 +304,6 @@ tachyfont.Cff.repositionedItemsOperators_ = [
  * Updates the offsets in the CFF table when the CharStrings INDEX changes size.
  * Given a delta size update the offsets in the Top DICT and Private DICTs.
  * @param {number} deltaSize The size change.
- * @throws {Error}
  */
 tachyfont.Cff.prototype.updateCharStringsSize = function(deltaSize) {
   var charStringsIndexOffset = this.charStringsIndex_.getOffsetToIndex();
