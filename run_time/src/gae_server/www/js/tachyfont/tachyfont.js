@@ -647,7 +647,7 @@ tachyfont.loadFonts_init_ = function(familyName, fontsInfo, opt_params) {
 
 
 /**
- * Get the base fonts for a list of TachyFonts
+ * Get the base font for a TachyFont.
  * @param {!tachyfont.IncrementalFont.obj} incrfont The TachyFont object for
  *     which to get the base font.
  * @return {!goog.Promise<?,?>}

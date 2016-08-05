@@ -534,7 +534,7 @@ tachyfont.IncrementalFont.obj.prototype.getBaseFontFromPersistence =
       }.bind(this))
       .then(function(arr) {
         var isOkay = tachyfont.Cmap.checkCharacters(
-            this.fileInfo_, arr[1], arr[2], this.fileInfo_.cmapMapping,
+            this.fileInfo_, arr[1], arr[2],
             this.fontInfo.getWeight(), true);
         if (isOkay) {
           this.charList.resolve(arr[2]);
@@ -723,12 +723,14 @@ tachyfont.IncrementalFont.obj.prototype.injectCharacters =
     baseBinaryEditor.setArrayOf(baseBinaryEditor.setUint8, bytes);
   }
   // Set the glyph Ids in the cmap format 12 subtable;
-  tachyfont.Cmap.setFormat12GlyphIds(this.fileInfo_, baseFontView, glyphIds,
-      glyphToCodeMap, this.fileInfo_.cmapMapping, this.fontInfo.getWeight());
+  tachyfont.Cmap.setFormat12GlyphIds(
+      this.fileInfo_, baseFontView, glyphIds, glyphToCodeMap,
+      this.fontInfo.getWeight());
 
   // Set the glyph Ids in the cmap format 4 subtable;
-  tachyfont.Cmap.setFormat4GlyphIds(this.fileInfo_, baseFontView, glyphIds,
-      glyphToCodeMap, this.fileInfo_.cmapMapping, this.fontInfo.getWeight());
+  tachyfont.Cmap.setFormat4GlyphIds(
+      this.fileInfo_, baseFontView, glyphIds, glyphToCodeMap,
+      this.fontInfo.getWeight());
 
   // Remove the glyph Ids that were in the bundleResponse and record
   // the extra glyphs.

@@ -154,17 +154,15 @@ tachyfont.Cmap.writeCmap4 = function(fileInfo, baseFontView, weight) {
 /**
  * Check the characters that are loaded in the font.
  *
- * @param {!Object} fileInfo Information about the font file.
+ * @param {!tachyfont.typedef.FileInfo} fileInfo Info about the font file.
  * @param {!DataView} baseFontView Current base font
  * @param {!Object<string, number>} charList The list of characters.
- * @param {!tachyfont.typedef.CmapMapping} cmapMapping Information
- *     about the cmap segments for the codepoint.
  * @param {string} weight The font weight for error reporting.
  * @param {boolean} charsLoaded If set check that the chars are loaded.
  * @return {boolean} Whether the chars seem okay.
  */
-tachyfont.Cmap.checkCharacters = function(fileInfo, baseFontView, 
-    charList, cmapMapping, weight, charsLoaded) {
+tachyfont.Cmap.checkCharacters = function(
+    fileInfo, baseFontView, charList, weight, charsLoaded) {
 
   var charsOkay = true;
   var baseBinaryEditor = new tachyfont.BinaryFontEditor(baseFontView, 0);
@@ -186,7 +184,7 @@ tachyfont.Cmap.checkCharacters = function(fileInfo, baseFontView,
     var aChar = chars[i];
     var code = tachyfont.utils.charToCode(aChar);
     var codeIsBlank = tachyfont.utils.BLANK_CHARS[code] ? true : false;
-    var charInfo = cmapMapping[code];
+    var charInfo = fileInfo.cmapMapping[code];
     if (!charInfo) {
       if (charInfoErrors.length < 5) {
         charInfoErrors.push(code);
@@ -325,17 +323,15 @@ tachyfont.Cmap.checkCharacters = function(fileInfo, baseFontView,
  *
  * Note: this is not well tested.
  *
- * @param {!Object} fileInfo Information about the font file.
+ * @param {!tachyfont.typedef.FileInfo} fileInfo Info about the font file.
  * @param {!DataView} baseFontView Current base font
  * @param {!Array<number>} glyphIds The glyph Ids to set.
  * @param {!Object<number, Array<number>>} glyphToCodeMap The glyph Id to code
  *     point mapping;
- * @param {!tachyfont.typedef.CmapMapping} cmapMapping Information
- *     about the cmap segments for the codepoint.
  * @param {string} weight The font weight for error reporting.
  */
-tachyfont.Cmap.setFormat4GlyphIds = function(fileInfo, baseFontView, glyphIds,
-    glyphToCodeMap, cmapMapping, weight) {
+tachyfont.Cmap.setFormat4GlyphIds = function(
+    fileInfo, baseFontView, glyphIds, glyphToCodeMap, weight) {
   if (!fileInfo.compact_gos.cmap4) {
     return;
   }
@@ -409,7 +405,7 @@ tachyfont.Cmap.setFormat4GlyphIds = function(fileInfo, baseFontView, glyphIds,
       if (goog.DEBUG) {
         goog.log.info(tachyfont.Logger.logger, 'format 4: code = ' + code);
       }
-      var charCmapInfo = cmapMapping[code];
+      var charCmapInfo = fileInfo.cmapMapping[code];
       if (!charCmapInfo) {
         tachyfont.Cmap.reportError(
             tachyfont.Cmap.Error.FORMAT4_CHAR_CMAP_INFO,
@@ -436,17 +432,15 @@ tachyfont.Cmap.setFormat4GlyphIds = function(fileInfo, baseFontView, glyphIds,
 /**
  * Set the format 12 glyph Ids.
  *
- * @param {!Object} fileInfo Information about the font file.
+ * @param {!tachyfont.typedef.FileInfo} fileInfo Info about the font file.
  * @param {!DataView} baseFontView Current base font
  * @param {!Array<number>} glyphIds The glyph Ids to set.
  * @param {!Object<number, Array<number>>} glyphToCodeMap The glyph Id to code
  *     point mapping;
- * @param {!tachyfont.typedef.CmapMapping} cmapMapping Information
- *     about the cmap segments for the codepoint.
  * @param {string} weight The weight of the font.
  */
-tachyfont.Cmap.setFormat12GlyphIds = function(fileInfo, baseFontView, glyphIds,
-    glyphToCodeMap, cmapMapping, weight) {
+tachyfont.Cmap.setFormat12GlyphIds = function(
+    fileInfo, baseFontView, glyphIds, glyphToCodeMap, weight) {
   if (!fileInfo.cmap12) {
     return;
   }
@@ -465,7 +459,7 @@ tachyfont.Cmap.setFormat12GlyphIds = function(fileInfo, baseFontView, glyphIds,
         goog.log.log(tachyfont.Logger.logger, goog.log.Level.FINER,
             'format 12: code = ' + code);
       }
-      var charCmapInfo = cmapMapping[code];
+      var charCmapInfo = fileInfo.cmapMapping[code];
       if (!charCmapInfo) {
         tachyfont.Cmap.reportError(
             tachyfont.Cmap.Error.FORMAT12_CHAR_CMAP_INFO,

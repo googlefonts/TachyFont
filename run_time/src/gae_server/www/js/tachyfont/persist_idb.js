@@ -149,9 +149,9 @@ tachyfont.Persist.openIndexedDB = function(dbName, id) {
           // tachyfont.Compact ?
           tachyfont.Metadata.initializeCompact(compactMetadataStore);
         }
-        if (!db.objectStoreNames.contains(tachyfont.utils.COMPACT_CHARS_LIST)) {
+        if (!db.objectStoreNames.contains(tachyfont.utils.COMPACT_CHAR_LIST)) {
           var compactCharsListStore =
-              db.createObjectStore(tachyfont.utils.COMPACT_CHARS_LIST);
+              db.createObjectStore(tachyfont.utils.COMPACT_CHAR_LIST);
           tachyfont.Persist.initializeCharList(compactCharsListStore);
         }
       }
