@@ -29,30 +29,16 @@ goog.provide('tachyfont.typedef.FileInfo');
 goog.provide('tachyfont.typedef.uint8');
 
 
-/** @typedef {number} */
-tachyfont.typedef.uint8;
+/** @typedef {{offset: number, nGroups: number}} */
+tachyfont.typedef.CMap12;
 
 
 /** @typedef {{offset: number, length: number}} */
 tachyfont.typedef.CMap4;
 
 
-/** @typedef {{offset: number, nGroups: number}} */
-tachyfont.typedef.CMap12;
-
-
-// TODO(bstell): Replace the 'Object' with specific typedefs.
-/** @typedef {{
- *     cmap4: !Object,
- *     cmap12: !Object
- *  }}
- */
-tachyfont.typedef.compact_gos;
-
-
-// TODO(bstell): Replace the 'Object' with specific typedefs.
-/** @typedef {{offset: number, gos: !Object}} */
-tachyfont.typedef.charset;
+/** @typedef {!Object<number, !tachyfont.CharCmapInfo>} */
+tachyfont.typedef.CmapMapping;
 
 
 /**
@@ -79,5 +65,19 @@ tachyfont.typedef.charset;
 tachyfont.typedef.FileInfo;
 
 
-/** @typedef {!Object<number, !tachyfont.CharCmapInfo>} */
-tachyfont.typedef.CmapMapping;
+// TODO(bstell): Replace the 'Object' with specific typedefs.
+/** @typedef {{offset: number, gos: !Object}} */
+tachyfont.typedef.charset;
+
+
+// TODO(bstell): Replace the 'Object' with specific typedefs.
+/** @typedef {{
+ *     cmap4: !Object,
+ *     cmap12: !Object
+ *  }}
+ */
+tachyfont.typedef.compact_gos;
+
+
+/** @typedef {number} */
+tachyfont.typedef.uint8;
