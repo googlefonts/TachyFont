@@ -192,6 +192,13 @@ if (goog.DEBUG) {
     tachyfont.Logger.init(debugLevel);
 
     /**
+     * Enable Compact TachyFont.
+     */
+    var compactTachyFontStr = uri.getParameterValue('CompactTachyFont') || '';
+    /** @type {boolean} */
+    tachyfont.compactTachyFont = compactTachyFontStr.toLowerCase() == 'true';
+
+    /**
      * For debugging: option to disable the obfuscation.
      *
      * Obfuscation is a security feature. If a page was presenting a short
@@ -274,8 +281,6 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
  * @return {!goog.Promise<?,?>}
  */
 tachyfont.checkSystem = function() {
-  // TODO(bstell): initialize tachyfont.Reporter here so the errors in
-  // isSupportedBrowser can be reported.
   // Check if this browser has the necessary features to run TachyFont.
   if (!tachyfont.isSupportedBrowser()) {
     return goog.Promise.reject('unsupported browser');
