@@ -77,7 +77,7 @@ tachyfont.TachyFontSet = function(familyName) {
   /**
    * The updateFont operation takes time so serialize them.
    *
-   * @type {tachyfont.chainedPromises}
+   * @type {!tachyfont.chainedPromises}
    */
   this.finishPrecedingUpdateFont =
       new tachyfont.chainedPromises('finishPrecedingUpdateFont');
@@ -214,7 +214,7 @@ tachyfont.TachyFontSet.TIMEOUT = 3000;
 /**
  * Add a TachyFont.
  *
- * @param {tachyfont.TachyFont} font The TachyFont to add to the set.
+ * @param {!tachyfont.TachyFont} font The TachyFont to add to the set.
  */
 tachyfont.TachyFontSet.prototype.addFont = function(font) {
   this.fonts.push(font);
@@ -224,7 +224,7 @@ tachyfont.TachyFontSet.prototype.addFont = function(font) {
 /**
  * For the node and sub-nodes remove TachyFont from input fields.
  *
- * @param {Node} node The starting point for walking the node/sub-nodes.
+ * @param {!Node} node The starting point for walking the node/sub-nodes.
  */
 tachyfont.TachyFontSet.prototype.recursivelyRemoveTachyFontFromInputFields =
     function(node) {
@@ -239,7 +239,7 @@ tachyfont.TachyFontSet.prototype.recursivelyRemoveTachyFontFromInputFields =
 /**
  * Remove TachyFont from an input field.
  *
- * @param {Node} node The node to work on.
+ * @param {!Node} node The node to work on.
  */
 tachyfont.TachyFontSet.prototype.removeTachyFontFromInputField =
     function(node) {
@@ -247,7 +247,7 @@ tachyfont.TachyFontSet.prototype.removeTachyFontFromInputField =
     return;
   }
 
-  var cssFamily = goog.style.getComputedStyle(/** @type {Element} */ (node),
+  var cssFamily = goog.style.getComputedStyle(/** @type {!Element} */ (node),
       'font-family');
   if (goog.DEBUG) {
     goog.log.log(tachyfont.Logger.logger, goog.log.Level.FINER,
@@ -266,7 +266,7 @@ tachyfont.TachyFontSet.prototype.removeTachyFontFromInputField =
   if (goog.DEBUG) {
     goog.log.log(tachyfont.Logger.logger, goog.log.Level.FINER,
         'newCssFamily: ' +
-        goog.style.getComputedStyle(/** @type {Element} */ (node),
+        goog.style.getComputedStyle(/** @type {!Element} */ (node),
             'font-family'));
   }
 };
@@ -275,10 +275,13 @@ tachyfont.TachyFontSet.prototype.removeTachyFontFromInputField =
 /**
  * For the node and sub-nodes record the needed text for each TachyFont.
  *
- * @param {Node} node The starting point for walking the node/sub-nodes.
+ * @param {?Node} node The starting point for walking the node/sub-nodes.
  */
 tachyfont.TachyFontSet.prototype.recursivelyAddTextToFontGroups =
     function(node) {
+  if (!node) {
+    return;
+  }
   this.addTextToFontGroups(node);
   var children = node.childNodes;
   for (var i = 0; i < children.length; i++) {
@@ -290,7 +293,7 @@ tachyfont.TachyFontSet.prototype.recursivelyAddTextToFontGroups =
 /**
  * Record the needed text for each TachyFont.
  *
- * @param {Node} node The text node.
+ * @param {!Node} node The text node.
  * @return {boolean} Whether text was added.
  */
 tachyfont.TachyFontSet.prototype.addTextToFontGroups = function(node) {
@@ -303,7 +306,7 @@ tachyfont.TachyFontSet.prototype.addTextToFontGroups = function(node) {
     return false;
   }
 
-  var parentNode = /** @type {Element} */ (node.parentNode);
+  var parentNode = /** @type {!Element} */ (node.parentNode);
   // <title> text does not have a parentNode.
   if (!parentNode) {
     return false;
