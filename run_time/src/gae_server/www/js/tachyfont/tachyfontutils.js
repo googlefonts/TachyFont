@@ -22,6 +22,14 @@ goog.provide('tachyfont.utils');
 
 
 /**
+ * Defines if Compact TachyFont is enabled.
+ * TODO(bstell): remove this once Compact TachyFont is fully operational.
+ * @type {boolean}
+ */
+tachyfont.utils.compactTachyFont = false;
+
+
+/**
  * The global IndexedDB version.
  * Increment this number every time there is a change in the schema.
  * @const {number}
@@ -46,9 +54,39 @@ tachyfont.utils.IDB_VERSION = 3;
 
 /**
  * The per font base store name.
+ * The base contains the file info prepended to the font.
  * @const {string}
  */
 tachyfont.utils.IDB_BASE = 'base';
+
+
+/**
+ * The compact font store name.
+ * @const {string}
+ */
+tachyfont.utils.COMPACT_FONT = 'compact_font';
+
+
+/**
+ * The compact font file info store name.
+ * This contains the original file info.
+ * @const {string}
+ */
+tachyfont.utils.COMPACT_FILE_INFO = 'file_info';
+
+
+/**
+ * The compact font metadata store name.
+ * @const {string}
+ */
+tachyfont.utils.COMPACT_METADATA = 'compact_metadata';
+
+
+/**
+ * The compact font char list store name.
+ * @const {string}
+ */
+tachyfont.utils.COMPACT_CHARS_LIST = 'compact_chars_list';
 
 
 /**

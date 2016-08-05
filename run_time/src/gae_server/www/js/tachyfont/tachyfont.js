@@ -193,10 +193,12 @@ if (goog.DEBUG) {
 
     /**
      * Enable Compact TachyFont.
+     * TODO(bstell): remove this once Compact Tachyfont is fully operational.
      */
     var compactTachyFontStr = uri.getParameterValue('CompactTachyFont') || '';
     /** @type {boolean} */
-    tachyfont.compactTachyFont = compactTachyFontStr.toLowerCase() == 'true';
+    tachyfont.utils.compactTachyFont =
+        compactTachyFontStr.toLowerCase() == 'true';
 
     /**
      * For debugging: option to disable the obfuscation.
@@ -210,13 +212,6 @@ if (goog.DEBUG) {
      */
     var noObfuscateStr = uri.getParameterValue('TachyFontNoObfuscate') || '';
     tachyfont.utils.noObfuscate = noObfuscateStr.toLowerCase() == 'true';
-
-    /**
-     * Enable checking cmap against fileInfo and charList.
-     */
-    var checkCmapStr = uri.getParameterValue('TachyFontCheckCmap') || '';
-    /** @type {boolean} */
-    tachyfont.checkCmap = checkCmapStr.toLowerCase() == 'true';
   };
 }
 
