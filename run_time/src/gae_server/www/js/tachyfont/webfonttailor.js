@@ -77,7 +77,7 @@ tachyfont.webfonttailor.FontFamliesInfo_ = {
  *
  * @param {!Array<string>} fontFamlies The suggested list of font families.
  * @param {!Array<string>} languages The language codes list.
- * @param {!Array<Object>} faces The faces (eg, slant, weight) list.
+ * @param {!Array<!Object>} faces The faces (eg, slant, weight) list.
  * @param {!Object<string, string>} options Additional info; eg, stretch.
  * @param {!Array<string>=} opt_priorityWeights Weights to prioritize
  *     (optional).

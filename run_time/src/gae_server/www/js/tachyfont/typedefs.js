@@ -79,5 +79,5 @@ tachyfont.typedef.charset;
 tachyfont.typedef.FileInfo;
 
 
-/** @typedef {Object<number, !tachyfont.CharCmapInfo>} */
+/** @typedef {!Object<number, !tachyfont.CharCmapInfo>} */
 tachyfont.typedef.CmapMapping;

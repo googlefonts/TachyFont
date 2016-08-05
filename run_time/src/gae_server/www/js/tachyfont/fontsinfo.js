@@ -43,7 +43,7 @@ tachyfont.FontsInfo = function(fonts, dataUrl, reportUrl) {
       nonPriorityFonts.push(font);
     }
   }
-  /** @private {!Array<tachyfont.FontInfo>} */
+  /** @private {!Array<!tachyfont.FontInfo>} */
   this.prioritySortedFonts_ = priorityFonts.concat(nonPriorityFonts);
 
   /** @private {string} */
