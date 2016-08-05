@@ -67,7 +67,7 @@ tachyfont.typedef.charset;
  *     vmtxOffset: number,
  *     hmetricCount: number,
  *     vmetricCount: number,
- *     isTtf: number,
+ *     isTtf: boolean,
  *     cmap12: !tachyfont.typedef.CMap12,
  *     cmap4: !tachyfont.typedef.CMap4,
  *     compact_gos: !tachyfont.typedef.compact_gos,
