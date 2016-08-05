@@ -417,7 +417,7 @@ tachyfont.IncrementalFont.obj.prototype.dropDb = function() {
 /**
  * Get the database handle.
  * @param {boolean} dropDb If true then drop the database before opening it.
- * @return {!goog.Promise<IDBDatabase,string>} The database handle.
+ * @return {!goog.Promise<!IDBDatabase,string>} The database handle.
  */
 // TODO(bstell): break this apart an put it into getDb/dropDb and adjust
 // callers.
@@ -583,7 +583,7 @@ tachyfont.IncrementalFont.obj.prototype.getBaseFontFromUrl =
 /**
  * Process the font base fetched from a URL.
  * @param {!ArrayBuffer} urlBaseBytes The fetched data.
- * @return {!Array<Object>} The fileInfo (information about the font bytes) and
+ * @return {!Array<!Object>} The fileInfo (information about the font bytes) and
  *     the font data ready for character data to be added.
  */
 tachyfont.IncrementalFont.obj.prototype.processUrlBase =
@@ -608,7 +608,7 @@ tachyfont.IncrementalFont.obj.prototype.processUrlBase =
  * Inject glyphs in the glyphData to the baseFontView
  * @param {!DataView} baseFontView Current base font
  * @param {!tachyfont.GlyphBundleResponse} bundleResponse New glyph data
- * @param {!Object<number, Array<number>>} glyphToCodeMap An input and output
+ * @param {!Object<number, !Array<number>>} glyphToCodeMap An input and output
  *     value.
  *       Input: the glyph Id to code point mapping;
  *       Output: the glyph Ids that were expected but not in the bundleResponse.

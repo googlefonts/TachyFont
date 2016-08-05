@@ -63,8 +63,8 @@ tachyfont.RLEDecoder.byteOp = function(op) {
 
 /**
  * Decode given rle encoded data and return decoded data
- * @param {!Array<DataView>} arr Holds the Rle encoded header and font data.
- * @return {DataView} Decoded data
+ * @param {!Array<!DataView>} arr Holds the Rle encoded header and font data.
+ * @return {!DataView} Decoded data
  */
 tachyfont.RLEDecoder.rleDecode = function(arr) {
   // time_start('rle');

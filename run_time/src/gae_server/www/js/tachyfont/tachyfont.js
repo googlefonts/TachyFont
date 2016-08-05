@@ -726,7 +726,7 @@ tachyfont.loadFonts_setupTextListeners_ = function(tachyFontSet) {
  * Note: mutation observers do not look at INPUT field changes.
  *
  * @param {!tachyfont.TachyFontSet} tachyFontSet The TachyFont objects.
- * @param {?Array<MutationRecord>} mutations The mutation records.
+ * @param {?Array<!MutationRecord>} mutations The mutation records.
  * @private
  */
 tachyfont.loadFonts_domMutationObserver_ = function(tachyFontSet, mutations) {

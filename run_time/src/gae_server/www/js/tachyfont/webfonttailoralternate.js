@@ -29,7 +29,7 @@ goog.require('tachyfont.FontsInfo');
 
  * @param {!Array<string>} fontFamlies The suggested list of font families.
  * @param {!Array<string>} languages The language codes list.
- * @param {!Array<Object>} faces The faces (eg, slant, weight) list.
+ * @param {!Array<!Object>} faces The faces (eg, slant, weight) list.
  * @param {!Object<string, string>} options Additional info; eg, stretch.
  * @return {!tachyfont.FontsInfo} The information describing the fonts, include:
  *     fonts: A list of font.
