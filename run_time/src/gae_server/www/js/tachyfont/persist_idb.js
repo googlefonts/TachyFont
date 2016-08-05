@@ -134,6 +134,27 @@ tachyfont.Persist.openIndexedDB = function(dbName, id) {
             db.createObjectStore(tachyfont.MetadataDefines.METADATA);
         tachyfont.Metadata.initializePerFont(metadataStore);
       }
+      if (tachyfont.utils.compactTachyFont) {
+        // Compact TachyFont data.
+        if (!db.objectStoreNames.contains(tachyfont.utils.COMPACT_FONT)) {
+          db.createObjectStore(tachyfont.utils.COMPACT_FONT);
+        }
+        if (!db.objectStoreNames.contains(tachyfont.utils.COMPACT_FILE_INFO)) {
+          db.createObjectStore(tachyfont.utils.COMPACT_FILE_INFO);
+        }
+        if (!db.objectStoreNames.contains(tachyfont.utils.COMPACT_METADATA)) {
+          var compactMetadataStore =
+              db.createObjectStore(tachyfont.utils.COMPACT_METADATA);
+          // TODO(bstell): does the table initialization belong under
+          // tachyfont.Compact ?
+          tachyfont.Metadata.initializeCompact(compactMetadataStore);
+        }
+        if (!db.objectStoreNames.contains(tachyfont.utils.COMPACT_CHARS_LIST)) {
+          var compactCharsListStore =
+              db.createObjectStore(tachyfont.utils.COMPACT_CHARS_LIST);
+          tachyfont.Persist.initializeCharList(compactCharsListStore);
+        }
+      }
     };
   });
   return openIdb;
@@ -243,6 +264,17 @@ tachyfont.Metadata.initialize = function(store, createTime) {
       tachyfont.MetadataDefines.CREATED_METADATA;
   metadata[tachyfont.MetadataDefines.ACTIVITY_TIME] =
       metadata[tachyfont.MetadataDefines.CREATED_METADATA_TIME] = createTime;
+  store.put(metadata, 0);
+};
+
+
+/**
+ * Initializes the compact TachyFont per font metadata table.
+ * @param {!IDBObjectStore} store The IndexedDB object store.
+ */
+tachyfont.Metadata.initializeCompact = function(store) {
+  var metadata = {};
+  metadata[tachyfont.MetadataDefines.ACTIVITY_TIME] = goog.now();
   store.put(metadata, 0);
 };
 
