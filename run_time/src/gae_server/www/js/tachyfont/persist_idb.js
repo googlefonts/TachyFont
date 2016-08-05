@@ -204,7 +204,7 @@ tachyfont.Persist.openGlobalDatabase = function() {
 
 
 /**
- * Initializes the char list table.
+ * Initializes the per font char list table.
  * @param {!IDBObjectStore} store The IndexedDB object store.
  */
 // TODO(bstell): this is a 'policy' function so move it out of the db layer;
