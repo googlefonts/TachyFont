@@ -157,7 +157,7 @@ tachyfont.Cmap.writeCmap4 = function(fileInfo, baseFontView, weight) {
  * @param {!Object} fileInfo Information about the font file.
  * @param {!DataView} baseFontView Current base font
  * @param {!Object<string, number>} charList The list of characters.
- * @param {!Object<number, !tachyfont.CharCmapInfo>} cmapMapping Information
+ * @param {!tachyfont.typedef.CmapMapping} cmapMapping Information
  *     about the cmap segments for the codepoint.
  * @param {string} weight The font weight for error reporting.
  * @param {boolean} charsLoaded If set check that the chars are loaded.
@@ -330,7 +330,7 @@ tachyfont.Cmap.checkCharacters = function(fileInfo, baseFontView,
  * @param {!Array<number>} glyphIds The glyph Ids to set.
  * @param {!Object<number, Array<number>>} glyphToCodeMap The glyph Id to code
  *     point mapping;
- * @param {!Object<number, !tachyfont.CharCmapInfo>} cmapMapping Information
+ * @param {!tachyfont.typedef.CmapMapping} cmapMapping Information
  *     about the cmap segments for the codepoint.
  * @param {string} weight The font weight for error reporting.
  */
@@ -441,7 +441,7 @@ tachyfont.Cmap.setFormat4GlyphIds = function(fileInfo, baseFontView, glyphIds,
  * @param {!Array<number>} glyphIds The glyph Ids to set.
  * @param {!Object<number, Array<number>>} glyphToCodeMap The glyph Id to code
  *     point mapping;
- * @param {!Object<number, !tachyfont.CharCmapInfo>} cmapMapping Information
+ * @param {!tachyfont.typedef.CmapMapping} cmapMapping Information
  *     about the cmap segments for the codepoint.
  * @param {string} weight The weight of the font.
  */

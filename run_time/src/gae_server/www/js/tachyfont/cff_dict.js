@@ -48,7 +48,6 @@ tachyfont.CffDict = function(name, dataView) {
   /** @private @const {!DataView} */
   this.dataView_ = dataView;
 
-
   /**
    * Map of operator->operand(s).
    * @private @const {!Object<string, !tachyfont.CffDict.OperandsOperatorSet>}

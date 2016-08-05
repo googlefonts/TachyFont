@@ -20,6 +20,8 @@
 goog.provide('tachyfont.BinaryFontEditor');
 
 
+goog.require('goog.asserts');
+goog.require('tachyfont.CharCmapInfo');
 /** @suppress {extraRequire} */
 goog.require('tachyfont.typedef.FileInfo');
 /** @suppress {extraRequire} */
@@ -882,3 +884,79 @@ tachyfont.BinaryFontEditor.prototype.setGlyphDataOffset =
 };
 
 
+/**
+ * Get the character to glyphId mapping.
+ * @param {!tachyfont.typedef.FileInfo} headerInfo Header information.
+ * @return {!tachyfont.typedef.CmapMapping} Map of chars to glyphId,
+ *     format4Seg, format12Seg.
+ */
+tachyfont.BinaryFontEditor.getCmapMapping = function(headerInfo) {
+  var cmapMapping = {};
+  var charCmapInfo;
+  // Parse format 4.
+  if (headerInfo.compact_gos.cmap4) {
+    var segments = headerInfo.compact_gos.cmap4.segments;
+    var glyphIdArray = headerInfo.compact_gos.cmap4.glyphIdArray;
+    var glyphIdIndex = 0;
+    for (var i = 0; i < segments.length; i++) {
+      var startCode = segments[i][0];
+      var endCode = segments[i][1];
+      var idDelta = segments[i][2];
+      var idRangeOffset = segments[i][3];
+      var length = endCode - startCode + 1;
+      for (var j = 0; j < length; j++) {
+        var code = startCode + j;
+        var glyphId = null;
+        if (idRangeOffset == 0) {
+          glyphId = (code + idDelta) % 65536;
+        } else {
+          if (goog.DEBUG) {
+            debugger;  // TODO(bstell): verify this code.
+          }
+          glyphId = glyphIdArray[glyphIdIndex++];
+          if (glyphId == 0) {
+            // This code is not mapped in the font.
+            if (goog.DEBUG) {
+              debugger;  // TODO(bstell): verify this code.
+            }
+            continue;
+          }
+        }
+        charCmapInfo = new tachyfont.CharCmapInfo(glyphId, i, null);
+        cmapMapping[code] = charCmapInfo;
+      }
+    }
+  }
+
+
+  if (!headerInfo.compact_gos.cmap12) {
+    if (goog.DEBUG) {
+      debugger;  // TODO(bstell): need to handle this.
+    }
+    return cmapMapping;
+  }
+  var n12Groups = headerInfo.cmap12.nGroups;
+  var segments = headerInfo.compact_gos.cmap12.segments;
+  for (var i = 0; i < n12Groups; i++) {
+    var startCode = segments[i][0];
+    var length = segments[i][1];
+    var startGlyphId = segments[i][2];
+    for (var j = 0; j < length; j++) {
+      var code = startCode + j;
+      charCmapInfo = cmapMapping[code];
+      var glyphId = startGlyphId + j;
+      if (goog.DEBUG) {
+        if (charCmapInfo) {
+          goog.asserts.assert(
+              charCmapInfo.glyphId == glyphId, 'format 4/12 glyphId mismatch');
+        }
+      }
+      if (!charCmapInfo) {
+        charCmapInfo = new tachyfont.CharCmapInfo(glyphId, null, null);
+        cmapMapping[code] = charCmapInfo;
+      }
+      charCmapInfo.format12Seg = i;
+    }
+  }
+  return cmapMapping;
+};
