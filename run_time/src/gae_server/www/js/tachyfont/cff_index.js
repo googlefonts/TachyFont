@@ -68,7 +68,7 @@ tachyfont.CffIndex = function(name, offset, type, binaryEditor) {
    * any offsets). However, all the fonts handled by TachyFont have been
    * processed by fontTools and it always adds a 0x01 byte for offsetSize and a
    * single 0x01 byte for the offsets array.
-   * @private {number}
+   * @private @const {number}
    */
   this.numberOfOffsets_ = count + 1;
 
