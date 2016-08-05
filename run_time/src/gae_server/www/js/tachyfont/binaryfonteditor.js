@@ -402,7 +402,7 @@ tachyfont.BinaryFontEditor.prototype.readNextGOS = function() {
     var gid;
     var segment;
     for (var i = 0; i < nGroups; i++) {
-      segment = this.getElementOffset(3); //lower 24 bits
+      segment = this.getElementOffset(3);  //lower 24 bits
       startCode = (segment & 0xF80000) >> 19;
       length = (segment & 0x70000) >> 16;
       gid = segment & 0xFFFF;
@@ -644,7 +644,7 @@ tachyfont.BinaryFontEditor.readOps.CCMP = function(editor, font) {
     var idRangeOffset;
     var startGid;
     var codeRange;
-    for (var i = 0; i < fmt4SegCount; i++) { // fix this
+    for (var i = 0; i < fmt4SegCount; i++) {  // fix this
       if (gos_type_4_lens.segments[i] == 0) {
         // The only time there is a format 4 segment with no format 12
         // segment is the format 4 end segment 0xFFFF.
@@ -684,7 +684,7 @@ tachyfont.BinaryFontEditor.readOps.CCMP = function(editor, font) {
             if (currentSeg <= fmt12SegNumEnd)
               currentSegArr = gos_type_12.segments[currentSeg];
           }else if (codePoint < currentSegArr[0]) {
-            glyphIdArray.push(0); //missing codepoint
+            glyphIdArray.push(0);  //missing codepoint
             codePoint++;
           }
         }

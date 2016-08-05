@@ -49,6 +49,26 @@ goog.require('tachyfont.CffIndex');
  * http://wwwimages.adobe.com/content/dam/Adobe/en/devnet/font/pdfs/5176.CFF.pdf
  * For a detailed description of the OpenType font format @see
  * http://www.microsoft.com/typography/otspec/otff.htm
+ *
+ * For reference: How to read/parse the CFF table
+ * ----------------------------------------------
+ * The items in the CFF table are organized as:
+ *     1) Items that are placed one after another.
+ *        - Header
+ *        - Name INDEX
+ *        - Top DICT INDEX
+ *        - etc.
+ *     2) Items found by their offset in the Top DICT.
+ *        - CharStrings INDEX
+ *        - Font DICT INDEX
+ *        - Private DICTs (which are found relative to the Font DICT INDEX)
+ *
+ * To read the CFF table the code:
+ *     - Determines the sizes of the items before the Top DICT INDEX
+ *     - Reads the Top DICT INDEX
+ *     - Uses the first element in the Top DICT INDEX as the Top DICT
+ *     - Reads the other items using the offsets in the Top DICT
+ *
  * @param {number} cffTableOffset The offset in the OpenType font to the CFF
  *     table.
  * @param {!DataView} fontData The font data.
@@ -57,25 +77,6 @@ goog.require('tachyfont.CffIndex');
  */
 tachyfont.Cff = function(cffTableOffset, fontData) {
 
-  // As detailed in
-  // http://wwwimages.adobe.com/content/dam/Adobe/en/devnet/font/pdfs/5176.CFF.pdf
-  //
-  // the items in the CFF table are organized as:
-  //     1) Items that are placed one after another.
-  //        - Header
-  //        - Name INDEX
-  //        - Top DICT INDEX
-  //        - etc.
-  //     2) Items found by their offset in the Top DICT.
-  //        - CharStrings INDEX
-  //        - Font DICT INDEX
-  //        - Private DICTs (which are found relative to the Font DICT INDEX)
-  //
-  // To read the CFF table the code:
-  //     - Determines the sizes of the items before the Top DICT INDEX
-  //     - Reads the Top DICT INDEX
-  //     - Uses the first element in the Top DICT INDEX as the Top DICT
-  //     - Reads the other items using the offsets in the Top DICT
 
   /**
    * Font data bytes.
@@ -90,13 +91,13 @@ tachyfont.Cff = function(cffTableOffset, fontData) {
   this.binaryEditor_ = new tachyfont.BinaryFontEditor(fontData, cffTableOffset);
 
   // Find the offset to the Top DICT INDEX.
-  // Move past the CFF Header.
+  // First move past the CFF Header.
   var offset = tachyfont.Cff.getHeaderSize(this.binaryEditor_);
-  // Move past the CFF Name INDEX
+  // Next move past the CFF Name INDEX
   offset += tachyfont.CffIndex.computeLength(offset, this.binaryEditor_);
+
   // Read the Top DICT INDEX.
   var topDictIndex = tachyfont.Cff.readTopDictIndex(offset, this.binaryEditor_);
-
   var topDict = topDictIndex.getDictElement(0);
   if (topDict == null) {
     // Library fatal error: without a Top DICT the font cannot be read nor
@@ -123,7 +124,6 @@ tachyfont.Cff = function(cffTableOffset, fontData) {
   this.charStringsIndex_ =
       tachyfont.Cff.readCharStringsIndex(this.topDict_, this.binaryEditor_);
 
-
   /**
    * The CFF Font DICT INDEX:
    *   - found by an offset in the Top DICT
@@ -136,7 +136,7 @@ tachyfont.Cff = function(cffTableOffset, fontData) {
 
 
 /**
- * Get the font data.
+ * Gets the font data bytes.
  * @return {!DataView}
  */
 tachyfont.Cff.prototype.getFontData = function() {
@@ -145,7 +145,7 @@ tachyfont.Cff.prototype.getFontData = function() {
 
 
 /**
- * Get the binaryEditor.
+ * Gets the binaryEditor.
  * @return {!tachyfont.BinaryFontEditor}
  */
 tachyfont.Cff.prototype.getBinaryEditor = function() {
@@ -154,7 +154,7 @@ tachyfont.Cff.prototype.getBinaryEditor = function() {
 
 
 /**
- * Get the Top DICT.
+ * Gets the Top DICT.
  * @return {!tachyfont.CffDict}
  */
 tachyfont.Cff.prototype.getTopDict = function() {
@@ -163,7 +163,7 @@ tachyfont.Cff.prototype.getTopDict = function() {
 
 
 /**
- * Get the Font DICT INDEX.
+ * Gets the Font DICT INDEX.
  * This has the relative offsets to the Private Font DICTs.
  * @return {!tachyfont.CffIndex}
  */
@@ -173,7 +173,7 @@ tachyfont.Cff.prototype.getFontDictIndex = function() {
 
 
 /**
- * Get the CFF header size.
+ * Gets the CFF header size.
  * The CFF Header holds it own length to provide upward compatibility if more
  * header space is needed.
  * @param {!tachyfont.BinaryFontEditor} binaryEditor Helper class to edit the
@@ -181,7 +181,7 @@ tachyfont.Cff.prototype.getFontDictIndex = function() {
  * @return {number} The size of the CFF header.
  */
 tachyfont.Cff.getHeaderSize = function(binaryEditor) {
-  binaryEditor.seek(2); // Skip the major and minor number.
+  binaryEditor.seek(2);  // Skip the major and minor number.
   return binaryEditor.getUint8();
 };
 
@@ -278,7 +278,7 @@ tachyfont.Cff.prototype.getData = function(offset, length) {
 
 
 /**
- * Get the specified operand for an operator.
+ * Gets the specified operand for an operator.
  * CFF DICTs store values as sets of (1 or more) operands followed by an
  * operator. For example the font bounding box is specified by four operands
  * (eg, -991 -1050 2930 1810) followed by the FontBBox (5) operator.
