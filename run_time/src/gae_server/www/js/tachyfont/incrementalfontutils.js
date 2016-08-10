@@ -52,6 +52,30 @@ tachyfont.IncrementalFontUtils.STYLESHEET_ID =
 
 
 /**
+ * Set the Horizontal/Vertical metrics.
+ * @param {number} flags Indicates what is in the glyphData.
+ * @param {!tachyfont.GlyphBundleResponse.GlyphData} glyphData An object holding
+ *     the glyph data.
+ * @param {!tachyfont.BinaryFontEditor} baseBinaryEditor A font editor.
+ * @param {!tachyfont.typedef.FileInfo} fileInfo Info about the font bytes.
+ */
+tachyfont.IncrementalFontUtils.setMtx = function(
+    flags, glyphData, baseBinaryEditor, fileInfo) {
+  var id = glyphData.getId();
+  if (flags & tachyfont.IncrementalFontUtils.FLAGS.HAS_HMTX) {
+    var hmtx = glyphData.getHmtx();
+    baseBinaryEditor.setMtxSideBearing(
+        fileInfo.hmtxOffset, fileInfo.hmetricCount, id, hmtx);
+  }
+  if (flags & tachyfont.IncrementalFontUtils.FLAGS.HAS_VMTX) {
+    var vmtx = glyphData.getVmtx();
+    baseBinaryEditor.setMtxSideBearing(
+        fileInfo.vmtxOffset, fileInfo.vmetricCount, id, vmtx);
+  }
+};
+
+
+/**
  * Parses base font header, set properties.
  * @param {!DataView} baseFont Base font with header.
  * @param {!Object} headerInfo Header information
