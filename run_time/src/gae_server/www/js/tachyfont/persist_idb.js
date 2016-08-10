@@ -442,3 +442,80 @@ tachyfont.Persist.getData = function(idb, name) {
   });
   return getData;
 };
+
+
+/**
+ * Put data to an object store.
+ * @param {!IDBTransaction} transaction The transaction object.
+ * @param {string} name The name of the store to retrieve.
+ * @param {*} value The value to write to the store.
+ * @return {!goog.Promise<*,?>} Promise when the data is written.
+ */
+tachyfont.Persist.putStore = function(transaction, name, value) {
+  var putStorePromise = new goog.Promise(function(resolve, reject) {
+    var store = transaction.objectStore(name);
+    var request = store.put(value, 0);
+    request.onsuccess = function(e) {
+      resolve(value);  //
+    };
+
+    request.onerror = function(e) {
+      reject(e);  //
+    };
+  });
+  return putStorePromise;
+};
+
+
+/**
+ * Put data to a group of object stores.
+ * @param {!IDBTransaction} transaction The transaction object.
+ * @param {!Array<string>} names The names of the stores to retrieve.
+ * @param {!Array<*>} values The values to write to the stores.
+ * @return {!goog.Promise<?,?>} Promise when the data is written.
+ */
+tachyfont.Persist.putStores = function(transaction, names, values) {
+  var results = [];
+  for (var i = 0; i < names.length; i++) {
+    results[i] = tachyfont.Persist.putStore(transaction, names[i], values[i]);
+  }
+  return goog.Promise.all(results);
+};
+
+
+/**
+ * Get data from an object store.
+ * @param {!IDBTransaction} transaction The transaction object.
+ * @param {string} name The name of the store to retrieve.
+ * @return {!goog.Promise<*,?>} Promise to return the data.
+ */
+tachyfont.Persist.getStore = function(transaction, name) {
+  var getStorePromise = new goog.Promise(function(resolve, reject) {
+    var store = transaction.objectStore(name);
+    var request = store.get(0);
+    request.onsuccess = function(e) {
+      resolve(e.target.result);  //
+    };
+
+    request.onerror = function(e) {
+      reject(e);  //
+    };
+  });
+  return getStorePromise;
+};
+
+
+/**
+ * Get data from a group of object stores.
+ * @param {!IDBTransaction} transaction An optional transaction object.
+ * @param {!Array<string>} names The names of the stores to retrieve.
+ * @return {!goog.Promise<!Array<*>,?>} Promise to return the array of data.
+ */
+tachyfont.Persist.getStores = function(transaction, names) {
+  var results = [];
+  for (var i = 0; i < names.length; i++) {
+    var getStorePromise = tachyfont.Persist.getStore(transaction, names[i]);
+    results.push(getStorePromise);
+  }
+  return goog.Promise.all(results);
+};

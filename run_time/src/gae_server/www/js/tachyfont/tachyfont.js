@@ -700,7 +700,9 @@ tachyfont.loadFonts_getCompactFont_ = function(incrfont) {
         return incrfont.getCompactFontFromUrl(
             incrfont.backendService, incrfont.fontInfo);
       })
-      .thenCatch(function() { return null; });
+      .thenCatch(function() {
+        return null;  //
+      });
 };
 
 
