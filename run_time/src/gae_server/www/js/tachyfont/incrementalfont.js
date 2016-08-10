@@ -903,40 +903,20 @@ tachyfont.IncrementalFont.obj.prototype.injectCharacters = function(
  */
 tachyfont.IncrementalFont.obj.prototype.setFont = function(fontData) {
   var msg = this.fontInfo.getName() + ' setFont.' + this.fontId_;
-  if (goog.DEBUG) {
-    goog.log.log(
-        tachyfont.Logger.logger, goog.log.Level.FINER,
-        'setFont.' + this.fontId_ + ': wait for preceding');
-  }
   var finishPrecedingSetFont =
       this.finishPrecedingSetFont_.getChainedPromise(msg);
   finishPrecedingSetFont.getPrecedingPromise()
       .then(function() {
-        if (goog.DEBUG) {
-          goog.log.log(
-              tachyfont.Logger.logger, goog.log.Level.FINER,
-              'setFont.' + this.fontId_ + ': done waiting for preceding');
-        }
         this.needToSetFont = false;
-        return goog.Promise.resolve()
-            .then(function() {
-              if (goog.DEBUG) {
-                goog.log.fine(tachyfont.Logger.logger, 'setFont ' +
-                 this.fontInfo.getName());
-              }
-              return tachyfont.Browser.setFont(fontData, this.fontInfo,
-                  this.fileInfo_.isTtf, this.blobUrl_);
-            }.bind(this))
+        return tachyfont.Browser
+            .setFont(
+                fontData, this.fontInfo, this.fileInfo_.isTtf, this.blobUrl_)
             .then(function(newBlobUrl) {
               this.blobUrl_ = newBlobUrl;
               finishPrecedingSetFont.resolve();
             }.bind(this));
       }.bind(this))
       .thenCatch(function(e) {
-        if (goog.DEBUG) {
-          goog.log.fine(
-              tachyfont.Logger.logger, 'setFont.' + this.fontId_ + ': failed');
-        }
         finishPrecedingSetFont.reject();
       }.bind(this));
   return finishPrecedingSetFont.getPromise();
