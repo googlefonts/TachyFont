@@ -1056,7 +1056,9 @@ tachyfont.IncrementalFont.obj.prototype.loadChars = function() {
               }
               return this.getBase.then(function(array) {
                 var fontData = array[1];
-                this.injectChars(fontData, neededCodes, bundleResponse);
+                var glyphToCodeMap = this.getGlyphToCodeMap(neededCodes);
+                this.injectChars(
+                    fontData, neededCodes, glyphToCodeMap, bundleResponse);
               }.bind(this));
             }.bind(this))
             .then(function() {
@@ -1236,7 +1238,7 @@ tachyfont.IncrementalFont.obj.prototype.handleFingerprintMismatch =
 /**
  * Inject glyph data and enable the chars in the cmaps.
  * @param {!Array<number>} neededCodes The codes to be injected.
- * @return {!Object<?,?>}
+ * @return {!Object<number,!Array<number>>}
  */
 tachyfont.IncrementalFont.obj.prototype.getGlyphToCodeMap = function(
     neededCodes) {
@@ -1267,11 +1269,12 @@ tachyfont.IncrementalFont.obj.prototype.getGlyphToCodeMap = function(
  * Inject glyph data and enable the chars in the cmaps.
  * @param {!DataView} fontData The font data bytes.
  * @param {!Array<number>} neededCodes The codes to be injected.
- * @param {!tachyfont.GlyphBundleResponse} bundleResponse New glyph data
+ * @param {!Object<number, !Array<number>>} glyphToCodeMap A map from the glyph
+ *     id to the codepoints.
+ * @param {!tachyfont.GlyphBundleResponse} bundleResponse New glyph data.
  */
 tachyfont.IncrementalFont.obj.prototype.injectChars = function(
-    fontData, neededCodes, bundleResponse) {
-  var glyphToCodeMap = this.getGlyphToCodeMap(neededCodes);
+    fontData, neededCodes, glyphToCodeMap, bundleResponse) {
   var extraGlyphs = [];
   fontData = this.injectCharacters(
       fontData, bundleResponse, glyphToCodeMap, extraGlyphs);
