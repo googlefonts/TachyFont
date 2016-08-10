@@ -270,6 +270,7 @@ tachyfont.IncrementalFont.obj = function(fontInfo, params, backendService) {
    * Information about the fonts
    * @type {!tachyfont.FontInfo}
    */
+  // TODO(bstell): make fontInfo private.
   this.fontInfo = fontInfo;
 
   this.fontName = fontInfo.getName();
@@ -333,6 +334,15 @@ tachyfont.IncrementalFont.obj = function(fontInfo, params, backendService) {
    */
   this.finishPrecedingSetFont_ =
       new tachyfont.chainedPromises('finishPrecedingSetFont_');
+};
+
+
+/**
+ * Gets fontInfo member.
+ * @return {!tachyfont.FontInfo}
+ */
+tachyfont.IncrementalFont.obj.prototype.getFontInfo = function() {
+  return this.fontInfo;
 };
 
 
@@ -776,7 +786,8 @@ tachyfont.IncrementalFont.obj.prototype.injectCharacters =
     var id = glyphData.getId();
     glyphIds.push(id);
     var nextId = id + 1;
-    this.setMtx(flags, glyphData, baseBinaryEditor);
+    tachyfont.IncrementalFont.setMtx(
+        flags, glyphData, baseBinaryEditor, this.fileInfo_);
 
     var offset = glyphData.getOffset();
     var length = glyphData.getLength();
@@ -892,19 +903,20 @@ tachyfont.IncrementalFont.obj.prototype.injectCharacters =
  * @param {!tachyfont.GlyphBundleResponse.GlyphData} glyphData An object holding
  *     the glyph data.
  * @param {!tachyfont.BinaryFontEditor} baseBinaryEditor A font editor.
+ * @param {!tachyfont.typedef.FileInfo} fileInfo Info about the font bytes.
  */
-tachyfont.IncrementalFont.obj.prototype.setMtx = function(flags,
-    glyphData, baseBinaryEditor) {
+tachyfont.IncrementalFont.setMtx = function(
+    flags, glyphData, baseBinaryEditor, fileInfo) {
   var id = glyphData.getId();
   if (flags & tachyfont.IncrementalFontUtils.FLAGS.HAS_HMTX) {
     var hmtx = glyphData.getHmtx();
-    baseBinaryEditor.setMtxSideBearing(this.fileInfo_.hmtxOffset,
-        this.fileInfo_.hmetricCount, id, hmtx);
+    baseBinaryEditor.setMtxSideBearing(
+        fileInfo.hmtxOffset, fileInfo.hmetricCount, id, hmtx);
   }
   if (flags & tachyfont.IncrementalFontUtils.FLAGS.HAS_VMTX) {
     var vmtx = glyphData.getVmtx();
-    baseBinaryEditor.setMtxSideBearing(this.fileInfo_.vmtxOffset,
-        this.fileInfo_.vmetricCount, id, vmtx);
+    baseBinaryEditor.setMtxSideBearing(
+        fileInfo.vmtxOffset, fileInfo.vmetricCount, id, vmtx);
   }
 };
 
