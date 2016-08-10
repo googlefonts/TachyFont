@@ -19,11 +19,8 @@
 
 goog.provide('tachyfont.Cmap');
 
-goog.require('goog.log');
-goog.require('goog.log.Level');
 goog.require('tachyfont.BinaryFontEditor');
 goog.require('tachyfont.Define');
-goog.require('tachyfont.Logger');
 goog.require('tachyfont.Reporter');
 goog.require('tachyfont.utils');
 
@@ -66,15 +63,8 @@ tachyfont.Cmap.Error = {
  * @param {*} errInfo The error object;
  */
 tachyfont.Cmap.reportError = function(errNum, errId, errInfo) {
-  if (goog.DEBUG) {
-    if (!tachyfont.Reporter.isReady()) {
-      goog.log.error(tachyfont.Logger.logger, 'failed to report error');
-    }
-  }
-  if (tachyfont.Reporter.isReady()) {
-    tachyfont.Reporter.reportError(
-        tachyfont.Cmap.Error.FILE_ID + errNum, errId, errInfo);
-  }
+  tachyfont.Reporter.reportError(
+      tachyfont.Cmap.Error.FILE_ID + errNum, errId, errInfo);
 };
 
 
@@ -399,9 +389,6 @@ tachyfont.Cmap.setFormat4GlyphIds = function(
     }
     for (var j = 0; j < codes.length; j++) {
       var code = codes[j];
-      if (goog.DEBUG) {
-        goog.log.info(tachyfont.Logger.logger, 'format 4: code = ' + code);
-      }
       var charCmapInfo = fileInfo.cmapMapping[code];
       if (!charCmapInfo) {
         tachyfont.Cmap.reportError(
@@ -452,10 +439,6 @@ tachyfont.Cmap.setFormat12GlyphIds = function(
     }
     for (var j = 0; j < codes.length; j++) {
       var code = codes[j];
-      if (goog.DEBUG) {
-        goog.log.log(tachyfont.Logger.logger, goog.log.Level.FINER,
-            'format 12: code = ' + code);
-      }
       var charCmapInfo = fileInfo.cmapMapping[code];
       if (!charCmapInfo) {
         tachyfont.Cmap.reportError(

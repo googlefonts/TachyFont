@@ -21,9 +21,7 @@ goog.provide('tachyfont.Metadata');
 goog.provide('tachyfont.Persist');
 
 goog.require('goog.Promise');
-goog.require('goog.log');
 goog.require('tachyfont.Define');
-goog.require('tachyfont.Logger');
 goog.require('tachyfont.Reporter');
 
 
@@ -57,15 +55,8 @@ tachyfont.Persist.Error = {
  * @param {*} errInfo The error object;
  */
 tachyfont.Persist.reportError = function(errNum, errId, errInfo) {
-  if (goog.DEBUG) {
-    if (!tachyfont.Reporter.isReady()) {
-      goog.log.error(tachyfont.Logger.logger, 'failed to report error');
-    }
-  }
-  if (tachyfont.Reporter.isReady()) {
-    tachyfont.Reporter.reportError(
-        tachyfont.Persist.Error.FILE_ID + errNum, errId, errInfo);
-  }
+  tachyfont.Reporter.reportError(
+      tachyfont.Persist.Error.FILE_ID + errNum, errId, errInfo);
 };
 
 

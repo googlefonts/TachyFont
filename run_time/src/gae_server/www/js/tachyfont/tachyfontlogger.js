@@ -17,41 +17,90 @@
  * the License.
  */
 
-goog.provide('tachyfont.Logger');
+goog.provide('tachyfont.log');
 
+goog.require('goog.debug.Logger');
 goog.require('goog.log');
+goog.require('goog.log.Level');
 
-if (goog.DEBUG) {
-  /**
-   * A class variable to limit initialization to a single time.
-   *
-   * @private {boolean}
-   */
-  tachyfont.Logger.hasInitialized_ = false;
 
-  /**
-   * For test allow reinitializing the logger.
-   * @param {boolean} hasInitialized
-   */
-  tachyfont.Logger.setHasInitialized = function(hasInitialized) {
-    tachyfont.Logger.hasInitialized_ = hasInitialized;
-  };
+/**
+ * @type {?goog.debug.Logger.Level}
+ */
+tachyfont.log.level = goog.debug.Logger.Level.INFO;
 
-  /**
-   * Initialize the logger.
-   * @param {?goog.debug.Logger.Level} debugLevel The desired debug level.
-   */
-  tachyfont.Logger.init = function(debugLevel) {
-    if (tachyfont.Logger.hasInitialized_) {
-      throw new Error('logger already initialized');
-    }
 
-    tachyfont.Logger.hasInitialized_ = true;
+/**
+ * @type {?goog.debug.Logger}
+ */
+tachyfont.log.logger = null;
 
-    /**
-     * @type {?goog.debug.Logger}
-     */
-    tachyfont.Logger.logger = goog.log.getLogger('tachyfont', debugLevel);
-  };
-}
 
+/**
+ * Gets the logging level.
+ * @return {?goog.debug.Logger.Level} The current log level.
+ */
+tachyfont.log.getLogLevel = function() {
+  return tachyfont.log.level;
+};
+
+
+/**
+ * Sets the logging level.
+ * @param {?goog.debug.Logger.Level} level The new log level.
+ */
+tachyfont.log.setLogLevel = function(level) {
+  tachyfont.log.level = level;
+  tachyfont.log.logger = goog.log.getLogger('tachyfont', level);
+};
+
+
+/**
+ * Gets the logger.
+ * @return {?goog.debug.Logger}
+ */
+tachyfont.log.getLogger = function() {
+  if (!tachyfont.log.logger) {
+    tachyfont.log.logger = goog.log.getLogger('tachyfont', tachyfont.log.level);
+  }
+  return tachyfont.log.logger;
+};
+
+
+/**
+ * Sets the logger.
+ * @param {?goog.debug.Logger} logger The new logger.
+ */
+tachyfont.log.setLogger = function(logger) {
+  tachyfont.log.logger = logger;
+};
+
+
+/**
+ * Sends a log message if the log level is info of lower.
+ * @param {string} message The message to log.
+ */
+tachyfont.log.info = function(message) {
+  var logger = tachyfont.log.getLogger();
+  goog.log.log(logger, goog.log.Level.INFO, message);
+};
+
+
+/**
+ * Sends a log message if the log level is warning of lower.
+ * @param {string} message The message to log.
+ */
+tachyfont.log.warning = function(message) {
+  var logger = tachyfont.log.getLogger();
+  goog.log.log(logger, goog.log.Level.WARNING, message);
+};
+
+
+/**
+ * Sends a log message if the log level is severe of lower.
+ * @param {string} message The message to log.
+ */
+tachyfont.log.severe = function(message) {
+  var logger = tachyfont.log.getLogger();
+  goog.log.log(logger, goog.log.Level.SEVERE, message);
+};

@@ -20,10 +20,8 @@
 goog.provide('tachyfont.Browser');
 
 goog.require('goog.Promise');
-goog.require('goog.log');
-goog.require('goog.log.Level');
 goog.require('tachyfont.IncrementalFontUtils');
-goog.require('tachyfont.Logger');
+goog.require('tachyfont.log');
 
 
 /**
@@ -52,9 +50,6 @@ tachyfont.Browser.setFont = function(fontData, fontInfo, isTtf, oldBlobUrl) {
 
   return tachyfont.Browser.setFontNoFlash(fontInfo, format, blobUrl)
       .then(function() {
-        if (goog.DEBUG) {
-          goog.log.fine(tachyfont.Logger.logger, 'setFont: setFont done');
-        }
         return goog.Promise.resolve(blobUrl);
       });
 };
@@ -92,10 +87,6 @@ tachyfont.Browser.setFontNoFlash = function(fontInfo, format, blobUrl) {
 
   // Create a temporary @font-face rule to transfer the blobUrl data from
   // Javascript to the browser side.
-  if (goog.DEBUG) {
-    goog.log.log(tachyfont.Logger.logger, goog.log.Level.FINER,
-        'setFont: ' + tmpFontFamily + '/' + weight);
-  }
   tachyfont.IncrementalFontUtils.setCssFontRule(sheet, tmpFontFamily, weight,
       blobUrl, format);
 
@@ -106,11 +97,6 @@ tachyfont.Browser.setFontNoFlash = function(fontInfo, format, blobUrl) {
             // multiple of 100. So use an artifical weight to work around this
             // problem.
             var fontStr = '400 20px ' + tmpFontFamily;
-            if (goog.DEBUG) {
-              goog.log.log(
-                  tachyfont.Logger.logger, goog.log.Level.FINER,
-                  'setFont: fontStr = ' + fontStr);
-            }
             // Transfer the data.
             // TODO(bstell): Make this cross platform.
             document.fonts.load(fontStr).then(
@@ -144,10 +130,6 @@ tachyfont.Browser.setFontNoFlash = function(fontInfo, format, blobUrl) {
  */
 tachyfont.Browser.switchFont = function(sheet, tmpFontFamily, fontFamily,
     weight, blobUrl, format) {
-  if (goog.DEBUG) {
-    goog.log.log(tachyfont.Logger.logger, goog.log.Level.FINER,
-        'switch to fontFamily');
-  }
   // Set the updated font rule.
   tachyfont.IncrementalFontUtils.setCssFontRule(sheet, fontFamily, weight,
       blobUrl, format);
@@ -156,9 +138,9 @@ tachyfont.Browser.switchFont = function(sheet, tmpFontFamily, fontFamily,
   var ruleToDelete = tachyfont.IncrementalFontUtils.findFontFaceRule(
       sheet, tmpFontFamily, weight);
   if (goog.DEBUG) {
-    goog.log.info(tachyfont.Logger.logger, '**** switched ' + weight +
-        ' from ' + tmpFontFamily + ' to ' + fontFamily +
-                ' ****');
+    tachyfont.log.info(
+        '**** switched ' + weight + ' from ' + tmpFontFamily + ' to ' +
+        fontFamily + ' ****');
   }
   tachyfont.IncrementalFontUtils.deleteCssRule(ruleToDelete, sheet);
 };

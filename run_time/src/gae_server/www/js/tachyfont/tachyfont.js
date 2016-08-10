@@ -24,16 +24,14 @@ goog.provide('tachyfont.TachyFont');
 goog.require('goog.Promise');
 goog.require('goog.Uri');
 goog.require('goog.debug.Logger');
-goog.require('goog.log');
-goog.require('goog.log.Level');
 goog.require('tachyfont.Define');
 /** @suppress {extraRequire} */
 goog.require('tachyfont.FontsInfo');
 goog.require('tachyfont.IncrementalFont');
-goog.require('tachyfont.Logger');
 goog.require('tachyfont.Persist');
 goog.require('tachyfont.Reporter');
 goog.require('tachyfont.TachyFontSet');
+goog.require('tachyfont.log');
 goog.require('tachyfont.utils');
 
 
@@ -82,7 +80,6 @@ tachyfont.TachyFont.GLOBAL_STABLE_DATA_TIME = 24 * 60 * 60 * 1000;
  */
 tachyfont.Error = {
   FILE_ID: 'ETF',
-  WINDOW_ON_ERROR: '01',  // '01' is deprecated.
   SET_FONT: '02',
   GET_BASE: '03',
   MISSING_FEATURE: '04',
@@ -109,28 +106,8 @@ tachyfont.Error = {
  * @param {*} errInfo The error object;
  */
 tachyfont.reportError = function(errNum, errInfo) {
-  if (tachyfont.Reporter.isReady()) {
-    tachyfont.Reporter.reportError(tachyfont.Error.FILE_ID + errNum, '000',
-        errInfo);
-  } else {
-    var obj = {};
-    obj.errNum = errNum;
-    obj.errInfo = errInfo;
-    setTimeout(function() {
-      tachyfont.delayedReportError_(obj);
-    }.bind(obj), 1000);
-  }
-};
-
-
-/**
- * Re-run the error report.
- * @param {!Object} obj An object holding the parameters for the error report.
- * @private
- */
-tachyfont.delayedReportError_ = function(obj) {
-  goog.log.error(tachyfont.Logger.logger, 'delayedReportError_');
-  tachyfont.reportError(obj.errNum, obj.errInfo);
+  tachyfont.Reporter.reportError(
+      tachyfont.Error.FILE_ID + errNum, '000', errInfo);
 };
 
 
@@ -156,7 +133,6 @@ if (window.addEventListener) {
     }
     var errorStr = JSON.stringify(errorObj);
     tachyfont.reportError(tachyfont.Error.KNOWN_WINDOW_ON_ERROR, errorStr);
-    tachyfont.reportError(tachyfont.Error.WINDOW_ON_ERROR, errorStr);
   };
   window.addEventListener('error', tachyfont.windowOnError_, false);
 }
@@ -184,7 +160,7 @@ if (goog.DEBUG) {
     var debugLevelStr =
         uri.getParameterValue('TachyFontDebugLevel') || 'WARNING';
     debugLevel = goog.debug.Logger.Level.getPredefinedLevel(debugLevelStr);
-    tachyfont.Logger.init(debugLevel);
+    tachyfont.log.setLogLevel(debugLevel);
 
     /**
      * Enable Compact TachyFont.
@@ -530,10 +506,6 @@ tachyfont.isSupportedBrowser = function(opt_windowObject) {
  */
 tachyfont.loadFonts_loadAndUse_ = function(tachyFontSet) {
   var msg = 'loadFonts';
-  if (goog.DEBUG) {
-    goog.log.log(tachyfont.Logger.logger, goog.log.Level.FINER,
-        'loadFonts: wait for preceding update');
-  }
   var waitPreviousTime = goog.now();
   var waitForPrecedingPromise =
       tachyFontSet.finishPrecedingUpdateFont.getChainedPromise(msg);
@@ -718,9 +690,6 @@ tachyfont.loadFonts_setupTextListeners_ = function(tachyFontSet) {
  * @private
  */
 tachyfont.loadFonts_domMutationObserver_ = function(tachyFontSet, mutations) {
-  if (goog.DEBUG) {
-    goog.log.fine(tachyfont.Logger.logger, 'MutationObserver');
-  }
   if (!mutations) {
     return;
   }
@@ -736,8 +705,7 @@ tachyfont.loadFonts_domMutationObserver_ = function(tachyFontSet, mutations) {
     } else if (mutation.type == 'characterData') {
       if (goog.DEBUG) {
         if (mutation.target.nodeName !== '#text') {
-          goog.log.info(tachyfont.Logger.logger,
-              'need to handle characterData for non-text');
+          tachyfont.log.info('need to handle characterData for non-text');
         }
       }
       tachyFontSet.recursivelyAddTextToFontGroups(mutation.target);
@@ -753,9 +721,6 @@ tachyfont.loadFonts_domMutationObserver_ = function(tachyFontSet, mutations) {
   }
   tachyFontSet.hadMutationEvents = true;
   if (immediateUpdate) {
-    if (goog.DEBUG) {
-      goog.log.info(tachyfont.Logger.logger, 'mutation observer: updateFonts');
-    }
     tachyFontSet.updateFonts(mutationTime, true);
   } else {
     // For pages that load new data slowly: request the fonts be updated soon.
@@ -789,16 +754,7 @@ tachyfont.loadFonts_handleDomContentLoaded_ = function(tachyFontSet, event) {
   // instead wait for the mutation event.
   if (tachyFontSet.hadMutationEvents) {
     // We have characters so update the fonts.
-    if (goog.DEBUG) {
-      goog.log.info(tachyfont.Logger.logger, 'DOMContentLoaded: updateFonts');
-    }
     tachyFontSet.updateFonts(0, true);
-  } else {
-    // The mutation event should be very soon.
-    if (goog.DEBUG) {
-      goog.log.info(tachyfont.Logger.logger,
-          'DOMContentLoaded: wait for mutation event');
-    }
   }
 };
 
