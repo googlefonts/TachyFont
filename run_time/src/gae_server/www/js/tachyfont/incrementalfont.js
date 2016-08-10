@@ -1032,7 +1032,7 @@ tachyfont.IncrementalFont.obj.prototype.loadChars = function() {
       this.finishPrecedingCharsRequest_.getChainedPromise(msg);
   finishPrecedingCharsRequest.getPrecedingPromise()
       .then(function() {
-        return this.calcNeededChars_()
+        return this.calcNeededChars()
             .then(function(neededCodes_) {
               neededCodes = neededCodes_;
               return this.fetchChars(neededCodes_);
@@ -1129,9 +1129,8 @@ tachyfont.IncrementalFont.obj.prototype.injectCompact = function(
 /**
  * Determine the codepoints that are in the font but not yet loaded.
  * @return {!goog.Promise} If successful returns a resolved promise.
- * @private
  */
-tachyfont.IncrementalFont.obj.prototype.calcNeededChars_ = function() {
+tachyfont.IncrementalFont.obj.prototype.calcNeededChars = function() {
   // Check if there are any new characters.
   var charArray = Object.keys(this.charsToLoad);
   if (charArray.length == 0) {
@@ -1167,10 +1166,7 @@ tachyfont.IncrementalFont.obj.prototype.calcNeededChars_ = function() {
           if (goog.DEBUG) {
             goog.log.fine(tachyfont.Logger.logger, 'no new characters');
           }
-          return goog.Promise.reject('no chars to load')
-              // Need a '.thenCatch' to stop debugging errors. See
-              // https://bugs.chromium.org/p/v8/issues/detail?id=3093
-              .thenCatch(function() {});
+          return goog.Promise.reject('no chars to load');
         }
         neededCodes = tachyfont.IncrementalFont.possibly_obfuscate(neededCodes,
             charlist, this.fileInfo_.cmapMapping);
