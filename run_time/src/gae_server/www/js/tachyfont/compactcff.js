@@ -18,39 +18,55 @@
 
 goog.provide('tachyfont.CompactCff');
 
+goog.require('goog.Promise');
 goog.require('tachyfont.BinaryFontEditor');
 goog.require('tachyfont.Cff');
 goog.require('tachyfont.CffDict');
 goog.require('tachyfont.Cmap');
+goog.require('tachyfont.Define');
 goog.require('tachyfont.IncrementalFontUtils');
+goog.require('tachyfont.Persist');
 goog.require('tachyfont.Sfnt');
+goog.require('tachyfont.utils');
 
 
 
 /**
- * This class manages compacting a CFF font.
- * @param {!DataView} fontData The font data bytes.
- * @param {!tachyfont.typedef.FileInfo} fileInfo Information about the font
- *     bytes.
- * @param {!tachyfont.FontInfo} fontInfo Information about the font (eg,
- *     weight).
+ * This class manages Compact TachyFont operations.
+ * @param {string} fontId A font identifier useful for error reports.
  * @constructor @struct @final
  */
-tachyfont.CompactCff = function(fontData, fileInfo, fontInfo) {
-  /** @private {!tachyfont.Sfnt.Font} */
-  this.sfnt_ = tachyfont.Sfnt.getFont(fontData);
+tachyfont.CompactCff = function(fontId) {
+  /**
+   * A font identifier useful for error reports.
+   * @private @const {string}
+   */
+  this.fontId_ = fontId;
+
+  /**
+   * The Sfnt font wrapper.
+   * Contains the font data bytes.
+   * @private {?tachyfont.Sfnt.Font}
+   */
+  this.sfnt_ = null;
 
   /**
    * Information about the font bytes.
-   * @private {!tachyfont.typedef.FileInfo}
+   * @private {?tachyfont.typedef.FileInfo}
    */
-  this.fileInfo_ = fileInfo;
+  this.fileInfo_ = null;
 
   /**
-   * Information about the font.
-   * @private {!tachyfont.FontInfo}
+   * A map of chars currently in the font.
+   * @private {?Object<string, number>}
    */
-  this.fontInfo_ = fontInfo;
+  this.charList_ = null;
+
+  /**
+   * Metadata about the font; eg, last time accessed.
+   * @private {?Object<string, *>}
+   */
+  this.metadata_ = null;
 };
 
 
@@ -59,6 +75,9 @@ tachyfont.CompactCff = function(fontData, fileInfo, fontInfo) {
  * @return {!tachyfont.Sfnt.Font}
  */
 tachyfont.CompactCff.prototype.getSfnt = function() {
+  if (!this.sfnt_) {
+    throw new Error('sfnt not set');
+  }
   return this.sfnt_;
 };
 
@@ -68,7 +87,40 @@ tachyfont.CompactCff.prototype.getSfnt = function() {
  * @return {!tachyfont.typedef.FileInfo}
  */
 tachyfont.CompactCff.prototype.getFileInfo = function() {
+  if (!this.fileInfo_) {
+    throw new Error('fileInfo not set');
+  }
   return this.fileInfo_;
+};
+
+
+/**
+ * Sets the table data.
+ * @param {!DataView} fontData The font data bytes.
+ * @param {!tachyfont.typedef.FileInfo} fileInfo Info about the font bytes.
+ * @param {!Object<string, number>} charList A map of the supported chars.
+ * @param {!Object<string, *>} metadata Metadata about the font.
+ */
+tachyfont.CompactCff.prototype.setTableData = function(
+    fontData, fileInfo, charList, metadata) {
+  this.sfnt_ = tachyfont.Sfnt.getFont(fontData);
+  this.fileInfo_ = fileInfo;
+  this.charList_ = charList;
+  this.metadata_ = metadata;
+};
+
+
+/**
+ * Gets the table data.
+ * @return {!Array<?DataView|?Object<string,*>|?Object<string,number>>}
+ */
+tachyfont.CompactCff.prototype.getTableData = function() {
+  return [
+    this.sfnt_.getFontData(),  //
+    this.fileInfo_,            //
+    this.charList_,            //
+    this.metadata_
+  ];
 };
 
 
@@ -78,8 +130,7 @@ tachyfont.CompactCff.prototype.getFileInfo = function() {
  * @return {string}
  */
 tachyfont.CompactCff.prototype.getFontId = function() {
-  // This should include other info such as slant, etc.
-  return this.fontInfo_.getWeight();
+  return this.fontId_;
 };
 
 
@@ -167,47 +218,73 @@ tachyfont.CompactCff.prototype.addDataSegment = function(
 
 
 /**
- * Inject glyphs in the compact font data expanding as necessary.
- * @param {!DataView} baseFontView Current base font
- * @param {!tachyfont.GlyphBundleResponse} bundleResponse New glyph data
- * @param {!Object<number, !Array<number>>} glyphToCodeMap This is both an
- *     input and an output:
- *       Input: the glyph-Id to codepoint mapping;
- *       Output: the glyph Ids that were expected but not in the bundleResponse.
- * @param {!Array<number>} extraGlyphs An output list of the extra glyph Ids.
- * @param {!tachyfont.typedef.FileInfo} fileInfo Info about the font bytes.
- * @param {string} fontId Used in error reports.
+ * @param {!IDBTransaction} transaction The current IndexedDB transaction.
+ * @return {!goog.Promise<?,?>}
  */
-tachyfont.CompactCff.prototype.injectGlyphBundle = function(
-    baseFontView, bundleResponse, glyphToCodeMap, extraGlyphs, fileInfo,
-    fontId) {
-  this.setCharacterInfo(
-      baseFontView, bundleResponse, glyphToCodeMap, extraGlyphs, fileInfo,
-      fontId);
-  var cffDataSegments = this.injectGlyphData(bundleResponse);
-  this.sfnt_.replaceTable(tachyfont.Sfnt.CFF_TAG, [cffDataSegments]);
+tachyfont.CompactCff.prototype.readDbTables = function(transaction) {
+  // Read the persisted data.
+  return tachyfont.Persist
+      .getStores(transaction, tachyfont.Define.compactStoreNames)
+      .then(function(dbTables) {
+        var fontData = dbTables[0];
+        var fileInfo = dbTables[1];
+        var charList = dbTables[2];
+        var metadata = dbTables[3];
+        if (!fontData || !fileInfo || !charList || !metadata) {
+          return goog.Promise.reject();
+        }
+        // TODO(bstell): update the metadata.
+        this.setTableData(fontData, fileInfo, charList, metadata);
+      }.bind(this));
+};
+
+
+/**
+ * @param {!IDBTransaction} transaction The current IndexedDB transaction.
+ * @return {!goog.Promise<?,?>}
+ */
+tachyfont.CompactCff.prototype.writeDbTables = function(transaction) {
+  // Read the persisted data.
+  return tachyfont.Persist.putStores(
+      transaction, tachyfont.Define.compactStoreNames, this.getTableData());
 };
 
 
 /**
  * Inject glyphs in the compact font data expanding as necessary.
- * @param {!DataView} baseFontView Current base font
  * @param {!tachyfont.GlyphBundleResponse} bundleResponse New glyph data
  * @param {!Object<number, !Array<number>>} glyphToCodeMap This is both an
  *     input and an output:
  *       Input: the glyph-Id to codepoint mapping;
  *       Output: the glyph Ids that were expected but not in the bundleResponse.
  * @param {!Array<number>} extraGlyphs An output list of the extra glyph Ids.
- * @param {!tachyfont.typedef.FileInfo} fileInfo Info about the font bytes.
- * @param {string} fontId Used in error reports.
+ */
+tachyfont.CompactCff.prototype.injectGlyphBundle = function(
+    bundleResponse, glyphToCodeMap, extraGlyphs) {
+  var origOffsets = this.sfnt_.getCompactOffsets();
+  this.setCharacterInfo(bundleResponse, glyphToCodeMap, extraGlyphs);
+  var cffDataSegments = this.injectGlyphData(bundleResponse);
+  this.sfnt_.replaceTable(tachyfont.Sfnt.CFF_TAG, [cffDataSegments]);
+  this.updateFileInfo(origOffsets);
+};
+
+
+/**
+ * Inject glyphs in the compact font data expanding as necessary.
+ * @param {!tachyfont.GlyphBundleResponse} bundleResponse New glyph data
+ * @param {!Object<number, !Array<number>>} glyphToCodeMap This is both an
+ *     input and an output:
+ *       Input: the glyph-Id to codepoint mapping;
+ *       Output: the glyph Ids that were expected but not in the bundleResponse.
+ * @param {!Array<number>} extraGlyphs An output list of the extra glyph Ids.
  * @return {!DataView} Updated base font
  */
 tachyfont.CompactCff.prototype.setCharacterInfo = function(
-    baseFontView, bundleResponse, glyphToCodeMap, extraGlyphs, fileInfo,
-    fontId) {
+    bundleResponse, glyphToCodeMap, extraGlyphs) {
 
-  fileInfo.dirty = true;
-  var baseBinaryEditor = new tachyfont.BinaryFontEditor(baseFontView, 0);
+  var fontData = this.sfnt_.getFontData();
+  this.fileInfo_.dirty = true;
+  var baseBinaryEditor = new tachyfont.BinaryFontEditor(fontData, 0);
 
   var count = bundleResponse.getGlyphCount();
   var flags = bundleResponse.getFlags();
@@ -223,23 +300,28 @@ tachyfont.CompactCff.prototype.setCharacterInfo = function(
   }
   // Set the glyph Ids in the cmap format 12 subtable;
   tachyfont.Cmap.setFormat12GlyphIds(
-      fileInfo, baseFontView, glyphIds, glyphToCodeMap, fontId);
+      this.fileInfo_, fontData, glyphIds, glyphToCodeMap, this.fontId_);
 
   // Set the glyph Ids in the cmap format 4 subtable;
   tachyfont.Cmap.setFormat4GlyphIds(
-      fileInfo, baseFontView, glyphIds, glyphToCodeMap, fontId);
+      this.fileInfo_, fontData, glyphIds, glyphToCodeMap, this.fontId_);
 
   // Remove the glyph Ids that were in the bundleResponse and record
   // the extra glyphs.
   for (var i = 0; i < glyphIds.length; i++) {
-    if (glyphToCodeMap[glyphIds[i]]) {
+    var codes = glyphToCodeMap[glyphIds[i]];
+    if (codes) {
+      for (var j = 0; j < codes.length; j++) {
+        var aChar = tachyfont.utils.stringFromCodePoint(codes[j]);
+        this.charList_[aChar] = 1;
+      }
       delete glyphToCodeMap[glyphIds[i]];
     } else {
       extraGlyphs.push(glyphIds[i]);
     }
   }
 
-  return baseFontView;
+  return fontData;
 };
 
 
