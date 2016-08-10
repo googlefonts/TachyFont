@@ -44,7 +44,7 @@ tachyfont.typedef.CmapMapping;
 
 /**
  * @typedef {{
- *     data: !DataView,
+ *     fontBytes: !DataView,
  *     charList: !Object<number, number>,
  *     fileInfo: !tachyfont.typedef.FileInfo
  * }}
