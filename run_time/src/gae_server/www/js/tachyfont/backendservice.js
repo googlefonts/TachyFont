@@ -135,7 +135,6 @@ BackendService.prototype.log = goog.functions.NULL;
  * @param {?string} postData Request data
  * @param {?Object} headers Request headers
  * @return {!goog.Promise} Promise to return response
- * @protected
  */
 BackendService.prototype.requestUrl = function(url, method, postData,
     headers) {
