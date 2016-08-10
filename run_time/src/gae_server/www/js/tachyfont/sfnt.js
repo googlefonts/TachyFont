@@ -96,7 +96,7 @@ tachyfont.Sfnt.Font.prototype.getTableOfContents = function() {
 
 
 /**
- * Get a Table Of Contents table entry.
+ * Gets a Table Of Contents table entry.
  * @param {string} tag The 4 character tag for the table.
  * @return {!tachyfont.Sfnt.TableOfContentsEntry} ;
  */
@@ -111,7 +111,7 @@ tachyfont.Sfnt.Font.prototype.getTableEntry = function(tag) {
 
 
 /**
- * Get a Table Of Contents table offset.
+ * Gets a Table Of Contents table offset.
  * @param {string} tag The 4 character tag for the table.
  * @return {number} ;
  */
@@ -122,7 +122,7 @@ tachyfont.Sfnt.Font.prototype.getTableOffset = function(tag) {
 
 
 /**
- * Get a Table Of Contents table length. This does not include any padding
+ * Gets a Table Of Contents table length. This does not include any padding
  * length.
  * @param {string} tag The 4 character tag for the table.
  * @return {number} ;
@@ -142,7 +142,7 @@ tachyfont.Sfnt.Font.prototype.getSortedTableOfContents = function() {
 
 
 /**
- * Get the allocated space. This is the tableEntry size plus any padding.
+ * Gets the allocated space. This is the tableEntry size plus any padding.
  * @param {string} tag The tag name;
  * @return {number}
  */
@@ -200,7 +200,7 @@ tachyfont.Sfnt.getFont = function(fontData) {
 
 
 /**
- * Get a table's bytes.
+ * Gets a table's bytes.
  * @param {string} tableTag The name of the table.
  * @return {!Uint8Array} The table contents.
  */
@@ -533,7 +533,7 @@ tachyfont.Sfnt.TableOfContents.prototype.updateOffsets_ = function(
 
 
 /**
- * Get a Table Of Contents table entry.
+ * Gets a Table Of Contents table entry.
  * @param {string} tag The 4 character tag for the table.
  * @return {!tachyfont.Sfnt.TableOfContentsEntry} ;
  */
@@ -573,7 +573,7 @@ tachyfont.Sfnt.TableOfContentsEntry = function(tag, tagNumber, checksum, offset,
 
 
 /**
- * Get the tag for this entry.
+ * Gets the tag for this entry.
  * @return {string} The tag (exactly 4 chars) for this entry.
  */
 tachyfont.Sfnt.TableOfContentsEntry.prototype.getTag = function() {
@@ -582,7 +582,7 @@ tachyfont.Sfnt.TableOfContentsEntry.prototype.getTag = function() {
 
 
 /**
- * Get the tag (as a number) for this entry.
+ * Gets the tag (as a number) for this entry.
  * @return {number}
  */
 tachyfont.Sfnt.TableOfContentsEntry.prototype.getTagNumber = function() {
@@ -591,7 +591,7 @@ tachyfont.Sfnt.TableOfContentsEntry.prototype.getTagNumber = function() {
 
 
 /**
- * Get the checksum for this entry.
+ * Gets the checksum for this entry.
  * @return {number}
  */
 tachyfont.Sfnt.TableOfContentsEntry.prototype.getChecksum = function() {
@@ -600,7 +600,7 @@ tachyfont.Sfnt.TableOfContentsEntry.prototype.getChecksum = function() {
 
 
 /**
- * Get the offset for this entry.
+ * Gets the offset for this entry.
  * @return {number}
  */
 tachyfont.Sfnt.TableOfContentsEntry.prototype.getOffset = function() {
@@ -609,7 +609,16 @@ tachyfont.Sfnt.TableOfContentsEntry.prototype.getOffset = function() {
 
 
 /**
- * Get the length for this entry.
+ * Sets the offset for this entry.
+ * @param {number} offset
+ */
+tachyfont.Sfnt.TableOfContentsEntry.prototype.setOffset = function(offset) {
+  this.offset_ = offset;
+};
+
+
+/**
+ * Gets the length for this entry.
  * @return {number} The length for this entry.
  */
 tachyfont.Sfnt.TableOfContentsEntry.prototype.getLength = function() {
