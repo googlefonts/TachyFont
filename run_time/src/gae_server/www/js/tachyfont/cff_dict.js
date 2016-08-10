@@ -48,6 +48,9 @@ tachyfont.CffDict = function(name, dataView) {
   /** @private @const {!DataView} */
   this.dataView_ = dataView;
 
+  /** @private {!Array<string>} */
+  this.operators_ = [];
+
   /**
    * Map of operator->operand(s).
    * @private @const {!Object<string, !tachyfont.CffDict.OperandsOperatorSet>}
@@ -57,6 +60,7 @@ tachyfont.CffDict = function(name, dataView) {
   var operandsOperatorSet;
   while (binaryEditor.getOffset() < this.dataView_.byteLength) {
     operandsOperatorSet = tachyfont.CffDict.readOperandsOperator(binaryEditor);
+    this.operators_.push(operandsOperatorSet.operator);
     this.dict_[operandsOperatorSet.operator] = operandsOperatorSet;
   }
 
@@ -100,6 +104,15 @@ tachyfont.CffDict.prototype.getDict = function() {
  */
 tachyfont.CffDict.prototype.getName = function() {
   return this.name_;
+};
+
+
+/**
+ * Gets the dict operators.
+ * @return {!Array<string>} The Dict operators.
+ */
+tachyfont.CffDict.prototype.getOperators = function() {
+  return this.operators_;
 };
 
 
