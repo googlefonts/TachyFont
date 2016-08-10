@@ -103,6 +103,10 @@ tachyfont.IncrementalFont.Error = {
   DELETE_IDB: '44',
   BELOW_STABLE_TIME: '45',
   GET_COMPACT_DATA: '46',
+  SET_FONT: '47',
+  SET_FONT_PRECEEDING_PROMISE: '48',
+  SET_FONT_COMPACT: '49',
+  SET_FONT_COMPACT_SUCCESS: '50',
   END: '00'
 };
 
@@ -654,16 +658,21 @@ tachyfont.IncrementalFont.obj.prototype.getCompactFont = function() {
   // Try to get the base from persistent store.
   return this
       .getCompactFontFromPersistence()  //
+      .then(function(compactWorkingData) {
+        this.compactCharList_ = compactWorkingData.charList;
+        return compactWorkingData;
+      }.bind(this))
       .thenCatch(function() {
         // Not persisted so fetch from the URL.
         this.compactCharList_ = {};
         return this.getCompactFontFromUrl(this.backendService, this.fontInfo)
-            .then(function(data) {
+            .then(function(compactWorkingData) {
+              this.compactCharList_ = compactWorkingData.charList;
               if (goog.DEBUG) {
                 // Remove this once this.compactCharList_ is used.
                 console.log(this.compactCharList_);
               }
-              return data;
+              return compactWorkingData;
             }.bind(this))
             .thenCatch(function() {
               return null;  //
@@ -918,6 +927,9 @@ tachyfont.IncrementalFont.obj.prototype.setFont = function(fontData) {
       }.bind(this))
       .thenCatch(function(e) {
         finishPrecedingSetFont.reject();
+        tachyfont.IncrementalFont.reportError(
+            tachyfont.IncrementalFont.Error.SET_FONT_PRECEEDING_PROMISE,
+            this.fontId_, e);
       }.bind(this));
   return finishPrecedingSetFont.getPromise();
 };
@@ -1034,16 +1046,18 @@ tachyfont.IncrementalFont.obj.prototype.loadChars = function() {
                 this.needToSetFont = true;
               }
               return this.getBase.then(function(array) {
+                var fileInfo = array[0];
                 var fontData = array[1];
                 var glyphToCodeMap = this.getGlyphToCodeMap(neededCodes);
                 this.injectChars(
                     fontData, neededCodes, glyphToCodeMap, bundleResponse);
                 if (goog.DEBUG) {
-                  if (tachyfont.Define.compactTachyFont &&
+                  if (tachyfont.Define.compactTachyFont && !fileInfo.isTtf &&
                       this.getShouldBeCompact()) {
-                    tachyfont.CompactCff.injectChars(
-                        this.fontInfo, neededCodes, glyphToCodeMap,
-                        bundleResponse);
+                    return this.injectCompact(neededCodes, bundleResponse)
+                        .thenCatch(function(e) {
+                          // TODO(bstell): Address this error.
+                        });
                   }
                 }
               }.bind(this));
@@ -1075,6 +1089,40 @@ tachyfont.IncrementalFont.obj.prototype.loadChars = function() {
         return goog.Promise.resolve(false);
       }.bind(this));
   return finishPrecedingCharsRequest.getPromise();
+};
+
+
+/**
+ * Calls the CompactCff injectChars code.
+ * @param {!Array<number>} neededCodes The codes to be injected.
+ * @param {!tachyfont.GlyphBundleResponse} bundleResponse The char request
+ *     (glyph bungle) data.
+ * @return {!goog.Promise<!tachyfont.CompactCff,?>} A promise for the CompactCff
+ *     font.
+ */
+tachyfont.IncrementalFont.obj.prototype.injectCompact = function(
+    neededCodes, bundleResponse) {
+  var glyphToCodeMap = this.getGlyphToCodeMap(neededCodes);
+  return tachyfont.CompactCff
+      .injectChars(this.fontInfo, neededCodes, glyphToCodeMap, bundleResponse)
+      .then(function(compactCff) {
+        var fontData = compactCff.getSfnt().getFontData();
+        var fileInfo = compactCff.getFileInfo();
+        return tachyfont.Browser
+            .setFont(fontData, this.fontInfo, fileInfo.isTtf, null)
+            .then(function() {
+              // This is a success report sent via the error reporting system.
+              tachyfont.IncrementalFont.reportError(
+                  tachyfont.IncrementalFont.Error.SET_FONT_COMPACT_SUCCESS,
+                  this.fontId_, '');
+            }.bind(this))
+            .thenCatch(function(e) {
+              tachyfont.IncrementalFont.reportError(
+                  tachyfont.IncrementalFont.Error.SET_FONT_COMPACT,
+                  this.fontId_, e);
+              return goog.Promise.reject(e);
+            }.bind(this));
+      }.bind(this));
 };
 
 
