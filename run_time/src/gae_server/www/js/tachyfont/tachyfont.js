@@ -623,10 +623,6 @@ tachyfont.loadFonts_initReporter = function(fontsInfo) {
  * @private
  */
 tachyfont.loadFonts_init_ = function(familyName, fontsInfo, opt_params) {
-  if (goog.DEBUG) {
-    goog.log.fine(tachyfont.Logger.logger, 'loadFonts');
-  }
-
   tachyfont.loadFonts_initFontInfosUrls(fontsInfo);
   var dataUrl = fontsInfo.getDataUrl();
   tachyfont.loadFonts_initReporter(fontsInfo);

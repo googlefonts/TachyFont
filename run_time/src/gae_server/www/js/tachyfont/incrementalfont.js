@@ -284,6 +284,7 @@ tachyfont.IncrementalFont.obj = function(fontInfo, params, backendService) {
   this.req_size = params['req_size'] || 2200;
 
   /**
+   * True if new characters have been loaded since last setFont.
    * If the Prelude code did not set the font then set it even if no new
    * characters are needed.
    * @type {boolean}
@@ -763,8 +764,8 @@ tachyfont.IncrementalFont.processUrlBase = function(urlBaseBytes, fontId) {
  * @param {!Array<number>} extraGlyphs An output list of the extra glyph Ids.
  * @return {!DataView} Updated base font
  */
-tachyfont.IncrementalFont.obj.prototype.injectCharacters =
-    function(baseFontView, bundleResponse, glyphToCodeMap, extraGlyphs) {
+tachyfont.IncrementalFont.obj.prototype.injectCharacters = function(
+    baseFontView, bundleResponse, glyphToCodeMap, extraGlyphs) {
   // time_start('inject')
   this.fileInfo_.dirty = true;
   var baseBinaryEditor = new tachyfont.BinaryFontEditor(baseFontView, 0);
