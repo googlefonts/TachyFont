@@ -52,6 +52,13 @@ tachyfont.Define.IDB_VERSION = 3;
 
 
 /**
+ * The database name.
+ * @type {string}
+ */
+tachyfont.Define.DB_NAME = 'incrfonts';
+
+
+/**
  * The per font base store name.
  * The base contains the file info prepended to the font.
  * @const {string}
