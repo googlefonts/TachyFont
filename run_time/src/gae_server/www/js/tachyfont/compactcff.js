@@ -218,6 +218,41 @@ tachyfont.CompactCff.prototype.addDataSegment = function(
 
 
 /**
+ * Inject fetched glyphBundle data.
+ * @param {!tachyfont.FontInfo} fontInfo Info about the font.
+ * @param {!Array<number>} neededCodes The codes to be injected.
+ * @param {!Object<number,!Array<number>>} glyphToCodeMap The map of glyph id to
+ *     codepoints.
+ * @param {!tachyfont.GlyphBundleResponse} bundleResponse New glyph data
+ * @return {!goog.Promise<!DataView,?>} A promise for the new font data bytes.
+ *
+ */
+tachyfont.CompactCff.injectChars = function(
+    fontInfo, neededCodes, glyphToCodeMap, bundleResponse) {
+  var transaction;
+  var fontId = fontInfo.getFontId();
+  var compactCff = new tachyfont.CompactCff(fontId);
+  // Get the db handle.
+  return tachyfont.Persist.openIndexedDB(fontInfo.getDbName(), fontId)
+      .then(function(db) {
+        // Create the transaction.
+        transaction =
+            db.transaction(tachyfont.Define.compactStoreNames, 'readonly');
+        // Get the persisted data.
+        return compactCff.readDbTables(transaction);
+      })
+      .then(function() {
+        compactCff.injectGlyphBundle(bundleResponse, glyphToCodeMap);
+        // Write the persisted data.
+        return compactCff.writeDbTables(transaction);
+      })
+      .then(function(something) {
+        return compactCff.getSfnt().getFontData();  //
+      });
+};
+
+
+/**
  * @param {!IDBTransaction} transaction The current IndexedDB transaction.
  * @return {!goog.Promise<?,?>}
  */

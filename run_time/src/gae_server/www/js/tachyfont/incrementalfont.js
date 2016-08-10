@@ -26,6 +26,7 @@ goog.require('goog.math');
 goog.require('tachyfont.BinaryFontEditor');
 goog.require('tachyfont.Browser');
 goog.require('tachyfont.Cmap');
+goog.require('tachyfont.CompactCff');
 goog.require('tachyfont.Define');
 goog.require('tachyfont.DemoBackendService');
 goog.require('tachyfont.GoogleBackendService');
@@ -1048,6 +1049,14 @@ tachyfont.IncrementalFont.obj.prototype.loadChars = function() {
                 var glyphToCodeMap = this.getGlyphToCodeMap(neededCodes);
                 this.injectChars(
                     fontData, neededCodes, glyphToCodeMap, bundleResponse);
+                if (goog.DEBUG) {
+                  if (tachyfont.Define.compactTachyFont &&
+                      this.getShouldBeCompact()) {
+                    tachyfont.CompactCff.injectChars(
+                        this.fontInfo, neededCodes, glyphToCodeMap,
+                        bundleResponse);
+                  }
+                }
               }.bind(this));
             }.bind(this))
             .then(function() {
