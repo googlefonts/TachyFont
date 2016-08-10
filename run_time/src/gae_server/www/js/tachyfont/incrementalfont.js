@@ -787,7 +787,7 @@ tachyfont.IncrementalFont.obj.prototype.injectCharacters = function(
     var id = glyphData.getId();
     glyphIds.push(id);
     var nextId = id + 1;
-    tachyfont.IncrementalFont.setMtx(
+    tachyfont.IncrementalFontUtils.setMtx(
         flags, glyphData, baseBinaryEditor, this.fileInfo_);
 
     var offset = glyphData.getOffset();
@@ -895,30 +895,6 @@ tachyfont.IncrementalFont.obj.prototype.injectCharacters = function(
   // time_end('inject')
 
   return baseFontView;
-};
-
-
-/**
- * Set the Horizontal/Vertical metrics.
- * @param {number} flags Indicates what is in the glyphData.
- * @param {!tachyfont.GlyphBundleResponse.GlyphData} glyphData An object holding
- *     the glyph data.
- * @param {!tachyfont.BinaryFontEditor} baseBinaryEditor A font editor.
- * @param {!tachyfont.typedef.FileInfo} fileInfo Info about the font bytes.
- */
-tachyfont.IncrementalFont.setMtx = function(
-    flags, glyphData, baseBinaryEditor, fileInfo) {
-  var id = glyphData.getId();
-  if (flags & tachyfont.IncrementalFontUtils.FLAGS.HAS_HMTX) {
-    var hmtx = glyphData.getHmtx();
-    baseBinaryEditor.setMtxSideBearing(
-        fileInfo.hmtxOffset, fileInfo.hmetricCount, id, hmtx);
-  }
-  if (flags & tachyfont.IncrementalFontUtils.FLAGS.HAS_VMTX) {
-    var vmtx = glyphData.getVmtx();
-    baseBinaryEditor.setMtxSideBearing(
-        fileInfo.vmtxOffset, fileInfo.vmetricCount, id, vmtx);
-  }
 };
 
 
