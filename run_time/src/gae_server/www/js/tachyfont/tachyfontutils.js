@@ -137,55 +137,6 @@ if (goog.DEBUG) {
 
 
   /**
-   * Report the list of codepoints.
-   * @param {string} title The title of the codepoint list.
-   * @param {!Array<number>} codesIn The array of codepoints.
-   */
-  tachyfont.utils.reportCodes = function(title, codesIn) {
-    if (goog.DEBUG) {
-      if (codesIn.constructor != Array) {
-        console.log('tachyfont.utils.codesIn: expected Array but got ' +
-            codesIn.constructor);
-        debugger;  // For debugging a utility function.
-        return;
-      }
-      var codes = codesIn.slice();
-      codes.sort(function(a, b) { return a - b });
-
-      console.log('----------');
-      console.log(title + ':');
-      var formattedOutput = '  ';
-      var str = '';
-      for (var i = 0; i < codes.length; i++) {
-        var code = codes[i];
-        if (typeof codes[i] != 'number') {
-          console.log(title + '[' + i + '] not a number: ' + typeof codes[0]);
-          debugger;  // For debugging a utility function.
-          return;
-        }
-        formattedOutput +=
-            ' 0x' + ('00000' + code.toString(16)).substr(-5) + ',';
-        str += tachyfont.utils.stringFromCodePoint(code);
-        if (i % 8 == 7) {
-          formattedOutput += '   "' + str + '"';
-          console.log(formattedOutput);
-          formattedOutput = '  ';
-          str = '';
-        }
-      }
-      if (i && i % 8 != 0) {
-        formattedOutput += '   "' + str + '"';
-        console.log(formattedOutput);
-      }
-      if (codes.length == 0) {
-        console.log('  <no codes>');
-      }
-      console.log('----------');
-    }
-  };
-
-
-  /**
    * Convert a number to hex.
    * @param {number} number The number to convert to hex.
    * @param {number=} opt_length Optional number of hex chars.
