@@ -18,8 +18,11 @@
 
 goog.provide('tachyfont.CompactCff');
 
+goog.require('tachyfont.BinaryFontEditor');
 goog.require('tachyfont.Cff');
 goog.require('tachyfont.CffDict');
+goog.require('tachyfont.Cmap');
+goog.require('tachyfont.IncrementalFontUtils');
 goog.require('tachyfont.Sfnt');
 
 
@@ -161,3 +164,58 @@ tachyfont.CompactCff.prototype.addDataSegment = function(
   var newUint8Array = new Uint8Array(buffer, dataOffset, length);
   dataArray.push(newUint8Array);
 };
+
+
+/**
+ * Inject glyphs in the compact font data expanding as necessary.
+ * @param {!DataView} baseFontView Current base font
+ * @param {!tachyfont.GlyphBundleResponse} bundleResponse New glyph data
+ * @param {!Object<number, !Array<number>>} glyphToCodeMap This is both an
+ *     input and an output:
+ *       Input: the glyph-Id to codepoint mapping;
+ *       Output: the glyph Ids that were expected but not in the bundleResponse.
+ * @param {!Array<number>} extraGlyphs An output list of the extra glyph Ids.
+ * @param {!tachyfont.typedef.FileInfo} fileInfo Info about the font bytes.
+ * @param {string} fontId Used in error reports.
+ * @return {!DataView} Updated base font
+ */
+tachyfont.CompactCff.prototype.injectCharacters = function(
+    baseFontView, bundleResponse, glyphToCodeMap, extraGlyphs, fileInfo,
+    fontId) {
+
+  fileInfo.dirty = true;
+  var baseBinaryEditor = new tachyfont.BinaryFontEditor(baseFontView, 0);
+
+  var count = bundleResponse.getGlyphCount();
+  var flags = bundleResponse.getFlags();
+  var glyphDataArray = bundleResponse.getGlyphDataArray();
+
+  var glyphIds = [];
+  for (var i = 0; i < count; i += 1) {
+    var glyphData = glyphDataArray[i];
+    var id = glyphData.getId();
+    glyphIds.push(id);
+    tachyfont.IncrementalFontUtils.setMtx(
+        flags, glyphData, baseBinaryEditor, this.fileInfo_);
+  }
+  // Set the glyph Ids in the cmap format 12 subtable;
+  tachyfont.Cmap.setFormat12GlyphIds(
+      fileInfo, baseFontView, glyphIds, glyphToCodeMap, fontId);
+
+  // Set the glyph Ids in the cmap format 4 subtable;
+  tachyfont.Cmap.setFormat4GlyphIds(
+      fileInfo, baseFontView, glyphIds, glyphToCodeMap, fontId);
+
+  // Remove the glyph Ids that were in the bundleResponse and record
+  // the extra glyphs.
+  for (var i = 0; i < glyphIds.length; i++) {
+    if (glyphToCodeMap[glyphIds[i]]) {
+      delete glyphToCodeMap[glyphIds[i]];
+    } else {
+      extraGlyphs.push(glyphIds[i]);
+    }
+  }
+
+  return baseFontView;
+};
+
