@@ -32,33 +32,30 @@ goog.require('tachyfont.Logger');
  * @param {!tachyfont.FontInfo} fontInfo Info about this font.
  * @param {boolean} isTtf True if the font is a TrueType font.
  * @param {?string} oldBlobUrl The previous Blob URL.
- * @return {!goog.Promise} The promise resolves when the glyphs are displaying.
+ * @return {!goog.Promise<string,?>} The promise for the blobUrl when the glyphs
+ *     are displaying.
  */
 tachyfont.Browser.setFont = function(fontData, fontInfo, isTtf, oldBlobUrl) {
-  return goog.Promise.resolve().
-      then(function() {
-        var mimeType;
-        var format;
-        if (isTtf) {
-          mimeType = 'font/ttf';  // 'application/x-font-ttf';
-          format = 'truetype';
-        } else {
-          mimeType = 'font/otf';  // 'application/font-sfnt';
-          format = 'opentype';
-        }
-        if (oldBlobUrl) {
-          window.URL.revokeObjectURL(oldBlobUrl);
-        }
-        var blobUrl =
-           tachyfont.IncrementalFontUtils.getBlobUrl(fontData, mimeType);
+  var mimeType;
+  var format;
+  if (isTtf) {
+    mimeType = 'font/ttf';  // 'application/x-font-ttf';
+    format = 'truetype';
+  } else {
+    mimeType = 'font/otf';  // 'application/font-sfnt';
+    format = 'opentype';
+  }
+  if (oldBlobUrl) {
+    window.URL.revokeObjectURL(oldBlobUrl);
+  }
+  var blobUrl = tachyfont.IncrementalFontUtils.getBlobUrl(fontData, mimeType);
 
-        return tachyfont.Browser.setFontNoFlash(fontInfo, format, blobUrl).
-           then(function() {
-             if (goog.DEBUG) {
-               goog.log.fine(tachyfont.Logger.logger, 'setFont: setFont done');
-             }
-             return goog.Promise.resolve(blobUrl);
-           });
+  return tachyfont.Browser.setFontNoFlash(fontInfo, format, blobUrl)
+      .then(function() {
+        if (goog.DEBUG) {
+          goog.log.fine(tachyfont.Logger.logger, 'setFont: setFont done');
+        }
+        return goog.Promise.resolve(blobUrl);
       });
 };
 
@@ -102,30 +99,33 @@ tachyfont.Browser.setFontNoFlash = function(fontInfo, format, blobUrl) {
   tachyfont.IncrementalFontUtils.setCssFontRule(sheet, tmpFontFamily, weight,
       blobUrl, format);
 
-  var setFontPromise = new goog.Promise(function(resolve, reject) {
-    // The document.fonts.load call fails with a weight that is not a multiple
-    // of 100. So use an artifical weight to work around this problem.
-    var fontStr = '400 20px ' + tmpFontFamily;
-    if (goog.DEBUG) {
-      goog.log.log(tachyfont.Logger.logger, goog.log.Level.FINER,
-          'setFont: fontStr = ' + fontStr);
-    }
-    // Transfer the data.
-    // TODO(bstell): Make this cross platform.
-    document.fonts.load(fontStr).
-        then(function(value) {
-          if (goog.DEBUG) {
-            goog.log.fine(tachyfont.Logger.logger, 'loaded ' + tmpFontFamily +
-                '/' + weight);
-          }
-          resolve();
-        });
-  }).
-      then(function() {
-        // Now that the font is ready switch the @font-face to the desired name.
-        tachyfont.Browser.switchFont(sheet, tmpFontFamily, fontFamily, weight,
-            blobUrl, format);
-      });
+  var setFontPromise =
+      new goog
+          .Promise(function(resolve, reject) {
+            // The document.fonts.load call fails with a weight that is not a
+            // multiple of 100. So use an artifical weight to work around this
+            // problem.
+            var fontStr = '400 20px ' + tmpFontFamily;
+            if (goog.DEBUG) {
+              goog.log.log(
+                  tachyfont.Logger.logger, goog.log.Level.FINER,
+                  'setFont: fontStr = ' + fontStr);
+            }
+            // Transfer the data.
+            // TODO(bstell): Make this cross platform.
+            document.fonts.load(fontStr).then(
+                function(value) {
+                  resolve();  //
+                },
+                function(e) {
+                  reject(e);  //
+                });
+          })
+          .then(function() {
+            // The font is ready so switch the @font-face to the desired name.
+            tachyfont.Browser.switchFont(
+                sheet, tmpFontFamily, fontFamily, weight, blobUrl, format);
+          });
 
   return setFontPromise;
 };
