@@ -257,12 +257,11 @@ tachyfont.CompactCff.prototype.writeDbTables = function(transaction) {
  *     input and an output:
  *       Input: the glyph-Id to codepoint mapping;
  *       Output: the glyph Ids that were expected but not in the bundleResponse.
- * @param {!Array<number>} extraGlyphs An output list of the extra glyph Ids.
  */
 tachyfont.CompactCff.prototype.injectGlyphBundle = function(
-    bundleResponse, glyphToCodeMap, extraGlyphs) {
+    bundleResponse, glyphToCodeMap) {
   var origOffsets = this.sfnt_.getCompactOffsets();
-  this.setCharacterInfo(bundleResponse, glyphToCodeMap, extraGlyphs);
+  this.setCharacterInfo(bundleResponse, glyphToCodeMap);
   var cffDataSegments = this.injectGlyphData(bundleResponse);
   this.sfnt_.replaceTable(tachyfont.Sfnt.CFF_TAG, [cffDataSegments]);
   this.updateFileInfo(origOffsets);
@@ -272,15 +271,12 @@ tachyfont.CompactCff.prototype.injectGlyphBundle = function(
 /**
  * Inject glyphs in the compact font data expanding as necessary.
  * @param {!tachyfont.GlyphBundleResponse} bundleResponse New glyph data
- * @param {!Object<number, !Array<number>>} glyphToCodeMap This is both an
- *     input and an output:
- *       Input: the glyph-Id to codepoint mapping;
- *       Output: the glyph Ids that were expected but not in the bundleResponse.
- * @param {!Array<number>} extraGlyphs An output list of the extra glyph Ids.
+ * @param {!Object<number, !Array<number>>} glyphToCodeMap Map from glyph id to
+ *     codepoints.
  * @return {!DataView} Updated base font
  */
 tachyfont.CompactCff.prototype.setCharacterInfo = function(
-    bundleResponse, glyphToCodeMap, extraGlyphs) {
+    bundleResponse, glyphToCodeMap) {
 
   var fontData = this.sfnt_.getFontData();
   this.fileInfo_.dirty = true;
@@ -306,8 +302,7 @@ tachyfont.CompactCff.prototype.setCharacterInfo = function(
   tachyfont.Cmap.setFormat4GlyphIds(
       this.fileInfo_, fontData, glyphIds, glyphToCodeMap, this.fontId_);
 
-  // Remove the glyph Ids that were in the bundleResponse and record
-  // the extra glyphs.
+  // Note the new characters that the font now supports.
   for (var i = 0; i < glyphIds.length; i++) {
     var codes = glyphToCodeMap[glyphIds[i]];
     if (codes) {
@@ -315,9 +310,6 @@ tachyfont.CompactCff.prototype.setCharacterInfo = function(
         var aChar = tachyfont.utils.stringFromCodePoint(codes[j]);
         this.charList_[aChar] = 1;
       }
-      delete glyphToCodeMap[glyphIds[i]];
-    } else {
-      extraGlyphs.push(glyphIds[i]);
     }
   }
 

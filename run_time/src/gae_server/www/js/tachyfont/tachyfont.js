@@ -437,7 +437,7 @@ tachyfont.manageStorageUsage = function(fontInfos) {
 // But first need to move Logger and Reporter into utils.
 tachyfont.manageFontStorage = function(fontInfo, previousPromise) {
   return previousPromise.then(function(available) {
-    var dbName = tachyfont.IncrementalFont.getDbName(fontInfo);
+    var dbName = fontInfo.getDbName();
     return tachyfont.isFontStored(dbName).then(function(isStored) {
       var size = fontInfo.getSize();
       if (!isStored && size > available) {

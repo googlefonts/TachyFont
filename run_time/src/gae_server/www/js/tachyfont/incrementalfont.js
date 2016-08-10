@@ -49,13 +49,6 @@ tachyfont.IncrementalFont.MAX_HIDDEN_MILLISECONDS = 3000;
 
 
 /**
- * The database name.
- * @type {string}
- */
-tachyfont.IncrementalFont.DB_NAME = 'incrfonts';
-
-
-/**
  * The persistence 'stable' time.
  * If the data has been in persistent store longer than this then the data is
  * considered to be stable; ie: not being automatically cleared. The time is in
@@ -445,13 +438,13 @@ tachyfont.IncrementalFont.obj.prototype.dropDb = function() {
 tachyfont.IncrementalFont.obj.prototype.accessDb = function(dropDb) {
   // Close the database if it is open.
   this.closeDb();
-  var dbName = tachyfont.IncrementalFont.getDbName(this.fontInfo);
+  var dbName = this.fontInfo.getDbName();
   this.getIDB_ =
       goog.Promise.resolve()
           .then(function() {
             if (dropDb) {
               return tachyfont.Persist.deleteDatabase(dbName, this.fontId_)
-                  .thenCatch(function() {  //
+                  .thenCatch(function() {
                     tachyfont.IncrementalFont.reportError(
                         tachyfont.IncrementalFont.Error.DELETE_IDB,
                         this.fontId_, 'accessDb');
@@ -482,8 +475,7 @@ tachyfont.IncrementalFont.obj.prototype.accessDb = function(dropDb) {
                       }.bind(this))
                       .thenCatch(function() {
                         // Return the db handle even if there was a problem
-                        // getting
-                        // the age of the data.
+                        // getting the age of the data.
                         return db;
                       });
                 }.bind(this))
@@ -1283,18 +1275,6 @@ tachyfont.IncrementalFont.obj.prototype.injectChars = function(
 
 
 /**
- * Gets the database name for this font.
- * @param {!tachyfont.FontInfo} fontInfo Info about the font.
- * @return {string} The database name.
- */
-tachyfont.IncrementalFont.getDbName = function(fontInfo) {
-  var dbName = tachyfont.IncrementalFont.DB_NAME + '/' + fontInfo.getName() +
-      '/' + fontInfo.getFontId();
-  return dbName;
-};
-
-
-/**
  * Save data that needs to be persisted.
  * @param {string} name The name of the data item.
  */
@@ -1322,7 +1302,6 @@ tachyfont.IncrementalFont.obj.prototype.persistDelayed = function(name) {
  */
 tachyfont.IncrementalFont.obj.prototype.persist_ = function(name) {
   var that = this;
-  var id = that.fontId_;
   // Wait for any preceding persist operation to finish.
   var msg = this.fontInfo.getName() + ' persist_';
   if (goog.DEBUG) {
@@ -1352,7 +1331,7 @@ tachyfont.IncrementalFont.obj.prototype.persist_ = function(name) {
         return that.getDb()
             .then(function(db) {
               // Set the next activity to begin_save.
-              return tachyfont.Metadata.beginSave(db, id);
+              return tachyfont.Metadata.beginSave(db, that.fontId_);
             })
             .then(function(storedMetadata) {
               metadata = storedMetadata;
@@ -1367,13 +1346,14 @@ tachyfont.IncrementalFont.obj.prototype.persist_ = function(name) {
                    if (goog.DEBUG) {
                      goog.log.fine(tachyfont.Logger.logger, 'save base');
                    }
-                   return tachyfont.Persist.saveData(arr[0],
-                   [tachyfont.Define.IDB_BASE], [arr[2].buffer])
-                   .thenCatch(function(e) {
-                     tachyfont.IncrementalFont.reportError(
-                     tachyfont.IncrementalFont.Error.SAVE_DATA,
-                     'base ' + id, e);
-                   });
+                   return tachyfont.Persist
+                       .saveData(
+                           arr[0], [tachyfont.Define.IDB_BASE], [arr[2].buffer])
+                       .thenCatch(function(e) {
+                         tachyfont.IncrementalFont.reportError(
+                             tachyfont.IncrementalFont.Error.SAVE_DATA,
+                             'base ' + that.fontId_, e);
+                       });
                  });
               }
             })
@@ -1388,20 +1368,21 @@ tachyfont.IncrementalFont.obj.prototype.persist_ = function(name) {
                    if (goog.DEBUG) {
                      goog.log.fine(tachyfont.Logger.logger, 'save charlist');
                    }
-                   return tachyfont.Persist.saveData(arr[0],
-                   [tachyfont.Define.IDB_CHARLIST], [arr[1]])
-                   .thenCatch(function(e) {
-                     tachyfont.IncrementalFont.reportError(
-                     tachyfont.IncrementalFont.Error.SAVE_DATA,
-                     'charList ' + id, e);
-                   });
+                   return tachyfont.Persist
+                       .saveData(
+                           arr[0], [tachyfont.Define.IDB_CHARLIST], [arr[1]])
+                       .thenCatch(function(e) {
+                         tachyfont.IncrementalFont.reportError(
+                             tachyfont.IncrementalFont.Error.SAVE_DATA,
+                             'charList ' + that.fontId_, e);
+                       });
                  });
               }
             })
             .then(function() {
               // Set the last activity to save_done.
               return that.getDb().then(function(db) {
-                return tachyfont.Metadata.saveDone(db, metadata, id);
+                return tachyfont.Metadata.saveDone(db, metadata, that.fontId_);
               });
             })
             .thenCatch(function(e) {

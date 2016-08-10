@@ -19,6 +19,8 @@
 
 goog.provide('tachyfont.FontInfo');
 
+goog.require('tachyfont.Define');
+
 
 
 /**
@@ -193,6 +195,15 @@ tachyfont.FontInfo.prototype.getShouldLoad = function() {
  */
 tachyfont.FontInfo.prototype.setShouldLoad = function(setting) {
   this.shouldLoad_ = setting;
+};
+
+
+/**
+ * Gets the database name for this font.
+ * @return {string} The database name.
+ */
+tachyfont.FontInfo.prototype.getDbName = function() {
+  return tachyfont.Define.DB_NAME + '/' + this.name_ + '/' + this.getFontId();
 };
 
 
