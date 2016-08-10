@@ -105,12 +105,10 @@ tachyfont.Error = {
 
 /**
  * The error reporter for this file.
- *
  * @param {string} errNum The error number (encoded in a string);
  * @param {*} errInfo The error object;
- * @private
  */
-tachyfont.reportError_ = function(errNum, errInfo) {
+tachyfont.reportError = function(errNum, errInfo) {
   if (tachyfont.Reporter.isReady()) {
     tachyfont.Reporter.reportError(tachyfont.Error.FILE_ID + errNum, '000',
         errInfo);
@@ -127,27 +125,25 @@ tachyfont.reportError_ = function(errNum, errInfo) {
 
 /**
  * Re-run the error report.
- *
  * @param {!Object} obj An object holding the parameters for the error report.
  * @private
  */
 tachyfont.delayedReportError_ = function(obj) {
   goog.log.error(tachyfont.Logger.logger, 'delayedReportError_');
-  tachyfont.reportError_(obj.errNum, obj.errInfo);
+  tachyfont.reportError(obj.errNum, obj.errInfo);
 };
 
 
 if (window.addEventListener) {
   /**
    * Report any uncaught errors.
-   *
    * @param {!Event} error The error information.
    * @private
    */
   tachyfont.windowOnError_ = function(error) {
     if (!error['filename']) {
       // The information is stripped from the report because of CORS issues.
-      tachyfont.reportError_(tachyfont.Error.UNKNOWN_WINDOW_ON_ERROR, '');
+      tachyfont.reportError(tachyfont.Error.UNKNOWN_WINDOW_ON_ERROR, '');
       return;
     }
     var errorObj = {};
@@ -159,8 +155,8 @@ if (window.addEventListener) {
       errorObj['stack'] = error['error']['stack'].substring(0, 1000);
     }
     var errorStr = JSON.stringify(errorObj);
-    tachyfont.reportError_(tachyfont.Error.KNOWN_WINDOW_ON_ERROR, errorStr);
-    tachyfont.reportError_(tachyfont.Error.WINDOW_ON_ERROR, errorStr);
+    tachyfont.reportError(tachyfont.Error.KNOWN_WINDOW_ON_ERROR, errorStr);
+    tachyfont.reportError(tachyfont.Error.WINDOW_ON_ERROR, errorStr);
   };
   window.addEventListener('error', tachyfont.windowOnError_, false);
 }
@@ -174,7 +170,6 @@ if (goog.DEBUG) {
 
   /**
    * A function to initialize the debug setup.
-   *
    * @private
    */
   tachyfont.debugInitialization_ = function() {
@@ -243,7 +238,7 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
   tachyfont.loadFonts_initReporter(fontsInfo);
   // Sent an "errro" report so the number of page loads can be determined on the
   // dashboard.
-  tachyfont.reportError_(tachyfont.Error.PAGE_LOADED, '');
+  tachyfont.reportError(tachyfont.Error.PAGE_LOADED, '');
   tachyfont.sendPreludeReports();
   tachyfont.loadFonts_initFontInfosUrls(fontsInfo);
   return tachyfont.checkSystem()
@@ -304,13 +299,13 @@ tachyfont.checkSystem = function() {
                   return;
                 }
               }
-              tachyfont.reportError_(
+              tachyfont.reportError(
                   tachyfont.Error.BELOW_GLOBAL_STABLE_TIME, '');
               return goog.Promise.reject();
             });
       },
       function(e) {
-        tachyfont.reportError_(tachyfont.Error.OPEN_GLOBAL_DATABASE, '');
+        tachyfont.reportError(tachyfont.Error.OPEN_GLOBAL_DATABASE, '');
         return goog.Promise.reject();
       });
 };
@@ -326,13 +321,13 @@ tachyfont.sendPreludeReports = function() {
     reports = prelude['reports'];
   }
   if (!reports || reports.constructor.name != 'Array') {
-    tachyfont.reportError_(tachyfont.Error.NO_PRELUDE_REPORTS, '');
+    tachyfont.reportError(tachyfont.Error.NO_PRELUDE_REPORTS, '');
     return;
   }
   for (var i = 0; i < reports.length; i++) {
     var report = reports[i];
     if (!report || report.constructor.name != 'Array' || report.length != 3) {
-      tachyfont.reportError_(tachyfont.Error.PRELUDE_REPORT_TYPE, '');
+      tachyfont.reportError(tachyfont.Error.PRELUDE_REPORT_TYPE, '');
       return;
     }
     var reportType = report[0];
@@ -379,7 +374,7 @@ tachyfont.getStorageInfo = function() {
             });
       })
       .thenCatch(function(errorInfo) {
-        tachyfont.reportError_(
+        tachyfont.reportError(
             /* errorNumber */ errorInfo[0],
             /* errorMessage */ errorInfo[1]);
         // Failed to get the storage info so pretend there is plenty.
@@ -418,7 +413,7 @@ tachyfont.manageStorageUsage = function(fontInfos) {
       })
       .then(function(available) {
         if (available < 0) {
-          tachyfont.reportError_(
+          tachyfont.reportError(
               tachyfont.Error.NOT_ENOUGH_STORAGE, '' + available);
         }
         return available;
@@ -510,16 +505,16 @@ tachyfont.isSupportedBrowser = function(opt_windowObject) {
   var isSupported = true;
 
   if (typeof windowObject.indexedDB != 'object') {
-    tachyfont.reportError_(tachyfont.Error.NO_INDEXED_DB, '');
+    tachyfont.reportError(tachyfont.Error.NO_INDEXED_DB, '');
     isSupported = false;
   }
   if (typeof windowObject.MutationObserver != 'function') {
-    tachyfont.reportError_(tachyfont.Error.NO_MUTATION_OBSERVER, '');
+    tachyfont.reportError(tachyfont.Error.NO_MUTATION_OBSERVER, '');
     isSupported = false;
   }
   if (typeof windowObject.document.fonts != 'object' ||
       typeof windowObject.document.fonts.load != 'function') {
-    tachyfont.reportError_(tachyfont.Error.NO_FONT_LOADER, '');
+    tachyfont.reportError(tachyfont.Error.NO_FONT_LOADER, '');
     isSupported = false;
   }
 
@@ -529,7 +524,6 @@ tachyfont.isSupportedBrowser = function(opt_windowObject) {
 
 /**
  * Load and use a list of TachyFonts
- *
  * @param {!tachyfont.TachyFontSet} tachyFontSet The list of TachyFonts.
  * @return {!goog.Promise}
  * @private
@@ -578,11 +572,11 @@ tachyfont.loadFonts_loadAndUse_ = function(tachyFontSet) {
         })
         .thenCatch(function(e) {
           waitForPrecedingPromise.reject();
-          tachyfont.reportError_(tachyfont.Error.SET_FONT, e);
+          tachyfont.reportError(tachyfont.Error.SET_FONT, e);
         });
   })
       .thenCatch(function(e) {
-        tachyfont.reportError_(tachyfont.Error.GET_BASE, e);
+        tachyfont.reportError(tachyfont.Error.GET_BASE, e);
         waitForPrecedingPromise.reject();
       });
 };
@@ -619,7 +613,6 @@ tachyfont.loadFonts_initReporter = function(fontsInfo) {
 
 /**
  * Initialization before loading a list of TachyFonts
- *
  * @param {string} familyName The font-family name.
  * TODO(bstell): remove the Object type.
  * @param {!tachyfont.FontsInfo} fontsInfo The information about the
@@ -708,7 +701,6 @@ tachyfont.loadFonts_getCompactFont_ = function(incrfont) {
 
 /**
  * Make use of a list of TachyFonts
- *
  * @param {!tachyfont.TachyFontSet} tachyFontSet The TachyFont objects.
  * @private
  */
