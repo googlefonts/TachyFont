@@ -196,6 +196,16 @@ tachyfont.FontInfo.prototype.setShouldLoad = function(setting) {
 };
 
 
+/**
+ * Gets an identifier for the font.
+ * @return {string}
+ */
+tachyfont.FontInfo.prototype.getFontId = function() {
+  // TODO(bstell): add slant/width/etc.
+  return this.weight_;
+};
+
+
 goog.scope(function() {
 goog.exportSymbol('tachyfont.FontInfo', tachyfont.FontInfo);
 goog.exportProperty(tachyfont.FontInfo.prototype, 'getName',
