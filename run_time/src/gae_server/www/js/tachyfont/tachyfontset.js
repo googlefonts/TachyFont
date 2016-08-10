@@ -24,6 +24,7 @@ goog.require('goog.array');
 goog.require('goog.log');
 goog.require('goog.log.Level');
 goog.require('goog.style');
+goog.require('tachyfont.Define');
 goog.require('tachyfont.IncrementalFontUtils');
 goog.require('tachyfont.Logger');
 goog.require('tachyfont.Reporter');
@@ -345,7 +346,7 @@ tachyfont.TachyFontSet.prototype.addTextToFontGroups = function(node) {
   }
 
   // Normalize the weight; eg, 'normal' -> '400'
-  weight = tachyfont.utils.cssWeightToNumber[weight] || weight;
+  weight = tachyfont.Define.cssWeightToNumber[weight] || weight;
   var fontId = tachyfont.utils.fontId(family, weight);
 
   // Look for this in the font set.

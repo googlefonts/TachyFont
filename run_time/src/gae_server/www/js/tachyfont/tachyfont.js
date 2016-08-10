@@ -26,11 +26,11 @@ goog.require('goog.Uri');
 goog.require('goog.debug.Logger');
 goog.require('goog.log');
 goog.require('goog.log.Level');
+goog.require('tachyfont.Define');
 /** @suppress {extraRequire} */
 goog.require('tachyfont.FontsInfo');
 goog.require('tachyfont.IncrementalFont');
 goog.require('tachyfont.Logger');
-goog.require('tachyfont.MetadataDefines');
 goog.require('tachyfont.Persist');
 goog.require('tachyfont.Reporter');
 goog.require('tachyfont.TachyFontSet');
@@ -197,7 +197,7 @@ if (goog.DEBUG) {
      */
     var compactTachyFontStr = uri.getParameterValue('CompactTachyFont') || '';
     /** @type {boolean} */
-    tachyfont.utils.compactTachyFont =
+    tachyfont.Define.compactTachyFont =
         compactTachyFontStr.toLowerCase() == 'true';
 
     /**
@@ -285,9 +285,9 @@ tachyfont.checkSystem = function() {
   return tachyfont.Persist.openGlobalDatabase().then(
       function(db) {
         // Check if storage is stable (ie: is not auto clearing).
-        return tachyfont.Persist.getData(db, tachyfont.MetadataDefines.METADATA)
+        return tachyfont.Persist.getData(db, tachyfont.Define.METADATA)
             .then(function(metadata) {
-              var name = tachyfont.MetadataDefines.CREATED_METADATA_TIME;
+              var name = tachyfont.Define.CREATED_METADATA_TIME;
               if (metadata && metadata[name]) {
                 var dataAge = goog.now() - metadata[name];
                 // The following commented out code is how to see the times in
@@ -485,8 +485,8 @@ tachyfont.isFontStored = function(dbName) {
     request.onsuccess = function(event) {
       var db = event.target.result;
       var objectStoreNames = db.objectStoreNames;
-      var isStored = objectStoreNames.contains(tachyfont.utils.IDB_BASE) &&
-          objectStoreNames.contains(tachyfont.utils.IDB_CHARLIST);
+      var isStored = objectStoreNames.contains(tachyfont.Define.IDB_BASE) &&
+          objectStoreNames.contains(tachyfont.Define.IDB_CHARLIST);
       resolve(isStored);
     };
     request.onerror = function(e) {
@@ -556,7 +556,7 @@ tachyfont.loadFonts_loadAndUse_ = function(tachyFontSet) {
           return tachyfont.loadFonts_getBaseFont_(font.incrfont)
               .then(function() {
                 if (goog.DEBUG) {
-                  if (tachyfont.utils.compactTachyFont &&
+                  if (tachyfont.Define.compactTachyFont &&
                       font.incrfont.getShouldBeCompact()) {
                     var result =
                         tachyfont.loadFonts_getCompactFont_(font.incrfont);
@@ -700,7 +700,9 @@ tachyfont.loadFonts_getCompactFont_ = function(incrfont) {
         return incrfont.getCompactFontFromUrl(
             incrfont.backendService, incrfont.fontInfo);
       })
-      .thenCatch(function() { return null; });
+      .thenCatch(function() {
+        return null;  //
+      });
 };
 
 
