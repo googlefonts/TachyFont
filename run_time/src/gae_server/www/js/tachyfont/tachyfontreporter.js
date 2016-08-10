@@ -19,9 +19,8 @@
 
 goog.provide('tachyfont.Reporter');
 
-goog.require('goog.log');
 goog.require('goog.userAgent');
-goog.require('tachyfont.Logger');
+goog.require('tachyfont.log');
 
 
 
@@ -42,8 +41,7 @@ tachyfont.Reporter = function(url) {
 
 
 /**
- * TachyFont start time.
- *
+ * The TachyFont start time.
  * This is as close to the user start time as possible. This is useful for
  * reporting how long after start time activities happened.
  *
@@ -53,24 +51,14 @@ tachyfont.Reporter.startTime_ = goog.now();
 
 
 /**
- * TachyFont singleton object.
- *
+ * The TachyFont Reporter singleton object.
  * @private {?tachyfont.Reporter}
  */
 tachyfont.Reporter.instance_ = null;
 
 
 /**
- * Indicated is the reporter has been intialized.
- * @return {boolean} Whether the reporter has been initialized.
- */
-tachyfont.Reporter.isReady = function() {
-  return tachyfont.Reporter.instance_ != null;
-};
-
-
-/**
- * Get the reporter instance.
+ * Gets the reporter instance.
  * @return {?tachyfont.Reporter}
  */
 tachyfont.Reporter.getInstance = function() {
@@ -79,7 +67,7 @@ tachyfont.Reporter.getInstance = function() {
 
 
 /**
- * Set the reporter instance.
+ * Sets the reporter instance.
  * @param {?tachyfont.Reporter} instance The reporter instance
  */
 tachyfont.Reporter.setInstance = function(instance) {
@@ -88,7 +76,7 @@ tachyfont.Reporter.setInstance = function(instance) {
 
 
 /**
- * Initialize the reporter singleton.
+ * Initializes the reporter singleton.
  * @param {string} url The base URL to send reports to.
  */
 tachyfont.Reporter.initReporter = function(url) {
@@ -99,7 +87,7 @@ tachyfont.Reporter.initReporter = function(url) {
 
 
 /**
- * Reset the reporter singleton.
+ * Resets the reporter singleton.
  */
 tachyfont.Reporter.reset = function() {
   tachyfont.Reporter.instance_ = null;
@@ -107,8 +95,7 @@ tachyfont.Reporter.reset = function() {
 
 
 /**
- * Add the time an item happened.
- *
+ * Adds the time an item happened.
  * @param {string} name The name of the item.
  */
 tachyfont.Reporter.addItemTime = function(name) {
@@ -118,8 +105,7 @@ tachyfont.Reporter.addItemTime = function(name) {
 
 
 /**
- * Add an item to report.
- *
+ * Adds an item to report.
  * @param {string} name The name of the item.
  * @param {string|number} value The value of the item.
  */
@@ -132,13 +118,22 @@ tachyfont.Reporter.addItem = function(name, value) {
 
 
 /**
- * Send an error report.
- *
+ * Sends an error report.
  * @param {string} errNum The error number.
  * @param {string} id Identifying information.
  * @param {*} errInfo The error information.
  */
 tachyfont.Reporter.reportError = function(errNum, id, errInfo) {
+  if (tachyfont.Reporter.instance_ == null) {
+    // Failed to report the error.
+    if (goog.DEBUG) {
+      tachyfont.log.severe(
+          'failed to report error: errNum = ' + errNum + ', id = ' + id +
+          ', errInfo = ' + errInfo);
+    }
+    return;
+  }
+
   // Move any pre-existing items aside.
   var preexistingItems = tachyfont.Reporter.instance_.items_;
   tachyfont.Reporter.instance_.items_ = {};
@@ -177,10 +172,7 @@ tachyfont.Reporter.reportError = function(errNum, id, errInfo) {
     keys.sort();
     for (var i = 0; i < keys.length; i++) {
       name = keys[i];
-      goog.log.error(tachyfont.Logger.logger, '    ' + name + ': ' +
-          tachyfont.Reporter.instance_.items_[name]);
     }
-    // debugger;  // Enable this when debugging the reporter.
   }
   tachyfont.Reporter.sendReport();
 
@@ -192,19 +184,12 @@ tachyfont.Reporter.reportError = function(errNum, id, errInfo) {
 
 
 /**
- * Send the report.
- *
- * @param {boolean=} opt_okIfNoItems Do not complain if not items.
+ * Sends the report.
  */
-tachyfont.Reporter.sendReport = function(opt_okIfNoItems) {
+tachyfont.Reporter.sendReport = function() {
   var keys = Object.keys(tachyfont.Reporter.instance_.items_);
   keys.sort();
   if (keys.length == 0) {
-    if (goog.DEBUG) {
-      if (!opt_okIfNoItems) {
-        goog.log.warning(tachyfont.Logger.logger, 'sendReport: no items');
-      }
-    }
     return;
   }
 
@@ -214,9 +199,6 @@ tachyfont.Reporter.sendReport = function(opt_okIfNoItems) {
   var item = 'm=' + (goog.userAgent.MOBILE ? '1' : '0');
   length += item.length;
   items.push(item);
-  if (goog.DEBUG) {
-    goog.log.info(tachyfont.Logger.logger, 'report items:');
-  }
   for (var i = 0; i < keys.length; i++) {
     var name = keys[i];
     var value = encodeURIComponent(
@@ -230,23 +212,22 @@ tachyfont.Reporter.sendReport = function(opt_okIfNoItems) {
     }
     length += item.length;
     items.push(item);
-    if (goog.DEBUG) {
-      goog.log.info(tachyfont.Logger.logger, '    ' + item);
-    }
   }
   tachyfont.Reporter.sendGen204_(baseUrl, items);
 };
 
 
 /**
- * Send the gen_204.
- *
+ * Sends the gen_204.
  * @param {string} baseUrl The url to send the GET to.
  * @param {!Array<string>} params The URL parameters.
  * @private
  */
 tachyfont.Reporter.sendGen204_ = function(baseUrl, params) {
   var reportUrl = baseUrl + params.join('&');
+  if (goog.DEBUG) {
+    tachyfont.log.info('send: ' + params.join(', '));
+  }
   var image = new Image();
   image.onload = image.onerror = tachyfont.Reporter.cleanUpFunc_(image);
   image.src = reportUrl;
@@ -254,10 +235,10 @@ tachyfont.Reporter.sendGen204_ = function(baseUrl, params) {
 
 
 /**
- * Clear references off the Image so it can be garbage collected.
- * @private
+ * Clears references off the Image so it can be garbage collected.
  * @param {!Image} image The image to clean up.
  * @return {!function()} Function that cleans up the image.
+ * @private
  */
 tachyfont.Reporter.cleanUpFunc_ = function(image) {
   return function() {

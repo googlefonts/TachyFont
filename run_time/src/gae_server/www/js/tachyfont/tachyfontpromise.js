@@ -21,10 +21,8 @@ goog.provide('tachyfont.chainedPromises');
 goog.provide('tachyfont.promise');
 
 goog.require('goog.Promise');
-goog.require('goog.log');
-goog.require('goog.log.Level');
-goog.require('tachyfont.Logger');
 goog.require('tachyfont.Reporter');
+goog.require('tachyfont.log');
 
 
 
@@ -84,16 +82,8 @@ tachyfont.promise.Error_ = {
  * @private
  */
 tachyfont.promise.reportError_ = function(errNum, errInfo) {
-  if (goog.DEBUG) {
-    if (!tachyfont.Reporter.isReady()) {
-      debugger;  // Failed to report error.
-      goog.log.error(tachyfont.Logger.logger, 'failed to report error');
-    }
-  }
-  if (tachyfont.Reporter.isReady()) {
-    tachyfont.Reporter.reportError(tachyfont.promise.Error_.FILE_ID + errNum,
-        '000', errInfo);
-  }
+  tachyfont.Reporter.reportError(
+      tachyfont.promise.Error_.FILE_ID + errNum, '000', errInfo);
 };
 
 
@@ -140,10 +130,6 @@ tachyfont.promise.prototype.reject = function(opt_value) {
     if (this.container_.promises.length > 1) {
       this.container_.promises.shift();
       this.container_.pendingCount_--;
-      if (goog.DEBUG) {
-        goog.log.log(tachyfont.Logger.logger, goog.log.Level.FINER,
-            this.msg_ + 'dropped count to ' + this.container_.pendingCount_);
-      }
     }
   }
 };
@@ -167,10 +153,6 @@ tachyfont.promise.prototype.resolve = function(opt_value) {
     if (this.container_.promises.length > 1) {
       this.container_.promises.shift();
       this.container_.pendingCount_--;
-      if (goog.DEBUG) {
-        goog.log.log(tachyfont.Logger.logger, goog.log.Level.FINER,
-            this.msg_ + 'dropped count to ' + this.container_.pendingCount_);
-      }
     }
   }
 };
@@ -216,7 +198,7 @@ tachyfont.chainedPromises = function(msg) {
   this.intervalId_ = setInterval(function() {
     if (this.pendingCount_ != 0) {
       if (goog.DEBUG) {
-        goog.log.log(tachyfont.Logger.logger, goog.log.Level.WARNING,
+        tachyfont.log.warning(
             this.msg_ + 'lingering pending count: ' + this.pendingCount_);
       }
       this.timerReportCount_++;
@@ -254,10 +236,6 @@ tachyfont.chainedPromises = function(msg) {
 tachyfont.chainedPromises.prototype.getChainedPromise = function(msg) {
   this.chainedCount_++;
   this.pendingCount_++;
-  if (goog.DEBUG) {
-    goog.log.log(tachyfont.Logger.logger, goog.log.Level.FINER,
-        this.msg_ + msg + ': increase pending count to ' + this.pendingCount_);
-  }
   var precedingPromise = this.promises[this.promises.length - 1];
   var newPromise = new tachyfont.promise(this, msg);
   newPromise.precedingPromise_ = precedingPromise.promise_;
