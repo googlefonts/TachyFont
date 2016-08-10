@@ -1041,13 +1041,15 @@ tachyfont.IncrementalFont.obj.prototype.loadChars = function() {
       this.finishPrecedingCharsRequest_.getChainedPromise(msg);
   finishPrecedingCharsRequest.getPrecedingPromise()
       .then(function() {
-        return this.calcNeededChars_().then(function(neededCodes_) {
-          neededCodes = neededCodes_;
-          return this.fetchChars(neededCodes_);
-        }.bind(this))
+        return this.calcNeededChars_()
+            .then(function(neededCodes_) {
+              neededCodes = neededCodes_;
+              return this.fetchChars(neededCodes_);
+            }.bind(this))
             .then(function(bundleResponse) {
               return this.injectChars(neededCodes, bundleResponse);
-            }.bind(this)).then(function() {
+            }.bind(this))
+            .then(function() {
               // Persist the data.
               this.persistDelayed(tachyfont.Define.IDB_BASE);
               this.persistDelayed(tachyfont.Define.IDB_CHARLIST);
