@@ -177,9 +177,32 @@ tachyfont.CompactCff.prototype.addDataSegment = function(
  * @param {!Array<number>} extraGlyphs An output list of the extra glyph Ids.
  * @param {!tachyfont.typedef.FileInfo} fileInfo Info about the font bytes.
  * @param {string} fontId Used in error reports.
- * @return {!DataView} Updated base font
  */
 tachyfont.CompactCff.prototype.injectCharacters = function(
+    baseFontView, bundleResponse, glyphToCodeMap, extraGlyphs, fileInfo,
+    fontId) {
+  this.setCharacterInfo(
+      baseFontView, bundleResponse, glyphToCodeMap, extraGlyphs, fileInfo,
+      fontId);
+  var cffDataSegments = this.injectGlyphData(bundleResponse);
+  this.sfnt_.replaceTable(tachyfont.Sfnt.CFF_TAG, [cffDataSegments]);
+};
+
+
+/**
+ * Inject glyphs in the compact font data expanding as necessary.
+ * @param {!DataView} baseFontView Current base font
+ * @param {!tachyfont.GlyphBundleResponse} bundleResponse New glyph data
+ * @param {!Object<number, !Array<number>>} glyphToCodeMap This is both an
+ *     input and an output:
+ *       Input: the glyph-Id to codepoint mapping;
+ *       Output: the glyph Ids that were expected but not in the bundleResponse.
+ * @param {!Array<number>} extraGlyphs An output list of the extra glyph Ids.
+ * @param {!tachyfont.typedef.FileInfo} fileInfo Info about the font bytes.
+ * @param {string} fontId Used in error reports.
+ * @return {!DataView} Updated base font
+ */
+tachyfont.CompactCff.prototype.setCharacterInfo = function(
     baseFontView, bundleResponse, glyphToCodeMap, extraGlyphs, fileInfo,
     fontId) {
 
@@ -219,3 +242,122 @@ tachyfont.CompactCff.prototype.injectCharacters = function(
   return baseFontView;
 };
 
+
+/**
+ * @param {!tachyfont.GlyphBundleResponse} glyphBundle
+ * @return {!Array.<!Uint8Array>}
+ */
+tachyfont.CompactCff.prototype.injectGlyphData = function(glyphBundle) {
+  // var glyphDataArray = glyphBundle.getGlyphDataArray();
+
+  var sfnt = this.getSfnt();
+  var segments = [];
+  var cffTableOffset = sfnt.getTableOffset(tachyfont.Sfnt.CFF_TAG);
+  var fontData = sfnt.getFontData();
+  var cff = new tachyfont.Cff(cffTableOffset, fontData);
+  var charStringsIndex = cff.getCharStringsIndex();
+  var charStringsOffset = /** @type {number} */ (
+      cff.getTopDictOperand(tachyfont.CffDict.Operator.CHAR_STRINGS, 0));
+  var fdArrayOffset = /** @type {number} */ (
+      cff.getTopDictOperand(tachyfont.CffDict.Operator.FD_ARRAY, 0));
+  var cffStart = cffTableOffset;
+  var fdArrayStart = cffTableOffset + fdArrayOffset;
+
+  // Add the pre-CharStrings data.
+  tachyfont.CompactCff.addDataSegment(
+      segments, fontData, cffStart, charStringsOffset);
+  var charStringsStart = cffStart + charStringsOffset;
+  var charStringsPosition = charStringsStart;
+
+  // Add the CharStrings header.
+  var headerLength = 3;
+  tachyfont.CompactCff.addDataSegment(
+      segments, fontData, charStringsPosition, headerLength);
+  charStringsPosition += headerLength;
+
+  // Add the CharStrings offset array.
+  var nGlyphs = charStringsIndex.getNumberOfElements();
+  var offsetsLength = (nGlyphs + 1) * charStringsIndex.getOffsetSize();
+  tachyfont.CompactCff.addDataSegment(
+      segments, fontData, charStringsPosition, offsetsLength);
+  var offsetBinEd =
+      new tachyfont.BinaryFontEditor(fontData, charStringsPosition);
+  charStringsPosition += offsetsLength;
+
+  var offsets = charStringsIndex.getOffsets();
+  var offSize = charStringsIndex.getOffsetSize();
+  var glyphDataArray = glyphBundle.getGlyphDataArray();
+  var newGlyphCount = glyphDataArray.length;
+  var currentOffsetsIndex = 0;
+  var deltaOffset = 0;
+  for (var i = 0; i < newGlyphCount; i++) {
+    var glyphData = glyphDataArray[i];
+    var id = glyphData.getId();
+    // Add the data segment for currentOffsetsIndex to id start.
+    var previousDataLength = offsets[id] - offsets[currentOffsetsIndex];
+    if (previousDataLength) {
+      tachyfont.CompactCff.addDataSegment(
+          segments, fontData, charStringsPosition, previousDataLength);
+      charStringsPosition += previousDataLength;
+    }
+    // Update offsets before this.
+    var updateCount = id - currentOffsetsIndex + 1;
+    if (deltaOffset) {
+      // needs to be checked
+      for (var j = 0; j < updateCount; j++) {
+        var newOffset = offsets[currentOffsetsIndex] + deltaOffset;
+        currentOffsetsIndex++;
+        offsetBinEd.setOffset(offSize, newOffset);
+      }
+    } else {
+      offsetBinEd.skip(updateCount * offSize);
+      currentOffsetsIndex += updateCount;
+    }
+
+    // Add a segment with the new char bytes.
+    var glyphBytes = glyphData.getBytes();
+    var glyphSegment = Uint8Array.from(glyphBytes);
+    segments.push(glyphSegment);
+    var oldGlyphLength = offsets[id + 1] - offsets[id];
+    deltaOffset += glyphBytes.length - oldGlyphLength;
+    charStringsPosition += oldGlyphLength;
+  }
+
+  // Add the data segment for remaining existing glyph data.
+  var remainingCharStringsLength = fdArrayStart - charStringsPosition;
+  tachyfont.CompactCff.addDataSegment(
+      segments, fontData, charStringsPosition, remainingCharStringsLength);
+  charStringsPosition += remainingCharStringsLength;
+
+  // Write the remaining offsets.
+  for (var j = currentOffsetsIndex; j <= nGlyphs; j++) {
+    var newOffset = offsets[j] + deltaOffset;
+    offsetBinEd.setOffset(offSize, newOffset);
+    currentOffsetsIndex++;
+  }
+
+  // Add the remaining CFF data.
+  cff.updateCharStringsSize(deltaOffset);
+  var cffTableLength = sfnt.getTableLength(tachyfont.Sfnt.CFF_TAG);
+  var remainingLength = cffTableLength - fdArrayOffset;
+  tachyfont.CompactCff.addDataSegment(
+      segments, fontData, fdArrayStart, remainingLength);
+  return segments;
+};
+
+
+/**
+ * Creates a copy of a data segment and appends it to an array.
+ * @param {!Array.<!Uint8Array>} dataArray The array to add the Uint8Array to.
+ * @param {!DataView} dataView The source data.
+ * @param {number} offset
+ * @param {number} length
+ */
+tachyfont.CompactCff.addDataSegment = function(
+    dataArray, dataView, offset, length) {
+  var dataViewOffset = dataView.byteOffset;
+  var dataOffset = dataViewOffset + offset;
+  var buffer = dataView.buffer;
+  var newUint8Array = new Uint8Array(buffer, dataOffset, length);
+  dataArray.push(newUint8Array);
+};
