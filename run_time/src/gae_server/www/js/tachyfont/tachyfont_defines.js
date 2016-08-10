@@ -89,6 +89,18 @@ tachyfont.Define.COMPACT_CHAR_LIST = 'compact_char_list';
 
 
 /**
+ * Defines the Compact TachyFont data store names.
+ * @type {!Array<string>}
+ */
+tachyfont.Define.compactStoreNames = [
+  tachyfont.Define.COMPACT_FONT,       //
+  tachyfont.Define.COMPACT_FILE_INFO,  //
+  tachyfont.Define.COMPACT_CHAR_LIST,  //
+  tachyfont.Define.COMPACT_METADATA
+];
+
+
+/**
  * The base is dirty (needs to be persisted) key.
  * @const {string}
  */

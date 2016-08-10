@@ -1104,6 +1104,7 @@ tachyfont.IncrementalFont.obj.prototype.calcNeededChars_ = function() {
         }
         for (var i = 0; i < neededCodes.length; i++) {
           var c = tachyfont.utils.stringFromCodePoint(neededCodes[i]);
+          // Add the character to the charlist.
           charlist[c] = 1;
           delete this.charsToLoad[c];
         }

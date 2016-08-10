@@ -540,24 +540,23 @@ tachyfont.loadFonts_loadAndUse_ = function(tachyFontSet) {
   return waitForPrecedingPromise.getPrecedingPromise()
       .then(function() {
         tachyfont.Reporter.addItem(
-            tachyfont.Log_.LOAD_FONTS_WAIT_PREVIOUS +
-            '000', goog.now() - waitPreviousTime);
+            tachyfont.Log_.LOAD_FONTS_WAIT_PREVIOUS + '000',
+            goog.now() - waitPreviousTime);
         return goog.Promise.resolve()
             .then(function() {
               var serialPromise = goog.Promise.resolve(0);
               var fonts = tachyFontSet.fonts;
               for (var i = 0; i < fonts.length; i++) {
                 serialPromise = serialPromise.then(function(index) {
-                  var font = fonts[index];
+                  var incrfont = fonts[index].incrfont;
                   // Load the fonts from persistent store or URL.
-                  return tachyfont.loadFonts_getBaseFont_(font.incrfont)
+                  return tachyfont.loadFonts_getBaseFont_(incrfont)
                       .then(function() {
                         if (goog.DEBUG) {
                           if (tachyfont.Define.compactTachyFont &&
-                              font.incrfont.getShouldBeCompact()) {
-                            var result = tachyfont.loadFonts_getCompactFont_(
-                                font.incrfont);
-                            return result;
+                              incrfont.getShouldBeCompact()) {
+                            return tachyfont.loadFonts_getCompactFont_(
+                                incrfont);
                           }
                         }
                       })
