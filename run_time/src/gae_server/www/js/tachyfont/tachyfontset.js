@@ -119,7 +119,8 @@ tachyfont.TachyFontSet.Log = {
 tachyfont.TachyFontSet.Error = {
   FILE_ID: 'ETS',
   UPDATE_FONT_LOAD_CHARS: '01',
-  UPDATE_FONT_SET_FONT: '02'
+  UPDATE_FONT_SET_FONT: '02',
+  SET_FONT: '03'
 };
 
 
@@ -456,8 +457,8 @@ tachyfont.TachyFontSet.prototype.setFont = function(index, loadResult,
   }
   // loadResult[0] holds fileInfo.
   var fontData = loadResult[1];
-  var cssSetResult = fontObj.setFont(fontData).
-      then(function() {
+  var cssSetResult = fontObj.setFont(fontData).then(
+      function() {
         if (startTime == 0) {
           tachyfont.Reporter.addItemTime(
               tachyfont.TachyFontSet.Log.SET_FONT_DOM_LOADED + weight);
@@ -471,7 +472,11 @@ tachyfont.TachyFontSet.prototype.setFont = function(index, loadResult,
         }
         tachyfont.IncrementalFontUtils.setVisibility(this.style,
             this.fontInfo, true);
-      }.bind(fontObj));
+      }.bind(fontObj),
+      function(e) {
+        tachyfont.TachyFontSet.reportError_(
+            tachyfont.TachyFontSet.Error.SET_FONT, e);
+      });
   return cssSetResult;
 };
 

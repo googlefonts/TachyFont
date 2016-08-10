@@ -336,6 +336,15 @@ tachyfont.IncrementalFont.obj = function(fontInfo, params, backendService) {
 
 
 /**
+ * Gets blobUrl member.
+ * @return {?string}
+ */
+tachyfont.IncrementalFont.obj.prototype.getBlobUrl = function() {
+  return this.blobUrl_;
+};
+
+
+/**
  * Gets fontInfo member.
  * @return {!tachyfont.FontInfo}
  */
@@ -928,7 +937,7 @@ tachyfont.IncrementalFont.obj.prototype.setFont = function(fontData) {
           goog.log.fine(
               tachyfont.Logger.logger, 'setFont.' + this.fontId_ + ': failed');
         }
-        finishPrecedingSetFont.resolve();
+        finishPrecedingSetFont.reject();
       }.bind(this));
   return finishPrecedingSetFont.getPromise();
 };
