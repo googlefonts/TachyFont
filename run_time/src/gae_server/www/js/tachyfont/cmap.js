@@ -512,38 +512,3 @@ tachyfont.Cmap.setFormat12GlyphIds = function(
     }
   }
 };
-
-
-/**
- * Determine if the font was preprocessed to have only one character per
- * segment. Fonts with this arrangement easily support keeping the cmap
- * accurate as character data is added.
- *
- * @param {!tachyfont.typedef.FileInfo} fileInfo Info about the font file.
- * @return {boolean} Whether there is only one char per segment.
- */
-tachyfont.Cmap.isOneCharPerSeg = function(fileInfo) {
-  if (fileInfo.compact_gos.cmap4) {
-    var segments = fileInfo.compact_gos.cmap4.segments;
-    for (var i = 0; i < segments.length; i++) {
-      var segStartCode = segments[i][0];
-      var segmentEndCode = segments[i][1];
-      var idRangeOffset = segments[i][3];
-      if (segStartCode != segmentEndCode || idRangeOffset != 0) {
-        return false;
-      }
-    }
-  }
-
-  if (fileInfo.compact_gos.cmap12) {
-    var segments = fileInfo.compact_gos.cmap12.segments;
-    for (var i = 0; i < segments.length; i++) {
-      var length = segments[i][1];
-      if (length != 1) {
-        return false;
-      }
-    }
-  }
-
-  return true;
-};
