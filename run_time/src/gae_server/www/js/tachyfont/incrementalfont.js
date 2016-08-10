@@ -133,7 +133,7 @@ tachyfont.IncrementalFont.reportError = function(errNum, errId, errInfo) {
 
 
 /**
- * Get the incremental font object.
+ * Gets the incremental font object.
  * This class does the following:
  * 1. Create a class using the "@font-face" rule and with visibility=hidden
  * 2. Create an incremental font manager object.
@@ -228,7 +228,7 @@ tachyfont.IncrementalFont.createManager = function(fontInfo, dropData, params) {
 tachyfont.IncrementalFont.obj = function(fontInfo, params, backendService) {
   var weight = fontInfo.getWeight();
 
-  // Get the prelude data.
+  // Gets the prelude data.
   var prelude = window['tachyfontprelude'] || {};
   var preludeUrls = prelude['urls'] || {};
   var preludeLoaded = prelude['loaded'] || {};
@@ -307,6 +307,13 @@ tachyfont.IncrementalFont.obj = function(fontInfo, params, backendService) {
   this.getCharList = this.charList.getPromise();
 
   /**
+   * A map of the characters that have been incrementally loaded.
+   * The string holds the UTF-16 character and the number is always 1.
+   * @private {!Object<string, number>}
+   */
+  this.compactCharList_ = {};
+
+  /**
    * The persist operation takes time so serialize them.
    * @private {!tachyfont.chainedPromises}
    */
@@ -348,7 +355,7 @@ tachyfont.IncrementalFont.obj.prototype.isCompact = function() {
 
 
 /**
- * Get the database handle.
+ * Gets the database handle.
  * @return {!goog.Promise} The database handle.
  */
 tachyfont.IncrementalFont.obj.prototype.getDb = function() {
@@ -360,7 +367,7 @@ tachyfont.IncrementalFont.obj.prototype.getDb = function() {
 
 
 /**
- * Get the cmap mapping
+ * Gets the cmap mapping
  * @return {!tachyfont.typedef.CmapMapping}
  */
 tachyfont.IncrementalFont.obj.prototype.getCmapMapping = function() {
@@ -379,7 +386,7 @@ tachyfont.IncrementalFont.obj.prototype.setCmapMapping = function(cmapMapping) {
 
 
 /**
- * Get the file information.
+ * Gets the file information.
  * @return {!tachyfont.typedef.FileInfo}
  */
 tachyfont.IncrementalFont.obj.prototype.getFileInfo = function() {
@@ -397,7 +404,7 @@ tachyfont.IncrementalFont.obj.prototype.setFileInfo = function(fileInfo) {
 
 
 /**
- * Get whether the CSS should be updated.
+ * Gets whether the CSS should be updated.
  * @return {boolean}
  */
 tachyfont.IncrementalFont.obj.prototype.getNeedToSetFont = function() {
@@ -406,7 +413,7 @@ tachyfont.IncrementalFont.obj.prototype.getNeedToSetFont = function() {
 
 
 /**
- * Get the database handle.
+ * Gets the database handle.
  * @return {!goog.Promise} The database handle.
  */
 tachyfont.IncrementalFont.obj.prototype.dropDb = function() {
@@ -415,7 +422,7 @@ tachyfont.IncrementalFont.obj.prototype.dropDb = function() {
 
 
 /**
- * Get the database handle.
+ * Gets the database handle.
  * @param {boolean} dropDb If true then drop the database before opening it.
  * @return {!goog.Promise<!IDBDatabase,string>} The database handle.
  */
@@ -495,7 +502,7 @@ tachyfont.IncrementalFont.obj.prototype.closeDb = function() {
 
 
 /**
- * Get the font base from persistent store.
+ * Gets the font base from persistent store.
  * @return {!goog.Promise} The base bytes in DataView.
  */
 tachyfont.IncrementalFont.obj.prototype.getBaseFontFromPersistence =
@@ -566,38 +573,26 @@ tachyfont.IncrementalFont.obj.prototype.getBaseFontFromPersistence =
 
 
 /**
- * Get the compact font base from persistent store.
+ * Gets the compact font base from persistent store.
  * @return {!goog.Promise<tachyfont.typedef.CompactFontWorkingData,?>} The
  *     Compact font's data, charlist, and metadata.
  */
 tachyfont.IncrementalFont.obj.prototype.getCompactFontFromPersistence =
     function() {
   var fontId = this.fontInfo.getWeight();
-  // TODO(bstell): make this fully work
-  var db;
-  var fontBytes;
-  var fileInfo;
-  var charList;
-  // TODO(bstell): make a call that loads multiple items in a single
-  // transaction.
   return this.getDb()
-      .then(function(result) {
-        db = result;
-        return tachyfont.Persist.getData(db, tachyfont.Define.COMPACT_FONT);
+      .then(function(db) {
+        var transaction =
+            db.transaction(tachyfont.Define.compactStoreNames, 'readonly');
+        return tachyfont.Persist.getStores(
+            transaction, tachyfont.Define.compactStoreNames);
       })
-      .then(function(result) {
-        fontBytes = result;
-        return tachyfont.Persist.getData(db,
-            tachyfont.Define.COMPACT_FILE_INFO);
-      })
-      .then(function(result) {
-        fileInfo = result;
-        return tachyfont.Persist.getData(db,
-            tachyfont.Define.COMPACT_CHAR_LIST);
-      })
-      .then(function(result) { charList = result; })
       .then(function(arr) {
         // Check there was data.
+        var fontBytes = arr[0];
+        var fileInfo = arr[1];
+        var charList = arr[2];
+        // metadata is in arr[3];
         if (!fontBytes || !fileInfo || !charList) {
           return goog.Promise.reject();
         }
@@ -606,7 +601,7 @@ tachyfont.IncrementalFont.obj.prototype.getCompactFontFromPersistence =
         if (!isOkay) {
           return goog.Promise.reject();
         }
-        return {data: fontBytes, fileInfo: fileInfo, charList: charList};
+        return {fontBytes: fontBytes, fileInfo: fileInfo, charList: charList};
       })
       .thenCatch(function(e) {
         tachyfont.IncrementalFont.reportError(
@@ -618,7 +613,7 @@ tachyfont.IncrementalFont.obj.prototype.getCompactFontFromPersistence =
 
 
 /**
- * Get the font base from a URL.
+ * Gets the font base from a URL.
  * @param {!Object} backendService The object that interacts with the backend.
  * @param {!tachyfont.FontInfo} fontInfo Info about this font.
  * @return {!goog.Promise} The base bytes in DataView.
@@ -640,7 +635,33 @@ tachyfont.IncrementalFont.obj.prototype.getBaseFontFromUrl = function(
 
 
 /**
- * Get the font base from a URL.
+ * Gets the Compact font for a TachyFont.
+ * @return {!goog.Promise<?tachyfont.typedef.CompactFontWorkingData,?>}
+ */
+tachyfont.IncrementalFont.obj.prototype.getCompactFont = function() {
+  // Try to get the base from persistent store.
+  return this
+      .getCompactFontFromPersistence()  //
+      .thenCatch(function() {
+        // Not persisted so fetch from the URL.
+        this.compactCharList_ = {};
+        return this.getCompactFontFromUrl(this.backendService, this.fontInfo)
+            .then(function(data) {
+              if (goog.DEBUG) {
+                // Remove this once this.compactCharList_ is used.
+                console.log(this.compactCharList_);
+              }
+              return data;
+            }.bind(this))
+            .thenCatch(function() {
+              return null;  //
+            });
+      }.bind(this));
+};
+
+
+/**
+ * Gets the font base from a URL.
  * @param {!Object} backendService The object that interacts with the backend.
  * @param {!tachyfont.FontInfo} fontInfo Info about this font.
  * @return {!goog.Promise<tachyfont.typedef.CompactFontWorkingData,?>} The
@@ -658,16 +679,44 @@ tachyfont.IncrementalFont.obj.prototype.getCompactFontFromUrl = function(
         var results =
             tachyfont.IncrementalFont.processUrlBase(urlBaseBytes, weight);
         // TODO(bstell): need to compact the data
-        // TODO(bstell): need to store the compact data
-        // TODO(bstell): need to initialize the compact charlist
-        // TODO(bstell): need to update the compact metadata
-        var compactWorkingData = {
-          data: results[1],
-          charList: {},
-          fileInfo: results[0]
+        return this.saveNewCompactFont(results);
+      }.bind(this))
+      .then(function(newData) {
+        return {
+          fontBytes: newData[0],
+          charList: newData[2],
+          fileInfo: newData[1]
         };
-        return compactWorkingData;
       }.bind(this));
+};
+
+
+/**
+ * Process the font base fetched from a URL.
+ * @param {!Array<!DataView|tachyfont.typedef.FileInfo>} newData The new data.
+ * @return {!goog.Promise<!Array<*>,?>} The updated data.
+ */
+tachyfont.IncrementalFont.obj.prototype.saveNewCompactFont = function(newData) {
+  // Update the data.
+  return this.getDb().then(function(db) {
+    var transaction =
+        db.transaction(tachyfont.Define.compactStoreNames, 'readwrite');
+    return tachyfont.Persist
+        .getStores(transaction, [tachyfont.Define.COMPACT_METADATA])
+        .then(function(getData) {
+          // TODO(bstell): fix up metadata if needed.
+          // TODO(bstell): modify the metadata info to record the current
+          // activity.
+          var newValues = [
+            newData[1],       // fontBytes,
+            newData[0],       // fileInfo,
+            {},               // charList,
+            getData[0] || {}  // metadata
+          ];
+          return tachyfont.Persist.putStores(
+              transaction, tachyfont.Define.compactStoreNames, newValues);
+        });
+  }.bind(this));
 };
 
 
@@ -1238,7 +1287,7 @@ tachyfont.IncrementalFont.obj.prototype.injectChars = function(neededCodes,
 
 
 /**
- * Get the database name for this font.
+ * Gets the database name for this font.
  * @param {!tachyfont.FontInfo} fontInfo Info about the font.
  * @return {string} The database name.
  */

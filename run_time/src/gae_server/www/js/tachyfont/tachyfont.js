@@ -555,8 +555,7 @@ tachyfont.loadFonts_loadAndUse_ = function(tachyFontSet) {
                         if (goog.DEBUG) {
                           if (tachyfont.Define.compactTachyFont &&
                               incrfont.getShouldBeCompact()) {
-                            return tachyfont.loadFonts_getCompactFont_(
-                                incrfont);
+                            return incrfont.getCompactFont();
                           }
                         }
                       })
@@ -675,28 +674,6 @@ tachyfont.loadFonts_getBaseFont_ = function(incrfont) {
       .then(function(loadedBase) {
         // Get the font data ready for use.
         incrfont.base.resolve(loadedBase);
-      });
-};
-
-
-/**
- * Get the Compact base font for a TachyFont.
- * @param {!tachyfont.IncrementalFont.obj} incrfont The TachyFont object for
- *     which to get the base font.
- * @return {!goog.Promise<?tachyfont.typedef.CompactFontWorkingData,?>}
- * @private
- */
-// TODO(bstell): should this be in incremental font?
-tachyfont.loadFonts_getCompactFont_ = function(incrfont) {
-  // Try to get the base from persistent store.
-  return incrfont.getCompactFontFromPersistence()
-      .thenCatch(function() {
-        // Not persisted so fetch from the URL.
-        return incrfont.getCompactFontFromUrl(
-            incrfont.backendService, incrfont.fontInfo);
-      })
-      .thenCatch(function() {
-        return null;  //
       });
 };
 
