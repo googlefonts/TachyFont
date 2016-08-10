@@ -178,7 +178,7 @@ tachyfont.CompactCff.prototype.addDataSegment = function(
  * @param {!tachyfont.typedef.FileInfo} fileInfo Info about the font bytes.
  * @param {string} fontId Used in error reports.
  */
-tachyfont.CompactCff.prototype.injectCharacters = function(
+tachyfont.CompactCff.prototype.injectGlyphBundle = function(
     baseFontView, bundleResponse, glyphToCodeMap, extraGlyphs, fileInfo,
     fontId) {
   this.setCharacterInfo(
