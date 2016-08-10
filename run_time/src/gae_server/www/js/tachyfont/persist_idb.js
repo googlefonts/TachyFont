@@ -22,10 +22,9 @@ goog.provide('tachyfont.Persist');
 
 goog.require('goog.Promise');
 goog.require('goog.log');
+goog.require('tachyfont.Define');
 goog.require('tachyfont.Logger');
-goog.require('tachyfont.MetadataDefines');
 goog.require('tachyfont.Reporter');
-goog.require('tachyfont.utils');
 
 
 /**
@@ -100,7 +99,7 @@ tachyfont.Persist.saveData = function(idb, names, datas) {
  */
 tachyfont.Persist.openIndexedDB = function(dbName, id) {
   var openIdb = new goog.Promise(function(resolve, reject) {
-    var dbOpen = window.indexedDB.open(dbName, tachyfont.utils.IDB_VERSION);
+    var dbOpen = window.indexedDB.open(dbName, tachyfont.Define.IDB_VERSION);
 
     dbOpen.onsuccess = function(e) {
       var db = e.target.result;
@@ -122,36 +121,36 @@ tachyfont.Persist.openIndexedDB = function(dbName, id) {
             id, 'onupgradeneeded error: ' + e.value);
         reject();
       };
-      if (!db.objectStoreNames.contains(tachyfont.utils.IDB_BASE)) {
-        db.createObjectStore(tachyfont.utils.IDB_BASE);
+      if (!db.objectStoreNames.contains(tachyfont.Define.IDB_BASE)) {
+        db.createObjectStore(tachyfont.Define.IDB_BASE);
       }
-      if (!db.objectStoreNames.contains(tachyfont.utils.IDB_CHARLIST)) {
-        var charListStore = db.createObjectStore(tachyfont.utils.IDB_CHARLIST);
+      if (!db.objectStoreNames.contains(tachyfont.Define.IDB_CHARLIST)) {
+        var charListStore = db.createObjectStore(tachyfont.Define.IDB_CHARLIST);
         tachyfont.Persist.initializeCharList(charListStore);
       }
-      if (!db.objectStoreNames.contains(tachyfont.MetadataDefines.METADATA)) {
+      if (!db.objectStoreNames.contains(tachyfont.Define.METADATA)) {
         var metadataStore =
-            db.createObjectStore(tachyfont.MetadataDefines.METADATA);
+            db.createObjectStore(tachyfont.Define.METADATA);
         tachyfont.Metadata.initializePerFont(metadataStore);
       }
-      if (tachyfont.utils.compactTachyFont) {
+      if (tachyfont.Define.compactTachyFont) {
         // Compact TachyFont data.
-        if (!db.objectStoreNames.contains(tachyfont.utils.COMPACT_FONT)) {
-          db.createObjectStore(tachyfont.utils.COMPACT_FONT);
+        if (!db.objectStoreNames.contains(tachyfont.Define.COMPACT_FONT)) {
+          db.createObjectStore(tachyfont.Define.COMPACT_FONT);
         }
-        if (!db.objectStoreNames.contains(tachyfont.utils.COMPACT_FILE_INFO)) {
-          db.createObjectStore(tachyfont.utils.COMPACT_FILE_INFO);
+        if (!db.objectStoreNames.contains(tachyfont.Define.COMPACT_FILE_INFO)) {
+          db.createObjectStore(tachyfont.Define.COMPACT_FILE_INFO);
         }
-        if (!db.objectStoreNames.contains(tachyfont.utils.COMPACT_METADATA)) {
+        if (!db.objectStoreNames.contains(tachyfont.Define.COMPACT_METADATA)) {
           var compactMetadataStore =
-              db.createObjectStore(tachyfont.utils.COMPACT_METADATA);
+              db.createObjectStore(tachyfont.Define.COMPACT_METADATA);
           // TODO(bstell): does the table initialization belong under
           // tachyfont.Compact ?
           tachyfont.Metadata.initializeCompact(compactMetadataStore);
         }
-        if (!db.objectStoreNames.contains(tachyfont.utils.COMPACT_CHAR_LIST)) {
+        if (!db.objectStoreNames.contains(tachyfont.Define.COMPACT_CHAR_LIST)) {
           var compactCharsListStore =
-              db.createObjectStore(tachyfont.utils.COMPACT_CHAR_LIST);
+              db.createObjectStore(tachyfont.Define.COMPACT_CHAR_LIST);
           tachyfont.Persist.initializeCharList(compactCharsListStore);
         }
       }
@@ -168,8 +167,8 @@ tachyfont.Persist.openIndexedDB = function(dbName, id) {
  */
 tachyfont.Persist.openGlobalDatabase = function() {
   var openIdb = new goog.Promise(function(resolve, reject) {
-    var dbOpen = window.indexedDB.open(tachyfont.utils.IDB_GLOBAL_NAME,
-        tachyfont.utils.IDB_GLOBAL_VERSION);
+    var dbOpen = window.indexedDB.open(tachyfont.Define.IDB_GLOBAL_NAME,
+        tachyfont.Define.IDB_GLOBAL_VERSION);
 
     dbOpen.onsuccess = function(e) {
       var db = e.target.result;
@@ -179,7 +178,7 @@ tachyfont.Persist.openGlobalDatabase = function() {
 
     dbOpen.onerror = function(e) {
       tachyfont.Persist.reportError(tachyfont.Persist.Error.IDB_GLOBAL_OPEN,
-          '', '!!! openIndexedDB "' + tachyfont.utils.IDB_GLOBAL_NAME);
+          '', '!!! openIndexedDB "' + tachyfont.Define.IDB_GLOBAL_NAME);
       reject();
     };
 
@@ -192,9 +191,9 @@ tachyfont.Persist.openGlobalDatabase = function() {
             '', 'onupgradeneeded error: ' + e.value);
         reject();
       };
-      if (!db.objectStoreNames.contains(tachyfont.MetadataDefines.METADATA)) {
+      if (!db.objectStoreNames.contains(tachyfont.Define.METADATA)) {
         var metadataStore =
-            db.createObjectStore(tachyfont.MetadataDefines.METADATA);
+            db.createObjectStore(tachyfont.Define.METADATA);
         tachyfont.Metadata.initializeGlobal(metadataStore);
       }
     };
@@ -260,10 +259,10 @@ tachyfont.Metadata.initializePerFont = function(store) {
 tachyfont.Metadata.initialize = function(store, createTime) {
   // TODO(bstell): make the metadata a real object or struct.
   var metadata = {};
-  metadata[tachyfont.MetadataDefines.ACTIVITY] =
-      tachyfont.MetadataDefines.CREATED_METADATA;
-  metadata[tachyfont.MetadataDefines.ACTIVITY_TIME] =
-      metadata[tachyfont.MetadataDefines.CREATED_METADATA_TIME] = createTime;
+  metadata[tachyfont.Define.ACTIVITY] =
+      tachyfont.Define.CREATED_METADATA;
+  metadata[tachyfont.Define.ACTIVITY_TIME] =
+      metadata[tachyfont.Define.CREATED_METADATA_TIME] = createTime;
   store.put(metadata, 0);
 };
 
@@ -274,7 +273,7 @@ tachyfont.Metadata.initialize = function(store, createTime) {
  */
 tachyfont.Metadata.initializeCompact = function(store) {
   var metadata = {};
-  metadata[tachyfont.MetadataDefines.ACTIVITY_TIME] = goog.now();
+  metadata[tachyfont.Define.ACTIVITY_TIME] = goog.now();
   store.put(metadata, 0);
 };
 
@@ -289,7 +288,7 @@ tachyfont.Metadata.initializeCompact = function(store) {
 // TODO(bstell): this is a 'policy' function so move it out of the db layer;
 // move it to a file like metadata.js
 tachyfont.Metadata.beginSave = function(db, id) {
-  var name = tachyfont.MetadataDefines.METADATA;
+  var name = tachyfont.Define.METADATA;
   return tachyfont.Persist.getData(db, name)
       .thenCatch(function(e) {
         // Tolerate missing metadata.
@@ -297,22 +296,22 @@ tachyfont.Metadata.beginSave = function(db, id) {
       })
       .then(function(storedMetadata) {
         var metadata = tachyfont.Metadata.cleanUpMetadata(storedMetadata, id);
-        if (metadata[tachyfont.MetadataDefines.ACTIVITY] !=
-            tachyfont.MetadataDefines.SAVE_DONE) {
-          if (metadata[tachyfont.MetadataDefines.ACTIVITY] ==
-              tachyfont.MetadataDefines.CREATED_METADATA) {
+        if (metadata[tachyfont.Define.ACTIVITY] !=
+            tachyfont.Define.SAVE_DONE) {
+          if (metadata[tachyfont.Define.ACTIVITY] ==
+              tachyfont.Define.CREATED_METADATA) {
             tachyfont.Persist.reportError(
                 tachyfont.Persist.Error.SAVE_BEGIN_AFTER_CREATED_METADATA, id,
-                metadata[tachyfont.MetadataDefines.ACTIVITY]);
+                metadata[tachyfont.Define.ACTIVITY]);
           } else {
             tachyfont.Persist.reportError(
                 tachyfont.Persist.Error.SAVE_BEGIN_PREVIOUS_ACTIVITY, id,
-                metadata[tachyfont.MetadataDefines.ACTIVITY]);
+                metadata[tachyfont.Define.ACTIVITY]);
           }
         }
-        metadata[tachyfont.MetadataDefines.ACTIVITY] =
-            tachyfont.MetadataDefines.BEGIN_SAVE;
-        metadata[tachyfont.MetadataDefines.ACTIVITY_TIME] = goog.now();
+        metadata[tachyfont.Define.ACTIVITY] =
+            tachyfont.Define.BEGIN_SAVE;
+        metadata[tachyfont.Define.ACTIVITY_TIME] = goog.now();
         return tachyfont.Persist.saveData(db, [name], [metadata])
             .then(function() {
               return metadata;
@@ -336,16 +335,16 @@ tachyfont.Metadata.beginSave = function(db, id) {
 // TODO(bstell): this is a 'policy' function so move it out of the db layer;
 // move it to a file like metadata.js
 tachyfont.Metadata.saveDone = function(db, metadata, id) {
-  var name = tachyfont.MetadataDefines.METADATA;
-  if (metadata[tachyfont.MetadataDefines.ACTIVITY] !=
-      tachyfont.MetadataDefines.BEGIN_SAVE) {
+  var name = tachyfont.Define.METADATA;
+  if (metadata[tachyfont.Define.ACTIVITY] !=
+      tachyfont.Define.BEGIN_SAVE) {
     tachyfont.Persist.reportError(
         tachyfont.Persist.Error.SAVE_DONE_PREVIOUS_ACTIVITY, id,
-        metadata[tachyfont.MetadataDefines.ACTIVITY]);
+        metadata[tachyfont.Define.ACTIVITY]);
   }
-  metadata[tachyfont.MetadataDefines.ACTIVITY] =
-      tachyfont.MetadataDefines.SAVE_DONE;
-  metadata[tachyfont.MetadataDefines.ACTIVITY_TIME] = goog.now();
+  metadata[tachyfont.Define.ACTIVITY] =
+      tachyfont.Define.SAVE_DONE;
+  metadata[tachyfont.Define.ACTIVITY_TIME] = goog.now();
 
   return tachyfont.Persist.saveData(db, [name], [metadata])
       .thenCatch(function(e) {
@@ -367,18 +366,18 @@ tachyfont.Metadata.saveDone = function(db, metadata, id) {
 // move it to a file like metadata.js
 tachyfont.Metadata.cleanUpMetadata = function(inputMetadata, id) {
   var outputMetadata = {};
-  if (!inputMetadata[tachyfont.MetadataDefines.CREATED_METADATA_TIME]) {
-    inputMetadata[tachyfont.MetadataDefines.CREATED_METADATA_TIME] = goog.now();
+  if (!inputMetadata[tachyfont.Define.CREATED_METADATA_TIME]) {
+    inputMetadata[tachyfont.Define.CREATED_METADATA_TIME] = goog.now();
     tachyfont.Persist.reportError(
         tachyfont.Persist.Error.MISSING_CREATED_METADATA_TIME, id, '');
   }
-  outputMetadata[tachyfont.MetadataDefines.CREATED_METADATA_TIME] =
-      inputMetadata[tachyfont.MetadataDefines.CREATED_METADATA_TIME];
-  outputMetadata[tachyfont.MetadataDefines.ACTIVITY] =
-      inputMetadata[tachyfont.MetadataDefines.ACTIVITY] ||
-      tachyfont.MetadataDefines.CREATED_METADATA;
-  outputMetadata[tachyfont.MetadataDefines.ACTIVITY_TIME] =
-      inputMetadata[tachyfont.MetadataDefines.ACTIVITY_TIME] || goog.now();
+  outputMetadata[tachyfont.Define.CREATED_METADATA_TIME] =
+      inputMetadata[tachyfont.Define.CREATED_METADATA_TIME];
+  outputMetadata[tachyfont.Define.ACTIVITY] =
+      inputMetadata[tachyfont.Define.ACTIVITY] ||
+      tachyfont.Define.CREATED_METADATA;
+  outputMetadata[tachyfont.Define.ACTIVITY_TIME] =
+      inputMetadata[tachyfont.Define.ACTIVITY_TIME] || goog.now();
   return outputMetadata;
 };
 
