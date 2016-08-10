@@ -224,7 +224,7 @@ tachyfont.CompactCff.prototype.addDataSegment = function(
  * @param {!Object<number,!Array<number>>} glyphToCodeMap The map of glyph id to
  *     codepoints.
  * @param {!tachyfont.GlyphBundleResponse} bundleResponse New glyph data
- * @return {!goog.Promise<!DataView,?>} A promise for the new font data bytes.
+ * @return {!goog.Promise<!tachyfont.CompactCff,?>} A promise for CompactCff.
  *
  */
 tachyfont.CompactCff.injectChars = function(
@@ -237,7 +237,7 @@ tachyfont.CompactCff.injectChars = function(
       .then(function(db) {
         // Create the transaction.
         transaction =
-            db.transaction(tachyfont.Define.compactStoreNames, 'readonly');
+            db.transaction(tachyfont.Define.compactStoreNames, 'readwrite');
         // Get the persisted data.
         return compactCff.readDbTables(transaction);
       })
@@ -246,8 +246,8 @@ tachyfont.CompactCff.injectChars = function(
         // Write the persisted data.
         return compactCff.writeDbTables(transaction);
       })
-      .then(function(something) {
-        return compactCff.getSfnt().getFontData();  //
+      .then(function() {
+        return compactCff;  //
       });
 };
 
