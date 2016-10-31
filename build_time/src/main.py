@@ -83,7 +83,7 @@ def main(args):
                  (build_dir, cur_time.year, cur_time.month, cur_time.day,
                   cur_time.hour, cur_time.minute, cur_time.second, os.getpid()))
   output_dir = cmd_args.output_dir
-  log.debug('JAR file: ' + output_dir)
+  log.debug('TAR file: ' + output_dir)
   try:
     os.makedirs(build_dir)
   except OSError as exception:
@@ -91,7 +91,7 @@ def main(args):
       log.error('failed to create build_dir (' + build_dir + ')')
       raise
 
-  log.debug('if reuse_clean then we should compare the source font and final jar')
+  log.debug('if reuse_clean then we should compare the source font and final tar')
   cleanfile = filename + '_clean' + extension
   cleanfilepath = build_dir + '/' + cleanfile
   # Decide if we are building the cleaned up version of the font.
@@ -113,20 +113,20 @@ def main(args):
   # Get the latest cleaned up font timestamp.
   cleantime = os.path.getmtime(cleanfilepath)
 
-  # Decide if we are rebuilding the jar file.
-  tachyfont_file = filename + '.TachyFont.jar'
-  jarfilepath = build_dir + '/' + tachyfont_file
-  rebuild_jar = False
-  jarfile_exists = os.path.isfile(jarfilepath)
-  log.debug('file %s exists: %s' % (jarfilepath, jarfile_exists))
-  if force_preprocessing or not jarfile_exists:
-    rebuild_jar = True
+  # Decide if we are rebuilding the tar file.
+  tachyfont_file = filename + '.TachyFont.tar'
+  tarfilepath = build_dir + '/' + tachyfont_file
+  rebuild_tar = False
+  tarfile_exists = os.path.isfile(tarfilepath)
+  log.debug('file %s exists: %s' % (tarfilepath, tarfile_exists))
+  if force_preprocessing or not tarfile_exists:
+    rebuild_tar = True
   else:
-    jartime = os.path.getmtime(jarfilepath)
-    if jartime <= cleantime:
-      rebuild_jar = True
-  log.debug('rebuild_jar = ' + str(rebuild_jar))
-  if rebuild_jar:
+    tartime = os.path.getmtime(tarfilepath)
+    if tartime <= cleantime:
+      rebuild_tar = True
+  log.debug('rebuild_tar = ' + str(rebuild_tar))
+  if rebuild_tar:
     log.debug('start proprocess')
     preprocess = Preprocess(cleanfilepath, build_dir, verbose)
     log.debug('build base')
@@ -138,37 +138,37 @@ def main(args):
     log.debug('write sha-1 fingerprint')
     preprocess.sha1_fingerprint()
 
-    log.debug('create jar file')
+    log.debug('create tar file')
     sub_files = ('base closure_data closure_idx codepoints gids  glyph_data '
                  'glyph_table sha1_fingerprint')
-    jar_cmd = 'cd %s; jar cf %s %s' % (build_dir, tachyfont_file, sub_files)
-    log.debug('jar_cmd: ' + jar_cmd)
-    status = os.system(jar_cmd)
-    log.debug('jar command status: ' + str(status))
+    tar_cmd = 'cd %s; tar cf %s %s' % (build_dir, tachyfont_file, sub_files)
+    log.debug('tar_cmd: ' + tar_cmd)
+    status = os.system(tar_cmd)
+    log.debug('tar command status: ' + str(status))
     if status:
-      log.error('jar command status: ' + str(status))
+      log.error('tar command status: ' + str(status))
       return status
   else:
-    log.debug('no need to rebuild intermediate jar file: ' + jarfilepath)
-  # Get the latest cleaned up jar timestamp.
-  jartime = os.path.getmtime(jarfilepath)
+    log.debug('no need to rebuild intermediate tar file: ' + tarfilepath)
+  # Get the latest cleaned up tar timestamp.
+  tartime = os.path.getmtime(tarfilepath)
 
 
-  # Decide if we are copying over the jar file.
-  copy_jar = False
-  jarcopy_filepath = output_dir + '/' + tachyfont_file
-  jarcopy_exists = os.path.isfile(jarcopy_filepath)
-  if force_preprocessing or not jarcopy_exists:
-    copy_jar = True
+  # Decide if we are copying over the tar file.
+  copy_tar = False
+  tarcopy_filepath = output_dir + '/' + tachyfont_file
+  tarcopy_exists = os.path.isfile(tarcopy_filepath)
+  if force_preprocessing or not tarcopy_exists:
+    copy_tar = True
   else:
-    jarcopytime = os.path.getmtime(jarcopy_filepath)
-    if jarcopytime <= jartime:
-      copy_jar = True
-  log.debug('copy_jar = ' + str(copy_jar))
-  if copy_jar:
+    tarcopytime = os.path.getmtime(tarcopy_filepath)
+    if tarcopytime <= tartime:
+      copy_tar = True
+  log.debug('copy_tar = ' + str(copy_tar))
+  if copy_tar:
     log.debug('cp the files to the output directory')
     log.info('cleaned: %s = %d' % (cleanfile, os.path.getsize(cleanfilepath)))
-    log.info('Jar: %s/%s' % (output_dir, tachyfont_file))
+    log.info('Tar: %s/%s' % (output_dir, tachyfont_file))
     cp_cmd = ('cp %s/%s %s/%s %s' %
               (build_dir, tachyfont_file, build_dir, cleanfile, output_dir))
     log.debug('cp_cmd: ' + cp_cmd)
@@ -178,7 +178,7 @@ def main(args):
       log.error('cp status = ' + str(status))
       return status
   else:
-    log.debug('the existing jar file is up to date: ' + jarfilepath)
+    log.debug('the existing tar file is up to date: ' + tarfilepath)
 
 
   if cmd_args.reuse_clean:
