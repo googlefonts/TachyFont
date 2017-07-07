@@ -250,17 +250,6 @@ tachyfont.SynchronousResolutionPromise.prototype.thenCatch = function(
 
 
 /**
- * Implements the "thenAlways" function.
- * @param {?tachyfont.typedef.ThenResolve} opt_thenAlways The always code.
- * @return {!SynchronousResolutionPromise}
- */
-tachyfont.SynchronousResolutionPromise.prototype.thenAlways = function(
-    opt_thenAlways) {
-  return this.then(opt_thenAlways, opt_thenAlways);
-};
-
-
-/**
  * Returns a resolved Promise.
  * @param {*=} value The resolve value;
  * @return {!SynchronousResolutionPromise}
