@@ -286,6 +286,37 @@ tachyfont.CompactCff.prototype.writeDbTables = function(transaction) {
 
 
 /**
+ * Clears datastores.
+ * @param {!Array<string>} storeNames The names of the stores to be cleared.
+ * @param {!tachyfont.FontInfo} fontInfo Info about the font.
+ * @return {!goog.Promise<?,?>}
+ */
+tachyfont.CompactCff.clearDataStores = function(storeNames, fontInfo) {
+  if (storeNames.length == 0) {
+    return goog.Promise.reject();
+  }
+  return tachyfont.Persist
+      .openIndexedDB(fontInfo.getDbName(), fontInfo.getFontId())
+      .then(function(db) {
+        return new goog.Promise(function(resolve, reject) {
+          // Create the transaction.
+          var transaction = db.transaction(storeNames, 'readwrite');
+          transaction.oncomplete = function(event) {
+            resolve();  //
+          };
+          transaction.onerror = function(event) {
+            reject();  //
+          };
+          // Clear each store.
+          for (var i = 0; i < storeNames.length; i++) {
+            transaction.objectStore(storeNames[i]).clear();
+          }
+        });
+      });
+};
+
+
+/**
  * Inject glyphs in the compact font data expanding as necessary.
  * @param {!tachyfont.GlyphBundleResponse} bundleResponse New glyph data
  * @param {!Object<number, !Array<number>>} glyphToCodeMap This is both an

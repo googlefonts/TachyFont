@@ -1050,7 +1050,12 @@ tachyfont.IncrementalFont.obj.prototype.loadChars = function() {
                         tachyfont.IncrementalFont.reportError(
                             tachyfont.IncrementalFont.Error.INJECT_COMPACT,
                             this.fontId_, '');
-                      });
+                        return tachyfont.CompactCff
+                           .clearDataStores(
+                               tachyfont.Define.compactStoreNames,
+                               this.fontInfo)
+                           .thenCatch(function() {});
+                      }.bind(this));
                 }
               }.bind(this));
             }.bind(this))
