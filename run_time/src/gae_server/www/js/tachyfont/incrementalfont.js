@@ -27,6 +27,7 @@ goog.require('tachyfont.Cmap');
 goog.require('tachyfont.CompactCff');
 goog.require('tachyfont.Define');
 goog.require('tachyfont.DemoBackendService');
+goog.require('tachyfont.FontInfo');
 goog.require('tachyfont.GoogleBackendService');
 goog.require('tachyfont.IncrementalFontUtils');
 goog.require('tachyfont.Metadata');
@@ -1095,8 +1096,14 @@ tachyfont.IncrementalFont.obj.prototype.injectCompact = function(
       .then(function(compactCff) {
         var fontData = compactCff.getSfnt().getFontData();
         var fileInfo = compactCff.getFileInfo();
+        // Until Compact TachyFont is fully enabled make an alternate fontInfo
+        // with a different fontFamily name.
+        // TODO(bstell): use the real fontInfo.
+        var compactFontInfo = new tachyfont.FontInfo(
+            this.fontInfo.getName() + '-Compact', this.fontInfo.getWeight(),
+            this.fontInfo.getPriority());
         return tachyfont.Browser
-            .setFont(fontData, this.fontInfo, fileInfo.isTtf, null)
+            .setFont(fontData, compactFontInfo, fileInfo.isTtf, null)
             .then(function() {
               // This is a success report sent via the error reporting system.
               tachyfont.IncrementalFont.reportError(
