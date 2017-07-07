@@ -525,28 +525,21 @@ tachyfont.loadFonts_loadAndUse_ = function(tachyFontSet) {
                   // Load the fonts from persistent store or URL.
                   return tachyfont.loadFonts_getBaseFont_(incrfont)
                       .then(function(baseFont) {
-                        // If necessary fetch the Compact version.
                         var fileInfo = baseFont[0];
                         // Until Compact is fully enabled: limit the weights.
                         if (!fileInfo.isTtf && incrfont.getShouldBeCompact()) {
-                          // Until Compact is fully enabled: limit to new users.
-                          return incrfont.ifCompactDataStoresExist()
-                              .then(function() {  //
-                                incrfont.getCompactFont()
-                                    .then(function() {
-                                      tachyfont.reportError(
-                                          tachyfont.Error
-                                              .GET_COMPACT_FONT_SUCCESS,
-                                          incrfont.getFontId());
-                                    })
-                                    .thenCatch(function() {
-                                      tachyfont.reportError(
-                                          tachyfont.Error.GET_COMPACT_FONT,
-                                          incrfont.getFontId());
-                                    });
+                          // If necessary fetch the Compact version.
+                          incrfont.getCompactFont()
+                              .then(function() {
+                                // Using error reporting to report success.
+                                tachyfont.reportError(
+                                    tachyfont.Error.GET_COMPACT_FONT_SUCCESS,
+                                    incrfont.getFontId());
                               })
                               .thenCatch(function() {
-                                // Ignore the Compact data stores do not exist
+                                tachyfont.reportError(
+                                    tachyfont.Error.GET_COMPACT_FONT,
+                                    incrfont.getFontId());
                               });
                         }
                       })
