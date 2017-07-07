@@ -95,6 +95,8 @@ tachyfont.Error = {
   NO_MUTATION_OBSERVER: '15',
   NO_FONT_LOADER: '16',
   PAGE_LOADED: '17',
+  GET_COMPACT_FONT: '18',
+  GET_COMPACT_FONT_SUCCESS: '19',
   END: '00'
 };
 
@@ -523,11 +525,29 @@ tachyfont.loadFonts_loadAndUse_ = function(tachyFontSet) {
                   // Load the fonts from persistent store or URL.
                   return tachyfont.loadFonts_getBaseFont_(incrfont)
                       .then(function(baseFont) {
+                        // If necessary fetch the Compact version.
                         var fileInfo = baseFont[0];
-                        if (tachyfont.Define.compactTachyFont &&
-                            !fileInfo.isTtf &&
-                            incrfont.getShouldBeCompact()) {
-                          return incrfont.getCompactFont();
+                        // Until Compact is fully enabled: limit the weights.
+                        if (!fileInfo.isTtf && incrfont.getShouldBeCompact()) {
+                          // Until Compact is fully enabled: limit to new users.
+                          return incrfont.ifCompactDataStoresExist()
+                              .then(function() {  //
+                                incrfont.getCompactFont()
+                                    .then(function() {
+                                      tachyfont.reportError(
+                                          tachyfont.Error
+                                              .GET_COMPACT_FONT_SUCCESS,
+                                          incrfont.getFontId());
+                                    })
+                                    .thenCatch(function() {
+                                      tachyfont.reportError(
+                                          tachyfont.Error.GET_COMPACT_FONT,
+                                          incrfont.getFontId());
+                                    });
+                              })
+                              .thenCatch(function() {
+                                // Ignore the Compact data stores do not exist
+                              });
                         }
                       })
                       .then(function() {

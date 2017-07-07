@@ -405,6 +405,15 @@ tachyfont.IncrementalFont.obj.prototype.getFileInfo = function() {
 
 
 /**
+ * Gets the file information.
+ * @return {string}
+ */
+tachyfont.IncrementalFont.obj.prototype.getFontId = function() {
+  return this.fontId_;
+};
+
+
+/**
  * Set the file information.
  * @param {!tachyfont.typedef.FileInfo} fileInfo The file information.
  */
@@ -640,6 +649,24 @@ tachyfont.IncrementalFont.obj.prototype.getBaseFontFromUrl = function(
     this.persistDelayed(tachyfont.Define.IDB_BASE);
     return results;
   }.bind(this));
+};
+
+
+/**
+ * Resolves if the Compact font stores have been created in IndexedDb;
+ * otherwise rejects.
+ * TODO(bstell): remove this once Compact TachyFont is fully enabled.
+ * @return {!goog.Promise<?,?>}
+ */
+tachyfont.IncrementalFont.obj.prototype.ifCompactDataStoresExist = function() {
+  return this.getDb().then(function(db) {
+    if (!(db.objectStoreNames.contains(tachyfont.Define.COMPACT_FONT) &&
+          db.objectStoreNames.contains(tachyfont.Define.COMPACT_FILE_INFO) &&
+          db.objectStoreNames.contains(tachyfont.Define.COMPACT_METADATA) &&
+          db.objectStoreNames.contains(tachyfont.Define.COMPACT_CHAR_LIST))) {
+      return goog.Promise.reject();
+    }
+  });
 };
 
 
