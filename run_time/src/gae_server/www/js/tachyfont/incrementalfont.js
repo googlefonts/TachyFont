@@ -104,6 +104,7 @@ tachyfont.IncrementalFont.Error = {
   SET_FONT_PRECEEDING_PROMISE: '48',
   SET_FONT_COMPACT: '49',
   SET_FONT_COMPACT_SUCCESS: '50',
+  INJECT_COMPACT: '51',
   END: '00'
 };
 
@@ -1043,14 +1044,13 @@ tachyfont.IncrementalFont.obj.prototype.loadChars = function() {
                 var glyphToCodeMap = this.getGlyphToCodeMap(neededCodes);
                 this.injectChars(
                     fontData, neededCodes, glyphToCodeMap, bundleResponse);
-                if (goog.DEBUG) {
-                  if (tachyfont.Define.compactTachyFont && !fileInfo.isTtf &&
-                      this.getShouldBeCompact()) {
-                    return this.injectCompact(neededCodes, bundleResponse)
-                        .thenCatch(function(e) {
-                          // TODO(bstell): Address this error.
-                        });
-                  }
+                if (!fileInfo.isTtf && this.getShouldBeCompact()) {
+                  return this.injectCompact(neededCodes, bundleResponse)
+                      .thenCatch(function(e) {
+                        tachyfont.IncrementalFont.reportError(
+                            tachyfont.IncrementalFont.Error.INJECT_COMPACT,
+                            this.fontId_, '');
+                      });
                 }
               }.bind(this));
             }.bind(this))
