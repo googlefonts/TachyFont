@@ -51,6 +51,8 @@ tachyfont.Cmap.Error = {
   FORMAT12_END_CODE2: '20',
   FORMAT12_GLYPH_ID_NOT_SET: '21',
   FORMAT12_CHAR_INFO: '22',
+  WRITE_CMAP4_UNSUPPORTED: '23',
+  SET_FORMAT4_GLYPHIDS_UNSUPPORTED: '24',
   END: '00'
 };
 
@@ -101,43 +103,46 @@ tachyfont.Cmap.writeCmap4 = function(fileInfo, baseFontView, fontId) {
   if (!fileInfo.compact_gos.cmap4) {
     return;
   }
-  var segments = fileInfo.compact_gos.cmap4.segments;
-  var glyphIdArray = fileInfo.compact_gos.cmap4.glyphIdArray;
-  var binaryEditor = new tachyfont.BinaryFontEditor(baseFontView,
-      fileInfo.cmap4.offset + 6);
-  var segCount = binaryEditor.getUint16() / 2;
-  if (segCount != segments.length) {
-    tachyfont.Cmap.reportError(
-        tachyfont.Cmap.Error.WRITE_CMAP4_SEGMENT_COUNT, fontId,
-        'segCount=' + segCount + ', segments.length=' + segments.length);
-  }
-  var glyphIdArrayLen = (fileInfo.cmap4.length - 16 - segCount * 8) / 2;
-  fileInfo.cmap4.segCount = segCount;
-  fileInfo.cmap4.glyphIdArrayLen = glyphIdArrayLen;
-  binaryEditor.skip(6);  //skip searchRange, entrySelector, rangeShift
-  // Write endCode values.
-  for (var i = 0; i < segCount; i++) {
-    binaryEditor.setUint16(segments[i][1]);
-  }
-  binaryEditor.skip(2);//skip reservePad
-  // Write startCode values.
-  for (var i = 0; i < segCount; i++) {
-    binaryEditor.setUint16(segments[i][0]);
-  }
-  // Write idDelta values.
-  for (var i = 0; i < segCount; i++) {
-    // Make the single code point in this segment point to .notdef.
-    var startCode = segments[i][0];
-    binaryEditor.setUint16(0x10000 - startCode);
-  }
-  // Write idRangeOffset vValues.
-  for (var i = 0; i < segCount; i++) {
-    binaryEditor.setUint16(segments[i][3]);
-  }
-  // Write glyphIdArray values.
-  if (glyphIdArrayLen > 0) {
-    binaryEditor.setArrayOf(binaryEditor.setUint16, glyphIdArray);
-  }
+  tachyfont.Cmap.reportError(
+      tachyfont.Cmap.Error.WRITE_CMAP4_UNSUPPORTED, fontId, '');
+  throw new Error('write cmap4 unsupported');
+  //var segments = fileInfo.compact_gos.cmap4.segments;
+  //var glyphIdArray = fileInfo.compact_gos.cmap4.glyphIdArray;
+  //var binaryEditor = new tachyfont.BinaryFontEditor(baseFontView,
+  //    fileInfo.cmap4.offset + 6);
+  //var segCount = binaryEditor.getUint16() / 2;
+  //if (segCount != segments.length) {
+  //  tachyfont.Cmap.reportError(
+  //      tachyfont.Cmap.Error.WRITE_CMAP4_SEGMENT_COUNT, fontId,
+  //      'segCount=' + segCount + ', segments.length=' + segments.length);
+  //}
+  //var glyphIdArrayLen = (fileInfo.cmap4.length - 16 - segCount * 8) / 2;
+  //fileInfo.cmap4.segCount = segCount;
+  //fileInfo.cmap4.glyphIdArrayLen = glyphIdArrayLen;
+  //binaryEditor.skip(6);  //skip searchRange, entrySelector, rangeShift
+  //// Write endCode values.
+  //for (var i = 0; i < segCount; i++) {
+  //  binaryEditor.setUint16(segments[i][1]);
+  //}
+  //binaryEditor.skip(2);//skip reservePad
+  //// Write startCode values.
+  //for (var i = 0; i < segCount; i++) {
+  //  binaryEditor.setUint16(segments[i][0]);
+  //}
+  //// Write idDelta values.
+  //for (var i = 0; i < segCount; i++) {
+  //  // Make the single code point in this segment point to .notdef.
+  //  var startCode = segments[i][0];
+  //  binaryEditor.setUint16(0x10000 - startCode);
+  //}
+  //// Write idRangeOffset vValues.
+  //for (var i = 0; i < segCount; i++) {
+  //  binaryEditor.setUint16(segments[i][3]);
+  //}
+  //// Write glyphIdArray values.
+  //if (glyphIdArrayLen > 0) {
+  //  binaryEditor.setArrayOf(binaryEditor.setUint16, glyphIdArray);
+  //}
 };
 
 
@@ -325,91 +330,95 @@ tachyfont.Cmap.setFormat4GlyphIds = function(
   if (!fileInfo.compact_gos.cmap4) {
     return;
   }
-  var segments = fileInfo.compact_gos.cmap4.segments;
-  var binaryEditor = new tachyfont.BinaryFontEditor(baseFontView,
-      fileInfo.cmap4.offset + 6);
-  var segCount = binaryEditor.getUint16() / 2;
-  if (segCount != segments.length) {
-    tachyfont.Cmap.reportError(
-        tachyfont.Cmap.Error.FORMAT4_SEGMENT_COUNT, fontId,
-        'segCount=' + segCount + ', segments.length=' + segments.length);
-    return;
-  }
-  binaryEditor.seek(8);
-  for (var i = 0; i < segCount; i++) {
-    // Check the end code.
-    var segmentEndCode = binaryEditor.getUint16();
-    if (segmentEndCode != segments[i][1]) {
-      tachyfont.Cmap.reportError(
-          tachyfont.Cmap.Error.FORMAT4_END_CODE, fontId, 'segment ' + i +
-              ': segmentEndCode (' + segmentEndCode + ') != segments[' + i +
-              '][1] (' + segments[i][1] + ')');
-      return;
-    }
-    // Check the segment is one char long
-    if (segmentEndCode != segments[i][0]) {
-      tachyfont.Cmap.reportError(
-          tachyfont.Cmap.Error.FORMAT4_SEGMENT_LENGTH, fontId, 'segment ' + i +
-              ' is ' + (segments[i][1] - segments[i][0] + 1) + ' chars long');
-      return;
-    }
-  }
-  binaryEditor.skip(2);//skip reservePad
-  for (var i = 0; i < segCount; i++) {
-    var segStartCode = binaryEditor.getUint16();
-    if (segStartCode != segments[i][0]) {
-      tachyfont.Cmap.reportError(
-          tachyfont.Cmap.Error.FORMAT4_START_CODE, fontId, 'segment ' + i +
-              ': segStartCode (' + segStartCode + ') != segments[' + i +
-              '][1] (' + segments[i][0] + ')');
-      return;
-    }
-  }
-  var idDeltaOffset = binaryEditor.tell();
-  // No longer reporting "already set" glyphs. This was never really an error as
-  // multiple composed characters could load the same sub-glyphs; eg, the acute
-  // used by a-acute, i-acute, o-acute, etc. Clients that had automatic site
-  // data clearing made this report very noisy.
-  for (var i = 0; i < segCount; i++) {
-    var segIdRangeOffset = binaryEditor.getUint16();
-    if (segIdRangeOffset != 0) {
-      tachyfont.Cmap.reportError(
-          tachyfont.Cmap.Error.FORMAT4_ID_RANGE_OFFSET, fontId,
-          'format 4 segment ' + i + ': segIdRangeOffset (' + segIdRangeOffset +
-              ') != 0');
-      return;
-    }
-  }
-  for (var i = 0; i < glyphIds.length; i++) {
-    // Set the glyph Id
-    var glyphId = glyphIds[i];
-    var codes = glyphToCodeMap[glyphId];
-    if (codes == undefined) {
-      continue;
-    }
-    for (var j = 0; j < codes.length; j++) {
-      var code = codes[j];
-      var charCmapInfo = fileInfo.cmapMapping[code];
-      if (!charCmapInfo) {
-        tachyfont.Cmap.reportError(
-            tachyfont.Cmap.Error.FORMAT4_CHAR_CMAP_INFO, fontId,
-            'format 4, code ' + code + ': no CharCmapInfo');
-        continue;
-      }
-      var format4Seg = charCmapInfo.format4Seg;
-      if (format4Seg == null) {
-        if (code <= 0xFFFF) {
-          tachyfont.Cmap.reportError(
-              tachyfont.Cmap.Error.FORMAT4_SEGMENT, fontId,
-              'format 4, missing segment for code ' + code);
-        }
-        // Character is not in the format 4 segment.
-        continue;
-      }
-      binaryEditor.seek(idDeltaOffset + format4Seg * 2);
-      binaryEditor.setUint16(segments[format4Seg][2]);
-    }
-  }
+  tachyfont.Cmap.reportError(
+      tachyfont.Cmap.Error.SET_FORMAT4_GLYPHIDS_UNSUPPORTED, fontId, '');
+  throw new Error('set format4 glyphids unsupported');
+  //var segments = fileInfo.compact_gos.cmap4.segments;
+  //var binaryEditor = new tachyfont.BinaryFontEditor(baseFontView,
+  //    fileInfo.cmap4.offset + 6);
+  //var segCount = binaryEditor.getUint16() / 2;
+  //if (segCount != segments.length) {
+  //  tachyfont.Cmap.reportError(
+  //      tachyfont.Cmap.Error.FORMAT4_SEGMENT_COUNT, fontId,
+  //      'segCount=' + segCount + ', segments.length=' + segments.length);
+  //  return;
+  //}
+  //binaryEditor.seek(8);
+  //for (var i = 0; i < segCount; i++) {
+  //  // Check the end code.
+  //  var segmentEndCode = binaryEditor.getUint16();
+  //  if (segmentEndCode != segments[i][1]) {
+  //    tachyfont.Cmap.reportError(
+  //        tachyfont.Cmap.Error.FORMAT4_END_CODE, fontId, 'segment ' + i +
+  //            ': segmentEndCode (' + segmentEndCode + ') != segments[' + i +
+  //            '][1] (' + segments[i][1] + ')');
+  //    return;
+  //  }
+  //  // Check the segment is one char long
+  //  if (segmentEndCode != segments[i][0]) {
+  //    tachyfont.Cmap.reportError(
+  //        tachyfont.Cmap.Error.FORMAT4_SEGMENT_LENGTH, fontId, 'segment ' +
+  //            i + ' is ' + (segments[i][1] - segments[i][0] + 1) +
+  //            ' chars long');
+  //    return;
+  //  }
+  //}
+  //binaryEditor.skip(2);//skip reservePad
+  //for (var i = 0; i < segCount; i++) {
+  //  var segStartCode = binaryEditor.getUint16();
+  //  if (segStartCode != segments[i][0]) {
+  //    tachyfont.Cmap.reportError(
+  //        tachyfont.Cmap.Error.FORMAT4_START_CODE, fontId, 'segment ' + i +
+  //            ': segStartCode (' + segStartCode + ') != segments[' + i +
+  //            '][1] (' + segments[i][0] + ')');
+  //    return;
+  //  }
+  //}
+  //var idDeltaOffset = binaryEditor.tell();
+  //// No longer reporting "already set" glyphs. This was never really an error
+  //// as multiple composed characters could load the same sub-glyphs; eg, the
+  //// acute used by a-acute, i-acute, o-acute, etc. Clients that had automatic
+  //// site data clearing made this report very noisy.
+  //for (var i = 0; i < segCount; i++) {
+  //  var segIdRangeOffset = binaryEditor.getUint16();
+  //  if (segIdRangeOffset != 0) {
+  //    tachyfont.Cmap.reportError(
+  //        tachyfont.Cmap.Error.FORMAT4_ID_RANGE_OFFSET, fontId,
+  //        'format 4 segment ' + i + ': segIdRangeOffset (' +
+  //        segIdRangeOffset + ') != 0');
+  //    return;
+  //  }
+  //}
+  //for (var i = 0; i < glyphIds.length; i++) {
+  //  // Set the glyph Id
+  //  var glyphId = glyphIds[i];
+  //  var codes = glyphToCodeMap[glyphId];
+  //  if (codes == undefined) {
+  //    continue;
+  //  }
+  //  for (var j = 0; j < codes.length; j++) {
+  //    var code = codes[j];
+  //    var charCmapInfo = fileInfo.cmapMapping[code];
+  //    if (!charCmapInfo) {
+  //      tachyfont.Cmap.reportError(
+  //          tachyfont.Cmap.Error.FORMAT4_CHAR_CMAP_INFO, fontId,
+  //          'format 4, code ' + code + ': no CharCmapInfo');
+  //      continue;
+  //    }
+  //    var format4Seg = charCmapInfo.format4Seg;
+  //    if (format4Seg == null) {
+  //      if (code <= 0xFFFF) {
+  //        tachyfont.Cmap.reportError(
+  //            tachyfont.Cmap.Error.FORMAT4_SEGMENT, fontId,
+  //            'format 4, missing segment for code ' + code);
+  //      }
+  //      // Character is not in the format 4 segment.
+  //      continue;
+  //    }
+  //    binaryEditor.seek(idDeltaOffset + format4Seg * 2);
+  //    binaryEditor.setUint16(segments[format4Seg][2]);
+  //  }
+  //}
 };
 
 
