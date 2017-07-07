@@ -80,6 +80,9 @@ tachyfont.CompactCff.Error = {
   FILE_ID: 'ECC',
   PRE_INJECT_SET_FONT: '01',
   POST_INJECT_SET_FONT: '02',
+  INJECT_CHARS_GET_DB: '03',
+  INJECT_CHARS_READ_TABLES: '04',
+  INJECT_CHARS_WRITE_TABLES: '05',
   END: '00'
 };
 
@@ -261,12 +264,22 @@ tachyfont.CompactCff.injectChars = function(
   var preInjectFontData;  // TODO(bstell): get rid of this.
   // Get the db handle.
   return tachyfont.Persist.openIndexedDB(fontInfo.getDbName(), fontId)
+      .thenCatch(function() { // TODO(bstell): remove this debug code
+        tachyfont.CompactCff.reportError(
+            tachyfont.CompactCff.Error.INJECT_CHARS_GET_DB, fontId, '');
+        return goog.Promise.reject();
+      })
       .then(function(db) {
         // Create the transaction.
         transaction =
             db.transaction(tachyfont.Define.compactStoreNames, 'readwrite');
         // Get the persisted data.
         return compactCff.readDbTables(transaction);
+      })
+      .thenCatch(function() { // TODO(bstell): remove this debug code
+        tachyfont.CompactCff.reportError(
+            tachyfont.CompactCff.Error.INJECT_CHARS_READ_TABLES, fontId, '');
+        return goog.Promise.reject();
       })
       .then(function() {
         // Save the pre-inject font data. Cannot run checkSetFont here as that
@@ -276,6 +289,11 @@ tachyfont.CompactCff.injectChars = function(
         compactCff.injectGlyphBundle(bundleResponse, glyphToCodeMap);
         // Write the persisted data.
         return compactCff.writeDbTables(transaction);
+      })
+      .thenCatch(function() { // TODO(bstell): remove this debug code
+        tachyfont.CompactCff.reportError(
+            tachyfont.CompactCff.Error.INJECT_CHARS_WRITE_TABLES, fontId, '');
+        return goog.Promise.reject();
       })
       .then(function() {
         // checkSetFont the pre-inject font

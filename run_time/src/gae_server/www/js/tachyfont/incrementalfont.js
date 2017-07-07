@@ -1117,10 +1117,19 @@ tachyfont.IncrementalFont.obj.prototype.loadChars = function() {
                     fontData, neededCodes, glyphToCodeMap, bundleResponse);
                 if (!fileInfo.isTtf && this.getShouldBeCompact()) {
                   return this.injectCompact(neededCodes, bundleResponse)
-                      .thenCatch(function(e) {
+                      .thenCatch(function(e) {  // TODO(bstell): get rid of this
+                        // Report the glyphs in this inject.
+                        var glyphDataArray = bundleResponse.getGlyphDataArray();
+                        var glyphIds = [];
+                        var count = bundleResponse.getGlyphCount();
+                        for (var i = 0; i < count && i < 100; i++) {
+                          var glyphData = glyphDataArray[i];
+                          var id = glyphData.getId();
+                          glyphIds.push(id);
+                        }
                         tachyfont.IncrementalFont.reportError(
                             tachyfont.IncrementalFont.Error.INJECT_COMPACT,
-                            this.fontId_, '');
+                            this.fontId_, glyphIds.join());
                         return tachyfont.CompactCff.clearDataStores(
                             tachyfont.Define.compactStoreNames, this.fontInfo);
                       }.bind(this));
