@@ -17,8 +17,8 @@
  * the License.
  */
 
+goog.provide('tachyfont.Promise');
 goog.provide('tachyfont.chainedPromises');
-goog.provide('tachyfont.promise');
 
 goog.require('goog.Promise');
 goog.require('tachyfont.Reporter');
@@ -34,7 +34,7 @@ goog.require('tachyfont.log');
  * @param {string=} opt_msg An optional message useful for debugging.
  * @constructor
  */
-tachyfont.promise = function(opt_container, opt_msg) {
+tachyfont.Promise.Encapsulated = function(opt_container, opt_msg) {
   /**
    * The promise.
    *
@@ -65,7 +65,7 @@ tachyfont.promise = function(opt_container, opt_msg) {
  * @enum {string}
  * @private
  */
-tachyfont.promise.Error_ = {
+tachyfont.Promise.Encapsulated.Error_ = {
   FILE_ID: 'ETP',
   PRECEDING_PROMISE: '01',
   RESOLVE_CHAINED_COUNT: '02',
@@ -81,9 +81,9 @@ tachyfont.promise.Error_ = {
  * @param {*} errInfo The error object;
  * @private
  */
-tachyfont.promise.reportError_ = function(errNum, errInfo) {
+tachyfont.Promise.Encapsulated.reportError_ = function(errNum, errInfo) {
   tachyfont.Reporter.reportError(
-      tachyfont.promise.Error_.FILE_ID + errNum, '000', errInfo);
+      tachyfont.Promise.Encapsulated.Error_.FILE_ID + errNum, '000', errInfo);
 };
 
 
@@ -92,7 +92,7 @@ tachyfont.promise.reportError_ = function(errNum, errInfo) {
  *
  * @return {!goog.Promise}
  */
-tachyfont.promise.prototype.getPromise = function() {
+tachyfont.Promise.Encapsulated.prototype.getPromise = function() {
   return this.promise_;
 };
 
@@ -102,10 +102,10 @@ tachyfont.promise.prototype.getPromise = function() {
  *
  * @return {?goog.Promise}
  */
-tachyfont.promise.prototype.getPrecedingPromise = function() {
+tachyfont.Promise.Encapsulated.prototype.getPrecedingPromise = function() {
   if (!this.precedingPromise_) {
-    tachyfont.promise.reportError_(tachyfont.promise.Error_.PRECEDING_PROMISE,
-        this.msg_);
+    tachyfont.Promise.Encapsulated.reportError_(
+        tachyfont.Promise.Encapsulated.Error_.PRECEDING_PROMISE, this.msg_);
   }
   return this.precedingPromise_;
 };
@@ -116,15 +116,16 @@ tachyfont.promise.prototype.getPrecedingPromise = function() {
  *
  * @param {*=} opt_value An optional value to pass to the reject function.
  */
-tachyfont.promise.prototype.reject = function(opt_value) {
+tachyfont.Promise.Encapsulated.prototype.reject = function(opt_value) {
   // TODO(bstell): reject means all subsequent uses to fail; is this desired?
   this.rejecter_(opt_value);
   if (this.container_) {
     if (this.container_.promises.length <= 1) {
       // We unshift all except the very first manually added promise.
       if (this.container_.chainedCount_ != 0) {
-        tachyfont.promise.reportError_(
-            tachyfont.promise.Error_.REJECT_CHAINED_COUNT, this.msg_);
+        tachyfont.Promise.Encapsulated.reportError_(
+            tachyfont.Promise.Encapsulated.Error_.REJECT_CHAINED_COUNT,
+            this.msg_);
       }
     }
     if (this.container_.promises.length > 1) {
@@ -140,14 +141,15 @@ tachyfont.promise.prototype.reject = function(opt_value) {
  *
  * @param {*=} opt_value An optional value to pass to the resolve function.
  */
-tachyfont.promise.prototype.resolve = function(opt_value) {
+tachyfont.Promise.Encapsulated.prototype.resolve = function(opt_value) {
   this.resolver_(opt_value);
   if (this.container_) {
     if (this.container_.promises.length <= 1) {
       // We unshift all except the very first manually added promise.
       if (this.container_.chainedCount_ != 0) {
-        tachyfont.promise.reportError_(
-            tachyfont.promise.Error_.RESOLVE_CHAINED_COUNT, this.msg_);
+        tachyfont.Promise.Encapsulated.reportError_(
+            tachyfont.Promise.Encapsulated.Error_.RESOLVE_CHAINED_COUNT,
+            this.msg_);
       }
     }
     if (this.container_.promises.length > 1) {
@@ -203,8 +205,8 @@ tachyfont.chainedPromises = function(msg) {
       }
       this.timerReportCount_++;
       if (this.timerReportCount_ >= 10) {
-        tachyfont.promise.reportError_(
-            tachyfont.promise.Error_.LINGERING_PROMISE,
+        tachyfont.Promise.Encapsulated.reportError_(
+            tachyfont.Promise.Encapsulated.Error_.LINGERING_PROMISE,
             this.msg_ + 'gave up checking for pending count');
         clearInterval(this.intervalId_);
       }
@@ -220,7 +222,7 @@ tachyfont.chainedPromises = function(msg) {
    */
   this.timerReportCount_ = 0;
   this.promises = [];
-  var firstPromise = new tachyfont.promise(this);
+  var firstPromise = new tachyfont.Promise.Encapsulated(this);
   firstPromise.precedingPromise_ = firstPromise.promise_;
   this.promises.push(firstPromise);
   firstPromise.resolve();
@@ -231,13 +233,13 @@ tachyfont.chainedPromises = function(msg) {
  * Get a chained promise.
  *
  * @param {string} msg Information about the caller.
- * @return {!tachyfont.promise}
+ * @return {!tachyfont.Promise.Encapsulated}
  */
 tachyfont.chainedPromises.prototype.getChainedPromise = function(msg) {
   this.chainedCount_++;
   this.pendingCount_++;
   var precedingPromise = this.promises[this.promises.length - 1];
-  var newPromise = new tachyfont.promise(this, msg);
+  var newPromise = new tachyfont.Promise.Encapsulated(this, msg);
   newPromise.precedingPromise_ = precedingPromise.promise_;
   this.promises.push(newPromise);
   return newPromise;

@@ -31,11 +31,11 @@ goog.require('tachyfont.GoogleBackendService');
 goog.require('tachyfont.IncrementalFontUtils');
 goog.require('tachyfont.Metadata');
 goog.require('tachyfont.Persist');
+goog.require('tachyfont.Promise');
 goog.require('tachyfont.RLEDecoder');
 goog.require('tachyfont.Reporter');
 goog.require('tachyfont.chainedPromises');
 goog.require('tachyfont.log');
-goog.require('tachyfont.promise');
 goog.require('tachyfont.utils');
 
 
@@ -302,9 +302,9 @@ tachyfont.IncrementalFont.obj = function(fontInfo, params, backendService) {
 
   // Promises
   this.getIDB_ = null;
-  this.base = new tachyfont.promise();
+  this.base = new tachyfont.Promise.Encapsulated();
   this.getBase = this.base.getPromise();
-  this.charList = new tachyfont.promise();
+  this.charList = new tachyfont.Promise.Encapsulated();
   this.getCharList = this.charList.getPromise();
 
   /**
