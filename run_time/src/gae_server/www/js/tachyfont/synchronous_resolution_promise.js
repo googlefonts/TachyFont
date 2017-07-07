@@ -52,10 +52,10 @@ var SynchronousResolutionPromise = tachyfont.SynchronousResolutionPromise;
  * depth. Synchronous resolution does not limit the call stack depth so care
  * must be taken to avoid exceeding maximum call stack depth.
  *
- * @param {!tachyfont.typedef.Resolver} resolver The initialization
- *     function that is invoked immediately with {@code resolve} and {@code
- *     reject} functions as arguments. The Promise is resolved or rejected with
- *     the first argument passed to either function.
+ * @param {!tachyfont.typedef.Resolver} resolver The initialization function
+ *     that is invoked immediately with {@code resolve} and {@code reject}
+ *     functions as arguments. The Promise is resolved or rejected with the
+ *     first argument passed to either function.
  * @constructor @struct @final
  */
 tachyfont.SynchronousResolutionPromise = function(resolver) {
@@ -68,14 +68,18 @@ tachyfont.SynchronousResolutionPromise = function(resolver) {
   /** @private {?tachyfont.typedef.ThenInfo} */
   this.deferredThen_ = null;
 
-  var self = this;
-  resolver(
-      function(result) {  //
-        self.resolve(result);
-      },
-      function(result) {  //
-        self.reject(result);
-      });
+  try {
+    var self = this;
+    resolver(
+        function(result) {  //
+          self.resolve(result);
+        },
+        function(result) {  //
+          self.reject(result);
+        });
+  } catch (e) {
+    this.reject(e);
+  }
 };
 
 
@@ -169,8 +173,8 @@ tachyfont.SynchronousResolutionPromise.prototype.reject = function(opt_reason) {
  *       .then(...)
  *       .then(...);
  *
- * @param {!tachyfont.typedef.ThenInfo} thenInfo The info used by an
- *     'attached' 'then' function.
+ * @param {!tachyfont.typedef.ThenInfo} thenInfo The info used by an 'attached'
+ *     'then' function.
  * @private
  */
 tachyfont.SynchronousResolutionPromise.prototype.runOrDeferTheThen_ = function(
@@ -208,17 +212,15 @@ tachyfont.SynchronousResolutionPromise.prototype.runOrDeferTheThen_ = function(
 
 /**
  * Implements the "then" function.
- * @param {?tachyfont.typedef.ThenResolve=} opt_thenResolve The
- *     resolve code.
- * @param {?tachyfont.typedef.ThenReject=} opt_thenReject The reject
- *     code.
+ * @param {?tachyfont.typedef.ThenResolve=} opt_thenResolve The resolve code.
+ * @param {?tachyfont.typedef.ThenReject=} opt_thenReject The reject code.
  * @return {!SynchronousResolutionPromise}
  */
 tachyfont.SynchronousResolutionPromise.prototype.then = function(
     opt_thenResolve, opt_thenReject) {
   var self = this;
   /**
-   * Explicityly create the resolve function so the parameter can be correctly
+   * Explicitly create the resolve function so the parameter can be correctly
    * defined to make the Closure compilier happy.
    * @param {?tachyfont.typedef.Resolve=} resolve The resolve code.
    * @param {?tachyfont.typedef.Reject=} reject The reject code.
@@ -233,6 +235,52 @@ tachyfont.SynchronousResolutionPromise.prototype.then = function(
     });
   };
   return new tachyfont.SynchronousResolutionPromise(resolver);
+};
+
+
+/**
+ * Implements the "thenCatch" function.
+ * @param {?tachyfont.typedef.ThenReject} opt_thenReject The reject code.
+ * @return {!SynchronousResolutionPromise}
+ */
+tachyfont.SynchronousResolutionPromise.prototype.thenCatch = function(
+    opt_thenReject) {
+  return this.then(null, opt_thenReject);
+};
+
+
+/**
+ * Implements the "thenAlways" function.
+ * @param {?tachyfont.typedef.ThenResolve} opt_thenAlways The always code.
+ * @return {!SynchronousResolutionPromise}
+ */
+tachyfont.SynchronousResolutionPromise.prototype.thenAlways = function(
+    opt_thenAlways) {
+  return this.then(opt_thenAlways, opt_thenAlways);
+};
+
+
+/**
+ * Returns a resolved Promise.
+ * @param {*=} value The resolve value;
+ * @return {!SynchronousResolutionPromise}
+ */
+tachyfont.SynchronousResolutionPromise.resolve = function(value) {
+  return new tachyfont.SynchronousResolutionPromise(function(resolve) {
+    resolve(value);
+  });
+};
+
+
+/**
+ * Returns a rejected Promise.
+ * @param {*=} value The reject value;
+ * @return {!SynchronousResolutionPromise}
+ */
+tachyfont.SynchronousResolutionPromise.reject = function(value) {
+  return new tachyfont.SynchronousResolutionPromise(function(resolve, reject) {
+    reject(value);
+  });
 };
 
 });  // goog.scope

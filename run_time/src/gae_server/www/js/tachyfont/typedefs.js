@@ -39,13 +39,13 @@ goog.provide('tachyfont.typedef.uint8');
 
 
 /**
- * @typedef {function(*=): ?}
+ * @typedef {function(*=): (?|*|undefined)}
  */
 tachyfont.typedef.Resolve;
 
 
 /**
- * @typedef {function(*=): ?}
+ * @typedef {function(*=): (*|undefined)}
  */
 tachyfont.typedef.Reject;
 
@@ -53,7 +53,10 @@ tachyfont.typedef.Reject;
 /**
  * @typedef {function((?tachyfont.typedef.Resolve|undefined),
  *                    (?tachyfont.typedef.Reject|undefined))
- *                    :?}
+ *                    :(*|undefined)}
+ * typedef {function(function (*=): ?,
+ *                    function (*=): ?)
+ *                    :void}
  */
 tachyfont.typedef.Resolver;
 
@@ -65,6 +68,9 @@ tachyfont.typedef.Context;
 
 
 /**
+ * typedef {function(!tachyfont.typedef.Resolver,
+ *                    !tachyfont.typedef.Context=)
+ *                    :void}
  * @typedef {function(!tachyfont.typedef.Resolver,
  *                    !tachyfont.typedef.Context=)
  *                    :void}
@@ -73,13 +79,13 @@ tachyfont.typedef.PromiseClass;
 
 
 /**
- * @typedef {function(*=): ?}
+ * @typedef {function(?): ?}
  */
 tachyfont.typedef.ThenResolve;
 
 
 /**
- * @typedef {function(*=): ?}
+ * @typedef {function(?): ?}
  */
 tachyfont.typedef.ThenReject;
 

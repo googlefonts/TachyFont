@@ -34,6 +34,7 @@ goog.require('tachyfont.Persist');
 goog.require('tachyfont.Promise');
 goog.require('tachyfont.RLEDecoder');
 goog.require('tachyfont.Reporter');
+goog.require('tachyfont.SynchronousResolutionPromise');
 goog.require('tachyfont.log');
 goog.require('tachyfont.utils');
 
@@ -602,13 +603,16 @@ tachyfont.IncrementalFont.obj.prototype.getBaseFontFromPersistence =
 
 /**
  * Gets the compact font base from persistent store.
- * @return {!goog.Promise<tachyfont.typedef.CompactFontWorkingData,?>} The
- *     Compact font's data, charlist, and metadata.
+ * @return {!tachyfont.SynchronousResolutionPromise<
+ *               tachyfont.typedef.CompactFontWorkingData,?>}
+ *   The Compact font's data, charlist, and metadata.
  */
 tachyfont.IncrementalFont.obj.prototype.getCompactFontFromPersistence =
     function() {
   var fontId = this.fontId_;
-  return this.getDb()
+  var dbName = this.fontInfo.getDbName();
+  return tachyfont.Persist
+      .openIndexedDbSynchronousResolutionPromise(dbName, fontId)
       .thenCatch(function(e) {  // TODO(bstell): remove this debug code
         tachyfont.IncrementalFont.reportError(
             tachyfont.IncrementalFont.Error.COMPACT_GET_DB, fontId, e);
@@ -625,7 +629,7 @@ tachyfont.IncrementalFont.obj.prototype.getCompactFontFromPersistence =
               tachyfont.IncrementalFont.reportError(
                   tachyfont.IncrementalFont.Error.COMPACT_GET_STORES, fontId,
                   e);
-              return goog.Promise.reject(e);
+              return tachyfont.SynchronousResolutionPromise.reject(e);
             });
       })
       .then(function(arr) {
@@ -636,7 +640,7 @@ tachyfont.IncrementalFont.obj.prototype.getCompactFontFromPersistence =
         // metadata is in arr[3];
         if (!fontData || !fileInfo || !charList) {
           // Missing data is not nessarily an error
-          return goog.Promise.reject();
+          return tachyfont.SynchronousResolutionPromise.reject();
         }
         // TODO(bstell): remove this after 2016-08-11
         if (fontData.byteLength > 3000000) {
@@ -645,14 +649,14 @@ tachyfont.IncrementalFont.obj.prototype.getCompactFontFromPersistence =
           tachyfont.IncrementalFont.reportError(
              tachyfont.IncrementalFont.Error.DO_NOT_USE_UNCOMPACTED_FONT,
              fontId, '');
-          return goog.Promise.reject();
+          return tachyfont.SynchronousResolutionPromise.reject();
         }
         var isOkay = tachyfont.Cmap.checkCharacters(
             fileInfo, fontData, charList, fontId, true);
         if (!isOkay) {
           tachyfont.IncrementalFont.reportError(
               tachyfont.IncrementalFont.Error.COMPACT_CHECK_CMAP, fontId, '');
-          return goog.Promise.reject();
+          return tachyfont.SynchronousResolutionPromise.reject();
         }
         return {fontBytes: fontData, fileInfo: fileInfo, charList: charList};
       })
@@ -671,7 +675,7 @@ tachyfont.IncrementalFont.obj.prototype.getCompactFontFromPersistence =
                   tachyfont.IncrementalFont.Error
                       .GET_COMPACT_FROM_PERSISTENCE_SET_FONT,
                   fontId, '');
-              return goog.Promise.reject();
+              return tachyfont.SynchronousResolutionPromise.reject();
             });
       }.bind(this));
 };
@@ -702,23 +706,29 @@ tachyfont.IncrementalFont.obj.prototype.getBaseFontFromUrl = function(
  * Resolves if the Compact font stores have been created in IndexedDb;
  * otherwise rejects.
  * TODO(bstell): remove this once Compact TachyFont is fully enabled.
- * @return {!goog.Promise<?,?>}
+ * @return {!tachyfont.SynchronousResolutionPromise<?,?>}
  */
 tachyfont.IncrementalFont.obj.prototype.ifCompactDataStoresExist = function() {
-  return this.getDb().then(function(db) {
-    if (!(db.objectStoreNames.contains(tachyfont.Define.COMPACT_FONT) &&
-          db.objectStoreNames.contains(tachyfont.Define.COMPACT_FILE_INFO) &&
-          db.objectStoreNames.contains(tachyfont.Define.COMPACT_METADATA) &&
-          db.objectStoreNames.contains(tachyfont.Define.COMPACT_CHAR_LIST))) {
-      return goog.Promise.reject();
-    }
-  });
+  var fontId = this.fontId_;
+  var dbName = this.fontInfo.getDbName();
+  return tachyfont.Persist
+      .openIndexedDbSynchronousResolutionPromise(dbName, fontId)
+      .then(function(db) {
+        var storeNames = db.objectStoreNames;
+        if (!(storeNames.contains(tachyfont.Define.COMPACT_FONT) &&
+              storeNames.contains(tachyfont.Define.COMPACT_FILE_INFO) &&
+              storeNames.contains(tachyfont.Define.COMPACT_METADATA) &&
+              storeNames.contains(tachyfont.Define.COMPACT_CHAR_LIST))) {
+          return tachyfont.SynchronousResolutionPromise.reject();
+        }
+      });
 };
 
 
 /**
  * Gets the Compact font for a TachyFont.
- * @return {!goog.Promise<?tachyfont.typedef.CompactFontWorkingData,?>}
+ * @return {!tachyfont.SynchronousResolutionPromise<
+ *               ?tachyfont.typedef.CompactFontWorkingData,?>}
  */
 tachyfont.IncrementalFont.obj.prototype.getCompactFont = function() {
   // Try to get the base from persistent store.
@@ -805,29 +815,34 @@ tachyfont.IncrementalFont.obj.prototype.getCompactFontFromUrl = function(
 /**
  * Saves the Compact data overwriting any previous data.
  * @param {!Array<!DataView|tachyfont.typedef.FileInfo>} newData The new data.
- * @return {!goog.Promise<!Array<*>,?>} The updated data.
+ * @return {!tachyfont.SynchronousResolutionPromise<!Array<*>,?>} The updated
+ *     data.
  */
 tachyfont.IncrementalFont.obj.prototype.saveNewCompactFont = function(newData) {
   // Update the data.
-  return this.getDb().then(function(db) {
-    var transaction =
-        db.transaction(tachyfont.Define.compactStoreNames, 'readwrite');
-    return tachyfont.Persist
-        .getStores(transaction, [tachyfont.Define.COMPACT_METADATA])
-        .then(function(getData) {
-          // TODO(bstell): fix up metadata if needed.
-          // TODO(bstell): modify the metadata info to record the current
-          // activity.
-          var newValues = [
-            newData[1],       // fontBytes,
-            newData[0],       // fileInfo,
-            {},               // charList,
-            getData[0] || {}  // metadata
-          ];
-          return tachyfont.Persist.putStores(
-              transaction, tachyfont.Define.compactStoreNames, newValues);
-        });
-  }.bind(this));
+  var fontId = this.fontId_;
+  var dbName = this.fontInfo.getDbName();
+  return tachyfont.Persist
+      .openIndexedDbSynchronousResolutionPromise(dbName, fontId)
+      .then(function(db) {
+        var transaction =
+            db.transaction(tachyfont.Define.compactStoreNames, 'readwrite');
+        return tachyfont.Persist
+            .getStores(transaction, [tachyfont.Define.COMPACT_METADATA])
+            .then(function(getData) {
+              // TODO(bstell): fix up metadata if needed.
+              // TODO(bstell): modify the metadata info to record the current
+              // activity.
+              var newValues = [
+                newData[1],       // fontBytes,
+                newData[0],       // fileInfo,
+                {},               // charList,
+                getData[0] || {}  // metadata
+              ];
+              return tachyfont.Persist.putStores(
+                  transaction, tachyfont.Define.compactStoreNames, newValues);
+            });
+      }.bind(this));
 };
 
 
@@ -1171,8 +1186,8 @@ tachyfont.IncrementalFont.obj.prototype.loadChars = function() {
  * @param {!Array<number>} neededCodes The codes to be injected.
  * @param {!tachyfont.GlyphBundleResponse} bundleResponse The char request
  *     (glyph bungle) data.
- * @return {!goog.Promise<!tachyfont.CompactCff,?>} A promise for the CompactCff
- *     font.
+ * @return {!tachyfont.SynchronousResolutionPromise<!tachyfont.CompactCff,?>} A
+ *     promise for the CompactCff font.
  */
 tachyfont.IncrementalFont.obj.prototype.injectCompact = function(
     neededCodes, bundleResponse) {
@@ -1191,7 +1206,7 @@ tachyfont.IncrementalFont.obj.prototype.injectCompact = function(
         tachyfont.IncrementalFont.reportError(
             tachyfont.IncrementalFont.Error.INJECT_FONT_COMPACT_2ND,
             this.fontId_, e);
-        return goog.Promise.reject(e);
+        return tachyfont.SynchronousResolutionPromise.reject(e);
       }.bind(this))
       .then(function(compactCff) {
         var fontData = compactCff.getSfnt().getFontData();
