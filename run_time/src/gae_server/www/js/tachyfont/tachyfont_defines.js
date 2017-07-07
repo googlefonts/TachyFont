@@ -50,7 +50,7 @@ tachyfont.Define.IDB_GLOBAL_NAME = 'tachyfont';
  * Increment this number every time there is a change in the schema.
  * @const {number}
  */
-tachyfont.Define.IDB_VERSION = 3;
+tachyfont.Define.IDB_VERSION = 4;
 
 
 /**
