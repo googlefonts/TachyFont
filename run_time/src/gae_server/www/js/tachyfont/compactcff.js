@@ -279,26 +279,13 @@ tachyfont.CompactCff.injectChars = function(
       })
       .then(function() {
         // checkSetFont the pre-inject font
+        // The post-inject font data is checked in the caller.
         return tachyfont.Browser
             .checkSetFont(preInjectFontData, fontInfo, /* isTtf */ false, null)
             .then(function(passesOts) {
               if (!passesOts) {
                 tachyfont.CompactCff.reportError(
                     tachyfont.CompactCff.Error.PRE_INJECT_SET_FONT, fontId, '');
-                return goog.Promise.reject();
-              }
-            });
-      })
-      .then(function() {
-        // checkSetFont the post-inject font
-        var postInjectFontData = compactCff.sfnt_.getFontData();
-        return tachyfont.Browser
-            .checkSetFont(postInjectFontData, fontInfo, /* isTtf */ false, null)
-            .then(function(passesOts) {
-              if (!passesOts) {
-                tachyfont.CompactCff.reportError(
-                    tachyfont.CompactCff.Error.POST_INJECT_SET_FONT, fontId,
-                    '');
                 return goog.Promise.reject();
               }
             });

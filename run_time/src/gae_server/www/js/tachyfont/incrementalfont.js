@@ -109,6 +109,7 @@ tachyfont.IncrementalFont.Error = {
   GET_COMPACT_FROM_PERSISTENCE_SET_FONT: '55',
   GET_COMPACT_FROM_URL: '56',
   SAVE_NEW_COMPACT: '57',
+  DO_NOT_USE_UNCOMPACTED_FONT: '58',
   END: '00'
 };
 
@@ -633,6 +634,15 @@ tachyfont.IncrementalFont.obj.prototype.getCompactFontFromPersistence =
           // Missing data is not nessarily an error
           return goog.Promise.reject();
         }
+        // TODO(bstell): remove this after 2016-08-11
+        if (fontData.byteLength > 3000000) {
+          // Due to a bug uncompacted fonts were saved as compacted fonts.
+          // Report the data is not there and new data will be fetched.
+          tachyfont.IncrementalFont.reportError(
+             tachyfont.IncrementalFont.Error.DO_NOT_USE_UNCOMPACTED_FONT,
+             fontId, '');
+          return goog.Promise.reject();
+        }
         var isOkay = tachyfont.Cmap.checkCharacters(
             fileInfo, fontData, charList, fontId, true);
         if (!isOkay) {
@@ -675,8 +685,8 @@ tachyfont.IncrementalFont.obj.prototype.getBaseFontFromUrl = function(
     tachyfont.Reporter.addItem(
         tachyfont.IncrementalFont.Log.URL_GET_BASE + this.fontId_,
         goog.now() - this.startTime);
-    var results =
-        tachyfont.IncrementalFont.processUrlBase(urlBaseBytes, this.fontId_);
+    var results = tachyfont.IncrementalFont.processUrlBase(
+        urlBaseBytes, this.fontId_, false);
     this.persistDelayed(tachyfont.Define.IDB_CHARLIST);
     this.persistDelayed(tachyfont.Define.IDB_BASE);
     return results;
@@ -748,8 +758,19 @@ tachyfont.IncrementalFont.obj.prototype.getCompactFontFromUrl = function(
             tachyfont.IncrementalFont.Log.URL_GET_BASE + this.fontId_,
             goog.now() - this.startTime);
         var results = tachyfont.IncrementalFont.processUrlBase(
-            urlBaseBytes, this.fontId_);
-        // TODO(bstell): need to compact the data
+            urlBaseBytes, this.fontId_, true);
+        // Compact the data.
+        var uncompactedFileInfo =
+            /** @type {!tachyfont.typedef.FileInfo} */ (results[0]);
+        var uncompactedFontData = /** @type {!DataView} */ (results[1]);
+        var compactCff = new tachyfont.CompactCff(this.fontId_);
+        compactCff.setTableData(
+            uncompactedFontData, uncompactedFileInfo, {}, {});
+        compactCff.compact();
+        var compactTables = compactCff.getTableData();
+        results[0] =
+            /** @type {!tachyfont.typedef.FileInfo} */ (compactTables[1]);
+        results[1] = /** @type {!DataView} */ (compactTables[0]);
         return this
             .saveNewCompactFont(results)  //
             .thenCatch(function(e) {
@@ -801,10 +822,12 @@ tachyfont.IncrementalFont.obj.prototype.saveNewCompactFont = function(newData) {
  * Process the font base fetched from a URL.
  * @param {!ArrayBuffer} urlBaseBytes The fetched data.
  * @param {string} fontId A font identifier for error messages.
+ * @param {boolean} compact Whether glyph offsets should be compacted.
  * @return {!Array<(!tachyfont.typedef.FileInfo|!DataView)>} The fileInfo and
  *     the font data ready for character data to be added.
  */
-tachyfont.IncrementalFont.processUrlBase = function(urlBaseBytes, fontId) {
+tachyfont.IncrementalFont.processUrlBase = function(
+    urlBaseBytes, fontId, compact) {
   var fileInfo = tachyfont.BinaryFontEditor.parseBaseHeader(urlBaseBytes);
   var headerData = new DataView(urlBaseBytes, 0, fileInfo.headSize);
   var rleFontData = new DataView(urlBaseBytes, fileInfo.headSize);
@@ -813,8 +836,8 @@ tachyfont.IncrementalFont.processUrlBase = function(urlBaseBytes, fontId) {
   tachyfont.Cmap.writeCmap12(fileInfo, raw_basefont);
   tachyfont.Cmap.writeCmap4(fileInfo, raw_basefont, fontId);
   tachyfont.IncrementalFontUtils.writeCharsetFormat2(raw_basefont, fileInfo);
-  var basefont =
-      tachyfont.IncrementalFontUtils.fixGlyphOffsets(fileInfo, raw_basefont);
+  var basefont = tachyfont.IncrementalFontUtils.fixGlyphOffsets(
+      fileInfo, raw_basefont, compact);
   return [fileInfo, basefont];
 };
 

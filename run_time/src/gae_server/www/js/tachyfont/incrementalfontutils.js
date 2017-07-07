@@ -101,11 +101,11 @@ tachyfont.IncrementalFontUtils.writeCharsetFormat2 =
  * Fixes the glyph offset.
  * @param {!Object} headerInfo The font header information.
  * @param {!DataView} baseFont Base font as DataView
+ * @param {boolean} compact Whether the glyph offsets should be compacted.
  * @return {!DataView} The base font with fixed glyph offsets.
  */
-tachyfont.IncrementalFontUtils.fixGlyphOffsets =
-    function(headerInfo, baseFont) {
-
+tachyfont.IncrementalFontUtils.fixGlyphOffsets = function(
+    headerInfo, baseFont, compact) {
   if (headerInfo.isTtf) {
     headerInfo.dirty = true;
     var binaryEditor = new tachyfont.BinaryFontEditor(baseFont, 0);
@@ -139,7 +139,7 @@ tachyfont.IncrementalFontUtils.fixGlyphOffsets =
     for (var i = 0; i < glyphCount + 1; i++) {
       thisOne = binaryEditor.getGlyphDataOffset(headerInfo.glyphDataOffset,
           headerInfo.offsetSize, i);
-      if (lastRealOffset == thisOne) {
+      if (compact || (lastRealOffset == thisOne)) {
         thisOne = lastRealOffset + delta;
         binaryEditor.setGlyphDataOffset(headerInfo.glyphDataOffset,
             headerInfo.offsetSize, i, thisOne);
