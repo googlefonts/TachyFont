@@ -333,11 +333,17 @@ tachyfont.CompactCff.prototype.writeDbTables = function(transaction) {
  * Clears datastores.
  * @param {!Array<string>} storeNames The names of the stores to be cleared.
  * @param {!tachyfont.FontInfo} fontInfo Info about the font.
+ * @param {boolean=} opt_rejectOnError If true return a promise reject on error.
  * @return {!goog.Promise<?,?>}
  */
-tachyfont.CompactCff.clearDataStores = function(storeNames, fontInfo) {
+tachyfont.CompactCff.clearDataStores = function(
+    storeNames, fontInfo, opt_rejectOnError) {
   if (storeNames.length == 0) {
-    return goog.Promise.reject();
+    if (opt_rejectOnError) {
+      return goog.Promise.reject();
+    } else {
+      return goog.Promise.resolve();
+    }
   }
   return tachyfont.Persist
       .openIndexedDB(fontInfo.getDbName(), fontInfo.getFontId())
@@ -349,7 +355,11 @@ tachyfont.CompactCff.clearDataStores = function(storeNames, fontInfo) {
             resolve();  //
           };
           transaction.onerror = function(event) {
-            reject();  //
+            if (opt_rejectOnError) {
+              reject();  //
+            } else {
+              resolve();  //
+            }
           };
           // Clear each store.
           for (var i = 0; i < storeNames.length; i++) {
