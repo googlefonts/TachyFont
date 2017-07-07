@@ -26,8 +26,71 @@ goog.provide('tachyfont.typedef.CMap12');
 goog.provide('tachyfont.typedef.CMap4');
 goog.provide('tachyfont.typedef.CmapMapping');
 goog.provide('tachyfont.typedef.CompactFontWorkingData');
+goog.provide('tachyfont.typedef.Context');
 goog.provide('tachyfont.typedef.FileInfo');
+goog.provide('tachyfont.typedef.PromiseClass');
+goog.provide('tachyfont.typedef.Reject');
+goog.provide('tachyfont.typedef.Resolve');
+goog.provide('tachyfont.typedef.Resolver');
+goog.provide('tachyfont.typedef.ThenInfo');
+goog.provide('tachyfont.typedef.ThenReject');
+goog.provide('tachyfont.typedef.ThenResolve');
 goog.provide('tachyfont.typedef.uint8');
+
+
+/**
+ * @typedef {function(*=): ?}
+ */
+tachyfont.typedef.Resolve;
+
+
+/**
+ * @typedef {function(*=): ?}
+ */
+tachyfont.typedef.Reject;
+
+
+/**
+ * @typedef {function((?tachyfont.typedef.Resolve|undefined),
+ *                    (?tachyfont.typedef.Reject|undefined))
+ *                    :?}
+ */
+tachyfont.typedef.Resolver;
+
+
+/**
+ * @typedef {Object}
+ */
+tachyfont.typedef.Context;
+
+
+/**
+ * @typedef {function(!tachyfont.typedef.Resolver,
+ *                    !tachyfont.typedef.Context=)
+ *                    :void}
+ */
+tachyfont.typedef.PromiseClass;
+
+
+/**
+ * @typedef {function(*=): ?}
+ */
+tachyfont.typedef.ThenResolve;
+
+
+/**
+ * @typedef {function(*=): ?}
+ */
+tachyfont.typedef.ThenReject;
+
+
+/**
+ * @typedef {{thenResolve: (?tachyfont.typedef.ThenResolve|undefined),
+ *            thenReject: (?tachyfont.typedef.ThenReject|undefined),
+ *            resolve: (?tachyfont.typedef.Resolve|undefined),
+ *            reject: (?tachyfont.typedef.Reject|undefined)}}
+ */
+tachyfont.typedef.ThenInfo;
 
 
 /** @typedef {{offset: number, nGroups: number}} */
