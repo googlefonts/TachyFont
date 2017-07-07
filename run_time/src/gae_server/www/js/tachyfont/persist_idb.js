@@ -440,24 +440,26 @@ tachyfont.Persist.getData = function(idb, name) {
 
 /**
  * Put data to an object store.
+ * @param {!goog.Promise<?,?>} previous The previous promise to wait for.
  * @param {!IDBTransaction} transaction The transaction object.
  * @param {string} name The name of the store to retrieve.
  * @param {*} value The value to write to the store.
  * @return {!goog.Promise<*,?>} Promise when the data is written.
  */
-tachyfont.Persist.putStore = function(transaction, name, value) {
-  var putStorePromise = new goog.Promise(function(resolve, reject) {
-    var store = transaction.objectStore(name);
-    var request = store.put(value, 0);
-    request.onsuccess = function(e) {
-      resolve(value);  //
-    };
+tachyfont.Persist.putStore = function(previous, transaction, name, value) {
+  return previous.then(function() {
+    return new goog.Promise(function(resolve, reject) {
+      var store = transaction.objectStore(name);
+      var request = store.put(value, 0);
+      request.onsuccess = function(e) {
+        resolve(value);  //
+      };
 
-    request.onerror = function(e) {
-      reject(e);  //
-    };
+      request.onerror = function(e) {
+        reject(e);  //
+      };
+    });
   });
-  return putStorePromise;
 };
 
 
@@ -470,32 +472,40 @@ tachyfont.Persist.putStore = function(transaction, name, value) {
  */
 tachyfont.Persist.putStores = function(transaction, names, values) {
   var results = [];
+  var lastPromise = goog.Promise.resolve([]);
   for (var i = 0; i < names.length; i++) {
-    results[i] = tachyfont.Persist.putStore(transaction, names[i], values[i]);
+    lastPromise = tachyfont.Persist
+                      .putStore(lastPromise, transaction, names[i], values[i])
+                      .then(function(value) {
+                        results.push(value);
+                        return results;
+                      });
   }
-  return goog.Promise.all(results);
+  return lastPromise;
 };
 
 
 /**
  * Get data from an object store.
+ * @param {!goog.Promise<?,?>} previous The previous promise to wait for.
  * @param {!IDBTransaction} transaction The transaction object.
  * @param {string} name The name of the store to retrieve.
  * @return {!goog.Promise<*,?>} Promise to return the data.
  */
-tachyfont.Persist.getStore = function(transaction, name) {
-  var getStorePromise = new goog.Promise(function(resolve, reject) {
-    var store = transaction.objectStore(name);
-    var request = store.get(0);
-    request.onsuccess = function(e) {
-      resolve(e.target.result);  //
-    };
+tachyfont.Persist.getStore = function(previous, transaction, name) {
+  return previous.then(function() {
+    return new goog.Promise(function(resolve, reject) {
+      var store = transaction.objectStore(name);
+      var request = store.get(0);
+      request.onsuccess = function(e) {
+        resolve(e.target.result);  //
+      };
 
-    request.onerror = function(e) {
-      reject(e);  //
-    };
+      request.onerror = function(e) {
+        reject(e);  //
+      };
+    });
   });
-  return getStorePromise;
 };
 
 
@@ -507,9 +517,13 @@ tachyfont.Persist.getStore = function(transaction, name) {
  */
 tachyfont.Persist.getStores = function(transaction, names) {
   var results = [];
+  var lastPromise = goog.Promise.resolve([]);
   for (var i = 0; i < names.length; i++) {
-    var getStorePromise = tachyfont.Persist.getStore(transaction, names[i]);
-    results.push(getStorePromise);
+    lastPromise = tachyfont.Persist.getStore(lastPromise, transaction, names[i])
+                      .then(function(value) {
+                        results.push(value);
+                        return results;
+                      });
   }
-  return goog.Promise.all(results);
+  return lastPromise;
 };
