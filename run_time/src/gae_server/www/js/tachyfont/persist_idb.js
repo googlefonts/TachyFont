@@ -104,7 +104,7 @@ tachyfont.Persist.openIndexedDB = function(dbName, id) {
     dbOpen.onerror = function(e) {
       tachyfont.Persist.reportError(tachyfont.Persist.Error.IDB_OPEN,
           id, '!!! openIndexedDB "' + dbName);
-      reject();
+      reject('open ' + dbName);
     };
 
     // Will get called when the version changes.
@@ -114,7 +114,7 @@ tachyfont.Persist.openIndexedDB = function(dbName, id) {
         tachyfont.Persist.reportError(
             tachyfont.Persist.Error.IDB_ON_UPGRAGE_NEEDED,
             id, 'onupgradeneeded error: ' + e.value);
-        reject();
+        reject(e);
       };
       if (!db.objectStoreNames.contains(tachyfont.Define.IDB_BASE)) {
         db.createObjectStore(tachyfont.Define.IDB_BASE);

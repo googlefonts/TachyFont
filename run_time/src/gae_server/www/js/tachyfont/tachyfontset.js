@@ -24,8 +24,8 @@ goog.require('goog.array');
 goog.require('goog.style');
 goog.require('tachyfont.Define');
 goog.require('tachyfont.IncrementalFontUtils');
+goog.require('tachyfont.Promise');
 goog.require('tachyfont.Reporter');
-goog.require('tachyfont.chainedPromises');
 goog.require('tachyfont.utils');
 
 
@@ -75,10 +75,10 @@ tachyfont.TachyFontSet = function(familyName) {
   /**
    * The updateFont operation takes time so serialize them.
    *
-   * @type {!tachyfont.chainedPromises}
+   * @type {!tachyfont.Promise.Chained}
    */
   this.finishPrecedingUpdateFont =
-      new tachyfont.chainedPromises('finishPrecedingUpdateFont');
+      new tachyfont.Promise.Chained('finishPrecedingUpdateFont');
 
   /**
    * Timeout indicating there is a pending update fonts request.

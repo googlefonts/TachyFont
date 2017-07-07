@@ -351,7 +351,12 @@ tachyfont.CompactCff.prototype.readDbTables = function(transaction) {
         var charList = dbTables[2];
         var metadata = dbTables[3];
         if (!fontData || !fileInfo || !charList || !metadata) {
-          return goog.Promise.reject();
+          return goog.Promise.reject(
+              'missing: ' +              //
+              (!fontData ? 'D' : '_') +  //
+              (!fileInfo ? 'I' : '_') +  //
+              (!charList ? 'C' : '_') +  //
+              (!metadata ? 'M' : '_'));
         }
         // TODO(bstell): update the metadata.
         this.setTableData(fontData, fileInfo, charList, metadata);

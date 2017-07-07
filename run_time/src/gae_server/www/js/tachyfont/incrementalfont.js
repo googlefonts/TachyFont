@@ -34,7 +34,6 @@ goog.require('tachyfont.Persist');
 goog.require('tachyfont.Promise');
 goog.require('tachyfont.RLEDecoder');
 goog.require('tachyfont.Reporter');
-goog.require('tachyfont.chainedPromises');
 goog.require('tachyfont.log');
 goog.require('tachyfont.utils');
 
@@ -316,24 +315,24 @@ tachyfont.IncrementalFont.obj = function(fontInfo, params, backendService) {
 
   /**
    * The persist operation takes time so serialize them.
-   * @private {!tachyfont.chainedPromises}
+   * @private {!tachyfont.Promise.Chained}
    */
   this.finishPersistingData_ =
-      new tachyfont.chainedPromises('finishPersistingData_');
+      new tachyfont.Promise.Chained('finishPersistingData_');
 
   /**
    * The character request operation takes time so serialize them.
-   * @private {!tachyfont.chainedPromises}
+   * @private {!tachyfont.Promise.Chained}
    */
   this.finishPrecedingCharsRequest_ =
-      new tachyfont.chainedPromises('finishPrecedingCharsRequest_');
+      new tachyfont.Promise.Chained('finishPrecedingCharsRequest_');
 
   /**
    * The setFont operation takes time so serialize them.
-   * @private {!tachyfont.chainedPromises}
+   * @private {!tachyfont.Promise.Chained}
    */
   this.finishPrecedingSetFont_ =
-      new tachyfont.chainedPromises('finishPrecedingSetFont_');
+      new tachyfont.Promise.Chained('finishPrecedingSetFont_');
 };
 
 

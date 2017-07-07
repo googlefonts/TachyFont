@@ -18,7 +18,6 @@
  */
 
 goog.provide('tachyfont.Promise');
-goog.provide('tachyfont.chainedPromises');
 
 goog.require('goog.Promise');
 goog.require('tachyfont.Reporter');
@@ -29,7 +28,7 @@ goog.require('tachyfont.log');
 /**
  * A class that holds a promise and the associated resolve and reject functions.
  *
- * @param {!tachyfont.chainedPromises=} opt_container If used to chain promises
+ * @param {!tachyfont.Promise.Chained=} opt_container If used to chain promises
  *     then this holds the object that implements the chaining.
  * @param {string=} opt_msg An optional message useful for debugging.
  * @constructor
@@ -170,7 +169,7 @@ tachyfont.Promise.Encapsulated.prototype.resolve = function(opt_value) {
  * @param {string} msg Indicates the caller.
  * @constructor
  */
-tachyfont.chainedPromises = function(msg) {
+tachyfont.Promise.Chained = function(msg) {
   /**
      * For debug: count of total chained promises.
      *
@@ -235,7 +234,7 @@ tachyfont.chainedPromises = function(msg) {
  * @param {string} msg Information about the caller.
  * @return {!tachyfont.Promise.Encapsulated}
  */
-tachyfont.chainedPromises.prototype.getChainedPromise = function(msg) {
+tachyfont.Promise.Chained.prototype.getChainedPromise = function(msg) {
   this.chainedCount_++;
   this.pendingCount_++;
   var precedingPromise = this.promises[this.promises.length - 1];
