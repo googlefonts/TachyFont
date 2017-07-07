@@ -523,13 +523,11 @@ tachyfont.loadFonts_loadAndUse_ = function(tachyFontSet) {
                   // Load the fonts from persistent store or URL.
                   return tachyfont.loadFonts_getBaseFont_(incrfont)
                       .then(function(baseFont) {
-                        if (goog.DEBUG) {
-                          var fileInfo = baseFont[0];
-                          if (tachyfont.Define.compactTachyFont &&
-                              !fileInfo.isTtf &&
-                              incrfont.getShouldBeCompact()) {
-                            return incrfont.getCompactFont();
-                          }
+                        var fileInfo = baseFont[0];
+                        if (tachyfont.Define.compactTachyFont &&
+                            !fileInfo.isTtf &&
+                            incrfont.getShouldBeCompact()) {
+                          return incrfont.getCompactFont();
                         }
                       })
                       .then(function() {
