@@ -625,22 +625,22 @@ tachyfont.IncrementalFont.obj.prototype.getCompactFontFromPersistence =
       })
       .then(function(arr) {
         // Check there was data.
-        var fontBytes = arr[0];
+        var fontData = arr[0];
         var fileInfo = arr[1];
         var charList = arr[2];
         // metadata is in arr[3];
-        if (!fontBytes || !fileInfo || !charList) {
+        if (!fontData || !fileInfo || !charList) {
           // Missing data is not nessarily an error
           return goog.Promise.reject();
         }
         var isOkay = tachyfont.Cmap.checkCharacters(
-            fileInfo, fontBytes, charList, fontId, true);
+            fileInfo, fontData, charList, fontId, true);
         if (!isOkay) {
           tachyfont.IncrementalFont.reportError(
               tachyfont.IncrementalFont.Error.COMPACT_CHECK_CMAP, fontId, '');
           return goog.Promise.reject();
         }
-        return {fontBytes: fontBytes, fileInfo: fileInfo, charList: charList};
+        return {fontBytes: fontData, fileInfo: fileInfo, charList: charList};
       })
       .then(function(workingCompactData) {  // TODO(bstell): get rid of this
         // Check setFont
@@ -814,7 +814,7 @@ tachyfont.IncrementalFont.processUrlBase = function(urlBaseBytes, fontId) {
   tachyfont.Cmap.writeCmap4(fileInfo, raw_basefont, fontId);
   tachyfont.IncrementalFontUtils.writeCharsetFormat2(raw_basefont, fileInfo);
   var basefont =
-      tachyfont.IncrementalFontUtils.sanitizeBaseFont(fileInfo, raw_basefont);
+      tachyfont.IncrementalFontUtils.fixGlyphOffsets(fileInfo, raw_basefont);
   return [fileInfo, basefont];
 };
 

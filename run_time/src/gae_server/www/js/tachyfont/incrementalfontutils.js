@@ -98,12 +98,12 @@ tachyfont.IncrementalFontUtils.writeCharsetFormat2 =
 
 
 /**
- * Sanitize base font to pass OTS
+ * Fixes the glyph offset.
  * @param {!Object} headerInfo The font header information.
  * @param {!DataView} baseFont Base font as DataView
- * @return {!DataView} Sanitized base font
+ * @return {!DataView} The base font with fixed glyph offsets.
  */
-tachyfont.IncrementalFontUtils.sanitizeBaseFont =
+tachyfont.IncrementalFontUtils.fixGlyphOffsets =
     function(headerInfo, baseFont) {
 
   if (headerInfo.isTtf) {
