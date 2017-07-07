@@ -52,7 +52,7 @@ var SynchronousResolutionPromise = tachyfont.SynchronousResolutionPromise;
  * depth. Synchronous resolution does not limit the call stack depth so care
  * must be taken to avoid exceeding maximum call stack depth.
  *
- * @param {!SynchronousResolutionPromise.Resolver} resolver The initialization
+ * @param {!tachyfont.typedef.Resolver} resolver The initialization
  *     function that is invoked immediately with {@code resolve} and {@code
  *     reject} functions as arguments. The Promise is resolved or rejected with
  *     the first argument passed to either function.
@@ -65,7 +65,7 @@ tachyfont.SynchronousResolutionPromise = function(resolver) {
   /** @private {*} */
   this.result_;
 
-  /** @private {?SynchronousResolutionPromise.ThenInfo} */
+  /** @private {?tachyfont.typedef.ThenInfo} */
   this.deferredThen_ = null;
 
   var self = this;
@@ -77,47 +77,6 @@ tachyfont.SynchronousResolutionPromise = function(resolver) {
         self.reject(result);
       });
 };
-
-
-/**
- * @typedef {(function(*=): void|undefined)}
- */
-SynchronousResolutionPromise.Resolve;
-
-
-/**
- * @typedef {(function(*=): void|undefined)}
- */
-SynchronousResolutionPromise.Reject;
-
-
-/**
- * @typedef {function(?SynchronousResolutionPromise.Resolve,
- *                    ?SynchronousResolutionPromise.Reject):
- *                    (*|undefined)}
- */
-SynchronousResolutionPromise.Resolver;
-
-
-/**
- * @typedef {(function(*=): (*|undefined)|undefined)}
- */
-SynchronousResolutionPromise.thenResolve;
-
-
-/**
- * @typedef {(function(*=): (*|undefined)|undefined)}
- */
-SynchronousResolutionPromise.thenReject;
-
-
-/**
- * @typedef {{thenResolve: ?SynchronousResolutionPromise.thenResolve,
- *            thenReject: ?SynchronousResolutionPromise.thenReject,
- *            resolve: ?SynchronousResolutionPromise.Resolve,
- *            reject: ?SynchronousResolutionPromise.Reject}}
- */
-SynchronousResolutionPromise.ThenInfo;
 
 
 /**
@@ -210,7 +169,7 @@ tachyfont.SynchronousResolutionPromise.prototype.reject = function(opt_reason) {
  *       .then(...)
  *       .then(...);
  *
- * @param {!SynchronousResolutionPromise.ThenInfo} thenInfo The info used by an
+ * @param {!tachyfont.typedef.ThenInfo} thenInfo The info used by an
  *     'attached' 'then' function.
  * @private
  */
@@ -249,9 +208,9 @@ tachyfont.SynchronousResolutionPromise.prototype.runOrDeferTheThen_ = function(
 
 /**
  * Implements the "then" function.
- * @param {?SynchronousResolutionPromise.thenResolve=} opt_thenResolve The
+ * @param {?tachyfont.typedef.ThenResolve=} opt_thenResolve The
  *     resolve code.
- * @param {?SynchronousResolutionPromise.thenReject=} opt_thenReject The reject
+ * @param {?tachyfont.typedef.ThenReject=} opt_thenReject The reject
  *     code.
  * @return {!SynchronousResolutionPromise}
  */
@@ -261,8 +220,8 @@ tachyfont.SynchronousResolutionPromise.prototype.then = function(
   /**
    * Explicityly create the resolve function so the parameter can be correctly
    * defined to make the Closure compilier happy.
-   * @param {?SynchronousResolutionPromise.Resolve} resolve The resolve code.
-   * @param {?SynchronousResolutionPromise.Reject} reject The reject code.
+   * @param {?tachyfont.typedef.Resolve=} resolve The resolve code.
+   * @param {?tachyfont.typedef.Reject=} reject The reject code.
    * @return {(*|undefined)}
    */
   var resolver = function(resolve, reject) {
