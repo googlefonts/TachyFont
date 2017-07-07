@@ -30,7 +30,9 @@ tachyfont.Define.compactTachyFont = false;
 
 /**
  * The global IndexedDB version.
- * Increment this number every time there is a change in the schema.
+ * The global DB is only used to indicate if the IndexedDb has been stable for
+ * at least one day; ie: the data is not being automatically erased. See
+ * IDB_VERSION for the DB where font data is stored.
  * @const {number}
  */
 tachyfont.Define.IDB_GLOBAL_VERSION = 1;
