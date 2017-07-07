@@ -122,6 +122,7 @@ tachyfont.IncrementalFont.Error = {
 tachyfont.IncrementalFont.CompactRecord = {
   GET_COMPACT_FROM_PERSISTENCE: 'Gcp',
   GET_COMPACT_FROM_URL: 'Gcu',
+  GET_COMPACT_FROM_URL2: 'Gcu2',
   GET_COMPACT_FROM_URL_ERROR: 'Gue',
   GET_COMPACT_CLEAR_STORES: 'Gcs',
   INJECT_COMPACT_INJECT: 'Ice',
@@ -264,6 +265,12 @@ tachyfont.IncrementalFont.obj = function(fontInfo, params, backendService) {
    * @private {string}
    */
   this.compactRecord_ = '';
+
+  /**
+   * Allow a one time refetch of the Compact font base.
+   * @private {boolean}
+   */
+  this.refetchedCompact_ = false;
 
   /**
    * Whether the font should be compacted.
@@ -1186,6 +1193,29 @@ tachyfont.IncrementalFont.obj.prototype.loadChars = function() {
                                              .LOAD_CHARS_COMPACT;
                   return this.injectCompact(neededCodes, bundleResponse)
                       .thenCatch(function(e) {
+                        // Try fetching the Compact font again and then
+                        // injecting.
+                        if (this.refetchedCompact_) {
+                          return goog.Promise.reject(e);
+                        }
+                        // To avoid an infinite loop limit the retries.
+                        this.refetchedCompact_ = true;
+                        this.compactRecord_ +=
+                            tachyfont.IncrementalFont.CompactRecord
+                                .GET_COMPACT_FROM_URL2;
+                        return this
+                            .getCompactFontFromUrl(
+                                this.backendService, this.fontInfo)
+                            .then(function(compactWorkingData) {
+                              this.compactCharList_ =
+                                  compactWorkingData.charList;
+                            }.bind(this))
+                            .then(function() {
+                              return this.injectCompact(
+                                  neededCodes, bundleResponse);
+                            }.bind(this));
+                      }.bind(this))
+                      .thenCatch(function(e) {
                         this.compactRecord_ +=
                             tachyfont.IncrementalFont.CompactRecord
                                 .LOAD_CHARS_INJECT_ERROR;
@@ -1243,6 +1273,7 @@ tachyfont.IncrementalFont.obj.prototype.injectCompact = function(
         tachyfont.IncrementalFont.reportError(
             tachyfont.IncrementalFont.Error.INJECT_FONT_INJECT_CHARS,
             this.fontId_, this.compactRecord_);
+        this.compactRecord_ = '';
         return tachyfont.SynchronousResolutionPromise.reject(e);
       }.bind(this))
       .then(function(compactCff) {
