@@ -1105,8 +1105,9 @@ tachyfont.IncrementalFont.obj.prototype.injectCompact = function(
         // with a different fontFamily name.
         // TODO(bstell): use the real fontInfo.
         var compactFontInfo = new tachyfont.FontInfo(
-            this.fontInfo.getName() + '-Compact', this.fontInfo.getWeight(),
+            this.fontInfo.getName(), this.fontInfo.getWeight(),
             this.fontInfo.getPriority());
+        compactFontInfo.setFamilyName('CompactTest');
         return tachyfont.Browser
             .setFont(fontData, compactFontInfo, fileInfo.isTtf, null)
             .then(function() {
