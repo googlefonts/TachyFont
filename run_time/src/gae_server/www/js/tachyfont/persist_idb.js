@@ -44,6 +44,8 @@ tachyfont.Persist.Error = {
   SAVE_BEGIN_AFTER_CREATED_METADATA: '11',
   IDB_GLOBAL_OPEN: '12',
   IDB_GLOBAL_ON_UPGRAGE_NEEDED: '13',
+  CREATE_COMPACT_DATA_BEGIN: '14',
+  CREATE_COMPACT_DATA_DONE: '15',
   END_VALUE: '00'
 };
 
@@ -124,27 +126,29 @@ tachyfont.Persist.openIndexedDB = function(dbName, id) {
             db.createObjectStore(tachyfont.Define.METADATA);
         tachyfont.Metadata.initializePerFont(metadataStore);
       }
-      if (tachyfont.Define.compactTachyFont) {
-        // Compact TachyFont data.
-        if (!db.objectStoreNames.contains(tachyfont.Define.COMPACT_FONT)) {
-          db.createObjectStore(tachyfont.Define.COMPACT_FONT);
-        }
-        if (!db.objectStoreNames.contains(tachyfont.Define.COMPACT_FILE_INFO)) {
-          db.createObjectStore(tachyfont.Define.COMPACT_FILE_INFO);
-        }
-        if (!db.objectStoreNames.contains(tachyfont.Define.COMPACT_METADATA)) {
-          var compactMetadataStore =
-              db.createObjectStore(tachyfont.Define.COMPACT_METADATA);
-          // TODO(bstell): does the table initialization belong under
-          // tachyfont.Compact ?
-          tachyfont.Metadata.initializeCompact(compactMetadataStore);
-        }
-        if (!db.objectStoreNames.contains(tachyfont.Define.COMPACT_CHAR_LIST)) {
-          var compactCharsListStore =
-              db.createObjectStore(tachyfont.Define.COMPACT_CHAR_LIST);
-          tachyfont.Persist.initializeCharList(compactCharsListStore);
-        }
+      // Compact TachyFont data.
+      tachyfont.Persist.reportError(
+          tachyfont.Persist.Error.CREATE_COMPACT_DATA_BEGIN, id, '');
+      if (!db.objectStoreNames.contains(tachyfont.Define.COMPACT_FONT)) {
+        db.createObjectStore(tachyfont.Define.COMPACT_FONT);
       }
+      if (!db.objectStoreNames.contains(tachyfont.Define.COMPACT_FILE_INFO)) {
+        db.createObjectStore(tachyfont.Define.COMPACT_FILE_INFO);
+      }
+      if (!db.objectStoreNames.contains(tachyfont.Define.COMPACT_METADATA)) {
+        var compactMetadataStore =
+            db.createObjectStore(tachyfont.Define.COMPACT_METADATA);
+        // TODO(bstell): does the table initialization belong under
+        // tachyfont.Compact ?
+        tachyfont.Metadata.initializeCompact(compactMetadataStore);
+      }
+      if (!db.objectStoreNames.contains(tachyfont.Define.COMPACT_CHAR_LIST)) {
+        var compactCharsListStore =
+            db.createObjectStore(tachyfont.Define.COMPACT_CHAR_LIST);
+        tachyfont.Persist.initializeCharList(compactCharsListStore);
+      }
+      tachyfont.Persist.reportError(
+          tachyfont.Persist.Error.CREATE_COMPACT_DATA_DONE, id, '');
     };
   });
   return openIdb;
