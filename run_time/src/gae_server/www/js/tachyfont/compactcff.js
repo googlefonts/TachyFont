@@ -83,6 +83,7 @@ tachyfont.CompactCff.Error = {
   INJECT_CHARS_GET_DB: '03',
   INJECT_CHARS_READ_TABLES: '04',
   INJECT_CHARS_WRITE_TABLES: '05',
+  INJECT_TRANSACTION: '06',
   END: '00'
 };
 
@@ -261,25 +262,35 @@ tachyfont.CompactCff.injectChars = function(
   var transaction;
   var fontId = fontInfo.getFontId();
   var compactCff = new tachyfont.CompactCff(fontId);
+  var db = null;
   var preInjectFontData;  // TODO(bstell): get rid of this.
   // Get the db handle.
   return tachyfont.Persist.openIndexedDB(fontInfo.getDbName(), fontId)
-      .thenCatch(function() { // TODO(bstell): remove this debug code
+      .thenCatch(function(event) {  // TODO(bstell): remove this debug code
         tachyfont.CompactCff.reportError(
-            tachyfont.CompactCff.Error.INJECT_CHARS_GET_DB, fontId, '');
-        return goog.Promise.reject();
+            tachyfont.CompactCff.Error.INJECT_CHARS_GET_DB, fontId, event);
+        return goog.Promise.reject(event);
       })
-      .then(function(db) {
+      .then(function(dbHandle) {
+        db = dbHandle;
         // Create the transaction.
         transaction =
             db.transaction(tachyfont.Define.compactStoreNames, 'readwrite');
+        transaction.onerror = function(event) {
+          tachyfont.CompactCff.reportError(
+              tachyfont.CompactCff.Error.INJECT_TRANSACTION, fontId, event);
+          return goog.Promise.reject(event);
+        };
         // Get the persisted data.
-        return compactCff.readDbTables(transaction);
-      })
-      .thenCatch(function() { // TODO(bstell): remove this debug code
-        tachyfont.CompactCff.reportError(
-            tachyfont.CompactCff.Error.INJECT_CHARS_READ_TABLES, fontId, '');
-        return goog.Promise.reject();
+        return compactCff
+            .readDbTables(transaction)  //
+            .thenCatch(function(event) {
+              // TODO(bstell): remove this debug code
+              tachyfont.CompactCff.reportError(
+                  tachyfont.CompactCff.Error.INJECT_CHARS_READ_TABLES, fontId,
+                  event);
+              return goog.Promise.reject(event);
+            });
       })
       .then(function() {
         // Save the pre-inject font data. Cannot run checkSetFont here as that
@@ -288,14 +299,17 @@ tachyfont.CompactCff.injectChars = function(
         preInjectFontData = new DataView(data.buffer.slice(data.byteOffset));
         compactCff.injectGlyphBundle(bundleResponse, glyphToCodeMap);
         // Write the persisted data.
-        return compactCff.writeDbTables(transaction);
-      })
-      .thenCatch(function() { // TODO(bstell): remove this debug code
-        tachyfont.CompactCff.reportError(
-            tachyfont.CompactCff.Error.INJECT_CHARS_WRITE_TABLES, fontId, '');
-        return goog.Promise.reject();
+        return compactCff.writeDbTables(transaction)
+            .thenCatch(function(
+                event) {  // TODO(bstell): remove this debug code
+              tachyfont.CompactCff.reportError(
+                  tachyfont.CompactCff.Error.INJECT_CHARS_WRITE_TABLES, fontId,
+                  event);
+              return goog.Promise.reject(event);
+            });
       })
       .then(function() {
+        // TODO(bstell): remove this debug code.
         // checkSetFont the pre-inject font
         // The post-inject font data is checked in the caller.
         return tachyfont.Browser
@@ -304,12 +318,21 @@ tachyfont.CompactCff.injectChars = function(
               if (!passesOts) {
                 tachyfont.CompactCff.reportError(
                     tachyfont.CompactCff.Error.PRE_INJECT_SET_FONT, fontId, '');
-                return goog.Promise.reject();
+                var event = {};
+                event.target = {};
+                event.target.error = {};
+                event.target.error.name = 'setFont';
+                return goog.Promise.reject(event);
               }
             });
       })
       .then(function() {
         return compactCff;  //
+      })
+      .thenAlways(function() {
+        if (db) {
+          db.close();
+        }
       });
 };
 

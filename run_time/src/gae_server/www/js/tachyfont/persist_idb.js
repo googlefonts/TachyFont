@@ -48,12 +48,6 @@ tachyfont.Persist.Error = {
   CREATE_COMPACT_DATA_DONE: '15',
   GET_STORE: '16',
   PUT_STORE: '17',
-  GET_STORES_1ST: '18',
-  GET_STORES_2ND: '19',
-  GET_STORES_3RD: '20',
-  PUT_STORES_1ST: '21',
-  PUT_STORES_2ND: '22',
-  PUT_STORES_3RD: '23',
   END_VALUE: '00'
 };
 
@@ -228,7 +222,7 @@ tachyfont.Metadata.initializeGlobal = function(store) {
   if (goog.DEBUG) {
     // To allow immediate testing make the data appear old enough to make it
     // seem stable.
-    createTime = goog.now() - 24 * 60 * 60 * 1000 + 15 * 1000;
+    createTime = goog.now() - 24 * 60 * 60 * 1000 + 5 * 1000;
   }
   tachyfont.Metadata.initialize(store, createTime);
 };
@@ -246,7 +240,7 @@ tachyfont.Metadata.initializePerFont = function(store) {
   if (goog.DEBUG) {
     // To allow immediate testing make the data appear old enough to make it
     // seem stable.
-    createTime = goog.now() - 24 * 60 * 60 * 1000 + 30 * 1000;
+    createTime = goog.now() - 24 * 60 * 60 * 1000 + 10 * 1000;
   }
   tachyfont.Metadata.initialize(store, createTime);
 };
@@ -465,7 +459,7 @@ tachyfont.Persist.putStore = function(previous, transaction, name, value) {
 
       request.onerror = function(e) {
         tachyfont.Persist.reportError(
-            tachyfont.Persist.Error.PUT_STORE, name, e.target.error.name);
+            tachyfont.Persist.Error.PUT_STORE, name, e);
         reject(e);  //
       };
     });
@@ -475,43 +469,12 @@ tachyfont.Persist.putStore = function(previous, transaction, name, value) {
 
 /**
  * Put data to a group of object stores.
- * This include multiple retries.
  * @param {!IDBTransaction} transaction The transaction object.
  * @param {!Array<string>} names The names of the stores to retrieve.
  * @param {!Array<*>} values The values to write to the stores.
  * @return {!goog.Promise<?,?>} Promise when the data is written.
  */
 tachyfont.Persist.putStores = function(transaction, names, values) {
-  return tachyfont.Persist.putStores_internal(transaction, names, values)
-      .thenCatch(function(e) {
-        tachyfont.Persist.reportError(
-            tachyfont.Persist.Error.PUT_STORES_1ST, '', e.target.error.name);
-        // Try a 2nd time.
-        return tachyfont.Persist.putStores_internal(transaction, names, values);
-      })
-      .thenCatch(function(e) {
-        tachyfont.Persist.reportError(
-            tachyfont.Persist.Error.PUT_STORES_2ND, '', e.target.error.name);
-        // Try a 3rd time.
-        return tachyfont.Persist.putStores_internal(transaction, names, values);
-      })
-      .thenCatch(function(e) {
-        tachyfont.Persist.reportError(
-            tachyfont.Persist.Error.PUT_STORES_3RD, '', e.target.error.name);
-        // Done trying.
-        return goog.Promise.reject(e);
-      });
-};
-
-
-/**
- * Put data to a group of object stores.
- * @param {!IDBTransaction} transaction The transaction object.
- * @param {!Array<string>} names The names of the stores to retrieve.
- * @param {!Array<*>} values The values to write to the stores.
- * @return {!goog.Promise<?,?>} Promise when the data is written.
- */
-tachyfont.Persist.putStores_internal = function(transaction, names, values) {
   var results = [];
   var lastPromise = goog.Promise.resolve([]);
   for (var i = 0; i < names.length; i++) {
@@ -544,7 +507,7 @@ tachyfont.Persist.getStore = function(previous, transaction, name) {
 
       request.onerror = function(e) {
         tachyfont.Persist.reportError(
-            tachyfont.Persist.Error.GET_STORE, name, e.target.error.name);
+            tachyfont.Persist.Error.GET_STORE, name, e);
         reject(e);  //
       };
     });
@@ -554,41 +517,11 @@ tachyfont.Persist.getStore = function(previous, transaction, name) {
 
 /**
  * Get data from a group of object stores.
- * This include multiple retries.
  * @param {!IDBTransaction} transaction An optional transaction object.
  * @param {!Array<string>} names The names of the stores to retrieve.
  * @return {!goog.Promise<!Array<*>,?>} Promise to return the array of data.
  */
 tachyfont.Persist.getStores = function(transaction, names) {
-  return tachyfont.Persist.getStores_internal(transaction, names)
-      .thenCatch(function(e) {
-        tachyfont.Persist.reportError(
-            tachyfont.Persist.Error.GET_STORES_1ST, '', e.target.error.name);
-        // Try a 2nd time.
-        return tachyfont.Persist.getStores_internal(transaction, names);
-      })
-      .thenCatch(function(e) {
-        tachyfont.Persist.reportError(
-            tachyfont.Persist.Error.GET_STORES_2ND, '', e.target.error.name);
-        // Try a 3rd time.
-        return tachyfont.Persist.getStores_internal(transaction, names);
-      })
-      .thenCatch(function(e) {
-        tachyfont.Persist.reportError(
-            tachyfont.Persist.Error.GET_STORES_3RD, '', e.target.error.name);
-        // Done trying.
-        return goog.Promise.reject(e);
-      });
-};
-
-
-/**
- * Get data from a group of object stores.
- * @param {!IDBTransaction} transaction An optional transaction object.
- * @param {!Array<string>} names The names of the stores to retrieve.
- * @return {!goog.Promise<!Array<*>,?>} Promise to return the array of data.
- */
-tachyfont.Persist.getStores_internal = function(transaction, names) {
   var results = [];
   var lastPromise = goog.Promise.resolve([]);
   for (var i = 0; i < names.length; i++) {
