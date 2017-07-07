@@ -110,6 +110,8 @@ tachyfont.IncrementalFont.Error = {
   GET_COMPACT_FROM_URL: '56',
   SAVE_NEW_COMPACT: '57',
   DO_NOT_USE_UNCOMPACTED_FONT: '58',
+  INJECT_FONT_COMPACT_1ST: '59',
+  INJECT_FONT_COMPACT_2ND: '60',
   END: '00'
 };
 
@@ -610,19 +612,22 @@ tachyfont.IncrementalFont.obj.prototype.getCompactFontFromPersistence =
   return this.getDb()
       .thenCatch(function(e) {  // TODO(bstell): remove this debug code
         tachyfont.IncrementalFont.reportError(
-            tachyfont.IncrementalFont.Error.COMPACT_GET_DB, fontId, '');
+            tachyfont.IncrementalFont.Error.COMPACT_GET_DB, fontId, e);
         return goog.Promise.reject(e);
       })
       .then(function(db) {
+        // TODO(bstell): the concept of a transaction belongs in the
+        // persistence level.
         var transaction =
             db.transaction(tachyfont.Define.compactStoreNames, 'readonly');
-        return tachyfont.Persist.getStores(
-            transaction, tachyfont.Define.compactStoreNames);
-      })
-      .thenCatch(function(e) {  // TODO(bstell): remove this debug code
-        tachyfont.IncrementalFont.reportError(
-            tachyfont.IncrementalFont.Error.COMPACT_GET_STORES, fontId, '');
-        return goog.Promise.reject(e);
+        return tachyfont.Persist
+            .getStores(transaction, tachyfont.Define.compactStoreNames)
+            .thenCatch(function(e) {  // TODO(bstell): remove this debug code
+              tachyfont.IncrementalFont.reportError(
+                  tachyfont.IncrementalFont.Error.COMPACT_GET_STORES, fontId,
+                  e);
+              return goog.Promise.reject(e);
+            });
       })
       .then(function(arr) {
         // Check there was data.
@@ -1129,7 +1134,7 @@ tachyfont.IncrementalFont.obj.prototype.loadChars = function() {
                         }
                         tachyfont.IncrementalFont.reportError(
                             tachyfont.IncrementalFont.Error.INJECT_COMPACT,
-                            this.fontId_, '' + count + ':' + glyphIds.join());
+                            this.fontId_, e);
                         return tachyfont.CompactCff.clearDataStores(
                             tachyfont.Define.compactStoreNames, this.fontInfo);
                       }.bind(this));
@@ -1176,8 +1181,19 @@ tachyfont.IncrementalFont.obj.prototype.injectCompact = function(
   return tachyfont.CompactCff
       .injectChars(this.fontInfo, neededCodes, glyphToCodeMap, bundleResponse)
       .thenCatch(function(e) {
+        tachyfont.IncrementalFont.reportError(
+            tachyfont.IncrementalFont.Error.INJECT_FONT_COMPACT_1ST,
+            this.fontId_, e);
+        // Try to inject a second time.
+        return tachyfont.CompactCff.injectChars(
+            this.fontInfo, neededCodes, glyphToCodeMap, bundleResponse);
+      }.bind(this))
+      .thenCatch(function(e) {
+        tachyfont.IncrementalFont.reportError(
+            tachyfont.IncrementalFont.Error.INJECT_FONT_COMPACT_2ND,
+            this.fontId_, e);
         return goog.Promise.reject(e);
-      })
+      }.bind(this))
       .then(function(compactCff) {
         var fontData = compactCff.getSfnt().getFontData();
         var fileInfo = compactCff.getFileInfo();

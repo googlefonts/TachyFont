@@ -165,6 +165,34 @@ tachyfont.Reporter.reportError = function(errNum, id, errInfo) {
       }
       msg += errInfo['lineNumber'] + ', ';
     }
+    // e.target.error.name
+    if (errInfo['target']) {
+      var target = errInfo['target'];
+      if (target['error']) {
+        var error = target['error'];
+        if (error['name']) {
+          if (msg) {
+            msg += ', ';
+          }
+          msg += error['name'] + ', ';
+        }
+      }
+      if (target['source']) {
+        var source = target['source'];
+        if (source['name']) {
+          if (msg) {
+            msg += ', ';
+          }
+          msg += source['name'] + ', ';
+        }
+      }
+    }
+    if (goog.DEBUG) {
+      if (!msg) {
+        debugger;
+        tachyfont.log.severe('unsupported error object');
+      }
+    }
   }
   tachyfont.Reporter.addItem(name, msg);
   if (goog.DEBUG) {
