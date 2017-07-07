@@ -1129,7 +1129,7 @@ tachyfont.IncrementalFont.obj.prototype.loadChars = function() {
                         }
                         tachyfont.IncrementalFont.reportError(
                             tachyfont.IncrementalFont.Error.INJECT_COMPACT,
-                            this.fontId_, glyphIds.join());
+                            this.fontId_, '' + count + ':' + glyphIds.join());
                         return tachyfont.CompactCff.clearDataStores(
                             tachyfont.Define.compactStoreNames, this.fontInfo);
                       }.bind(this));
