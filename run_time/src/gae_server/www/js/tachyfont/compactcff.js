@@ -18,7 +18,6 @@
 
 goog.provide('tachyfont.CompactCff');
 
-goog.require('goog.Promise');
 goog.require('tachyfont.BinaryFontEditor');
 goog.require('tachyfont.Browser');
 goog.require('tachyfont.Cff');
@@ -29,6 +28,7 @@ goog.require('tachyfont.IncrementalFontUtils');
 goog.require('tachyfont.Persist');
 goog.require('tachyfont.Reporter');
 goog.require('tachyfont.Sfnt');
+goog.require('tachyfont.SynchronousResolutionPromise');
 goog.require('tachyfont.utils');
 
 
@@ -254,7 +254,10 @@ tachyfont.CompactCff.prototype.addDataSegment = function(
  * @param {!Object<number,!Array<number>>} glyphToCodeMap The map of glyph id to
  *     codepoints.
  * @param {!tachyfont.GlyphBundleResponse} bundleResponse New glyph data
- * @return {!goog.Promise<!tachyfont.CompactCff,?>} A promise for CompactCff.
+ * @return {
+ *     (!tachyfont.SynchronousResolutionPromise<!tachyfont.CompactCff,?>|
+ *      !goog.Promise<!tachyfont.CompactCff,?>)}
+ *    A promise for CompactCff.
  *
  */
 tachyfont.CompactCff.injectChars = function(
@@ -265,11 +268,12 @@ tachyfont.CompactCff.injectChars = function(
   var db = null;
   var preInjectFontData;  // TODO(bstell): get rid of this.
   // Get the db handle.
-  return tachyfont.Persist.openIndexedDB(fontInfo.getDbName(), fontId)
+  return tachyfont.Persist
+      .openIndexedDbSynchronousResolutionPromise(fontInfo.getDbName(), fontId)
       .thenCatch(function(event) {  // TODO(bstell): remove this debug code
         tachyfont.CompactCff.reportError(
             tachyfont.CompactCff.Error.INJECT_CHARS_GET_DB, fontId, event);
-        return goog.Promise.reject(event);
+        return tachyfont.SynchronousResolutionPromise.reject(event);
       })
       .then(function(dbHandle) {
         db = dbHandle;
@@ -279,7 +283,7 @@ tachyfont.CompactCff.injectChars = function(
         transaction.onerror = function(event) {
           tachyfont.CompactCff.reportError(
               tachyfont.CompactCff.Error.INJECT_TRANSACTION, fontId, event);
-          return goog.Promise.reject(event);
+          return tachyfont.SynchronousResolutionPromise.reject(event);
         };
         // Get the persisted data.
         return compactCff
@@ -289,7 +293,7 @@ tachyfont.CompactCff.injectChars = function(
               tachyfont.CompactCff.reportError(
                   tachyfont.CompactCff.Error.INJECT_CHARS_READ_TABLES, fontId,
                   event);
-              return goog.Promise.reject(event);
+              return tachyfont.SynchronousResolutionPromise.reject(event);
             });
       })
       .then(function() {
@@ -305,7 +309,7 @@ tachyfont.CompactCff.injectChars = function(
               tachyfont.CompactCff.reportError(
                   tachyfont.CompactCff.Error.INJECT_CHARS_WRITE_TABLES, fontId,
                   event);
-              return goog.Promise.reject(event);
+              return tachyfont.SynchronousResolutionPromise.reject(event);
             });
       })
       .then(function() {
@@ -322,24 +326,28 @@ tachyfont.CompactCff.injectChars = function(
                 event.target = {};
                 event.target.error = {};
                 event.target.error.name = 'setFont';
-                return goog.Promise.reject(event);
+                return tachyfont.SynchronousResolutionPromise.reject(event);
               }
             });
       })
       .then(function() {
-        return compactCff;  //
-      })
-      .thenAlways(function() {
         if (db) {
           db.close();
         }
+        return compactCff;  //
+      })
+      .thenCatch(function(e) {
+        if (db) {
+          db.close();
+        }
+        return tachyfont.SynchronousResolutionPromise.reject(e);
       });
 };
 
 
 /**
  * @param {!IDBTransaction} transaction The current IndexedDB transaction.
- * @return {!goog.Promise<?,?>}
+ * @return {!tachyfont.SynchronousResolutionPromise<?,?>}
  */
 tachyfont.CompactCff.prototype.readDbTables = function(transaction) {
   // Read the persisted data.
@@ -351,7 +359,7 @@ tachyfont.CompactCff.prototype.readDbTables = function(transaction) {
         var charList = dbTables[2];
         var metadata = dbTables[3];
         if (!fontData || !fileInfo || !charList || !metadata) {
-          return goog.Promise.reject(
+          return tachyfont.SynchronousResolutionPromise.reject(
               'missing: ' +              //
               (!fontData ? 'D' : '_') +  //
               (!fileInfo ? 'I' : '_') +  //
@@ -366,7 +374,7 @@ tachyfont.CompactCff.prototype.readDbTables = function(transaction) {
 
 /**
  * @param {!IDBTransaction} transaction The current IndexedDB transaction.
- * @return {!goog.Promise<?,?>}
+ * @return {!tachyfont.SynchronousResolutionPromise<?,?>}
  */
 tachyfont.CompactCff.prototype.writeDbTables = function(transaction) {
   // Read the persisted data.
@@ -380,38 +388,40 @@ tachyfont.CompactCff.prototype.writeDbTables = function(transaction) {
  * @param {!Array<string>} storeNames The names of the stores to be cleared.
  * @param {!tachyfont.FontInfo} fontInfo Info about the font.
  * @param {boolean=} opt_rejectOnError If true return a promise reject on error.
- * @return {!goog.Promise<?,?>}
+ * @return {!Object}
  */
 tachyfont.CompactCff.clearDataStores = function(
     storeNames, fontInfo, opt_rejectOnError) {
   if (storeNames.length == 0) {
     if (opt_rejectOnError) {
-      return goog.Promise.reject();
+      return tachyfont.SynchronousResolutionPromise.reject();
     } else {
-      return goog.Promise.resolve();
+      return tachyfont.SynchronousResolutionPromise.resolve();
     }
   }
   return tachyfont.Persist
-      .openIndexedDB(fontInfo.getDbName(), fontInfo.getFontId())
+      .openIndexedDbSynchronousResolutionPromise(
+          fontInfo.getDbName(), fontInfo.getFontId())
       .then(function(db) {
-        return new goog.Promise(function(resolve, reject) {
-          // Create the transaction.
-          var transaction = db.transaction(storeNames, 'readwrite');
-          transaction.oncomplete = function(event) {
-            resolve();  //
-          };
-          transaction.onerror = function(event) {
-            if (opt_rejectOnError) {
-              reject();  //
-            } else {
-              resolve();  //
-            }
-          };
-          // Clear each store.
-          for (var i = 0; i < storeNames.length; i++) {
-            transaction.objectStore(storeNames[i]).clear();
-          }
-        });
+        return new tachyfont.SynchronousResolutionPromise(  //
+            function(resolve, reject) {
+              // Create the transaction.
+              var transaction = db.transaction(storeNames, 'readwrite');
+              transaction.oncomplete = function(event) {
+                resolve();  //
+              };
+              transaction.onerror = function(event) {
+                if (opt_rejectOnError) {
+                  reject();  //
+                } else {
+                  resolve();  //
+                }
+              };
+              // Clear each store.
+              for (var i = 0; i < storeNames.length; i++) {
+                transaction.objectStore(storeNames[i]).clear();
+              }
+            });
       });
 };
 

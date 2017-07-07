@@ -23,6 +23,7 @@ goog.provide('tachyfont.Persist');
 goog.require('goog.Promise');
 goog.require('tachyfont.Define');
 goog.require('tachyfont.Reporter');
+goog.require('tachyfont.SynchronousResolutionPromise');
 
 
 /**
@@ -90,70 +91,97 @@ tachyfont.Persist.saveData = function(idb, names, datas) {
  * Get the fontDB.
  * @param {string} dbName The name of the database.
  * @param {string} id For error reporting: the id of the font.
+ * @return {!tachyfont.SynchronousResolutionPromise} The font DB.
+ */
+tachyfont.Persist.openIndexedDbSynchronousResolutionPromise = function(
+    dbName, id) {
+  return new tachyfont.SynchronousResolutionPromise(function(resolve, reject) {
+    return tachyfont.Persist.openIndexedDb_(dbName, id, resolve, reject);
+  });
+};
+
+
+/**
+ * Get the fontDB.
+ * @param {string} dbName The name of the database.
+ * @param {string} id For error reporting: the id of the font.
  * @return {!goog.Promise} The font DB.
  */
 tachyfont.Persist.openIndexedDB = function(dbName, id) {
-  var openIdb = new goog.Promise(function(resolve, reject) {
-    var dbOpen = window.indexedDB.open(dbName, tachyfont.Define.IDB_VERSION);
-
-    dbOpen.onsuccess = function(e) {
-      var db = e.target.result;
-      resolve(db);
-    };
-
-    dbOpen.onerror = function(e) {
-      tachyfont.Persist.reportError(tachyfont.Persist.Error.IDB_OPEN,
-          id, '!!! openIndexedDB "' + dbName);
-      reject('open ' + dbName);
-    };
-
-    // Will get called when the version changes.
-    dbOpen.onupgradeneeded = function(e) {
-      var db = e.target.result;
-      e.target.transaction.onerror = function(e) {
-        tachyfont.Persist.reportError(
-            tachyfont.Persist.Error.IDB_ON_UPGRAGE_NEEDED,
-            id, 'onupgradeneeded error: ' + e.value);
-        reject(e);
-      };
-      if (!db.objectStoreNames.contains(tachyfont.Define.IDB_BASE)) {
-        db.createObjectStore(tachyfont.Define.IDB_BASE);
-      }
-      if (!db.objectStoreNames.contains(tachyfont.Define.IDB_CHARLIST)) {
-        var charListStore = db.createObjectStore(tachyfont.Define.IDB_CHARLIST);
-        tachyfont.Persist.initializeCharList(charListStore);
-      }
-      if (!db.objectStoreNames.contains(tachyfont.Define.METADATA)) {
-        var metadataStore =
-            db.createObjectStore(tachyfont.Define.METADATA);
-        tachyfont.Metadata.initializePerFont(metadataStore);
-      }
-      // Compact TachyFont data.
-      tachyfont.Persist.reportError(
-          tachyfont.Persist.Error.CREATE_COMPACT_DATA_BEGIN, id, '');
-      if (!db.objectStoreNames.contains(tachyfont.Define.COMPACT_FONT)) {
-        db.createObjectStore(tachyfont.Define.COMPACT_FONT);
-      }
-      if (!db.objectStoreNames.contains(tachyfont.Define.COMPACT_FILE_INFO)) {
-        db.createObjectStore(tachyfont.Define.COMPACT_FILE_INFO);
-      }
-      if (!db.objectStoreNames.contains(tachyfont.Define.COMPACT_METADATA)) {
-        var compactMetadataStore =
-            db.createObjectStore(tachyfont.Define.COMPACT_METADATA);
-        // TODO(bstell): does the table initialization belong under
-        // tachyfont.Compact ?
-        tachyfont.Metadata.initializeCompact(compactMetadataStore);
-      }
-      if (!db.objectStoreNames.contains(tachyfont.Define.COMPACT_CHAR_LIST)) {
-        var compactCharsListStore =
-            db.createObjectStore(tachyfont.Define.COMPACT_CHAR_LIST);
-        tachyfont.Persist.initializeCharList(compactCharsListStore);
-      }
-      tachyfont.Persist.reportError(
-          tachyfont.Persist.Error.CREATE_COMPACT_DATA_DONE, id, '');
-    };
+  return new goog.Promise(function(resolve, reject) {
+    return tachyfont.Persist.openIndexedDb_(dbName, id, resolve, reject);
   });
-  return openIdb;
+};
+
+
+/**
+ * Get the fontDB.
+ * @param {string} dbName The name of the database.
+ * @param {string} id For error reporting: the id of the font.
+ * @param {(?function(*=): (*|undefined)|undefined)} resolve The function to
+ *     resolve the promise.
+ * @param {(?function(*=): (*|undefined)|undefined)} reject The function to
+ *     reject the promise.
+ * @private
+ */
+tachyfont.Persist.openIndexedDb_ = function(dbName, id, resolve, reject) {
+  var dbOpen = window.indexedDB.open(dbName, tachyfont.Define.IDB_VERSION);
+
+  dbOpen.onsuccess = function(e) {
+    var db = e.target.result;
+    resolve(db);
+  };
+
+  dbOpen.onerror = function(e) {
+    tachyfont.Persist.reportError(
+        tachyfont.Persist.Error.IDB_OPEN, id, '!!! openIndexedDB "' + dbName);
+    reject('open ' + dbName);
+  };
+
+  // Will get called when the version changes.
+  dbOpen.onupgradeneeded = function(e) {
+    var db = e.target.result;
+    e.target.transaction.onerror = function(e) {
+      tachyfont.Persist.reportError(
+          tachyfont.Persist.Error.IDB_ON_UPGRAGE_NEEDED, id,
+          'onupgradeneeded error: ' + e.value);
+      reject(e);
+    };
+    if (!db.objectStoreNames.contains(tachyfont.Define.IDB_BASE)) {
+      db.createObjectStore(tachyfont.Define.IDB_BASE);
+    }
+    if (!db.objectStoreNames.contains(tachyfont.Define.IDB_CHARLIST)) {
+      var charListStore = db.createObjectStore(tachyfont.Define.IDB_CHARLIST);
+      tachyfont.Persist.initializeCharList(charListStore);
+    }
+    if (!db.objectStoreNames.contains(tachyfont.Define.METADATA)) {
+      var metadataStore = db.createObjectStore(tachyfont.Define.METADATA);
+      tachyfont.Metadata.initializePerFont(metadataStore);
+    }
+    // Compact TachyFont data.
+    tachyfont.Persist.reportError(
+        tachyfont.Persist.Error.CREATE_COMPACT_DATA_BEGIN, id, '');
+    if (!db.objectStoreNames.contains(tachyfont.Define.COMPACT_FONT)) {
+      db.createObjectStore(tachyfont.Define.COMPACT_FONT);
+    }
+    if (!db.objectStoreNames.contains(tachyfont.Define.COMPACT_FILE_INFO)) {
+      db.createObjectStore(tachyfont.Define.COMPACT_FILE_INFO);
+    }
+    if (!db.objectStoreNames.contains(tachyfont.Define.COMPACT_METADATA)) {
+      var compactMetadataStore =
+          db.createObjectStore(tachyfont.Define.COMPACT_METADATA);
+      // TODO(bstell): does the table initialization belong under
+      // tachyfont.Compact ?
+      tachyfont.Metadata.initializeCompact(compactMetadataStore);
+    }
+    if (!db.objectStoreNames.contains(tachyfont.Define.COMPACT_CHAR_LIST)) {
+      var compactCharsListStore =
+          db.createObjectStore(tachyfont.Define.COMPACT_CHAR_LIST);
+      tachyfont.Persist.initializeCharList(compactCharsListStore);
+    }
+    tachyfont.Persist.reportError(
+        tachyfont.Persist.Error.CREATE_COMPACT_DATA_DONE, id, '');
+  };
 };
 
 
@@ -174,8 +202,9 @@ tachyfont.Persist.openGlobalDatabase = function() {
     };
 
     dbOpen.onerror = function(e) {
-      tachyfont.Persist.reportError(tachyfont.Persist.Error.IDB_GLOBAL_OPEN,
-          '', '!!! openIndexedDB "' + tachyfont.Define.IDB_GLOBAL_NAME);
+      tachyfont.Persist.reportError(
+          tachyfont.Persist.Error.IDB_GLOBAL_OPEN, '',
+          '!!! openIndexedDb_ "' + tachyfont.Define.IDB_GLOBAL_NAME);
       reject();
     };
 
@@ -442,27 +471,30 @@ tachyfont.Persist.getData = function(idb, name) {
 
 /**
  * Put data to an object store.
- * @param {!goog.Promise<?,?>} previous The previous promise to wait for.
+ * @param {!tachyfont.SynchronousResolutionPromise<?,?>} previous The previous
+ *     promise to wait for.
  * @param {!IDBTransaction} transaction The transaction object.
  * @param {string} name The name of the store to retrieve.
  * @param {*} value The value to write to the store.
- * @return {!goog.Promise<*,?>} Promise when the data is written.
+ * @return {!tachyfont.SynchronousResolutionPromise<*,?>} Promise when the data
+ *     is written.
  */
 tachyfont.Persist.putStore = function(previous, transaction, name, value) {
   return previous.then(function() {
-    return new goog.Promise(function(resolve, reject) {
-      var store = transaction.objectStore(name);
-      var request = store.put(value, 0);
-      request.onsuccess = function(e) {
-        resolve(value);  //
-      };
+    return new tachyfont.SynchronousResolutionPromise(  //
+        function(resolve, reject) {
+          var store = transaction.objectStore(name);
+          var request = store.put(value, 0);
+          request.onsuccess = function(e) {
+            resolve(value);  //
+          };
 
-      request.onerror = function(e) {
-        tachyfont.Persist.reportError(
-            tachyfont.Persist.Error.PUT_STORE, name, e);
-        reject(e);  //
-      };
-    });
+          request.onerror = function(e) {
+            tachyfont.Persist.reportError(
+                tachyfont.Persist.Error.PUT_STORE, name, e);
+            reject(e);  //
+          };
+        });
   });
 };
 
@@ -472,11 +504,12 @@ tachyfont.Persist.putStore = function(previous, transaction, name, value) {
  * @param {!IDBTransaction} transaction The transaction object.
  * @param {!Array<string>} names The names of the stores to retrieve.
  * @param {!Array<*>} values The values to write to the stores.
- * @return {!goog.Promise<?,?>} Promise when the data is written.
+ * @return {!tachyfont.SynchronousResolutionPromise<?,?>} Promise when the data
+ *     is written.
  */
 tachyfont.Persist.putStores = function(transaction, names, values) {
   var results = [];
-  var lastPromise = goog.Promise.resolve([]);
+  var lastPromise = tachyfont.SynchronousResolutionPromise.resolve([]);
   for (var i = 0; i < names.length; i++) {
     lastPromise = tachyfont.Persist
                       .putStore(lastPromise, transaction, names[i], values[i])
@@ -491,26 +524,29 @@ tachyfont.Persist.putStores = function(transaction, names, values) {
 
 /**
  * Get data from an object store.
- * @param {!goog.Promise<?,?>} previous The previous promise to wait for.
+ * @param {!tachyfont.SynchronousResolutionPromise<?,?>} previous The previous
+ *     promise to wait for.
  * @param {!IDBTransaction} transaction The transaction object.
  * @param {string} name The name of the store to retrieve.
- * @return {!goog.Promise<*,?>} Promise to return the data.
+ * @return {!tachyfont.SynchronousResolutionPromise<*,?>} Promise to return the
+ *     data.
  */
 tachyfont.Persist.getStore = function(previous, transaction, name) {
   return previous.then(function() {
-    return new goog.Promise(function(resolve, reject) {
-      var store = transaction.objectStore(name);
-      var request = store.get(0);
-      request.onsuccess = function(e) {
-        resolve(e.target.result);  //
-      };
+    return new tachyfont.SynchronousResolutionPromise(  //
+        function(resolve, reject) {
+          var store = transaction.objectStore(name);
+          var request = store.get(0);
+          request.onsuccess = function(e) {
+            resolve(e.target.result);  //
+          };
 
-      request.onerror = function(e) {
-        tachyfont.Persist.reportError(
-            tachyfont.Persist.Error.GET_STORE, name, e);
-        reject(e);  //
-      };
-    });
+          request.onerror = function(e) {
+            tachyfont.Persist.reportError(
+                tachyfont.Persist.Error.GET_STORE, name, e);
+            reject(e);  //
+          };
+        });
   });
 };
 
@@ -519,11 +555,12 @@ tachyfont.Persist.getStore = function(previous, transaction, name) {
  * Get data from a group of object stores.
  * @param {!IDBTransaction} transaction An optional transaction object.
  * @param {!Array<string>} names The names of the stores to retrieve.
- * @return {!goog.Promise<!Array<*>,?>} Promise to return the array of data.
+ * @return {!tachyfont.SynchronousResolutionPromise<!Array<*>,?>} Promise to
+ *     return the array of data.
  */
 tachyfont.Persist.getStores = function(transaction, names) {
   var results = [];
-  var lastPromise = goog.Promise.resolve([]);
+  var lastPromise = tachyfont.SynchronousResolutionPromise.resolve([]);
   for (var i = 0; i < names.length; i++) {
     lastPromise = tachyfont.Persist.getStore(lastPromise, transaction, names[i])
                       .then(function(value) {
