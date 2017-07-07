@@ -20,12 +20,14 @@ goog.provide('tachyfont.CompactCff');
 
 goog.require('goog.Promise');
 goog.require('tachyfont.BinaryFontEditor');
+goog.require('tachyfont.Browser');
 goog.require('tachyfont.Cff');
 goog.require('tachyfont.CffDict');
 goog.require('tachyfont.Cmap');
 goog.require('tachyfont.Define');
 goog.require('tachyfont.IncrementalFontUtils');
 goog.require('tachyfont.Persist');
+goog.require('tachyfont.Reporter');
 goog.require('tachyfont.Sfnt');
 goog.require('tachyfont.utils');
 
@@ -67,6 +69,30 @@ tachyfont.CompactCff = function(fontId) {
    * @private {?Object<string, *>}
    */
   this.metadata_ = null;
+};
+
+
+/**
+ * Enum for error values.
+ * @enum {string}
+ */
+tachyfont.CompactCff.Error = {
+  FILE_ID: 'ECC',
+  PRE_INJECT_SET_FONT: '01',
+  POST_INJECT_SET_FONT: '02',
+  END: '00'
+};
+
+
+/**
+ * The error reporter for this file.
+ * @param {string} errNum The error number;
+ * @param {string} errId Identifies the error.
+ * @param {*} errInfo The error object;
+ */
+tachyfont.CompactCff.reportError = function(errNum, errId, errInfo) {
+  tachyfont.Reporter.reportError(
+      tachyfont.CompactCff.Error.FILE_ID + errNum, errId, errInfo);
 };
 
 
@@ -232,6 +258,7 @@ tachyfont.CompactCff.injectChars = function(
   var transaction;
   var fontId = fontInfo.getFontId();
   var compactCff = new tachyfont.CompactCff(fontId);
+  var preInjectFontData;  // TODO(bstell): get rid of this.
   // Get the db handle.
   return tachyfont.Persist.openIndexedDB(fontInfo.getDbName(), fontId)
       .then(function(db) {
@@ -242,9 +269,39 @@ tachyfont.CompactCff.injectChars = function(
         return compactCff.readDbTables(transaction);
       })
       .then(function() {
+        // Save the pre-inject font data. Cannot run checkSetFont here as that
+        // would prematurely end the IndexedDb transaction.
+        var data = compactCff.sfnt_.getFontData();
+        preInjectFontData = new DataView(data.buffer.slice(data.byteOffset));
         compactCff.injectGlyphBundle(bundleResponse, glyphToCodeMap);
         // Write the persisted data.
         return compactCff.writeDbTables(transaction);
+      })
+      .then(function() {
+        // checkSetFont the pre-inject font
+        return tachyfont.Browser
+            .checkSetFont(preInjectFontData, fontInfo, /* isTtf */ false, null)
+            .then(function(passesOts) {
+              if (!passesOts) {
+                tachyfont.CompactCff.reportError(
+                    tachyfont.CompactCff.Error.PRE_INJECT_SET_FONT, fontId, '');
+                return goog.Promise.reject();
+              }
+            });
+      })
+      .then(function() {
+        // checkSetFont the post-inject font
+        var postInjectFontData = compactCff.sfnt_.getFontData();
+        return tachyfont.Browser
+            .checkSetFont(postInjectFontData, fontInfo, /* isTtf */ false, null)
+            .then(function(passesOts) {
+              if (!passesOts) {
+                tachyfont.CompactCff.reportError(
+                    tachyfont.CompactCff.Error.POST_INJECT_SET_FONT, fontId,
+                    '');
+                return goog.Promise.reject();
+              }
+            });
       })
       .then(function() {
         return compactCff;  //

@@ -20,8 +20,35 @@
 goog.provide('tachyfont.Browser');
 
 goog.require('goog.Promise');
+goog.require('tachyfont.FontInfo');
 goog.require('tachyfont.IncrementalFontUtils');
 goog.require('tachyfont.log');
+
+
+/**
+ * Check the font passes OTS (OpenType Sanitizer).
+ * @param {!DataView} fontData The font dataview.
+ * @param {!tachyfont.FontInfo} fontInfo Info about this font.
+ * @param {boolean} isTtf True if the font is a TrueType font.
+ * @param {?string} oldBlobUrl The previous Blob URL.
+ * @return {!goog.Promise<boolean,?>} Indicates if the font passed OTS.
+ */
+tachyfont.Browser.checkSetFont = function(
+    fontData, fontInfo, isTtf, oldBlobUrl) {
+  // Modify the family-name to avoid possibly disturbing a font in use.
+  var testFontInfo = new tachyfont.FontInfo(
+      fontInfo.getName(), fontInfo.getWeight(), fontInfo.getPriority());
+  testFontInfo.setFamilyName('test-' + testFontInfo.getFamilyName());
+
+  return tachyfont.Browser.setFont(fontData, testFontInfo, isTtf, oldBlobUrl)
+      .then(function(blobUrl) {
+        window.URL.revokeObjectURL(blobUrl);
+        return true;  //
+      })
+      .thenCatch(function(e) {
+        return false;  //
+      });
+};
 
 
 /**
