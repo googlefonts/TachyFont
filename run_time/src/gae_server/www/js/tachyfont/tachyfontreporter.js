@@ -226,7 +226,7 @@ tachyfont.Reporter.sendReport = function() {
 tachyfont.Reporter.sendGen204_ = function(baseUrl, params) {
   var reportUrl = baseUrl + params.join('&');
   if (goog.DEBUG) {
-    tachyfont.log.info('send: ' + params.join(', '));
+    tachyfont.log.info('report: ' + params.join(', '));
   }
   var image = new Image();
   image.onload = image.onerror = tachyfont.Reporter.cleanUpFunc_(image);
