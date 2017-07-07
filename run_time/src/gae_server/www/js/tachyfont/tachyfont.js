@@ -529,18 +529,7 @@ tachyfont.loadFonts_loadAndUse_ = function(tachyFontSet) {
                         // Until Compact is fully enabled: limit the weights.
                         if (!fileInfo.isTtf && incrfont.getShouldBeCompact()) {
                           // If necessary fetch the Compact version.
-                          incrfont.getCompactFont()
-                              .then(function() {
-                                // Using error reporting to report success.
-                                tachyfont.reportError(
-                                    tachyfont.Error.GET_COMPACT_FONT_SUCCESS,
-                                    incrfont.getFontId());
-                              })
-                              .thenCatch(function() {
-                                tachyfont.reportError(
-                                    tachyfont.Error.GET_COMPACT_FONT,
-                                    incrfont.getFontId());
-                              });
+                          incrfont.getCompactFont();
                         }
                       })
                       .then(function() {
