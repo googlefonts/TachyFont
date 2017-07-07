@@ -736,7 +736,13 @@ tachyfont.IncrementalFont.obj.prototype.getCompactFont = function() {
               tachyfont.IncrementalFont.reportError(
                   tachyfont.IncrementalFont.Error.GET_COMPACT_FROM_URL,
                   this.fontId_, e);
-              return null;
+              // Clear the font.
+              return tachyfont.CompactCff
+                  .clearDataStores(
+                      tachyfont.Define.compactStoreNames, this.fontInfo)
+                  .then(function() {
+                    return null;  //
+                  });
             }.bind(this));
       }.bind(this));
 };
@@ -777,6 +783,9 @@ tachyfont.IncrementalFont.obj.prototype.getCompactFontFromUrl = function(
               tachyfont.IncrementalFont.reportError(
                   tachyfont.IncrementalFont.Error.SAVE_NEW_COMPACT,
                   this.fontId_, e);
+              // Clear the font.
+              return tachyfont.CompactCff.clearDataStores(
+                  tachyfont.Define.compactStoreNames, this.fontInfo);
             }.bind(this));
       }.bind(this))
       .then(function(newData) {
@@ -1112,11 +1121,8 @@ tachyfont.IncrementalFont.obj.prototype.loadChars = function() {
                         tachyfont.IncrementalFont.reportError(
                             tachyfont.IncrementalFont.Error.INJECT_COMPACT,
                             this.fontId_, '');
-                        return tachyfont.CompactCff
-                           .clearDataStores(
-                               tachyfont.Define.compactStoreNames,
-                               this.fontInfo)
-                           .thenCatch(function() {});
+                        return tachyfont.CompactCff.clearDataStores(
+                            tachyfont.Define.compactStoreNames, this.fontInfo);
                       }.bind(this));
                 }
               }.bind(this));
