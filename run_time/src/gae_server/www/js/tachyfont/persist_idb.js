@@ -46,6 +46,8 @@ tachyfont.Persist.Error = {
   IDB_GLOBAL_ON_UPGRAGE_NEEDED: '13',
   CREATE_COMPACT_DATA_BEGIN: '14',
   CREATE_COMPACT_DATA_DONE: '15',
+  GET_STORE: '16',
+  PUT_STORE: '17',
   END_VALUE: '00'
 };
 
@@ -456,6 +458,8 @@ tachyfont.Persist.putStore = function(previous, transaction, name, value) {
       };
 
       request.onerror = function(e) {
+        tachyfont.Persist.reportError(
+            tachyfont.Persist.Error.PUT_STORE, name, e.target.error.name);
         reject(e);  //
       };
     });
@@ -502,6 +506,8 @@ tachyfont.Persist.getStore = function(previous, transaction, name) {
       };
 
       request.onerror = function(e) {
+        tachyfont.Persist.reportError(
+            tachyfont.Persist.Error.GET_STORE, name, e.target.error.name);
         reject(e);  //
       };
     });
