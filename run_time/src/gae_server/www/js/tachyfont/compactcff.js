@@ -84,6 +84,7 @@ tachyfont.CompactCff.Error = {
   INJECT_CHARS_READ_TABLES: '04',
   INJECT_CHARS_WRITE_TABLES: '05',
   INJECT_TRANSACTION: '06',
+  INJECT_GLYPH_BUNDLE: '07',
   END: '00'
 };
 
@@ -296,12 +297,40 @@ tachyfont.CompactCff.injectChars = function(
               return tachyfont.SynchronousResolutionPromise.reject(event);
             });
       })
+      // Inject the glyphs.
       .then(function() {
         // Save the pre-inject font data. Cannot run checkSetFont here as that
         // would prematurely end the IndexedDb transaction.
         var data = compactCff.sfnt_.getFontData();
         preInjectFontData = new DataView(data.buffer.slice(data.byteOffset));
         compactCff.injectGlyphBundle(bundleResponse, glyphToCodeMap);
+      })
+      .thenCatch(function(event) {
+        tachyfont.CompactCff.reportError(
+            tachyfont.CompactCff.Error.INJECT_GLYPH_BUNDLE, fontId,
+            event);
+        // TODO(bstell): get rid of this debug info.
+        // For debug see if certain characters are problematic.
+        var chars = '';
+        var glyphDataArray = bundleResponse.getGlyphDataArray();
+        var count = bundleResponse.getGlyphCount();
+        for (var i = 0; i < count; i += 1) {
+          var glyphData = glyphDataArray[i];
+          var id = glyphData.getId();
+          var codes = glyphToCodeMap[id];
+          if (codes) {
+            for (var j = 0; j < codes.length; j++) {
+              var aChar = tachyfont.utils.stringFromCodePoint(codes[j]);
+              chars += aChar;
+            }
+          }
+        }
+        tachyfont.CompactCff.reportError(
+            tachyfont.CompactCff.Error.INJECT_GLYPH_BUNDLE, fontId,
+            chars);
+        return tachyfont.SynchronousResolutionPromise.reject(event);
+      })
+      .then(function() {
         // Write the persisted data.
         return compactCff.writeDbTables(transaction)
             .thenCatch(function(

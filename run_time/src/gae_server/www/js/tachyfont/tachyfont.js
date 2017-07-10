@@ -213,7 +213,7 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
     tachyfont.debugInitialization_();
   }
   tachyfont.loadFonts_initReporter(fontsInfo);
-  // Sent an "errro" report so the number of page loads can be determined on the
+  // Sent an "error" report so the number of page loads can be determined on the
   // dashboard.
   tachyfont.reportError(tachyfont.Error.PAGE_LOADED, '');
   tachyfont.sendPreludeReports();
