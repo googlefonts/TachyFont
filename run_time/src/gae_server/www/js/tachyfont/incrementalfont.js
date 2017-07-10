@@ -283,14 +283,14 @@ tachyfont.IncrementalFont.obj = function(fontInfo, params, backendService) {
    */
   // TODO(bstell): remove this when Compact TachyFont is fully enabled.
   // The font weights are: 100, 300, 400, 500, 700.
-  // This enables Compact TachyFont for weights greater than the number.
-  this.shouldBeCompact_ = parseInt(weight, 10) > 50;
+  // This enables testing Compact TachyFont for weights greater than the number.
+  this.checkCompact_ = parseInt(weight, 10) > 50;
 
   /**
-   * Whether the font is compacted.
+   * Whether the compact font should be used.
    * @private {boolean}
    */
-  this.isCompact_ = false;
+  this.useCompact_ = false;
 
   /**
    * The creation time for this TachyFont.
@@ -405,20 +405,21 @@ tachyfont.IncrementalFont.obj.prototype.getFontInfo = function() {
 
 
 /**
- * Gets whether the font should be compacted.
+ * Gets whether the Compact font should should have glyph data injected and be
+ * checked by OTS.
  * @return {boolean}
  */
-tachyfont.IncrementalFont.obj.prototype.getShouldBeCompact = function() {
-  return this.shouldBeCompact_;
+tachyfont.IncrementalFont.obj.prototype.getCheckCompact = function() {
+  return this.checkCompact_;
 };
 
 
 /**
- * Gets whether the font is compacted.
+ * Gets whether the Compact font should be used to display text.
  * @return {boolean}
  */
-tachyfont.IncrementalFont.obj.prototype.isCompact = function() {
-  return this.isCompact_;
+tachyfont.IncrementalFont.obj.prototype.useCompact = function() {
+  return this.useCompact_;
 };
 
 
@@ -1209,7 +1210,7 @@ tachyfont.IncrementalFont.obj.prototype.loadChars = function() {
                 var glyphToCodeMap = this.getGlyphToCodeMap(neededCodes);
                 this.injectChars(
                     fontData, neededCodes, glyphToCodeMap, bundleResponse);
-                if (this.getShouldBeCompact()) {
+                if (this.getCheckCompact()) {
                   this.compactRecord_ += tachyfont.IncrementalFont.CompactRecord
                                              .BEFORE_INJECT_COMPACT;
                   return this.injectCompact(neededCodes, bundleResponse)
@@ -1337,7 +1338,7 @@ tachyfont.IncrementalFont.obj.prototype.calcNeededChars = function() {
 
   return this.getCharList
       .then(function(charlist) {
-        if (!this.getShouldBeCompact()) {
+        if (!this.getCheckCompact()) {
           return charlist;
         }
         // Wait for the Compact data to be fetched if needed.
