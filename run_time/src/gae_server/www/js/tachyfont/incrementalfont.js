@@ -92,9 +92,7 @@ tachyfont.IncrementalFont.Error = {
   SAVE_DATA: '22',
   // 23-24 no longer used.
   DB_OPEN: '25',
-  // 26 no longer used.
-  GET_DATA: '27',
-  // 28-40 no longer used.
+  // 26-40 no longer used.
   NOT_USING_PERSISTED_DATA: '41',
   FINGERPRINT_MISMATCH: '42',
   DELETE_IDB: '44',
@@ -115,6 +113,8 @@ tachyfont.IncrementalFont.Error = {
   BEFORE_GET_COMPACT_CHARLIST: '61',
   RESOLVED_GET_COMPACT_CHARLIST: '62',
   REJECTED_GET_COMPACT_CHARLIST: '63',
+  GET_BASE_DATA: '63',
+  GET_CHARLIST_DATA: '64',
   END: '00'
 };
 
@@ -615,8 +615,8 @@ tachyfont.IncrementalFont.obj.prototype.getBaseFontFromPersistence =
             filedata = tachyfont.Persist.getData(idb, tachyfont.Define.IDB_BASE)
                            .thenCatch(function(e) {
                              tachyfont.IncrementalFont.reportError(
-                                 tachyfont.IncrementalFont.Error.GET_DATA,
-                                 'base ' + this.fontId_, e);
+                                 tachyfont.IncrementalFont.Error.GET_BASE_DATA,
+                                 this.fontId_, e);
                              return goog.Promise.reject(e);
                            }.bind(this));
             return goog.Promise.all([goog.Promise.resolve(idb), filedata]);
@@ -639,8 +639,8 @@ tachyfont.IncrementalFont.obj.prototype.getBaseFontFromPersistence =
                     },
                     function(e) {
                       tachyfont.IncrementalFont.reportError(
-                          tachyfont.IncrementalFont.Error.GET_DATA,
-                          'charList ' + this.fontId_, e);
+                          tachyfont.IncrementalFont.Error.GET_CHARLIST_DATA,
+                          this.fontId_, e);
                       return goog.Promise.reject(e);
                     }.bind(this));
           }.bind(this))
