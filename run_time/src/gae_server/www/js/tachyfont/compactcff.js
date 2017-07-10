@@ -85,6 +85,12 @@ tachyfont.CompactCff.Error = {
   INJECT_CHARS_WRITE_TABLES: '05',
   INJECT_TRANSACTION: '06',
   INJECT_GLYPH_BUNDLE: '07',
+  GET_OFFSETS: '08',
+  SET_CHARACTER_INFO: '09',
+  INJECT_GLYPH_DATA: '10',
+  REPLACE_TABLE: '11',
+  UPDATE_FILE_INFO: '12',
+  UINT8ARRAY_FROM: '13',
   END: '00'
 };
 
@@ -430,11 +436,44 @@ tachyfont.CompactCff.clearDataStores = function(
  */
 tachyfont.CompactCff.prototype.injectGlyphBundle = function(
     bundleResponse, glyphToCodeMap) {
-  var origOffsets = this.sfnt_.getCompactOffsets();
-  this.setCharacterInfo(bundleResponse, glyphToCodeMap);
-  var cffDataSegments = this.injectGlyphData(bundleResponse);
-  this.sfnt_.replaceTable(tachyfont.Sfnt.CFF_TAG, [cffDataSegments]);
-  this.updateFileInfo(origOffsets);
+  var origOffsets;
+  var cffDataSegments;
+  try {
+    origOffsets = this.sfnt_.getCompactOffsets();
+  } catch (e) {
+    tachyfont.CompactCff.reportError(
+        tachyfont.CompactCff.Error.GET_OFFSETS, this.fontId_, e);
+    throw new Error('getCompactOffsets');
+  }
+  try {
+    this.setCharacterInfo(bundleResponse, glyphToCodeMap);
+  } catch (e) {
+    tachyfont.CompactCff.reportError(
+        tachyfont.CompactCff.Error.SET_CHARACTER_INFO, this.fontId_, e);
+    throw new Error('setCharacterInfo');
+  }
+  try {
+    cffDataSegments = this.injectGlyphData(bundleResponse);
+  } catch (e) {
+    tachyfont.CompactCff.reportError(
+        tachyfont.CompactCff.Error.INJECT_GLYPH_DATA, this.fontId_, e);
+    throw new Error('injectGlyphData');
+  }
+  try {
+    this.sfnt_.replaceTable(tachyfont.Sfnt.CFF_TAG, [cffDataSegments]);
+  } catch (e) {
+    tachyfont.CompactCff.reportError(
+        tachyfont.CompactCff.Error.REPLACE_TABLE, this.fontId_, e);
+    throw new Error('replaceTable');
+  }
+  try {
+    this.updateFileInfo(origOffsets);
+  } catch (e) {
+    tachyfont.CompactCff.reportError(
+        tachyfont.CompactCff.Error.UPDATE_FILE_INFO, this.fontId_, e);
+    throw new Error('updateFileInfo');
+  }
+
 };
 
 
@@ -560,6 +599,11 @@ tachyfont.CompactCff.prototype.injectGlyphData = function(glyphBundle) {
 
     // Add a segment with the new char bytes.
     var glyphBytes = glyphData.getBytes();
+    // TODO(bstell): Remove this debug code.
+    if (typeof Uint8Array.from != 'function') {
+      tachyfont.CompactCff.reportError(
+          tachyfont.CompactCff.Error.UINT8ARRAY_FROM, this.fontId_, '');
+    }
     var glyphSegment = Uint8Array.from(glyphBytes);
     segments.push(glyphSegment);
     var oldGlyphLength = offsets[id + 1] - offsets[id];
