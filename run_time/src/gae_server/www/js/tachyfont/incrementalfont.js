@@ -279,19 +279,23 @@ tachyfont.IncrementalFont.obj = function(fontInfo, params, backendService) {
   this.refetchedCompact_ = false;
 
   /**
-   * Whether the font should be compacted.
+   * Check Compact TachyFont weights greater than the number; ie:
+   *     1. compact the font
+   *     2. inject glyph data
+   *     3. use OTS (OpenType Sanitizer) to check font validity.
+   * The font weights are: 100, 300, 400, 500, 700.
    * @private {boolean}
    */
   // TODO(bstell): remove this when Compact TachyFont is fully enabled.
-  // The font weights are: 100, 300, 400, 500, 700.
-  // This enables testing Compact TachyFont for weights greater than the number.
   this.checkCompact_ = parseInt(weight, 10) > 50;
 
   /**
-   * Whether the compact font should be used.
+   * Use Compact TachyFont to display weights greater than the number.
+   * The font weights are: 100, 300, 400, 500, 700.
    * @private {boolean}
    */
-  this.useCompact_ = parseInt(weight, 10) > 650;
+  // TODO(bstell): remove this when Compact TachyFont is fully enabled.
+  this.useCompact_ = parseInt(weight, 10) > 350;
 
   /**
    * The creation time for this TachyFont.
