@@ -35,6 +35,7 @@ goog.require('tachyfont.Promise');
 goog.require('tachyfont.RLEDecoder');
 goog.require('tachyfont.Reporter');
 goog.require('tachyfont.SynchronousResolutionPromise');
+goog.require('tachyfont.WorkQueue');
 goog.require('tachyfont.log');
 goog.require('tachyfont.utils');
 
@@ -368,6 +369,13 @@ tachyfont.IncrementalFont.obj = function(fontInfo, params, backendService) {
    */
   this.finishPrecedingSetFont_ =
       new tachyfont.Promise.Chained('finishPrecedingSetFont_');
+
+  /**
+   * The worker queue that makes sure the operations are done in order and
+   * non-overlapping.
+   * @private {!tachyfont.WorkQueue}
+   */
+  this.workQueue_ = new tachyfont.WorkQueue(this.fontId_);
 };
 
 
@@ -1615,4 +1623,16 @@ tachyfont.IncrementalFont.obj.prototype.persist_ = function(name) {
         // Release the lock.
         finishedPersisting.resolve('persisting');
       });
+};
+
+
+/**
+ * Adds a task to the worker queue.
+ * @param {function(?)} taskFunction The function to call.
+ * @param {*} data The data to pass to the function.
+ * @return {!tachyfont.WorkQueue.Task} The task object.
+ */
+tachyfont.IncrementalFont.obj.prototype.addTask = function(taskFunction, data) {
+  var task = this.workQueue_.addTask(taskFunction, data, this.fontId_);
+  return task;
 };
