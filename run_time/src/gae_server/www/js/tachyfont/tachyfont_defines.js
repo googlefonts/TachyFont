@@ -21,14 +21,6 @@ goog.provide('tachyfont.Define');
 
 
 /**
- * Defines if Compact TachyFont is enabled.
- * TODO(bstell): remove this once Compact TachyFont is fully operational.
- * @type {boolean}
- */
-tachyfont.Define.compactTachyFont = false;
-
-
-/**
  * The global IndexedDB version.
  * The global DB is only used to indicate if the IndexedDb has been stable for
  * at least one day; ie: the data is not being automatically erased. See
@@ -58,14 +50,6 @@ tachyfont.Define.IDB_VERSION = 4;
  * @type {string}
  */
 tachyfont.Define.DB_NAME = 'incrfonts';
-
-
-/**
- * The per font base store name.
- * The base contains the file info prepended to the font.
- * @const {string}
- */
-tachyfont.Define.IDB_BASE = 'base';
 
 
 /**
@@ -107,27 +91,6 @@ tachyfont.Define.compactStoreNames = [
   tachyfont.Define.COMPACT_CHAR_LIST,  //
   tachyfont.Define.COMPACT_METADATA
 ];
-
-
-/**
- * The base is dirty (needs to be persisted) key.
- * @const {string}
- */
-tachyfont.Define.IDB_BASE_DIRTY = 'base_dirty';
-
-
-/**
- * The per font char list store name.
- * @const {string}
- */
-tachyfont.Define.IDB_CHARLIST = 'charlist';
-
-
-/**
- * The charlist is dirty (needs to be persisted) key.
- * @const {string}
- */
-tachyfont.Define.IDB_CHARLIST_DIRTY = 'charlist_dirty';
 
 
 /**
