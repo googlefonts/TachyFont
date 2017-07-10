@@ -687,6 +687,7 @@ tachyfont.IncrementalFont.obj.prototype.getCompactFontFromPersistence =
         var transaction =
             db.transaction(tachyfont.Define.compactStoreNames, 'readonly');
         return tachyfont.Persist
+            // TODO(bstell): Reuse code in readDbTable instead of getStores.
             .getStores(transaction, tachyfont.Define.compactStoreNames)
             .thenCatch(function(e) {  // TODO(bstell): remove this debug code
               this.compactRecord_ += tachyfont.IncrementalFont.CompactRecord
@@ -1231,7 +1232,12 @@ tachyfont.IncrementalFont.obj.prototype.loadChars = function() {
                 if (this.getCheckCompact()) {
                   this.compactRecord_ += tachyfont.IncrementalFont.CompactRecord
                                              .BEFORE_INJECT_COMPACT;
-                  return this.injectCompact(neededCodes, bundleResponse)
+                  // Make sure the compact font is loaded.
+                  // TODO(bstell): remove this when Compact fully enabled.
+                  return this.getCompactCharList()
+                      .then(function() {
+                        this.injectCompact(neededCodes, bundleResponse);
+                      }.bind(this))
                       .thenCatch(function(e) {
                         // Try fetching the Compact font again and then
                         // injecting.
