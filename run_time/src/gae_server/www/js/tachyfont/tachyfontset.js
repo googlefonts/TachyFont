@@ -128,6 +128,7 @@ tachyfont.TachyFontSet.reportError_ = function(errNum, errObj) {
 /*
  * There are multiple issues for the 'character detection', 'character data
  * fetching', and 'CSS update' logic to manage:
+ *
  *   1. Character Detection
  *      * Use a Mutation Observer to record the characters as they are added to
  *        the DOM.
@@ -356,72 +357,6 @@ tachyfont.TachyFontSet.prototype.requestUpdateFonts = function(startTime) {
 
 
 /**
- * Switch the CSS to use a group of TachyFonts
- * @param {number} startTime The time when the chars were added to the DOM. If
- *     the number is negative then an intentional delay was happened.
- * @param {!Array<?Array<!Object|!DataView>>} loadResults The fileInfo and
- *     fontData.
- * @return {!goog.Promise}
- */
-tachyfont.TachyFontSet.prototype.setFonts = function(startTime, loadResults) {
-  var allCssSet = [];
-  for (var i = 0; i < loadResults.length; i++) {
-    var loadResult = loadResults[i];
-    var cssSetResult = this.setFont(i, loadResult, startTime);
-    allCssSet.push(cssSetResult);
-  }
-  return goog.Promise.all(allCssSet);
-};
-
-
-/**
- * Switch the CSS to use a TachyFont.
- * @param {number} index The index of the font in the TachyFontSet.
- * @param {?Array<!Object|!DataView>} loadResult The fileInfo and fontData.
- * @param {number} startTime The time when the chars were added to the DOM. If
- *     the number is negative then an intentional delay was happened.
- * @return {!goog.Promise}
- */
-tachyfont.TachyFontSet.prototype.setFont = function(index, loadResult,
-    startTime) {
-  var fontObj = this.fonts[index].incrfont;
-  var weight = fontObj.fontInfo.getWeight();
-  var setFontLogId;
-  if (fontObj.fontInfo.getPriority()) {
-    setFontLogId = tachyfont.TachyFontSet.Log.SET_FONT_PRIORITY;
-  } else {
-    setFontLogId = tachyfont.TachyFontSet.Log.SET_FONT;
-  }
-  if (loadResult == null) {
-    // No FOUT so 0 FOUT time.
-    tachyfont.Reporter.addItem(setFontLogId + weight, 0);
-    return goog.Promise.resolve(null);
-  }
-  // loadResult[0] holds fileInfo.
-  var fontData = loadResult[1];
-  var cssSetResult = fontObj.setFont(fontData).then(
-      function() {
-        if (startTime == 0) {
-          tachyfont.Reporter.addItemTime(
-              tachyfont.TachyFontSet.Log.SET_FONT_DOM_LOADED + weight);
-        } else if (startTime >= 0) {
-          tachyfont.Reporter.addItem(setFontLogId + weight,
-              goog.now() - startTime);
-        } else {
-          tachyfont.Reporter.addItem(
-              tachyfont.TachyFontSet.Log.SET_FONT_DELAYED + weight,
-              goog.now() + startTime);
-        }
-      }.bind(fontObj),
-      function(e) {
-        tachyfont.TachyFontSet.reportError_(
-            tachyfont.TachyFontSet.Error.SET_FONT, e);
-      });
-  return cssSetResult;
-};
-
-
-/**
  * Update a group of TachyFonts
  * @param {number} startTime The time when the chars were added to the DOM. If
  *     the number is negative then an intentional delay was happened.
@@ -429,7 +364,6 @@ tachyfont.TachyFontSet.prototype.setFont = function(index, loadResult,
  *     finished loading.
  * @return {!goog.Promise}
  */
-// TODO(bstell): check if this routine does anything now.
 tachyfont.TachyFontSet.prototype.updateFonts =
     function(startTime, allowEarlyUse) {
   this.lastRequestUpdateTime_ = goog.now();
@@ -445,35 +379,25 @@ tachyfont.TachyFontSet.prototype.updateFonts =
         var updatingFonts = [];
         for (var i = 0; i < this.fonts.length; i++) {
           var fontObj = this.fonts[i].incrfont;
+          // loadChars calls setFont
           var load = fontObj.loadChars();
           updatingFonts.push(load);
         }
         return goog.Promise.all(updatingFonts);
       }.bind(this))
-      .thenCatch(function(err) {
-        tachyfont.TachyFontSet.reportError_(
-            tachyfont.TachyFontSet.Error.UPDATE_FONT_LOAD_CHARS, err);
-      })
-      .then(function() {
-        var fontsData = [];
-        for (var i = 0; i < this.fonts.length; i++) {
-          // Note: Compact fonts are displayed earlier in loadChars.
-          // TODO(bstell): does this routine do anything now?
-          fontsData.push(goog.Promise.resolve(null));
-        }
-        return goog.Promise.all(fontsData);
-      }.bind(this))
-      .then(function(loadResults) {
-        return this.setFonts(startTime, loadResults);
-      }.bind(this))
-      .then(function(setResults) {
-        tachyfont.Reporter.sendReport();
-        allUpdated.resolve();
-      }.bind(this))
-      .thenCatch(function(e) {
-        tachyfont.TachyFontSet.reportError_(
-            tachyfont.TachyFontSet.Error.UPDATE_FONT_SET_FONT,
-            'failed to load all fonts' + e.stack);
+      .then(
+          function() {
+            tachyfont.Reporter.addItem(
+                tachyfont.TachyFontSet.Log.SET_FONT + '000',
+                goog.now() - startTime);
+            tachyfont.Reporter.sendReport();
+          },
+          function(error) {
+            tachyfont.TachyFontSet.reportError_(
+                tachyfont.TachyFontSet.Error.UPDATE_FONT_LOAD_CHARS, error);
+          },
+          this)
+      .thenAlways(function() {  //
         allUpdated.resolve();
       });
 };
