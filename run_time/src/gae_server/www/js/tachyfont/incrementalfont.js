@@ -236,6 +236,15 @@ tachyfont.IncrementalFont.obj = function(fontInfo, params, backendService) {
   /** @private {boolean} Whether the FileInfo for the font has been read. */
   this.haveReadFileInfo_ = false;
 
+  /** @private {boolean} Whether the font is a TTF or an CFF font. */
+  this.isTtf_ = false;
+
+  /** @private {string} The sha1 fingerprint of the font. */
+  this.sha1_fingerprint_ = '';
+
+  /** @private {!Object<number, boolean>} A map of the loadable codepoints. */
+  this.loadableCodepoints_ = {};
+
   /** @private {string} */
   this.fontId_ = fontId;
 
@@ -335,17 +344,8 @@ tachyfont.IncrementalFont.obj.prototype.getDb = function() {
  * @return {!tachyfont.typedef.CmapMapping}
  */
 tachyfont.IncrementalFont.obj.prototype.getCmapMapping = function() {
+  goog.asserts.assert(this.haveReadFileInfo_);
   return this.fileInfo_.cmapMapping;
-};
-
-
-/**
- * Set the cmap mapping
- * @param {!tachyfont.typedef.CmapMapping} cmapMapping The map of
- *     codepoint to segment mapping.
- */
-tachyfont.IncrementalFont.obj.prototype.setCmapMapping = function(cmapMapping) {
-  this.fileInfo_.cmapMapping = cmapMapping;
 };
 
 
@@ -409,6 +409,13 @@ tachyfont.IncrementalFont.obj.prototype.setGetIdb = function(getIdb) {
  * @param {!tachyfont.typedef.FileInfo} fileInfo The file information.
  */
 tachyfont.IncrementalFont.obj.prototype.setFileInfo = function(fileInfo) {
+  var codepoints = Object.keys(fileInfo.cmapMapping);
+  for (var i = 0; i < codepoints.length; i++) {
+    var codepoint = parseInt(codepoints[i], 10);
+    this.loadableCodepoints_[codepoint] = true;
+  }
+  this.isTtf_ = fileInfo.isTtf;
+  this.sha1_fingerprint_ = fileInfo.sha1_fingerprint;
   this.fileInfo_ = fileInfo;
   this.haveReadFileInfo_ = true;
 };
@@ -753,6 +760,8 @@ tachyfont.IncrementalFont.processUrlBase = function(
 /**
  * Inject glyphs in the glyphData to the baseFontView
  * @param {!DataView} baseFontView Current base font
+ * @param {!tachyfont.typedef.FileInfo} fileInfo File info; eg, offsets to
+ *     various tables in the font.
  * @param {!tachyfont.GlyphBundleResponse} bundleResponse New glyph data
  * @param {!Object<number, !Array<number>>} glyphToCodeMap This is both an
  *     input and an output:
@@ -762,9 +771,9 @@ tachyfont.IncrementalFont.processUrlBase = function(
  * @return {!DataView} Updated base font
  */
 tachyfont.IncrementalFont.obj.prototype.injectCharacters = function(
-    baseFontView, bundleResponse, glyphToCodeMap, extraGlyphs) {
+    baseFontView, fileInfo, bundleResponse, glyphToCodeMap, extraGlyphs) {
+  goog.asserts.assert(this.haveReadFileInfo_);
   // time_start('inject')
-  this.fileInfo_.dirty = true;
   var baseBinaryEditor = new tachyfont.BinaryFontEditor(baseFontView, 0);
 
   var count = bundleResponse.getGlyphCount();
@@ -773,7 +782,7 @@ tachyfont.IncrementalFont.obj.prototype.injectCharacters = function(
 
   var isCff = flags & tachyfont.IncrementalFontUtils.FLAGS.HAS_CFF;
   var offsetDivisor = 1;
-  if (!isCff && this.fileInfo_.offsetSize == 2) {
+  if (!isCff && fileInfo.offsetSize == 2) {
     // For the loca "short version":
     //   "The actual local offset divided by 2 is stored."
     offsetDivisor = 2;
@@ -785,29 +794,33 @@ tachyfont.IncrementalFont.obj.prototype.injectCharacters = function(
     glyphIds.push(id);
     var nextId = id + 1;
     tachyfont.IncrementalFontUtils.setMtx(
-        flags, glyphData, baseBinaryEditor, this.fileInfo_);
+        flags, glyphData, baseBinaryEditor, fileInfo);
 
     var offset = glyphData.getOffset();
     var length = glyphData.getLength();
 
     if (!isCff) {
       // Set the loca for this glyph.
-      baseBinaryEditor.setGlyphDataOffset(this.fileInfo_.glyphDataOffset,
-          this.fileInfo_.offsetSize, id, offset / offsetDivisor);
+      baseBinaryEditor.setGlyphDataOffset(
+          fileInfo.glyphDataOffset, fileInfo.offsetSize, id,
+          offset / offsetDivisor);
       var oldNextOne = baseBinaryEditor.getGlyphDataOffset(
-          this.fileInfo_.glyphDataOffset, this.fileInfo_.offsetSize, nextId);
+          fileInfo.glyphDataOffset, fileInfo.offsetSize, nextId);
       var newNextOne = offset + length;
       // Set the length of the current glyph (at the loca of nextId).
-      baseBinaryEditor.setGlyphDataOffset(this.fileInfo_.glyphDataOffset,
-          this.fileInfo_.offsetSize, nextId, newNextOne / offsetDivisor);
+      baseBinaryEditor.setGlyphDataOffset(
+          fileInfo.glyphDataOffset, fileInfo.offsetSize, nextId,
+          newNextOne / offsetDivisor);
 
       // Fix the sparse loca values before this new value.
       var prev_id = id - 1;
       while (prev_id >= 0 &&
-          baseBinaryEditor.getGlyphDataOffset(this.fileInfo_.glyphDataOffset,
-          this.fileInfo_.offsetSize, prev_id) > offset) {
-        baseBinaryEditor.setGlyphDataOffset(this.fileInfo_.glyphDataOffset,
-            this.fileInfo_.offsetSize, prev_id, offset / offsetDivisor);
+             baseBinaryEditor.getGlyphDataOffset(
+                 fileInfo.glyphDataOffset, fileInfo.offsetSize, prev_id) >
+                 offset) {
+        baseBinaryEditor.setGlyphDataOffset(
+            fileInfo.glyphDataOffset, fileInfo.offsetSize, prev_id,
+            offset / offsetDivisor);
         prev_id--;
       }
       /*
@@ -817,10 +830,10 @@ tachyfont.IncrementalFont.obj.prototype.injectCharacters = function(
        * a dummy glyph(ie: write -1 to make it a composite glyph).
        */
       var isChanged = oldNextOne != newNextOne;
-      isChanged = isChanged && nextId < this.fileInfo_.numGlyphs;
+      isChanged = isChanged && nextId < fileInfo.numGlyphs;
       if (isChanged) {
         // Fix the loca value after this one.
-        baseBinaryEditor.seek(this.fileInfo_.glyphOffset + newNextOne);
+        baseBinaryEditor.seek(fileInfo.glyphOffset + newNextOne);
         if (length > 0) {
           baseBinaryEditor.setInt16(-1);
         }else if (length == 0) {
@@ -828,34 +841,36 @@ tachyfont.IncrementalFont.obj.prototype.injectCharacters = function(
           var currentUint1 = baseBinaryEditor.getUint32(),
               currentUint2 = baseBinaryEditor.getUint32();
           if (currentUint1 == 0 && currentUint2 == 0) {
-            baseBinaryEditor.seek(this.fileInfo_.glyphOffset + newNextOne);
+            baseBinaryEditor.seek(fileInfo.glyphOffset + newNextOne);
             baseBinaryEditor.setInt16(-1);
           }
         }
       }
     } else {
-      baseBinaryEditor.setGlyphDataOffset(this.fileInfo_.glyphDataOffset,
-          this.fileInfo_.offsetSize, id, offset);
+      baseBinaryEditor.setGlyphDataOffset(
+          fileInfo.glyphDataOffset, fileInfo.offsetSize, id, offset);
       var oldNextOne = baseBinaryEditor.getGlyphDataOffset(
-          this.fileInfo_.glyphDataOffset, this.fileInfo_.offsetSize, nextId);
-      baseBinaryEditor.setGlyphDataOffset(this.fileInfo_.glyphDataOffset,
-          this.fileInfo_.offsetSize, nextId, offset + length);
+          fileInfo.glyphDataOffset, fileInfo.offsetSize, nextId);
+      baseBinaryEditor.setGlyphDataOffset(
+          fileInfo.glyphDataOffset, fileInfo.offsetSize, nextId,
+          offset + length);
       nextId = id + 2;
-      var offsetCount = this.fileInfo_.numGlyphs + 1;
+      var offsetCount = fileInfo.numGlyphs + 1;
       var currentIdOffset = offset + length, nextIdOffset;
       if (oldNextOne < currentIdOffset && nextId - 1 < offsetCount - 1) {
-        baseBinaryEditor.seek(this.fileInfo_.glyphOffset + currentIdOffset);
+        baseBinaryEditor.seek(fileInfo.glyphOffset + currentIdOffset);
         baseBinaryEditor.setUint8(14);
       }
       while (nextId < offsetCount) {
         nextIdOffset = baseBinaryEditor.getGlyphDataOffset(
-            this.fileInfo_.glyphDataOffset, this.fileInfo_.offsetSize, nextId);
+            fileInfo.glyphDataOffset, fileInfo.offsetSize, nextId);
         if (nextIdOffset <= currentIdOffset) {
           currentIdOffset++;
-          baseBinaryEditor.setGlyphDataOffset(this.fileInfo_.glyphDataOffset,
-              this.fileInfo_.offsetSize, nextId, currentIdOffset);
+          baseBinaryEditor.setGlyphDataOffset(
+              fileInfo.glyphDataOffset, fileInfo.offsetSize, nextId,
+              currentIdOffset);
           if (nextId < offsetCount - 1) {
-            baseBinaryEditor.seek(this.fileInfo_.glyphOffset + currentIdOffset);
+            baseBinaryEditor.seek(fileInfo.glyphOffset + currentIdOffset);
             baseBinaryEditor.setUint8(14);
           }
           nextId++;
@@ -866,16 +881,16 @@ tachyfont.IncrementalFont.obj.prototype.injectCharacters = function(
     }
 
     var bytes = glyphData.getBytes();
-    baseBinaryEditor.seek(this.fileInfo_.glyphOffset + offset);
+    baseBinaryEditor.seek(fileInfo.glyphOffset + offset);
     baseBinaryEditor.setArrayOf(baseBinaryEditor.setUint8, bytes);
   }
   // Set the glyph Ids in the cmap format 12 subtable;
   tachyfont.Cmap.setFormat12GlyphIds(
-      this.fileInfo_, baseFontView, glyphIds, glyphToCodeMap, this.fontId_);
+      fileInfo, baseFontView, glyphIds, glyphToCodeMap, this.fontId_);
 
   // Set the glyph Ids in the cmap format 4 subtable;
   tachyfont.Cmap.setFormat4GlyphIds(
-      this.fileInfo_, baseFontView, glyphIds, glyphToCodeMap, this.fontId_);
+      fileInfo, baseFontView, glyphIds, glyphToCodeMap, this.fontId_);
 
   // Remove the glyph Ids that were in the bundleResponse and record
   // the extra glyphs.
@@ -907,8 +922,7 @@ tachyfont.IncrementalFont.obj.prototype.setFont = function(fontData) {
         this.needToSetFont_ = false;
         goog.asserts.assert(this.haveReadFileInfo_);
         return tachyfont.Browser
-            .setFont(
-                fontData, this.fontInfo_, this.fileInfo_.isTtf, this.blobUrl_)
+            .setFont(fontData, this.fontInfo_, this.isTtf_, this.blobUrl_)
             .then(function(newBlobUrl) {
               this.blobUrl_ = newBlobUrl;
             }.bind(this));
@@ -931,12 +945,12 @@ tachyfont.IncrementalFont.obj.prototype.setFont = function(fontData) {
  * @param {!Array<number>} codes The codepoints to add obusfuscation to.
  * @param {!Object} alreadyRequestedChars The chars that have already been
  *     requested.
- * @param {!tachyfont.typedef.CmapMapping} cmapMapping A map of the
- *     characters in the font.
+ * @param {!Object<number,boolean>} loadableCodepoints A map of the
+ *     codepoints supported in the font.
  * @return {!Array<number>} The codepoints with obusfuscation.
  */
 tachyfont.IncrementalFont.possibly_obfuscate = function(
-    codes, alreadyRequestedChars, cmapMapping) {
+    codes, alreadyRequestedChars, loadableCodepoints) {
   if (tachyfont.utils.noObfuscate == true) {
     return codes;
   }
@@ -964,7 +978,7 @@ tachyfont.IncrementalFont.possibly_obfuscate = function(
     }
     var top = code + tachyfont.Define.OBFUSCATION_RANGE / 2;
     var newCode = Math.floor(goog.math.uniformRandom(bottom, top + 1));
-    if (!cmapMapping[newCode]) {
+    if (!loadableCodepoints[newCode]) {
       // This code is not supported in the font.
       continue;
     }
@@ -1094,8 +1108,7 @@ tachyfont.IncrementalFont.obj.prototype.injectCompact = function(
         var fontData = compactCff.getSfnt().getFontData();
         goog.asserts.assert(this.haveReadFileInfo_);
         return tachyfont.Browser
-            .setFont(
-                fontData, this.fontInfo_, this.fileInfo_.isTtf, this.blobUrl_)
+            .setFont(fontData, this.fontInfo_, this.isTtf_, this.blobUrl_)
             .then(function(blobUrl) {
               this.blobUrl_ = blobUrl;
               var tables = compactCff.getTableData();
@@ -1146,7 +1159,7 @@ tachyfont.IncrementalFont.obj.prototype.calcNeededChars = function() {
           var c = charArray[i];
           var code = tachyfont.utils.charToCode(c);
           // Check if the font supports the char and it is not loaded.
-          if (this.fileInfo_.cmapMapping[code] && !tmp_charlist[c]) {
+          if (this.loadableCodepoints_[code] && !tmp_charlist[c]) {
             neededCodes.push(code);
             tmp_charlist[c] = 1;
           }
@@ -1163,8 +1176,8 @@ tachyfont.IncrementalFont.obj.prototype.calcNeededChars = function() {
           return goog.Promise.reject('no chars to load');
         }
         goog.asserts.assert(this.haveReadFileInfo_);
-        neededCodes = tachyfont.IncrementalFont.possibly_obfuscate(neededCodes,
-            charlist, this.fileInfo_.cmapMapping);
+        neededCodes = tachyfont.IncrementalFont.possibly_obfuscate(
+            neededCodes, charlist, this.loadableCodepoints_);
         if (goog.DEBUG) {
           tachyfont.log.info(
               this.fontInfo_.getName() + ' ' + this.fontId_ + ': load ' +
@@ -1232,8 +1245,7 @@ tachyfont.IncrementalFont.obj.prototype.checkFingerprint = function(
     return goog.Promise.resolve(bundleResponse);
   }
   goog.asserts.assert(this.haveReadFileInfo_);
-  var base_signature = this.fileInfo_.sha1_fingerprint;
-  if (base_signature == bundleResponse.signature) {
+  if (this.sha1_fingerprint_ == bundleResponse.signature) {
     return goog.Promise.resolve(bundleResponse);
   }
   return goog.Promise.reject('reject fingerprint');
@@ -1269,7 +1281,7 @@ tachyfont.IncrementalFont.obj.prototype.injectChars = function(
     fontData, neededCodes, glyphToCodeMap, bundleResponse) {
   var extraGlyphs = [];
   fontData = this.injectCharacters(
-      fontData, bundleResponse, glyphToCodeMap, extraGlyphs);
+      fontData, this.fileInfo_, bundleResponse, glyphToCodeMap, extraGlyphs);
   var missingCodes = Object.keys(glyphToCodeMap);
   if (missingCodes.length != 0) {
     missingCodes = missingCodes.slice(0, 5);
