@@ -34,11 +34,11 @@
 
 
   /** @const {string} The db store name for the font base. */
-  var BASE = 'base';
+  var COMPACT_FONT = 'compact_font';
 
 
   /** @const {string} The db store name for the metadata. */
-  var META = 'metadata';
+  var COMPACT_META = 'compact_metadata';
 
 
   /** @const {string} The db store name for the metadata. */
@@ -57,15 +57,6 @@
   var STABLE_DATA_TIME = 24 * 60 * 60 * 1000;
 
 
-  /**
-   * The TachyFont magic (reality check) number.
-   * The magic number is the 4 numbers in the string 'BSAC': 0x42 0x53 0x41 0x43
-   *
-   * @const {number}
-   */
-  var MAGIC_NUMBER = 0x42534143;
-
-
   /** @const {string} The Style Sheet ID. */
   var STYLESHEET_ID = 'Incremental\u00A0Font\u00A0Utils';
 
@@ -76,10 +67,6 @@
 
   /** @const {string} IndexedDB missing the base field error. */
   var ERROR_PRELUDE_MISSING_BASE = '02';
-
-
-  /** @const {string} The magic number (reality check) is bad. */
-  var ERROR_PRELUDE_BAD_MAGIC_NUMBER = '03';
 
 
   /** @const {string} IndexedDB missing the metadata field error. */
@@ -104,7 +91,6 @@
 
   /** @const {number} TachyFontPrelude start time. */
   var START_TIME = (new Date()).getTime();
-
 
 
   /**
@@ -226,7 +212,7 @@
   function getFontData(fontInfo) {
     return openIDB(fontInfo)
         .then(function(db) {
-          return getData(db, META).then(
+          return getData(db, COMPACT_META).then(
               function(metadata) {
                 // Check metadata age.
                 var age = START_TIME -
@@ -241,21 +227,9 @@
               });
         })
         .then(function(db) {
-          return getData(db, BASE).then(
-              function(bytes) {
-                // Convert to font data.
-                var fileData = new DataView(bytes);
-                if (fileData.getUint32(0) != MAGIC_NUMBER) {
-                  return newRejectedPromise(ERROR_PRELUDE_BAD_MAGIC_NUMBER);
-                }
-                return new DataView(
-                    bytes,
-                    /* headerSize */ fileData.getInt32(4));
-              },
-              function() {
-                // No data.
-                return newRejectedPromise(ERROR_PRELUDE_MISSING_BASE);
-              });
+          return getData(db, COMPACT_FONT).then(undefined, function() {
+            return newRejectedPromise(ERROR_PRELUDE_MISSING_BASE);
+          });
         });
   }
 
@@ -314,11 +288,7 @@
 
     var fontStr = '400 20px ' + tmpFontFamily;
     return document.fonts.load(fontStr)
-        .then(
-            undefined,
-            function() {
-              // Ignore errors of fonts that do not load.
-            })
+        .then(undefined, undefined) // Ignore errors of fonts that do not load.
         .then(function(value) {
           setCssFontRule(sheet, cssFontFamily, weight, blobUrl, format);
           if (reportLoadTime) {
