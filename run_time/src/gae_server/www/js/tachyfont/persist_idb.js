@@ -45,8 +45,7 @@ tachyfont.Persist.Error = {
   SAVE_BEGIN_AFTER_CREATED_METADATA: '11',
   IDB_GLOBAL_OPEN: '12',
   IDB_GLOBAL_ON_UPGRAGE_NEEDED: '13',
-  CREATE_COMPACT_DATA_BEGIN: '14',
-  CREATE_COMPACT_DATA_DONE: '15',
+  // 14-15 no longer used.
   GET_STORE: '16',
   PUT_STORE: '17',
   END_VALUE: '00'
@@ -159,8 +158,6 @@ tachyfont.Persist.openIndexedDb_ = function(dbName, id, resolve, reject) {
       tachyfont.Metadata.initializePerFont(metadataStore);
     }
     // Compact TachyFont data.
-    tachyfont.Persist.reportError(
-        tachyfont.Persist.Error.CREATE_COMPACT_DATA_BEGIN, id, '');
     if (!db.objectStoreNames.contains(tachyfont.Define.COMPACT_FONT)) {
       db.createObjectStore(tachyfont.Define.COMPACT_FONT);
     }
@@ -179,8 +176,6 @@ tachyfont.Persist.openIndexedDb_ = function(dbName, id, resolve, reject) {
           db.createObjectStore(tachyfont.Define.COMPACT_CHAR_LIST);
       tachyfont.Persist.initializeCharList(compactCharsListStore);
     }
-    tachyfont.Persist.reportError(
-        tachyfont.Persist.Error.CREATE_COMPACT_DATA_DONE, id, '');
   };
 };
 

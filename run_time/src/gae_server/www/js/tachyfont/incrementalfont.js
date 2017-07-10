@@ -99,7 +99,7 @@ tachyfont.IncrementalFont.Error = {
   BELOW_STABLE_TIME: '45',
   SET_FONT_PRECEEDING_PROMISE: '48',
   INJECT_FONT_COMPACT: '49',
-  INJECT_FONT_COMPACT_SUCCESS: '50',
+  // 50 no longer used.
   INJECT_COMPACT: '51',
   COMPACT_GET_DB: '52',
   COMPACT_GET_STORES: '53',
@@ -110,8 +110,7 @@ tachyfont.IncrementalFont.Error = {
   DO_NOT_USE_UNCOMPACTED_FONT: '58',
   INJECT_FONT_INJECT_CHARS: '59',
   DISPLAY_COMPACT_FONT: '60',
-  // 61 no longer used.
-  RESOLVED_GET_COMPACT_CHARLIST: '62',
+  // 61-62 no longer used.
   REJECTED_GET_COMPACT_CHARLIST: '63',
   GET_BASE_DATA: '64',
   GET_CHARLIST_DATA: '65',
@@ -1040,16 +1039,17 @@ tachyfont.IncrementalFont.obj.prototype.setFont = function(fontData) {
                 fontData, this.fontInfo, this.fileInfo_.isTtf, this.blobUrl_)
             .then(function(newBlobUrl) {
               this.blobUrl_ = newBlobUrl;
-              finishPrecedingSetFont.resolve();
             }.bind(this));
       }.bind(this))
       .thenCatch(function(e) {
-        finishPrecedingSetFont.resolve();
         tachyfont.IncrementalFont.reportError(
             tachyfont.IncrementalFont.Error.SET_FONT_PRECEEDING_PROMISE,
             this.fontId_, e);
         return goog.Promise.reject(e);
-      }.bind(this));
+      }.bind(this))
+      .thenAlways(function() {  //
+        finishPrecedingSetFont.resolve();
+      });
 };
 
 
@@ -1197,18 +1197,16 @@ tachyfont.IncrementalFont.obj.prototype.loadChars = function() {
               this.closeDb();
             }.bind(this));
       }.bind(this))
-      .then(function() {
-        // All done getting the char data so release the lock.
-        finishPrecedingCharsRequest.resolve();
-      }.bind(this))
       .thenCatch(function(e) {
         // Failed to get the char data so release the lock.
         finishPrecedingCharsRequest.resolve('finishPrecedingCharsRequest');
         tachyfont.IncrementalFont.reportError(
             tachyfont.IncrementalFont.Error.LOAD_CHARS_GET_LOCK, this.fontId_,
             e);
-        return goog.Promise.reject(e);
-      }.bind(this));
+      }.bind(this))
+      .thenAlways(function() {  //
+        finishPrecedingCharsRequest.resolve();
+      });
 };
 
 
@@ -1253,9 +1251,6 @@ tachyfont.IncrementalFont.obj.prototype.injectCompact = function(
               if (tables && tables[2]) {
                 this.compactCharList_.resolve(tables[2]);
               }
-              tachyfont.IncrementalFont.reportError(
-                  tachyfont.IncrementalFont.Error.INJECT_FONT_COMPACT_SUCCESS,
-                  this.fontId_, this.compactRecord_);
               this.compactRecord_ = '';
               return compactCff;
             }.bind(this))
@@ -1284,14 +1279,7 @@ tachyfont.IncrementalFont.obj.prototype.calcNeededChars = function() {
   }
 
   return this.getCompactCharList()
-      .then(
-          function(compactCharList) {
-            tachyfont.IncrementalFont.reportError(
-                tachyfont.IncrementalFont.Error.RESOLVED_GET_COMPACT_CHARLIST,
-                this.fontId_, this.compactRecord_);
-            // Return the non-compact charlist (not using the compact yet).
-            return compactCharList;
-          },
+      .thenCatch(
           function(e) {
             // TODO(bstell): should the one time refresh happen here?
             tachyfont.IncrementalFont.reportError(
