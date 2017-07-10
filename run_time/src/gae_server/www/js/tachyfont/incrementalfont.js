@@ -1063,7 +1063,8 @@ tachyfont.IncrementalFont.obj.prototype.loadChars = function() {
  */
 tachyfont.IncrementalFont.obj.prototype.injectCompact = function(
     neededCodes, bundleResponse) {
-  var glyphToCodeMap = this.getGlyphToCodeMap(neededCodes);
+  var glyphToCodeMap = tachyfont.IncrementalFontUtils.getGlyphToCodeMap(
+      neededCodes, this.fileInfo_.cmapMapping);
   return tachyfont.CompactCff
       .injectChars(this.fontInfo_, neededCodes, glyphToCodeMap, bundleResponse)
       .thenCatch(function(e) {
@@ -1239,34 +1240,6 @@ tachyfont.IncrementalFont.obj.prototype.handleFingerprintMismatch = function() {
       .then(function(db) {
              return goog.Promise.reject('deleted database');
       }.bind(this));
-};
-
-
-/**
- * Inject glyph data and enable the chars in the cmaps.
- * @param {!Array<number>} neededCodes The codes to be injected.
- * @return {!Object<number,!Array<number>>}
- */
-tachyfont.IncrementalFont.obj.prototype.getGlyphToCodeMap = function(
-    neededCodes) {
-  var glyphToCodeMap = {};
-  for (var i = 0; i < neededCodes.length; i++) {
-    var code = neededCodes[i];
-    var charCmapInfo = this.fileInfo_.cmapMapping[code];
-    if (charCmapInfo) {
-      // Handle multiple codes sharing a glyphId.
-      if (glyphToCodeMap[charCmapInfo.glyphId] == undefined) {
-        glyphToCodeMap[charCmapInfo.glyphId] = [];
-      }
-      glyphToCodeMap[charCmapInfo.glyphId].push(code);
-    }
-    if (goog.DEBUG) {
-      if (!charCmapInfo) {
-        tachyfont.log.warning('no glyph for codepoint 0x' + code.toString(16));
-      }
-    }
-  }
-  return glyphToCodeMap;
 };
 
 

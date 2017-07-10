@@ -62,7 +62,7 @@ tachyfont.typedef.Resolver;
 
 
 /**
- * @typedef {Object}
+ * @typedef {!Object}
  */
 tachyfont.typedef.Context;
 
