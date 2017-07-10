@@ -18,6 +18,7 @@
 
 goog.provide('tachyfont.CompactCff');
 
+goog.require('goog.asserts');
 goog.require('tachyfont.BinaryFontEditor');
 goog.require('tachyfont.Cff');
 goog.require('tachyfont.CffDict');
@@ -117,9 +118,7 @@ tachyfont.CompactCff.prototype.getSfnt = function() {
  * @return {!tachyfont.typedef.FileInfo}
  */
 tachyfont.CompactCff.prototype.getFileInfo = function() {
-  if (!this.fileInfo_) {
-    throw new Error('fileInfo not set');
-  }
+  goog.asserts.assert(this.fileInfo_);
   return this.fileInfo_;
 };
 
@@ -251,8 +250,6 @@ tachyfont.CompactCff.prototype.addDataSegment = function(
  * Inject fetched glyphBundle data.
  * @param {!tachyfont.FontInfo} fontInfo Info about the font.
  * @param {!Array<number>} neededCodes The codes to be injected.
- * @param {!Object<number,!Array<number>>} glyphToCodeMap The map of glyph id to
- *     codepoints.
  * @param {!tachyfont.GlyphBundleResponse} bundleResponse New glyph data
  * @return {
  *     (!tachyfont.SynchronousResolutionPromise<!tachyfont.CompactCff,?>|
@@ -261,7 +258,7 @@ tachyfont.CompactCff.prototype.addDataSegment = function(
  *
  */
 tachyfont.CompactCff.injectChars = function(
-    fontInfo, neededCodes, glyphToCodeMap, bundleResponse) {
+    fontInfo, neededCodes, bundleResponse) {
   var transaction;
   var fontId = fontInfo.getFontId();
   var compactCff = new tachyfont.CompactCff(fontId);
@@ -305,6 +302,9 @@ tachyfont.CompactCff.injectChars = function(
       })
       // Inject the glyphs.
       .then(function() {
+        var fileInfo = compactCff.getFileInfo();
+        var glyphToCodeMap = tachyfont.IncrementalFontUtils.getGlyphToCodeMap(
+            neededCodes, fileInfo.cmapMapping);
         try {
           compactCff.injectGlyphBundle(bundleResponse, glyphToCodeMap);
         } catch (event) {
@@ -341,7 +341,7 @@ tachyfont.CompactCff.injectChars = function(
 
 /**
  * @param {!IDBTransaction} transaction The current IndexedDB transaction.
- * @return {!tachyfont.SynchronousResolutionPromise<?,?>}
+ * @return {!tachyfont.SynchronousResolutionPromise<!Array<?>,?>}
  */
 tachyfont.CompactCff.prototype.readDbTables = function(transaction) {
   // Read the persisted data.

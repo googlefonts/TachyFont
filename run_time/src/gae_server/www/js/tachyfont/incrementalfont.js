@@ -1063,10 +1063,8 @@ tachyfont.IncrementalFont.obj.prototype.loadChars = function() {
  */
 tachyfont.IncrementalFont.obj.prototype.injectCompact = function(
     neededCodes, bundleResponse) {
-  var glyphToCodeMap = tachyfont.IncrementalFontUtils.getGlyphToCodeMap(
-      neededCodes, this.fileInfo_.cmapMapping);
   return tachyfont.CompactCff
-      .injectChars(this.fontInfo_, neededCodes, glyphToCodeMap, bundleResponse)
+      .injectChars(this.fontInfo_, neededCodes, bundleResponse)
       .thenCatch(function(e) {
         tachyfont.IncrementalFont.reportError(
             tachyfont.IncrementalFont.Error.INJECT_FONT_INJECT_CHARS,
