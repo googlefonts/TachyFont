@@ -1324,7 +1324,13 @@ tachyfont.IncrementalFont.obj.prototype.injectCompact = function(
             tachyfont.IncrementalFont.Error.INJECT_FONT_INJECT_CHARS,
             this.fontId_, this.compactRecord_);
         this.compactRecord_ = '';
-        return tachyfont.SynchronousResolutionPromise.reject(e);
+        // Something is wrong with the font so reload it.
+        var dbName = this.fontInfo.getDbName();
+        return tachyfont.Persist.deleteDatabase(dbName, this.fontId_)
+            .thenCatch(function() {})
+            .then(function() {
+              return tachyfont.SynchronousResolutionPromise.reject(e);
+            });
       }.bind(this))
       .then(function(compactCff) {
         var fontData = compactCff.getSfnt().getFontData();
