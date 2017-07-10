@@ -41,10 +41,14 @@ tachyfont.WorkQueue = function(name) {
  * Adds a task.
  * @param {function(?)} taskFunction The function to call.
  * @param {*} data The data to pass to the function.
+ * @param {string} fontId An identifier useful for error messages.
+ * @param {number=} opt_watchDogTime Option watch dog time.
  * @return {!tachyfont.WorkQueue.Task} A promise with the task's result.
  */
-tachyfont.WorkQueue.prototype.addTask = function(taskFunction, data) {
-  var task = new tachyfont.WorkQueue.Task(taskFunction, data);
+tachyfont.WorkQueue.prototype.addTask = function(
+    taskFunction, data, fontId, opt_watchDogTime) {
+  var task = new tachyfont.WorkQueue.Task(
+      taskFunction, data, fontId, opt_watchDogTime);
   this.queue_.push(task);
   if (this.queue_.length == 1) {
     this.runNextTask();
@@ -83,6 +87,7 @@ tachyfont.WorkQueue.prototype.getLength = function() {
  */
 tachyfont.WorkQueue.Error = {
   FILE_ID: 'EWQ',
+  WATCH_DOG_TIMER: '01',
   END: '00'
 };
 
@@ -113,9 +118,12 @@ tachyfont.WorkQueue.prototype.getName = function() {
  * A class that holds a task.
  * @param {function(?)} taskFunction The function to call.
  * @param {*} data The data to pass to the function.
+ * @param {string} fontId An indentifer for error reporting.
+ * @param {number=} opt_watchDogTime Option watch dog time.
  * @constructor @struct @final
  */
-tachyfont.WorkQueue.Task = function(taskFunction, data) {
+tachyfont.WorkQueue.Task = function(
+    taskFunction, data, fontId, opt_watchDogTime) {
   var resolver;
 
   /** @private {function(?)} */
@@ -124,6 +132,9 @@ tachyfont.WorkQueue.Task = function(taskFunction, data) {
   /** @private {*} */
   this.data_ = data;
 
+  /** @private {string} */
+  this.fontId_ = fontId;
+
   /** @private {!goog.Promise<?,?>} */
   this.result_ = new goog.Promise(function(resolve, reject) {  //
     resolver = resolve;
@@ -131,7 +142,22 @@ tachyfont.WorkQueue.Task = function(taskFunction, data) {
 
   /** @private {function(*=)} */
   this.resolver_ = resolver;
+
+  /** @private {?number} */
+  this.timeoutId_ = null;
+
+  /** @private {number} */
+  this.watchDogTime_ =
+      opt_watchDogTime || tachyfont.WorkQueue.Task.WATCH_DOG_TIME;
 };
+
+
+/**
+ * The time in milliseconds to wait before reporting that a running task did not
+ * complete.
+ * @type {number}
+ */
+tachyfont.WorkQueue.Task.WATCH_DOG_TIME = 10 * 60 * 1000;
 
 
 /**
@@ -161,11 +187,41 @@ tachyfont.WorkQueue.Task.prototype.resolve_ = function(result) {
  * @return {*}
  */
 tachyfont.WorkQueue.Task.prototype.run = function() {
+  this.startWatchDogTimer_();
   var result;
   try {
     result = this.function_(this.data_);
   } catch (e) {
     result = goog.Promise.reject(e);
   }
+  this.result_.thenAlways(function() {  //
+    this.stopWatchDogTimer_();
+  }.bind(this));
   return this.resolve_(result);
+};
+
+
+/**
+ * Starts the watch dog timer.
+ * @return {*}
+ * @private
+ */
+tachyfont.WorkQueue.Task.prototype.startWatchDogTimer_ = function() {
+  this.timeoutId_ = setTimeout(function() {
+    this.timeoutId_ = null;
+    tachyfont.WorkQueue.reportError(
+        tachyfont.WorkQueue.Error.WATCH_DOG_TIMER, this.fontId_, '');
+  }.bind(this), this.watchDogTime_);
+};
+
+
+/**
+ * Stops the watch dog timer.
+ * @private
+ */
+tachyfont.WorkQueue.Task.prototype.stopWatchDogTimer_ = function() {
+  if (this.timeoutId_) {
+    clearTimeout(this.timeoutId_);
+  }
+  this.timeoutId_ = null;
 };
