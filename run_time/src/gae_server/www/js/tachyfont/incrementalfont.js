@@ -89,8 +89,7 @@ tachyfont.IncrementalFont.Error = {
   LOAD_CHARS_GET_LOCK: '18',
   PERSIST_SAVE_DATA: '19',
   PERSIST_GET_LOCK: '21',
-  SAVE_DATA: '22',
-  // 23-24 no longer used.
+  // 22-24 no longer used.
   DB_OPEN: '25',
   // 26-40 no longer used.
   NOT_USING_PERSISTED_DATA: '41',
@@ -113,8 +112,10 @@ tachyfont.IncrementalFont.Error = {
   BEFORE_GET_COMPACT_CHARLIST: '61',
   RESOLVED_GET_COMPACT_CHARLIST: '62',
   REJECTED_GET_COMPACT_CHARLIST: '63',
-  GET_BASE_DATA: '63',
-  GET_CHARLIST_DATA: '64',
+  GET_BASE_DATA: '64',
+  GET_CHARLIST_DATA: '65',
+  SAVE_BASE_DATA: '66',
+  SAVE_CHARLIST_DATA: '67',
   END: '00'
 };
 
@@ -1682,8 +1683,8 @@ tachyfont.IncrementalFont.obj.prototype.persist_ = function(name) {
                            arr[0], [tachyfont.Define.IDB_BASE], [arr[2].buffer])
                        .thenCatch(function(e) {
                          tachyfont.IncrementalFont.reportError(
-                             tachyfont.IncrementalFont.Error.SAVE_DATA,
-                             'base ' + that.fontId_, e);
+                             tachyfont.IncrementalFont.Error.SAVE_BASE_DATA,
+                             that.fontId_, e);
                        });
                  });
               }
@@ -1701,8 +1702,8 @@ tachyfont.IncrementalFont.obj.prototype.persist_ = function(name) {
                            arr[0], [tachyfont.Define.IDB_CHARLIST], [arr[1]])
                        .thenCatch(function(e) {
                          tachyfont.IncrementalFont.reportError(
-                             tachyfont.IncrementalFont.Error.SAVE_DATA,
-                             'charList ' + that.fontId_, e);
+                             tachyfont.IncrementalFont.Error.SAVE_CHARLIST_DATA,
+                             that.fontId_, e);
                        });
                  });
               }
