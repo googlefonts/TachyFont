@@ -65,8 +65,8 @@ tachyfont.SynchronousResolutionPromise = function(resolver) {
   /** @private {*} */
   this.result_;
 
-  /** @private {?tachyfont.typedef.ThenInfo} */
-  this.deferredThen_ = null;
+  /** @private {!Array<!tachyfont.typedef.ThenInfo>} */
+  this.deferredThens_ = [];
 
   try {
     var self = this;
@@ -120,9 +120,9 @@ tachyfont.SynchronousResolutionPromise.prototype.resolve = function(
   this.result_ = opt_result;
   this.state_ = SynchronousResolutionPromise.State.RESOLVED;
 
-  // Handle an attached then.
-  if (this.deferredThen_) {
-    this.runOrDeferTheThen_(this.deferredThen_);
+  // Handle attached thens.
+  for (var i = 0; i < this.deferredThens_.length; i++) {
+    this.runOrDeferTheThen_(this.deferredThens_[i]);
   }
 };
 
@@ -152,27 +152,15 @@ tachyfont.SynchronousResolutionPromise.prototype.reject = function(opt_reason) {
   this.result_ = opt_reason;
   this.state_ = SynchronousResolutionPromise.State.REJECTED;
 
-  // Handle an attached then.
-  if (this.deferredThen_) {
-    this.runOrDeferTheThen_(this.deferredThen_);
+  // Handle attached thens.
+  for (var i = 0; i < this.deferredThens_.length; i++) {
+    this.runOrDeferTheThen_(this.deferredThens_[i]);
   }
 };
 
 
 /**
- * Runs or defers the attached then.
- * NOTE: this only saves a single thenInfo so therfore this only supports
- * attaching a single then to a given Promise; eg, this will not work:
- *   var promise = new tachyfont.SynchronousResolutionPromise(...);
- *   promise.then(...);
- *   promise.then(...);
- *
- * However, this will work a each then is a new Promise:
- *   var promise = new tachyfont.SynchronousResolutionPromise(...)
- *       .then(...)
- *       .then(...)
- *       .then(...);
- *
+ * Runs or defers the attached thens.
  * @param {!tachyfont.typedef.ThenInfo} thenInfo The info used by an 'attached'
  *     'then' function.
  * @private
@@ -181,7 +169,7 @@ tachyfont.SynchronousResolutionPromise.prototype.runOrDeferTheThen_ = function(
     thenInfo) {
   if (this.state_ == SynchronousResolutionPromise.State.PENDING) {
     // Save the then until this resolves or rejects.
-    this.deferredThen_ = thenInfo;
+    this.deferredThens_.push(thenInfo);
     return;
   }
 

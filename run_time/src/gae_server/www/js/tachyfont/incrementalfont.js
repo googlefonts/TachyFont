@@ -121,6 +121,7 @@ tachyfont.IncrementalFont.Error = {
  */
 tachyfont.IncrementalFont.CompactRecord = {
   GET_COMPACT_FROM_PERSISTENCE: 'Gcp',
+  GET_COMPACT_FROM_PERSISTENCE_ERROR: 'Gcpe',
   GET_COMPACT_FROM_URL: 'Gcu',
   GET_COMPACT_FROM_URL2: 'Gcu2',
   GET_COMPACT_FROM_URL_ERROR: 'Gue',
@@ -139,6 +140,7 @@ tachyfont.IncrementalFont.CompactRecord = {
   PERSISTENCE_PASSES_OTS: 'Ppo',
   PERSISTENCE_FAILS_OTS: 'Pfo',
   NEW_SAVE: 'Ns',
+  URL_GOT_DATA: 'Ugd',
   URL_COMPACT: 'Uc',
   URL_SAVE_ERROR: 'Use',
   URL_SAVE: 'Us',
@@ -276,7 +278,9 @@ tachyfont.IncrementalFont.obj = function(fontInfo, params, backendService) {
    * Whether the font should be compacted.
    * @private {boolean}
    */
-  // TODO(bstell): fix this hack.
+  // TODO(bstell): remove this when Compact TachyFont is fully enabled.
+  // The font weights are: 100, 300, 400, 500, 700.
+  // This enables Compact TachyFont for weights greater than the number.
   this.shouldBeCompact_ = parseInt(weight, 10) > 650;
 
   /**
@@ -660,7 +664,7 @@ tachyfont.IncrementalFont.obj.prototype.getCompactFontFromPersistence =
             tachyfont.IncrementalFont.CompactRecord.PERSISTENCE_DB;
         tachyfont.IncrementalFont.reportError(
             tachyfont.IncrementalFont.Error.COMPACT_GET_DB, fontId, e);
-        return goog.Promise.reject(e);
+        return tachyfont.SynchronousResolutionPromise.reject(e);
       }.bind(this))
       .then(function(db) {
         // TODO(bstell): the concept of a transaction belongs in the
@@ -686,15 +690,13 @@ tachyfont.IncrementalFont.obj.prototype.getCompactFontFromPersistence =
         // metadata is in arr[3];
         if (!fontData || !fileInfo || !charList) {
           // Missing data is not nessarily an error
-          var missing =                  //
+          var missing = tachyfont.IncrementalFont.CompactRecord
+              .PERSISTENCE_MISSING_STORE +
               (!fontData ? 'f' : '_') +  //
               (!fileInfo ? 'i' : '_') +  //
               (!charList ? 'c' : '_');
-          this.compactRecord_ += //
-              tachyfont.IncrementalFont.CompactRecord
-                                     .PERSISTENCE_MISSING_STORE +
-              missing;
-          return tachyfont.SynchronousResolutionPromise.reject();
+          this.compactRecord_ += missing;
+          return tachyfont.SynchronousResolutionPromise.reject(missing);
         }
         // TODO(bstell): remove this after 2016-08-11
         if (fontData.byteLength > 3000000) {
@@ -781,6 +783,8 @@ tachyfont.IncrementalFont.obj.prototype.getCompactFont = function() {
       }.bind(this))
       .thenCatch(function() {
         // Not persisted so fetch from the URL.
+        this.compactRecord_ += tachyfont.IncrementalFont.CompactRecord
+                                   .GET_COMPACT_FROM_PERSISTENCE_ERROR;
         this.compactCharList_ = {};
         return this.getCompactFontFromUrl(this.backendService, this.fontInfo)
             .then(function(compactWorkingData) {
@@ -821,6 +825,8 @@ tachyfont.IncrementalFont.obj.prototype.getCompactFontFromUrl = function(
   return backendService
       .requestFontBase(fontInfo)  // Curse you clang formatter.
       .then(function(urlBaseBytes) {
+        this.compactRecord_ +=
+            tachyfont.IncrementalFont.CompactRecord.URL_GOT_DATA;
         tachyfont.Reporter.addItem(
             tachyfont.IncrementalFont.Log.URL_GET_BASE + this.fontId_,
             goog.now() - this.startTime);
@@ -850,7 +856,10 @@ tachyfont.IncrementalFont.obj.prototype.getCompactFontFromUrl = function(
                   tachyfont.IncrementalFont.CompactRecord.URL_SAVE_ERROR;
               // Clear the font.
               return tachyfont.CompactCff.clearDataStores(
-                  tachyfont.Define.compactStoreNames, this.fontInfo);
+                  tachyfont.Define.compactStoreNames, this.fontInfo)
+                  .then(function() {
+                    return goog.Promise.reject(e);
+                  });
             }.bind(this));
       }.bind(this))
       .then(function(newData) {
@@ -1286,14 +1295,16 @@ tachyfont.IncrementalFont.obj.prototype.injectCompact = function(
                                            .INJECT_COMPACT_SET_FONT;
                 tachyfont.IncrementalFont.reportError(
                     tachyfont.IncrementalFont.Error.INJECT_FONT_COMPACT_SUCCESS,
-                    this.fontId_, '');
+                    this.fontId_, this.compactRecord_);
+                this.compactRecord_ = '';
                 return compactCff;
               }
               this.compactRecord_ += tachyfont.IncrementalFont.CompactRecord
                                          .INJECT_COMPACT_SET_FONT_ERROR;
               tachyfont.IncrementalFont.reportError(
                   tachyfont.IncrementalFont.Error.INJECT_FONT_COMPACT,
-                  this.fontId_, '');
+                  this.fontId_, this.compactRecord_);
+              this.compactRecord_ = '';
               return goog.Promise.reject();
             }.bind(this));
       }.bind(this));
