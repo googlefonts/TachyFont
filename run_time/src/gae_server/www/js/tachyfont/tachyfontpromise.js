@@ -31,7 +31,7 @@ goog.require('tachyfont.log');
  * @param {!tachyfont.Promise.Chained=} opt_container If used to chain promises
  *     then this holds the object that implements the chaining.
  * @param {string=} opt_msg An optional message useful for debugging.
- * @constructor
+ * @constructor @final @struct
  */
 tachyfont.Promise.Encapsulated = function(opt_container, opt_msg) {
   var resolver;
@@ -98,7 +98,7 @@ tachyfont.Promise.Encapsulated.Error_ = {
 
 
 /**
- * The error reporter for this file.
+ * Reports errors for this file.
  * @param {string} errNum The error number;
  * @param {*} errInfo The error object;
  * @private
