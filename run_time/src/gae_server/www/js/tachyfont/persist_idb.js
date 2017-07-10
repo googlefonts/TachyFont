@@ -172,7 +172,7 @@ tachyfont.Persist.openIndexedDb_ = function(dbName, id, resolve, reject) {
           db.createObjectStore(tachyfont.Define.COMPACT_METADATA);
       // TODO(bstell): does the table initialization belong under
       // tachyfont.Compact ?
-      tachyfont.Metadata.initializeCompact(compactMetadataStore);
+      tachyfont.Metadata.initializePerFont(compactMetadataStore);
     }
     if (!db.objectStoreNames.contains(tachyfont.Define.COMPACT_CHAR_LIST)) {
       var compactCharsListStore =
@@ -258,8 +258,7 @@ tachyfont.Metadata.initializeGlobal = function(store) {
 
 
 /**
- * Initializes the global metadata table.
- * Currently this is the same as the per font metadata store.
+ * Initializes the per font metadata table.
  * @param {!IDBObjectStore} store The IndexedDB object store.
  */
 // TODO(bstell): this is a 'policy' function so move it out of the db layer;
@@ -289,17 +288,6 @@ tachyfont.Metadata.initialize = function(store, createTime) {
       tachyfont.Define.CREATED_METADATA;
   metadata[tachyfont.Define.ACTIVITY_TIME] =
       metadata[tachyfont.Define.CREATED_METADATA_TIME] = createTime;
-  store.put(metadata, 0);
-};
-
-
-/**
- * Initializes the compact TachyFont per font metadata table.
- * @param {!IDBObjectStore} store The IndexedDB object store.
- */
-tachyfont.Metadata.initializeCompact = function(store) {
-  var metadata = {};
-  metadata[tachyfont.Define.ACTIVITY_TIME] = goog.now();
   store.put(metadata, 0);
 };
 
