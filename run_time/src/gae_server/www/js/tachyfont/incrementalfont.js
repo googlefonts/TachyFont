@@ -167,46 +167,22 @@ tachyfont.IncrementalFont.reportError = function(errNum, errId, errInfo) {
 /**
  * Gets the incremental font object.
  * This class does the following:
- * 1. Create a class using the "@font-face" rule and with visibility=hidden
- * 2. Create an incremental font manager object.
- * 3. Open the IndexedDB.
- * 4. Start the operation to get the base.
- * 5. Start the operation to get the list of fetched/not-fetched chars.
- * 6. Create a "@font-face" rule (need the data to make the blob URL).
- * 7. When the base is available set the class visibility=visible
+ * 1. Create an incremental font manager object.
+ * 2. Open the IndexedDB.
+ * 3. Start the operation to get the base.
+ * 4. Start the operation to get the list of fetched/not-fetched chars.
+ * 5. Create a "@font-face" rule (need the data to make the blob URL).
  * @param {!tachyfont.FontInfo} fontInfo Info about this font.
  * @param {boolean} dropData If true then drop the persistent data.
  * @param {!Object} params Parameters.
  * @return {!tachyfont.IncrementalFont.obj} The incremental font manager object.
  */
 tachyfont.IncrementalFont.createManager = function(fontInfo, dropData, params) {
-  var fontName = fontInfo.getName();
   var fontId = fontInfo.getFontId();
   var backendService =
       fontInfo.getFontKit() ?
       new tachyfont.GoogleBackendService(fontInfo.getDataUrl()) :
       new tachyfont.DemoBackendService(fontInfo.getDataUrl());
-
-  var initialVisibility = false;
-  var initialVisibilityStr = 'hidden';
-  if (params['visibility'] == 'visible') {
-    initialVisibility = true;
-    initialVisibilityStr = 'visible';
-  }
-  var maxVisibilityTimeout = tachyfont.IncrementalFont.MAX_HIDDEN_MILLISECONDS;
-  if (params['maxVisibilityTimeout']) {
-    try {
-      maxVisibilityTimeout = parseInt(params['maxVisibilityTimeout'], 10);
-    } catch (err) {
-    }
-  }
-
-  // Create a style for this font.
-  var style = document.createElement('style');
-  document.head.appendChild(style);
-  var rule = '.' + fontName + ' { font-family: ' + fontName + '; ' +
-      'visibility: ' + initialVisibilityStr + '; }';
-  style.sheet.insertRule(rule, 0);
 
   var incrFontMgr =
       new tachyfont.IncrementalFont.obj(fontInfo, params, backendService);
@@ -234,15 +210,6 @@ tachyfont.IncrementalFont.createManager = function(fontInfo, dropData, params) {
         tachyfont.IncrementalFont.reportError(
             tachyfont.IncrementalFont.Error.DB_OPEN, fontId, 'createManager');
       });
-
-  // Create a class with initial visibility.
-  incrFontMgr.style = tachyfont.IncrementalFontUtils.setVisibility(null,
-      fontInfo, initialVisibility);
-  // Limit the maximum visibility=hidden time.
-  setTimeout(function() {
-    tachyfont.IncrementalFontUtils.setVisibility(incrFontMgr.style, fontInfo,
-        true);
-  }, maxVisibilityTimeout);
 
   return incrFontMgr;
 };
@@ -330,7 +297,6 @@ tachyfont.IncrementalFont.obj = function(fontInfo, params, backendService) {
   this.persistInfo = {};
   this.persistInfo[tachyfont.Define.IDB_BASE_DIRTY] = false;
   this.persistInfo[tachyfont.Define.IDB_CHARLIST_DIRTY] = false;
-  this.style = null;
 
   /** @type {!tachyfont.BackendService} */
   this.backendService = backendService;

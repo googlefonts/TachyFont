@@ -159,39 +159,6 @@ tachyfont.IncrementalFontUtils.fixGlyphOffsets = function(
 
 
 /**
- * Set a style's visibility.
- * @param {?Object} style The style object
- * @param {!tachyfont.FontInfo} fontInfo The font information object
- * @param {boolean} visible True is setting visibility to visible.
- * @return {!Object} New style object for given font and visibility
- */
-tachyfont.IncrementalFontUtils.setVisibility = function(style, fontInfo,
-    visible) {
-  if (!style) {
-    style = document.createElement('style');
-    document.head.appendChild(style);
-  }
-  if (style.sheet.cssRules.length) {
-    style.sheet.deleteRule(0);
-  }
-  var visibility;
-  if (visible) {
-    visibility = 'visible';
-  } else {
-    visibility = 'hidden';
-  }
-  var rule = '.' + fontInfo.getName() + ' { ' +
-      'font-family: ' + fontInfo.getFamilyName() + '; ' +
-      'font-weight: ' + fontInfo.getWeight() + '; ' +
-      'visibility: ' + visibility + '; }';
-
-  style.sheet.insertRule(rule, style.sheet.cssRules.length);
-
-  return style;
-};
-
-
-/**
  * Add the '@font-face' rule
  * @param {!DataView} data The font data.
  * @param {string} mimeType The mime-type of the font.

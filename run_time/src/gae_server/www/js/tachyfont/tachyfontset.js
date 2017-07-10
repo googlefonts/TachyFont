@@ -32,14 +32,12 @@ goog.require('tachyfont.utils');
 
 /**
  * Manage a group of TachyFonts.
- *
  * @param {string} familyName The font family name for this set.
  * @constructor
  */
 tachyfont.TachyFontSet = function(familyName) {
   /**
    * The TachyFonts managed in this set.
-   *
    * @type {!Array<!tachyfont.TachyFont>}
    */
   this.fonts = [];
@@ -49,7 +47,6 @@ tachyfont.TachyFontSet = function(familyName) {
 
   /**
    * Map of CSS family spec to TachyFont family.
-   *
    * @type {!Object<string, string>}
    */
   this.cssFamilyToTachyFontFamily = {};
@@ -59,7 +56,6 @@ tachyfont.TachyFontSet = function(familyName) {
 
   /**
    * Sigh, for really slow sites do not set the CSS until the page is loaded.
-   *
    * @type {boolean}
    */
   this.domContentLoaded = false;
@@ -67,14 +63,12 @@ tachyfont.TachyFontSet = function(familyName) {
   /**
    * Do not need to scan the DOM if there have been mutation events before
    * DOMContentLoaded.
-   *
    * @type {boolean}
    */
   this.hadMutationEvents = false;
 
   /**
    * The updateFont operation takes time so serialize them.
-   *
    * @type {!tachyfont.Promise.Chained}
    */
   this.finishPrecedingUpdateFont =
@@ -82,14 +76,12 @@ tachyfont.TachyFontSet = function(familyName) {
 
   /**
    * Timeout indicating there is a pending update fonts request.
-   *
    * @private {?number} The timerID from setTimeout.
    */
   this.pendingUpdateRequest_ = null;
 
   /**
    * Time of the last request update fonts.
-   *
    * @private {number} The timerID from setTimeout.
    */
   this.lastRequestUpdateTime_ = 0;
@@ -123,7 +115,6 @@ tachyfont.TachyFontSet.Error = {
 
 /**
  * The error reporter for this file.
- *
  * @param {string} errNum The error number;
  * @param {*} errObj The error object;
  * @private
@@ -137,7 +128,6 @@ tachyfont.TachyFontSet.reportError_ = function(errNum, errObj) {
 /*
  * There are multiple issues for the 'character detection', 'character data
  * fetching', and 'CSS update' logic to manage:
- *
  *   1. Character Detection
  *      * Use a Mutation Observer to record the characters as they are added to
  *        the DOM.
@@ -196,7 +186,6 @@ tachyfont.TachyFontSet.reportError_ = function(errNum, errObj) {
 
 /**
  * Maximum time in milliseconds to wait before doing a character update.
- *
  * @type {number}
  */
 tachyfont.TachyFontSet.TIMEOUT = 3000;
@@ -204,7 +193,6 @@ tachyfont.TachyFontSet.TIMEOUT = 3000;
 
 /**
  * Add a TachyFont.
- *
  * @param {!tachyfont.TachyFont} font The TachyFont to add to the set.
  */
 tachyfont.TachyFontSet.prototype.addFont = function(font) {
@@ -214,7 +202,6 @@ tachyfont.TachyFontSet.prototype.addFont = function(font) {
 
 /**
  * For the node and sub-nodes remove TachyFont from input fields.
- *
  * @param {!Node} node The starting point for walking the node/sub-nodes.
  */
 tachyfont.TachyFontSet.prototype.recursivelyRemoveTachyFontFromInputFields =
@@ -229,7 +216,6 @@ tachyfont.TachyFontSet.prototype.recursivelyRemoveTachyFontFromInputFields =
 
 /**
  * Remove TachyFont from an input field.
- *
  * @param {!Node} node The node to work on.
  */
 tachyfont.TachyFontSet.prototype.removeTachyFontFromInputField =
@@ -255,7 +241,6 @@ tachyfont.TachyFontSet.prototype.removeTachyFontFromInputField =
 
 /**
  * For the node and sub-nodes record the needed text for each TachyFont.
- *
  * @param {?Node} node The starting point for walking the node/sub-nodes.
  */
 tachyfont.TachyFontSet.prototype.recursivelyAddTextToFontGroups =
@@ -273,7 +258,6 @@ tachyfont.TachyFontSet.prototype.recursivelyAddTextToFontGroups =
 
 /**
  * Record the needed text for each TachyFont.
- *
  * @param {!Node} node The text node.
  * @return {boolean} Whether text was added.
  */
@@ -347,7 +331,6 @@ tachyfont.TachyFontSet.prototype.addTextToFontGroups = function(node) {
 
 /**
  * Request an update of a group of TachyFonts.
- *
  * @param {number} startTime The time when the chars were added to the DOM.
  */
 tachyfont.TachyFontSet.prototype.requestUpdateFonts = function(startTime) {
@@ -379,7 +362,6 @@ tachyfont.TachyFontSet.prototype.requestUpdateFonts = function(startTime) {
  * @param {!Array<?Array<!Object|!DataView>>} loadResults The fileInfo and
  *     fontData.
  * @return {!goog.Promise}
- *
  */
 tachyfont.TachyFontSet.prototype.setFonts = function(startTime, loadResults) {
   var allCssSet = [];
@@ -430,8 +412,6 @@ tachyfont.TachyFontSet.prototype.setFont = function(index, loadResult,
               tachyfont.TachyFontSet.Log.SET_FONT_DELAYED + weight,
               goog.now() + startTime);
         }
-        tachyfont.IncrementalFontUtils.setVisibility(this.style,
-            this.fontInfo, true);
       }.bind(fontObj),
       function(e) {
         tachyfont.TachyFontSet.reportError_(
@@ -443,13 +423,11 @@ tachyfont.TachyFontSet.prototype.setFont = function(index, loadResult,
 
 /**
  * Update a group of TachyFonts
- *
  * @param {number} startTime The time when the chars were added to the DOM. If
  *     the number is negative then an intentional delay was happened.
  * @param {boolean} allowEarlyUse Allow the font to be used before the page has
  *     finished loading.
  * @return {!goog.Promise}
- *
  */
 // TODO(bstell): check if this routine does anything now.
 tachyfont.TachyFontSet.prototype.updateFonts =
