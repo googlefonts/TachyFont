@@ -150,7 +150,7 @@ tachyfont.IncrementalFont.createManager = function(fontInfo, dropData, params) {
       new tachyfont.IncrementalFont.obj(fontInfo, params, backendService);
   tachyfont.Reporter.addItem(
       tachyfont.IncrementalFont.Log.CREATE_TACHYFONT + fontId,
-      goog.now() - incrFontMgr.startTime);
+      goog.now() - incrFontMgr.startTime_);
 
   goog.Promise.resolve()
       .then(function() {
@@ -165,7 +165,7 @@ tachyfont.IncrementalFont.createManager = function(fontInfo, dropData, params) {
         // TODO(bstell): probably want to remove this time reporting code.
         tachyfont.Reporter.addItem(
             tachyfont.IncrementalFont.Log.DB_OPEN + fontId,
-            goog.now() - incrFontMgr.startTime);
+            goog.now() - incrFontMgr.startTime_);
       })
       .thenCatch(function() {
         // Failed to get database;
@@ -203,9 +203,9 @@ tachyfont.IncrementalFont.obj = function(fontInfo, params, backendService) {
 
   /**
    * The creation time for this TachyFont.
-   * @type {number}
+   * @private {number}
    */
-  this.startTime = goog.now();
+  this.startTime_ = goog.now();
 
   /**
    * Indicates whether the data is stable; ie: not being constantly cleared.
@@ -223,12 +223,10 @@ tachyfont.IncrementalFont.obj = function(fontInfo, params, backendService) {
 
   /**
    * Information about the fonts
-   * @type {!tachyfont.FontInfo}
+   * @private {!tachyfont.FontInfo}
    */
   // TODO(bstell): make fontInfo private.
-  this.fontInfo = fontInfo;
-
-  this.fontName = fontInfo.getName();
+  this.fontInfo_ = fontInfo;
 
   /** @private {!tachyfont.typedef.FileInfo} Information about the font file */
   this.fileInfo_;
@@ -236,25 +234,25 @@ tachyfont.IncrementalFont.obj = function(fontInfo, params, backendService) {
   /** @private {string} */
   this.fontId_ = fontId;
 
-  this.charsToLoad = {};
+  /** @private {!Object<string, number>} */
+  this.charsToLoad_ = {};
+
+  /** @private {number} */
   //TODO(bstell): need to fix the request size.
-  this.req_size = params['req_size'] || 2200;
+  this.maximumRequestSize_ = params['req_size'] || 2200;
 
   /**
    * True if new characters have been loaded since last setFont.
    * If the Prelude code did not set the font then set it even if no new
    * characters are needed.
-   * @type {boolean}
+   * @private {boolean}
    */
-  this.needToSetFont = !preludeLoaded[weight];
+  this.needToSetFont_ = !preludeLoaded[weight];
 
-  this.url = fontInfo.getDataUrl();
-  this.charsURL = '/incremental_fonts/request';
+  /** @private {!tachyfont.BackendService} */
+  this.backendService_ = backendService;
 
-  /** @type {!tachyfont.BackendService} */
-  this.backendService = backendService;
-
-  // Promises
+  /** @private {?goog.Promise<!IDBDatabase,?>} */
   this.getIDB_ = null;
 
   /**
@@ -289,6 +287,15 @@ tachyfont.IncrementalFont.obj = function(fontInfo, params, backendService) {
 
 
 /**
+ * Gets whether the font data needs to be pushed to the browser rendering code.
+ * @return {!Object<string,number>}
+ */
+tachyfont.IncrementalFont.obj.prototype.getCharsToLoad = function() {
+  return this.charsToLoad_;
+};
+
+
+/**
  * Gets blobUrl member.
  * @return {?string}
  */
@@ -302,7 +309,7 @@ tachyfont.IncrementalFont.obj.prototype.getBlobUrl = function() {
  * @return {!tachyfont.FontInfo}
  */
 tachyfont.IncrementalFont.obj.prototype.getFontInfo = function() {
-  return this.fontInfo;
+  return this.fontInfo_;
 };
 
 
@@ -338,6 +345,24 @@ tachyfont.IncrementalFont.obj.prototype.setCmapMapping = function(cmapMapping) {
 
 
 /**
+ * Gets the font name.
+ * @return {string}
+ */
+tachyfont.IncrementalFont.obj.prototype.getFontName = function() {
+  return this.fontInfo_.getName();
+};
+
+
+/**
+ * Gets the maximum request size.
+ * @return {number}
+ */
+tachyfont.IncrementalFont.obj.prototype.getMaximumRequestSize = function() {
+  return this.maximumRequestSize_;
+};
+
+
+/**
  * Gets the file information.
  * @return {!tachyfont.typedef.FileInfo}
  */
@@ -356,6 +381,24 @@ tachyfont.IncrementalFont.obj.prototype.getFontId = function() {
 
 
 /**
+ * Gets the promise that resolves the db handle.
+ * @return {?goog.Promise<!IDBDatabase,?>}
+ */
+tachyfont.IncrementalFont.obj.prototype.getGetIdb = function() {
+  return this.getIDB_;
+};
+
+
+/**
+ * Sets the promise that resolves the db handle.
+ * @param {?goog.Promise<!IDBDatabase,?>} getIdb A promise for the Db handle.
+ */
+tachyfont.IncrementalFont.obj.prototype.setGetIdb = function(getIdb) {
+  this.getIDB_ = getIdb;
+};
+
+
+/**
  * Set the file information.
  * @param {!tachyfont.typedef.FileInfo} fileInfo The file information.
  */
@@ -369,7 +412,7 @@ tachyfont.IncrementalFont.obj.prototype.setFileInfo = function(fileInfo) {
  * @return {boolean}
  */
 tachyfont.IncrementalFont.obj.prototype.getNeedToSetFont = function() {
-  return this.needToSetFont && this.isStableData_;
+  return this.needToSetFont_ && this.isStableData_;
 };
 
 
@@ -411,7 +454,7 @@ tachyfont.IncrementalFont.obj.prototype.dropDb = function() {
 tachyfont.IncrementalFont.obj.prototype.accessDb = function(dropDb) {
   // Close the database if it is open.
   this.closeDb();
-  var dbName = this.fontInfo.getDbName();
+  var dbName = this.fontInfo_.getDbName();
   this.getIDB_ =
       goog.Promise.resolve()
           .then(function() {
@@ -489,7 +532,7 @@ tachyfont.IncrementalFont.obj.prototype.closeDb = function() {
 tachyfont.IncrementalFont.obj.prototype.getCompactFontFromPersistence =
     function() {
   var fontId = this.fontId_;
-  var dbName = this.fontInfo.getDbName();
+  var dbName = this.fontInfo_.getDbName();
   return tachyfont.Persist
       .openIndexedDbSynchronousResolutionPromise(dbName, fontId)
       .thenCatch(function(e) {  // TODO(bstell): remove this debug code
@@ -563,7 +606,7 @@ tachyfont.IncrementalFont.obj.prototype.getCompactFont = function() {
       }.bind(this))
       .thenCatch(function() {
         // Not persisted so fetch from the URL.
-        return this.getCompactFontFromUrl(this.backendService, this.fontInfo)
+        return this.getCompactFontFromUrl(this.backendService_, this.fontInfo_)
             .then(function(compactWorkingData) {
               this.fileInfo_ = compactWorkingData.fileInfo;
               this.compactCharList_.resolve(compactWorkingData.charList);
@@ -577,7 +620,7 @@ tachyfont.IncrementalFont.obj.prototype.getCompactFont = function() {
               // Clear the font.
               return tachyfont.CompactCff
                   .clearDataStores(
-                      tachyfont.Define.compactStoreNames, this.fontInfo)
+                      tachyfont.Define.compactStoreNames, this.fontInfo_)
                   .then(function() {
                     return goog.Promise.reject(e);  //
                   });
@@ -600,7 +643,7 @@ tachyfont.IncrementalFont.obj.prototype.getCompactFontFromUrl = function(
       .then(function(urlBaseBytes) {
         tachyfont.Reporter.addItem(
             tachyfont.IncrementalFont.Log.URL_GET_BASE + this.fontId_,
-            goog.now() - this.startTime);
+            goog.now() - this.startTime_);
         var results = tachyfont.IncrementalFont.processUrlBase(
             urlBaseBytes, this.fontId_, true);
         // Compact the data.
@@ -623,7 +666,7 @@ tachyfont.IncrementalFont.obj.prototype.getCompactFontFromUrl = function(
                   this.fontId_, e);
               // Clear the font.
               return tachyfont.CompactCff.clearDataStores(
-                  tachyfont.Define.compactStoreNames, this.fontInfo)
+                  tachyfont.Define.compactStoreNames, this.fontInfo_)
                   .then(function() {
                     return goog.Promise.reject(e);
                   });
@@ -648,7 +691,7 @@ tachyfont.IncrementalFont.obj.prototype.getCompactFontFromUrl = function(
 tachyfont.IncrementalFont.obj.prototype.saveNewCompactFont = function(newData) {
   // Update the data.
   var fontId = this.fontId_;
-  var dbName = this.fontInfo.getDbName();
+  var dbName = this.fontInfo_.getDbName();
   return tachyfont.Persist
       .openIndexedDbSynchronousResolutionPromise(dbName, fontId)
       .then(function(db) {
@@ -846,15 +889,15 @@ tachyfont.IncrementalFont.obj.prototype.injectCharacters = function(
  * @return {!goog.Promise} The promise resolves when the glyphs are displaying.
  */
 tachyfont.IncrementalFont.obj.prototype.setFont = function(fontData) {
-  var msg = this.fontInfo.getName() + ' setFont.' + this.fontId_;
+  var msg = this.fontInfo_.getName() + ' setFont.' + this.fontId_;
   var finishPrecedingSetFont =
       this.finishPrecedingSetFont_.getChainedPromise(msg);
   return finishPrecedingSetFont.getPrecedingPromise()
       .then(function() {
-        this.needToSetFont = false;
+        this.needToSetFont_ = false;
         return tachyfont.Browser
             .setFont(
-                fontData, this.fontInfo, this.fileInfo_.isTtf, this.blobUrl_)
+                fontData, this.fontInfo_, this.fileInfo_.isTtf, this.blobUrl_)
             .then(function(newBlobUrl) {
               this.blobUrl_ = newBlobUrl;
             }.bind(this));
@@ -938,7 +981,7 @@ tachyfont.IncrementalFont.possibly_obfuscate =
 tachyfont.IncrementalFont.obj.prototype.loadChars = function() {
   var neededCodes = [];
 
-  var msg = this.fontInfo.getName() + ' loadChars';
+  var msg = this.fontInfo_.getName() + ' loadChars';
   var finishPrecedingCharsRequest =
       this.finishPrecedingCharsRequest_.getChainedPromise(msg);
   return finishPrecedingCharsRequest.getPrecedingPromise()
@@ -954,7 +997,7 @@ tachyfont.IncrementalFont.obj.prototype.loadChars = function() {
               }
               var glyphCount = bundleResponse.getGlyphCount();
               if (glyphCount != 0) {
-                this.needToSetFont = true;
+                this.needToSetFont_ = true;
               }
               // Use getCompactCharList as a lock to wait if the font is not yet
               // loaded.
@@ -974,7 +1017,7 @@ tachyfont.IncrementalFont.obj.prototype.loadChars = function() {
                     this.refetchedCompact_ = true;
                     return this
                         .getCompactFontFromUrl(
-                            this.backendService, this.fontInfo)
+                            this.backendService_, this.fontInfo_)
                         .then(function(compactWorkingData) {
                           this.compactCharList_.resolve(
                               compactWorkingData.charList);
@@ -989,7 +1032,7 @@ tachyfont.IncrementalFont.obj.prototype.loadChars = function() {
                         tachyfont.IncrementalFont.Error.INJECT_COMPACT,
                         this.fontId_, e);
                     return tachyfont.CompactCff.clearDataStores(
-                        tachyfont.Define.compactStoreNames, this.fontInfo);
+                        tachyfont.Define.compactStoreNames, this.fontInfo_);
                   }.bind(this));
             }.bind(this))
             .thenCatch(function(e) {
@@ -1022,13 +1065,13 @@ tachyfont.IncrementalFont.obj.prototype.injectCompact = function(
     neededCodes, bundleResponse) {
   var glyphToCodeMap = this.getGlyphToCodeMap(neededCodes);
   return tachyfont.CompactCff
-      .injectChars(this.fontInfo, neededCodes, glyphToCodeMap, bundleResponse)
+      .injectChars(this.fontInfo_, neededCodes, glyphToCodeMap, bundleResponse)
       .thenCatch(function(e) {
         tachyfont.IncrementalFont.reportError(
             tachyfont.IncrementalFont.Error.INJECT_FONT_INJECT_CHARS,
             this.fontId_, e);
         // Something is wrong with the font so reload it.
-        var dbName = this.fontInfo.getDbName();
+        var dbName = this.fontInfo_.getDbName();
         return tachyfont.Persist.deleteDatabase(dbName, this.fontId_)
             .thenCatch(function() {})
             .then(function() {
@@ -1039,7 +1082,7 @@ tachyfont.IncrementalFont.obj.prototype.injectCompact = function(
         var fontData = compactCff.getSfnt().getFontData();
         return tachyfont.Browser
             .setFont(
-                fontData, this.fontInfo, this.fileInfo_.isTtf, this.blobUrl_)
+                fontData, this.fontInfo_, this.fileInfo_.isTtf, this.blobUrl_)
             .then(function(blobUrl) {
               this.blobUrl_ = blobUrl;
               var tables = compactCff.getTableData();
@@ -1064,7 +1107,7 @@ tachyfont.IncrementalFont.obj.prototype.injectCompact = function(
  */
 tachyfont.IncrementalFont.obj.prototype.calcNeededChars = function() {
   // Check if there are any new characters.
-  var charArray = Object.keys(this.charsToLoad);
+  var charArray = Object.keys(this.charsToLoad_);
   if (charArray.length == 0) {
     return goog.Promise.resolve([]);
   }
@@ -1110,13 +1153,13 @@ tachyfont.IncrementalFont.obj.prototype.calcNeededChars = function() {
             charlist, this.fileInfo_.cmapMapping);
         if (goog.DEBUG) {
           tachyfont.log.info(
-              this.fontInfo.getName() + ' ' + this.fontId_ + ': load ' +
+              this.fontInfo_.getName() + ' ' + this.fontId_ + ': load ' +
               neededCodes.length + ' codes:');
         }
         var remaining;
-        if (this.req_size) {
-          remaining = neededCodes.slice(this.req_size);
-          neededCodes = neededCodes.slice(0, this.req_size);
+        if (this.maximumRequestSize_) {
+          remaining = neededCodes.slice(this.maximumRequestSize_);
+          neededCodes = neededCodes.slice(0, this.maximumRequestSize_);
         } else {
           remaining = [];
         }
@@ -1124,7 +1167,7 @@ tachyfont.IncrementalFont.obj.prototype.calcNeededChars = function() {
           var c = tachyfont.utils.stringFromCodePoint(neededCodes[i]);
           // Add the character to the charlist.
           charlist[c] = 1;
-          delete this.charsToLoad[c];
+          delete this.charsToLoad_[c];
         }
         if (remaining.length) {
           setTimeout(function() {
@@ -1151,7 +1194,7 @@ tachyfont.IncrementalFont.obj.prototype.fetchChars =
   if (requestedCodes.length == 0) {
     return goog.Promise.reject('no chars to fetch');
   }
-  return this.backendService.requestCodepoints(this.fontInfo, requestedCodes)
+  return this.backendService_.requestCodepoints(this.fontInfo_, requestedCodes)
       .then(function(bundleResponse) {
         return this.checkFingerprint(bundleResponse);
       }.bind(this))
