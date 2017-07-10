@@ -20,6 +20,7 @@
 goog.provide('tachyfont.IncrementalFont');
 
 goog.require('goog.Promise');
+goog.require('goog.asserts');
 goog.require('goog.math');
 goog.require('tachyfont.BinaryFontEditor');
 goog.require('tachyfont.Browser');
@@ -33,6 +34,7 @@ goog.require('tachyfont.Persist');
 goog.require('tachyfont.Promise');
 goog.require('tachyfont.RLEDecoder');
 goog.require('tachyfont.Reporter');
+goog.require('tachyfont.Sfnt');
 goog.require('tachyfont.SynchronousResolutionPromise');
 goog.require('tachyfont.WorkQueue');
 goog.require('tachyfont.log');
@@ -231,6 +233,9 @@ tachyfont.IncrementalFont.obj = function(fontInfo, params, backendService) {
   /** @private {!tachyfont.typedef.FileInfo} Information about the font file */
   this.fileInfo_;
 
+  /** @private {boolean} Whether the FileInfo for the font has been read. */
+  this.haveReadFileInfo_ = false;
+
   /** @private {string} */
   this.fontId_ = fontId;
 
@@ -367,6 +372,7 @@ tachyfont.IncrementalFont.obj.prototype.getMaximumRequestSize = function() {
  * @return {!tachyfont.typedef.FileInfo}
  */
 tachyfont.IncrementalFont.obj.prototype.getFileInfo = function() {
+  goog.asserts.assert(this.haveReadFileInfo_);
   return this.fileInfo_;
 };
 
@@ -404,6 +410,7 @@ tachyfont.IncrementalFont.obj.prototype.setGetIdb = function(getIdb) {
  */
 tachyfont.IncrementalFont.obj.prototype.setFileInfo = function(fileInfo) {
   this.fileInfo_ = fileInfo;
+  this.haveReadFileInfo_ = true;
 };
 
 
@@ -600,7 +607,7 @@ tachyfont.IncrementalFont.obj.prototype.getCompactFont = function() {
   return this
       .getCompactFontFromPersistence()  //
       .then(function(compactWorkingData) {
-        this.fileInfo_ = compactWorkingData.fileInfo;
+        this.setFileInfo(compactWorkingData.fileInfo);
         this.compactCharList_.resolve(compactWorkingData.charList);
         return compactWorkingData;
       }.bind(this))
@@ -608,7 +615,7 @@ tachyfont.IncrementalFont.obj.prototype.getCompactFont = function() {
         // Not persisted so fetch from the URL.
         return this.getCompactFontFromUrl(this.backendService_, this.fontInfo_)
             .then(function(compactWorkingData) {
-              this.fileInfo_ = compactWorkingData.fileInfo;
+              this.setFileInfo(compactWorkingData.fileInfo);
               this.compactCharList_.resolve(compactWorkingData.charList);
               return compactWorkingData;
             }.bind(this))
@@ -633,7 +640,7 @@ tachyfont.IncrementalFont.obj.prototype.getCompactFont = function() {
  * Gets the Compact font base from a URL.
  * @param {!Object} backendService The object that interacts with the backend.
  * @param {!tachyfont.FontInfo} fontInfo Info about this font.
- * @return {!goog.Promise<tachyfont.typedef.CompactFontWorkingData,?>} The
+ * @return {!goog.Promise<!tachyfont.typedef.CompactFontWorkingData,?>} The
  *     compact font data, fileInfo, and charList.
  */
 tachyfont.IncrementalFont.obj.prototype.getCompactFontFromUrl = function(
@@ -650,16 +657,17 @@ tachyfont.IncrementalFont.obj.prototype.getCompactFontFromUrl = function(
         var uncompactedFileInfo =
             /** @type {!tachyfont.typedef.FileInfo} */ (results[0]);
         var uncompactedFontData = /** @type {!DataView} */ (results[1]);
-        var compactCff = new tachyfont.CompactCff(this.fontId_);
-        compactCff.setTableData(
-            uncompactedFontData, uncompactedFileInfo, {}, {});
+        var fontTableData = {
+          sfnt: tachyfont.Sfnt.getFont(uncompactedFontData),
+          fileInfo: uncompactedFileInfo,
+          charList: {},
+          metadata: {}
+        };
+        var compactCff = new tachyfont.CompactCff(this.fontId_, fontTableData);
         compactCff.compact();
-        var compactTables = compactCff.getTableData();
-        results[0] =
-            /** @type {!tachyfont.typedef.FileInfo} */ (compactTables[1]);
-        results[1] = /** @type {!DataView} */ (compactTables[0]);
+        var compactFontTableData = compactCff.getTableData();
         return this
-            .saveNewCompactFont(results)  //
+            .saveNewCompactFont(compactFontTableData)  //
             .thenCatch(function(e) {
               tachyfont.IncrementalFont.reportError(
                   tachyfont.IncrementalFont.Error.SAVE_NEW_COMPACT,
@@ -684,11 +692,13 @@ tachyfont.IncrementalFont.obj.prototype.getCompactFontFromUrl = function(
 
 /**
  * Saves the Compact data overwriting any previous data.
- * @param {!Array<!DataView|tachyfont.typedef.FileInfo>} newData The new data.
+ * @param {!tachyfont.typedef.FontTableData} fontTableData The compact font
+ *     bytes, fileInfo, charList, and metadata.
  * @return {!tachyfont.SynchronousResolutionPromise<!Array<*>,?>} The updated
  *     data.
  */
-tachyfont.IncrementalFont.obj.prototype.saveNewCompactFont = function(newData) {
+tachyfont.IncrementalFont.obj.prototype.saveNewCompactFont = function(
+    fontTableData) {
   // Update the data.
   var fontId = this.fontId_;
   var dbName = this.fontInfo_.getDbName();
@@ -704,10 +714,10 @@ tachyfont.IncrementalFont.obj.prototype.saveNewCompactFont = function(newData) {
               // TODO(bstell): modify the metadata info to record the current
               // activity.
               var newValues = [
-                newData[1],       // fontBytes,
-                newData[0],       // fileInfo,
-                {},               // charList,
-                getData[0] || {}  // metadata
+                fontTableData.sfnt.getFontData(),     // fontBytes,
+                fontTableData.fileInfo,               // fileInfo,
+                fontTableData.charList,               // charList,
+                getData[0] || fontTableData.metadata  // metadata
               ];
               return tachyfont.Persist.putStores(
                   transaction, tachyfont.Define.compactStoreNames, newValues);
@@ -895,6 +905,7 @@ tachyfont.IncrementalFont.obj.prototype.setFont = function(fontData) {
   return finishPrecedingSetFont.getPrecedingPromise()
       .then(function() {
         this.needToSetFont_ = false;
+        goog.asserts.assert(this.haveReadFileInfo_);
         return tachyfont.Browser
             .setFont(
                 fontData, this.fontInfo_, this.fileInfo_.isTtf, this.blobUrl_)
@@ -918,13 +929,14 @@ tachyfont.IncrementalFont.obj.prototype.setFont = function(fontData) {
  * Obfuscate small requests to make it harder for a TachyFont server to
  * determine the content on a page.
  * @param {!Array<number>} codes The codepoints to add obusfuscation to.
- * @param {!Object} charlist The chars that have already been requested.
+ * @param {!Object} alreadyRequestedChars The chars that have already been
+ *     requested.
  * @param {!tachyfont.typedef.CmapMapping} cmapMapping A map of the
  *     characters in the font.
  * @return {!Array<number>} The codepoints with obusfuscation.
  */
-tachyfont.IncrementalFont.possibly_obfuscate =
-    function(codes, charlist, cmapMapping) {
+tachyfont.IncrementalFont.possibly_obfuscate = function(
+    codes, alreadyRequestedChars, cmapMapping) {
   if (tachyfont.utils.noObfuscate == true) {
     return codes;
   }
@@ -957,9 +969,9 @@ tachyfont.IncrementalFont.possibly_obfuscate =
       continue;
     }
     var newChar = tachyfont.utils.stringFromCodePoint(newCode);
-    if (charlist[newChar] == undefined) {
+    if (alreadyRequestedChars[newChar] == undefined) {
       code_map[newCode] = newCode;
-      charlist[newChar] = 1;
+      alreadyRequestedChars[newChar] = 1;
     }
   }
 
@@ -986,6 +998,7 @@ tachyfont.IncrementalFont.obj.prototype.loadChars = function() {
       this.finishPrecedingCharsRequest_.getChainedPromise(msg);
   return finishPrecedingCharsRequest.getPrecedingPromise()
       .then(function() {
+        goog.asserts.assert(this.haveReadFileInfo_);
         return this.calcNeededChars()
             .then(function(neededCodes_) {
               neededCodes = neededCodes_;
@@ -1079,6 +1092,7 @@ tachyfont.IncrementalFont.obj.prototype.injectCompact = function(
       }.bind(this))
       .then(function(compactCff) {
         var fontData = compactCff.getSfnt().getFontData();
+        goog.asserts.assert(this.haveReadFileInfo_);
         return tachyfont.Browser
             .setFont(
                 fontData, this.fontInfo_, this.fileInfo_.isTtf, this.blobUrl_)
@@ -1148,6 +1162,7 @@ tachyfont.IncrementalFont.obj.prototype.calcNeededChars = function() {
         if (neededCodes.length == 0) {
           return goog.Promise.reject('no chars to load');
         }
+        goog.asserts.assert(this.haveReadFileInfo_);
         neededCodes = tachyfont.IncrementalFont.possibly_obfuscate(neededCodes,
             charlist, this.fileInfo_.cmapMapping);
         if (goog.DEBUG) {
@@ -1216,6 +1231,7 @@ tachyfont.IncrementalFont.obj.prototype.checkFingerprint = function(
   if (bundleResponse == null) {
     return goog.Promise.resolve(bundleResponse);
   }
+  goog.asserts.assert(this.haveReadFileInfo_);
   var base_signature = this.fileInfo_.sha1_fingerprint;
   if (base_signature == bundleResponse.signature) {
     return goog.Promise.resolve(bundleResponse);

@@ -18,7 +18,6 @@
 
 goog.provide('tachyfont.CompactCff');
 
-goog.require('goog.asserts');
 goog.require('tachyfont.BinaryFontEditor');
 goog.require('tachyfont.Cff');
 goog.require('tachyfont.CffDict');
@@ -36,9 +35,10 @@ goog.require('tachyfont.utils');
 /**
  * This class manages Compact TachyFont operations.
  * @param {string} fontId A font identifier useful for error reports.
+ * @param {!tachyfont.typedef.FontTableData} fontTableData The font table data.
  * @constructor @struct @final
  */
-tachyfont.CompactCff = function(fontId) {
+tachyfont.CompactCff = function(fontId, fontTableData) {
   /**
    * A font identifier useful for error reports.
    * @private @const {string}
@@ -46,29 +46,10 @@ tachyfont.CompactCff = function(fontId) {
   this.fontId_ = fontId;
 
   /**
-   * The Sfnt font wrapper.
-   * Contains the font data bytes.
-   * @private {?tachyfont.Sfnt.Font}
+   * The font data tables.
+   * @private {!tachyfont.typedef.FontTableData}
    */
-  this.sfnt_ = null;
-
-  /**
-   * Information about the font bytes.
-   * @private {?tachyfont.typedef.FileInfo}
-   */
-  this.fileInfo_ = null;
-
-  /**
-   * A map of chars currently in the font.
-   * @private {?Object<string, number>}
-   */
-  this.charList_ = null;
-
-  /**
-   * Metadata about the font; eg, last time accessed.
-   * @private {?Object<string, *>}
-   */
-  this.metadata_ = null;
+  this.fontTableData_ = fontTableData;
 };
 
 
@@ -112,10 +93,7 @@ tachyfont.CompactCff.reportError = function(errNum, errId, errInfo) {
  * @return {!tachyfont.Sfnt.Font}
  */
 tachyfont.CompactCff.prototype.getSfnt = function() {
-  if (!this.sfnt_) {
-    throw new Error('sfnt not set');
-  }
-  return this.sfnt_;
+  return this.fontTableData_.sfnt;
 };
 
 
@@ -124,38 +102,16 @@ tachyfont.CompactCff.prototype.getSfnt = function() {
  * @return {!tachyfont.typedef.FileInfo}
  */
 tachyfont.CompactCff.prototype.getFileInfo = function() {
-  goog.asserts.assert(this.fileInfo_);
-  return this.fileInfo_;
-};
-
-
-/**
- * Sets the table data.
- * @param {!DataView} fontData The font data bytes.
- * @param {!tachyfont.typedef.FileInfo} fileInfo Info about the font bytes.
- * @param {!Object<string, number>} charList A map of the supported chars.
- * @param {!Object<string, *>} metadata Metadata about the font.
- */
-tachyfont.CompactCff.prototype.setTableData = function(
-    fontData, fileInfo, charList, metadata) {
-  this.sfnt_ = tachyfont.Sfnt.getFont(fontData);
-  this.fileInfo_ = fileInfo;
-  this.charList_ = charList;
-  this.metadata_ = metadata;
+  return this.fontTableData_.fileInfo;
 };
 
 
 /**
  * Gets the table data.
- * @return {!Array<?DataView|?Object<string,*>|?Object<string,number>>}
+ * @return {!tachyfont.typedef.FontTableData}
  */
 tachyfont.CompactCff.prototype.getTableData = function() {
-  return [
-    this.sfnt_.getFontData(),  //
-    this.fileInfo_,            //
-    this.charList_,            //
-    this.metadata_
-  ];
+  return this.fontTableData_;
 };
 
 
@@ -173,10 +129,11 @@ tachyfont.CompactCff.prototype.getFontId = function() {
  * Compacts a TachyFont.
  */
 tachyfont.CompactCff.prototype.compact = function() {
-  var origOffsets = this.sfnt_.getCompactOffsets();
-  var fontData = this.sfnt_.getFontData();
-  var cffTableOffset = this.sfnt_.getTableOffset(tachyfont.Sfnt.CFF_TAG);
-  var cffTableLength = this.sfnt_.getTableLength(tachyfont.Sfnt.CFF_TAG);
+  var sfnt = this.fontTableData_.sfnt;
+  var origOffsets = sfnt.getCompactOffsets();
+  var fontData = sfnt.getFontData();
+  var cffTableOffset = sfnt.getTableOffset(tachyfont.Sfnt.CFF_TAG);
+  var cffTableLength = sfnt.getTableLength(tachyfont.Sfnt.CFF_TAG);
   var cff = new tachyfont.Cff(cffTableOffset, fontData);
 
   var charStringsIndex = cff.getCharStringsIndex();
@@ -204,7 +161,7 @@ tachyfont.CompactCff.prototype.compact = function() {
   cff.updateCharStringsSize(-gapAfterCharStrings);
   this.addDataSegment(cffDataSegments, fontData, fdArrayStart, remainingLength);
 
-  this.sfnt_.replaceTable(tachyfont.Sfnt.CFF_TAG, [cffDataSegments]);
+  sfnt.replaceTable(tachyfont.Sfnt.CFF_TAG, [cffDataSegments]);
   this.updateFileInfo(origOffsets);
   return;
 };
@@ -216,22 +173,23 @@ tachyfont.CompactCff.prototype.compact = function() {
  * Uint8Array to.
  */
 tachyfont.CompactCff.prototype.updateFileInfo = function(origOffsets) {
-  var newOffsets = this.sfnt_.getCompactOffsets();
+  var fileInfo = this.fontTableData_.fileInfo;
+  var newOffsets = this.fontTableData_.sfnt.getCompactOffsets();
 
   // Adjust the cmap offsets.
   var deltaCmapOffset =
       newOffsets.getCmapOffset() - origOffsets.getCmapOffset();
-  this.fileInfo_.cmap4.offset += deltaCmapOffset;
-  this.fileInfo_.cmap12.offset += deltaCmapOffset;
+  fileInfo.cmap4.offset += deltaCmapOffset;
+  fileInfo.cmap12.offset += deltaCmapOffset;
 
   // Adjust the Cff glyph data offsets.
   var deltaCffOffset = newOffsets.getCffOffset() - origOffsets.getCffOffset();
-  this.fileInfo_.glyphOffset += deltaCffOffset;
-  this.fileInfo_.glyphDataOffset += deltaCffOffset;
+  fileInfo.glyphOffset += deltaCffOffset;
+  fileInfo.glyphDataOffset += deltaCffOffset;
 
   // Adjust the Horizontal/Vertical Metrics offsets.
-  this.fileInfo_.hmtxOffset = newOffsets.getHmtxOffset();
-  this.fileInfo_.vmtxOffset = newOffsets.getVmtxOffset();
+  fileInfo.hmtxOffset = newOffsets.getHmtxOffset();
+  fileInfo.vmtxOffset = newOffsets.getVmtxOffset();
 };
 
 
@@ -267,7 +225,7 @@ tachyfont.CompactCff.injectChars = function(
     fontInfo, neededCodes, bundleResponse) {
   var transaction;
   var fontId = fontInfo.getFontId();
-  var compactCff = new tachyfont.CompactCff(fontId);
+  var compactCff;
   var db = null;
   // Get the db handle.
   return tachyfont.Persist
@@ -296,7 +254,7 @@ tachyfont.CompactCff.injectChars = function(
       })
       .then(function() {
         // Get the persisted data.
-        return compactCff
+        return tachyfont.CompactCff
             .readDbTables(transaction)  //
             .thenCatch(function(event) {
               // TODO(bstell): remove this debug code
@@ -307,7 +265,8 @@ tachyfont.CompactCff.injectChars = function(
             });
       })
       // Inject the glyphs.
-      .then(function() {
+      .then(function(fontTableData) {
+        compactCff = new tachyfont.CompactCff(fontId, fontTableData);
         var fileInfo = compactCff.getFileInfo();
         var glyphToCodeMap = tachyfont.IncrementalFontUtils.getGlyphToCodeMap(
             neededCodes, fileInfo.cmapMapping);
@@ -347,28 +306,31 @@ tachyfont.CompactCff.injectChars = function(
 
 /**
  * @param {!IDBTransaction} transaction The current IndexedDB transaction.
- * @return {!tachyfont.SynchronousResolutionPromise<!Array<?>,?>}
+ * @return {!tachyfont.SynchronousResolutionPromise<
+ *     !tachyfont.typedef.FontTableData,?>}
  */
-tachyfont.CompactCff.prototype.readDbTables = function(transaction) {
+tachyfont.CompactCff.readDbTables = function(transaction) {
   // Read the persisted data.
   return tachyfont.Persist
       .getStores(transaction, tachyfont.Define.compactStoreNames)
       .then(function(dbTables) {
-        var fontData = dbTables[0];
-        var fileInfo = dbTables[1];
-        var charList = dbTables[2];
-        var metadata = dbTables[3];
-        if (!fontData || !fileInfo || !charList || !metadata) {
+        if (!dbTables[0] || !dbTables[1] || !dbTables[2] || !dbTables[3]) {
           return tachyfont.SynchronousResolutionPromise.reject(
-              'missing: ' +              //
-              (!fontData ? 'D' : '_') +  //
-              (!fileInfo ? 'I' : '_') +  //
-              (!charList ? 'C' : '_') +  //
-              (!metadata ? 'M' : '_'));
+              'missing: ' +                 //
+              (!dbTables[0] ? 'D' : '_') +  // fontData
+              (!dbTables[1] ? 'I' : '_') +  // fileInfo
+              (!dbTables[2] ? 'C' : '_') +  // charList
+              (!dbTables[3] ? 'M' : '_'));  // metadata
         }
         // TODO(bstell): update the metadata.
-        this.setTableData(fontData, fileInfo, charList, metadata);
-      }.bind(this));
+        var fontTableData = {
+          sfnt: tachyfont.Sfnt.getFont(dbTables[0]),
+          fileInfo: dbTables[1],
+          charList: dbTables[2],
+          metadata: dbTables[3]
+        };
+        return fontTableData;
+      });
 };
 
 
@@ -378,8 +340,14 @@ tachyfont.CompactCff.prototype.readDbTables = function(transaction) {
  */
 tachyfont.CompactCff.prototype.writeDbTables = function(transaction) {
   // Read the persisted data.
+  var tables = [
+    this.fontTableData_.sfnt.getFontData(),  //
+    this.fontTableData_.fileInfo,            //
+    this.fontTableData_.charList,            //
+    this.fontTableData_.metadata
+  ];
   return tachyfont.Persist.putStores(
-      transaction, tachyfont.Define.compactStoreNames, this.getTableData());
+      transaction, tachyfont.Define.compactStoreNames, tables);
 };
 
 
@@ -436,10 +404,11 @@ tachyfont.CompactCff.clearDataStores = function(
  */
 tachyfont.CompactCff.prototype.injectGlyphBundle = function(
     bundleResponse, glyphToCodeMap) {
+  var sfnt = this.fontTableData_.sfnt;
   var origOffsets;
   var cffDataSegments;
   try {
-    origOffsets = this.sfnt_.getCompactOffsets();
+    origOffsets = sfnt.getCompactOffsets();
   } catch (e) {
     tachyfont.CompactCff.reportError(
         tachyfont.CompactCff.Error.GET_OFFSETS, this.fontId_, e);
@@ -460,7 +429,7 @@ tachyfont.CompactCff.prototype.injectGlyphBundle = function(
     throw new Error('injectGlyphData');
   }
   try {
-    this.sfnt_.replaceTable(tachyfont.Sfnt.CFF_TAG, [cffDataSegments]);
+    sfnt.replaceTable(tachyfont.Sfnt.CFF_TAG, [cffDataSegments]);
   } catch (e) {
     tachyfont.CompactCff.reportError(
         tachyfont.CompactCff.Error.REPLACE_TABLE, this.fontId_, e);
@@ -473,7 +442,6 @@ tachyfont.CompactCff.prototype.injectGlyphBundle = function(
         tachyfont.CompactCff.Error.UPDATE_FILE_INFO, this.fontId_, e);
     throw new Error('updateFileInfo');
   }
-
 };
 
 
@@ -486,9 +454,8 @@ tachyfont.CompactCff.prototype.injectGlyphBundle = function(
  */
 tachyfont.CompactCff.prototype.setCharacterInfo = function(
     bundleResponse, glyphToCodeMap) {
-
-  var fontData = this.sfnt_.getFontData();
-  this.fileInfo_.dirty = true;
+  var fontTableData = this.fontTableData_;
+  var fontData = fontTableData.sfnt.getFontData();
   var baseBinaryEditor = new tachyfont.BinaryFontEditor(fontData, 0);
 
   var count = bundleResponse.getGlyphCount();
@@ -501,15 +468,15 @@ tachyfont.CompactCff.prototype.setCharacterInfo = function(
     var id = glyphData.getId();
     glyphIds.push(id);
     tachyfont.IncrementalFontUtils.setMtx(
-        flags, glyphData, baseBinaryEditor, this.fileInfo_);
+        flags, glyphData, baseBinaryEditor, fontTableData.fileInfo);
   }
   // Set the glyph Ids in the cmap format 12 subtable;
   tachyfont.Cmap.setFormat12GlyphIds(
-      this.fileInfo_, fontData, glyphIds, glyphToCodeMap, this.fontId_);
+      fontTableData.fileInfo, fontData, glyphIds, glyphToCodeMap, this.fontId_);
 
   // Set the glyph Ids in the cmap format 4 subtable;
   tachyfont.Cmap.setFormat4GlyphIds(
-      this.fileInfo_, fontData, glyphIds, glyphToCodeMap, this.fontId_);
+      fontTableData.fileInfo, fontData, glyphIds, glyphToCodeMap, this.fontId_);
 
   // Note the new characters that the font now supports.
   for (var i = 0; i < glyphIds.length; i++) {
@@ -517,7 +484,7 @@ tachyfont.CompactCff.prototype.setCharacterInfo = function(
     if (codes) {
       for (var j = 0; j < codes.length; j++) {
         var aChar = tachyfont.utils.stringFromCodePoint(codes[j]);
-        this.charList_[aChar] = 1;
+        fontTableData.charList[aChar] = 1;
       }
     }
   }

@@ -28,6 +28,7 @@ goog.provide('tachyfont.typedef.CmapMapping');
 goog.provide('tachyfont.typedef.CompactFontWorkingData');
 goog.provide('tachyfont.typedef.Context');
 goog.provide('tachyfont.typedef.FileInfo');
+goog.provide('tachyfont.typedef.FontTableData');
 goog.provide('tachyfont.typedef.PromiseClass');
 goog.provide('tachyfont.typedef.Reject');
 goog.provide('tachyfont.typedef.Resolve');
@@ -113,8 +114,19 @@ tachyfont.typedef.CmapMapping;
 
 /**
  * @typedef {{
+ *     sfnt: !tachyfont.Sfnt.Font,
+ *     fileInfo: !tachyfont.typedef.FileInfo,
+ *     charList: !Object<string, number>,
+ *     metadata: !Object<string, *>
+ * }}
+ */
+tachyfont.typedef.FontTableData;
+
+
+/**
+ * @typedef {{
  *     fontBytes: !DataView,
- *     charList: !Object<number, number>,
+ *     charList: !Object<string, number>,
  *     fileInfo: !tachyfont.typedef.FileInfo
  * }}
  */
