@@ -295,7 +295,7 @@ tachyfont.IncrementalFont.obj = function(fontInfo, params, backendService) {
    * @private {boolean}
    */
   // TODO(bstell): remove this when Compact TachyFont is fully enabled.
-  this.useCompact_ = parseInt(weight, 10) > 350;
+  this.useCompact_ = parseInt(weight, 10) > 50;
 
   /**
    * The creation time for this TachyFont.
