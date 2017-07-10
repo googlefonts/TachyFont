@@ -23,16 +23,34 @@ goog.require('tachyfont.Reporter');
 
 
 /**
- * This class manages TachyFont work queues.
+ * This class manages work queues.
  * @param {string} name An identifier useful for error reports.
  * @constructor @struct @final
  */
 tachyfont.WorkQueue = function(name) {
-  /**
-   * An identifier useful for error reports.
-   * @private @const {string}
-   */
+  /** @private @const {string} */
   this.name_ = name;
+
+  /** @private {!Array<!tachyfont.WorkQueue.Task>} */
+  this.queue_ = [];
+};
+
+
+/**
+ * Adds a task.
+ * @param {!tachyfont.WorkQueue.Task} task The task to add.
+ */
+tachyfont.WorkQueue.prototype.addTask = function(task) {
+  this.queue_.push(task);
+};
+
+
+/**
+ * Gets the queue length.
+ * @return {number}
+ */
+tachyfont.WorkQueue.prototype.getLength = function() {
+  return this.queue_.length;
 };
 
 
@@ -64,4 +82,38 @@ tachyfont.WorkQueue.reportError = function(errNum, errId, errInfo) {
  */
 tachyfont.WorkQueue.prototype.getName = function() {
   return this.name_;
+};
+
+
+
+/**
+ * A class that holds a task.
+ * @param {function(*=)} taskFunction The function to call.
+ * @param {*} data The data to pass to the function.
+ * @constructor @struct @final
+ */
+tachyfont.WorkQueue.Task = function(taskFunction, data) {
+  /** @private {function(*=)} */
+  this.function_ = taskFunction;
+
+  /** @private {*} */
+  this.data_ = data;
+};
+
+
+/**
+ * Gets the task function.
+ * @return {function(*=)}
+ */
+tachyfont.WorkQueue.Task.prototype.getFunction = function() {
+  return this.function_;
+};
+
+
+/**
+ * Gets the task data.
+ * @return {*}
+ */
+tachyfont.WorkQueue.Task.prototype.getData = function() {
+  return this.data_;
 };
