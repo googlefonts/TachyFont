@@ -1058,7 +1058,7 @@ tachyfont.IncrementalFont.obj.prototype.setFont = function(fontData) {
   var msg = this.fontInfo.getName() + ' setFont.' + this.fontId_;
   var finishPrecedingSetFont =
       this.finishPrecedingSetFont_.getChainedPromise(msg);
-  finishPrecedingSetFont.getPrecedingPromise()
+  return finishPrecedingSetFont.getPrecedingPromise()
       .then(function() {
         this.needToSetFont = false;
         return tachyfont.Browser
@@ -1070,12 +1070,12 @@ tachyfont.IncrementalFont.obj.prototype.setFont = function(fontData) {
             }.bind(this));
       }.bind(this))
       .thenCatch(function(e) {
-        finishPrecedingSetFont.reject();
+        finishPrecedingSetFont.resolve();
         tachyfont.IncrementalFont.reportError(
             tachyfont.IncrementalFont.Error.SET_FONT_PRECEEDING_PROMISE,
             this.fontId_, e);
+        return goog.Promise.reject(e);
       }.bind(this));
-  return finishPrecedingSetFont.getPromise();
 };
 
 
@@ -1149,7 +1149,7 @@ tachyfont.IncrementalFont.obj.prototype.loadChars = function() {
   var msg = this.fontInfo.getName() + ' loadChars';
   var finishPrecedingCharsRequest =
       this.finishPrecedingCharsRequest_.getChainedPromise(msg);
-  finishPrecedingCharsRequest.getPrecedingPromise()
+  return finishPrecedingCharsRequest.getPrecedingPromise()
       .then(function() {
         return this.calcNeededChars()
             .then(function(neededCodes_) {
@@ -1229,13 +1229,12 @@ tachyfont.IncrementalFont.obj.prototype.loadChars = function() {
       }.bind(this))
       .thenCatch(function(e) {
         // Failed to get the char data so release the lock.
-        finishPrecedingCharsRequest.reject('finishPrecedingCharsRequest');
+        finishPrecedingCharsRequest.resolve('finishPrecedingCharsRequest');
         tachyfont.IncrementalFont.reportError(
             tachyfont.IncrementalFont.Error.LOAD_CHARS_GET_LOCK, this.fontId_,
             e);
-        return goog.Promise.resolve(false);
+        return goog.Promise.reject(e);
       }.bind(this));
-  return finishPrecedingCharsRequest.getPromise();
 };
 
 
@@ -1614,6 +1613,6 @@ tachyfont.IncrementalFont.obj.prototype.persist_ = function(name) {
         tachyfont.IncrementalFont.reportError(
             tachyfont.IncrementalFont.Error.PERSIST_GET_LOCK, that.fontId_, e);
         // Release the lock.
-        finishedPersisting.reject('persisting');
+        finishedPersisting.resolve('persisting');
       });
 };
