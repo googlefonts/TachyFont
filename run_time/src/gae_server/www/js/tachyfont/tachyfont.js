@@ -97,6 +97,7 @@ tachyfont.Error = {
   GET_COMPACT_FONT: '18',
   // 19 no longer used.
   DISPLAY_COMPACT_FONT: '20',
+  NO_UINT8ARRAY_FROM: '21',
   END: '00'
 };
 
@@ -487,6 +488,10 @@ tachyfont.isSupportedBrowser = function(opt_windowObject) {
   if (typeof windowObject.document.fonts != 'object' ||
       typeof windowObject.document.fonts.load != 'function') {
     tachyfont.reportError(tachyfont.Error.NO_FONT_LOADER);
+    isSupported = false;
+  }
+  if (typeof Uint8Array.from != 'function') {
+    tachyfont.reportError(tachyfont.Error.NO_UINT8ARRAY_FROM);
     isSupported = false;
   }
 
