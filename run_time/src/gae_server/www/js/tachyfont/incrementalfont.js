@@ -1183,12 +1183,11 @@ tachyfont.IncrementalFont.obj.prototype.loadChars = function() {
                 this.needToSetFont = true;
               }
               return this.getBase.then(function(array) {
-                var fileInfo = array[0];
                 var fontData = array[1];
                 var glyphToCodeMap = this.getGlyphToCodeMap(neededCodes);
                 this.injectChars(
                     fontData, neededCodes, glyphToCodeMap, bundleResponse);
-                if (!fileInfo.isTtf && this.getShouldBeCompact()) {
+                if (this.getShouldBeCompact()) {
                   this.compactRecord_ += tachyfont.IncrementalFont.CompactRecord
                                              .LOAD_CHARS_COMPACT;
                   return this.injectCompact(neededCodes, bundleResponse)
