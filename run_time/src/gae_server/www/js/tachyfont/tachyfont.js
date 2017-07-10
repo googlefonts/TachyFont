@@ -526,7 +526,7 @@ tachyfont.loadFonts_loadAndUse_ = function(tachyFontSet) {
                   return tachyfont.loadFonts_getBaseFont_(incrfont)
                       .then(function(baseFont) {
                         // Until Compact is fully enabled: limit the weights.
-                        if (incrfont.getShouldBeCompact()) {
+                        if (incrfont.getCheckCompact()) {
                           // If necessary fetch the Compact version.
                           incrfont.getCompactFont().then(  //
                               function() {
