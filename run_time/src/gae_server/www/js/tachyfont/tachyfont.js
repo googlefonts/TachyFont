@@ -80,8 +80,7 @@ tachyfont.TachyFont.GLOBAL_STABLE_DATA_TIME = 24 * 60 * 60 * 1000;
  */
 tachyfont.Error = {
   FILE_ID: 'ETF',
-  SET_FONT: '02',
-  // 03 no longer used.
+  // 02-03 no longer used.
   KNOWN_WINDOW_ON_ERROR: '05',
   UNKNOWN_WINDOW_ON_ERROR: '06',
   NOT_ENOUGH_STORAGE: '07',
@@ -97,6 +96,7 @@ tachyfont.Error = {
   PAGE_LOADED: '17',
   GET_COMPACT_FONT: '18',
   // 19 no longer used.
+  DISPLAY_COMPACT_FONT: '20',
   END: '00'
 };
 
@@ -104,11 +104,14 @@ tachyfont.Error = {
 /**
  * The error reporter for this file.
  * @param {string} errNum The error number (encoded in a string);
- * @param {*} errInfo The error object;
+ * @param {*=} opt_errInfo Optional error object;
+ * @param {string} opt_fontId Optional identifier for the font.
  */
-tachyfont.reportError = function(errNum, errInfo) {
+tachyfont.reportError = function(errNum, opt_errInfo, opt_fontId) {
+  var errInfo = opt_errInfo || '';
+  var fontId = opt_fontId || '000';
   tachyfont.Reporter.reportError(
-      tachyfont.Error.FILE_ID + errNum, '000', errInfo);
+      tachyfont.Error.FILE_ID + errNum, fontId, errInfo);
 };
 
 
@@ -121,7 +124,7 @@ if (window.addEventListener) {
   tachyfont.windowOnError_ = function(error) {
     if (!error['filename']) {
       // The information is stripped from the report because of CORS issues.
-      tachyfont.reportError(tachyfont.Error.UNKNOWN_WINDOW_ON_ERROR, '');
+      tachyfont.reportError(tachyfont.Error.UNKNOWN_WINDOW_ON_ERROR);
       return;
     }
     var errorObj = {};
@@ -162,15 +165,6 @@ if (goog.DEBUG) {
         uri.getParameterValue('TachyFontDebugLevel') || 'WARNING';
     debugLevel = goog.debug.Logger.Level.getPredefinedLevel(debugLevelStr);
     tachyfont.log.setLogLevel(debugLevel);
-
-    /**
-     * Enable Compact TachyFont.
-     * TODO(bstell): remove this once Compact Tachyfont is fully operational.
-     */
-    var compactTachyFontStr = uri.getParameterValue('CompactTachyFont') || '';
-    /** @type {boolean} */
-    tachyfont.Define.compactTachyFont =
-        compactTachyFontStr.toLowerCase() == 'true';
 
     /**
      * For debugging: option to disable the obfuscation.
@@ -215,7 +209,7 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
   tachyfont.loadFonts_initReporter(fontsInfo);
   // Sent an "error" report so the number of page loads can be determined on the
   // dashboard.
-  tachyfont.reportError(tachyfont.Error.PAGE_LOADED, '');
+  tachyfont.reportError(tachyfont.Error.PAGE_LOADED);
   tachyfont.sendPreludeReports();
   tachyfont.loadFonts_initFontInfosUrls(fontsInfo);
   return tachyfont.checkSystem()
@@ -276,13 +270,12 @@ tachyfont.checkSystem = function() {
                   return;
                 }
               }
-              tachyfont.reportError(
-                  tachyfont.Error.BELOW_GLOBAL_STABLE_TIME, '');
+              tachyfont.reportError(tachyfont.Error.BELOW_GLOBAL_STABLE_TIME);
               return goog.Promise.reject();
             });
       },
       function(e) {
-        tachyfont.reportError(tachyfont.Error.OPEN_GLOBAL_DATABASE, '');
+        tachyfont.reportError(tachyfont.Error.OPEN_GLOBAL_DATABASE);
         return goog.Promise.reject();
       });
 };
@@ -298,13 +291,13 @@ tachyfont.sendPreludeReports = function() {
     reports = prelude['reports'];
   }
   if (!reports || reports.constructor.name != 'Array') {
-    tachyfont.reportError(tachyfont.Error.NO_PRELUDE_REPORTS, '');
+    tachyfont.reportError(tachyfont.Error.NO_PRELUDE_REPORTS);
     return;
   }
   for (var i = 0; i < reports.length; i++) {
     var report = reports[i];
     if (!report || report.constructor.name != 'Array' || report.length != 3) {
-      tachyfont.reportError(tachyfont.Error.PRELUDE_REPORT_TYPE, '');
+      tachyfont.reportError(tachyfont.Error.PRELUDE_REPORT_TYPE);
       return;
     }
     var reportType = report[0];
@@ -457,8 +450,10 @@ tachyfont.isFontStored = function(dbName) {
     request.onsuccess = function(event) {
       var db = event.target.result;
       var objectStoreNames = db.objectStoreNames;
-      var isStored = objectStoreNames.contains(tachyfont.Define.IDB_BASE) &&
-          objectStoreNames.contains(tachyfont.Define.IDB_CHARLIST);
+      var isStored = objectStoreNames.contains(tachyfont.Define.COMPACT_FONT) &&
+          objectStoreNames.contains(tachyfont.Define.COMPACT_FILE_INFO) &&
+          objectStoreNames.contains(tachyfont.Define.COMPACT_CHAR_LIST) &&
+          objectStoreNames.contains(tachyfont.Define.COMPACT_METADATA);
       resolve(isStored);
     };
     request.onerror = function(e) {
@@ -482,16 +477,16 @@ tachyfont.isSupportedBrowser = function(opt_windowObject) {
   var isSupported = true;
 
   if (typeof windowObject.indexedDB != 'object') {
-    tachyfont.reportError(tachyfont.Error.NO_INDEXED_DB, '');
+    tachyfont.reportError(tachyfont.Error.NO_INDEXED_DB);
     isSupported = false;
   }
   if (typeof windowObject.MutationObserver != 'function') {
-    tachyfont.reportError(tachyfont.Error.NO_MUTATION_OBSERVER, '');
+    tachyfont.reportError(tachyfont.Error.NO_MUTATION_OBSERVER);
     isSupported = false;
   }
   if (typeof windowObject.document.fonts != 'object' ||
       typeof windowObject.document.fonts.load != 'function') {
-    tachyfont.reportError(tachyfont.Error.NO_FONT_LOADER, '');
+    tachyfont.reportError(tachyfont.Error.NO_FONT_LOADER);
     isSupported = false;
   }
 
@@ -507,6 +502,7 @@ tachyfont.isSupportedBrowser = function(opt_windowObject) {
  */
 tachyfont.loadFonts_loadAndUse_ = function(tachyFontSet) {
   var msg = 'loadFonts';
+  var hadError = false;
   var waitPreviousTime = goog.now();
   var waitForPrecedingPromise =
       tachyFontSet.finishPrecedingUpdateFont.getChainedPromise(msg);
@@ -521,17 +517,28 @@ tachyfont.loadFonts_loadAndUse_ = function(tachyFontSet) {
           serialPromise = serialPromise.then(function(index) {
             var incrfont = fonts[index].incrfont;
             // Load the fonts from persistent store or URL.
-            // TODO(bstell): get rid of the non-compact code and data.
-            return tachyfont.loadFonts_getBaseFont_(incrfont)
-                .then(function(baseFont) {
-                  // Until Compact is fully enabled: limit the weights.
-                  // If necessary fetch the Compact version.
-                  incrfont.getCompactFont().thenCatch(  //
-                      function(e) {
-                        tachyfont.reportError(
-                            tachyfont.Error.GET_COMPACT_FONT, e);
-                      });
-                })
+            return incrfont.getCompactFont()
+                .then(
+                    function(compactFontWorkingData) {
+                      // Use the Compact font.
+                      if (incrfont.needToSetFont) {
+                        return incrfont
+                            .setFont(compactFontWorkingData.fontBytes)
+                            .thenCatch(function(error) {
+                              // Report the error.
+                              tachyfont.reportError(
+                                  tachyfont.Error.DISPLAY_COMPACT_FONT,
+                                  incrfont.getFontId());
+                            });
+                      }
+                    },
+                    function(e) {
+                      // Record and report an error happened.
+                      hadError = true;
+                      tachyfont.reportError(
+                          tachyfont.Error.GET_COMPACT_FONT,
+                          incrfont.getFontId());
+                    })
                 .then(function() {
                   // Advance to the next font.
                   return ++index;
@@ -540,9 +547,10 @@ tachyfont.loadFonts_loadAndUse_ = function(tachyFontSet) {
         }
         return serialPromise;
       })
-      .thenCatch(function(e) {
-        tachyfont.reportError(tachyfont.Error.SET_FONT, e);
-        return goog.Promise.reject(e);
+      .then(function(e) {
+        if (hadError) {
+          return goog.Promise.reject(e);
+        }
       })
       .thenAlways(function() {  //
         waitForPrecedingPromise.resolve();
@@ -613,32 +621,6 @@ tachyfont.loadFonts_init_ = function(familyName, fontsInfo, opt_params) {
     tachyFontSet.fontIdToIndex[fontId] = i;
   }
   return tachyFontSet;
-};
-
-
-/**
- * Get the base font for a TachyFont.
- * @param {!tachyfont.IncrementalFont.obj} incrfont The TachyFont object for
- *     which to get the base font.
- * @return {!goog.Promise<?,?>}
- * @private
- */
-tachyfont.loadFonts_getBaseFont_ = function(incrfont) {
-  // Try to get the base from persistent store.
-  return incrfont.getBaseFontFromPersistence()
-      .then(function(loadedBase) {
-        if (loadedBase != null) {
-          return loadedBase;
-        }
-        // Not persisted so fetch from the URL.
-        return incrfont.getBaseFontFromUrl(
-            incrfont.backendService, incrfont.fontInfo);
-      })
-      .then(function(loadedBase) {
-        // Get the font data ready for use.
-        incrfont.base.resolve(loadedBase);
-        return loadedBase;
-      });
 };
 
 

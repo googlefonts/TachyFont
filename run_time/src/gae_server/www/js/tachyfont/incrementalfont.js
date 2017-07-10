@@ -29,7 +29,6 @@ goog.require('tachyfont.Define');
 goog.require('tachyfont.DemoBackendService');
 goog.require('tachyfont.GoogleBackendService');
 goog.require('tachyfont.IncrementalFontUtils');
-goog.require('tachyfont.Metadata');
 goog.require('tachyfont.Persist');
 goog.require('tachyfont.Promise');
 goog.require('tachyfont.RLEDecoder');
@@ -72,7 +71,6 @@ tachyfont.IncrementalFont.PERSIST_TIMEOUT = 1000;
 tachyfont.IncrementalFont.Log = {
   CREATE_TACHYFONT: 'LIFCT.',
   DB_OPEN: 'LIFDO.',
-  IDB_GET_BASE: 'LIFIB.',
   URL_GET_BASE: 'LIFUB.',
   MISS_COUNT: 'LIFMC.',
   MISS_RATE: 'LIFMR.'
@@ -88,12 +86,9 @@ tachyfont.IncrementalFont.Error = {
   // 01-16 no longer used.
   LOAD_CHARS_INJECT_CHARS_2: '17',
   LOAD_CHARS_GET_LOCK: '18',
-  PERSIST_SAVE_DATA: '19',
-  PERSIST_GET_LOCK: '21',
-  // 22-24 no longer used.
+  // 19-24 no longer used.
   DB_OPEN: '25',
-  // 26-40 no longer used.
-  NOT_USING_PERSISTED_DATA: '41',
+  // 26-41 no longer used.
   FINGERPRINT_MISMATCH: '42',
   DELETE_IDB: '44',
   BELOW_STABLE_TIME: '45',
@@ -109,11 +104,10 @@ tachyfont.IncrementalFont.Error = {
   SAVE_NEW_COMPACT: '57',
   DO_NOT_USE_UNCOMPACTED_FONT: '58',
   INJECT_FONT_INJECT_CHARS: '59',
-  DISPLAY_COMPACT_FONT: '60',
-  // 61-62 no longer used.
+  // 60-62 no longer used.
   REJECTED_GET_COMPACT_CHARLIST: '63',
   GET_BASE_DATA: '64',
-  GET_CHARLIST_DATA: '65',
+  // 65 no longer used.
   SAVE_BASE_DATA: '66',
   SAVE_CHARLIST_DATA: '67',
   END: '00'
@@ -256,19 +250,12 @@ tachyfont.IncrementalFont.obj = function(fontInfo, params, backendService) {
 
   this.url = fontInfo.getDataUrl();
   this.charsURL = '/incremental_fonts/request';
-  this.persistInfo = {};
-  this.persistInfo[tachyfont.Define.IDB_BASE_DIRTY] = false;
-  this.persistInfo[tachyfont.Define.IDB_CHARLIST_DIRTY] = false;
 
   /** @type {!tachyfont.BackendService} */
   this.backendService = backendService;
 
   // Promises
   this.getIDB_ = null;
-  this.base = new tachyfont.Promise.Encapsulated();
-  this.getBase = this.base.getPromise();
-  this.charList = new tachyfont.Promise.Encapsulated();
-  this.getCharList = this.charList.getPromise();
 
   /**
    * A map of the characters that have been incrementally loaded.
@@ -277,12 +264,6 @@ tachyfont.IncrementalFont.obj = function(fontInfo, params, backendService) {
    */
   this.compactCharList_ = new tachyfont.Promise.Encapsulated();
 
-  /**
-   * The persist operation takes time so serialize them.
-   * @private {!tachyfont.Promise.Chained}
-   */
-  this.finishPersistingData_ =
-      new tachyfont.Promise.Chained('finishPersistingData_');
 
   /**
    * The character request operation takes time so serialize them.
@@ -500,70 +481,6 @@ tachyfont.IncrementalFont.obj.prototype.closeDb = function() {
 
 
 /**
- * Gets the font base from persistent store.
- * @return {!goog.Promise} The base bytes in DataView.
- */
-tachyfont.IncrementalFont.obj.prototype.getBaseFontFromPersistence =
-    function() {
-  var persistedBase =
-      this.getDb()
-          .then(function(idb) {
-            var filedata;
-            filedata = tachyfont.Persist.getData(idb, tachyfont.Define.IDB_BASE)
-                           .thenCatch(function(e) {
-                             tachyfont.IncrementalFont.reportError(
-                                 tachyfont.IncrementalFont.Error.GET_BASE_DATA,
-                                 this.fontId_, e);
-                             return goog.Promise.reject(e);
-                           }.bind(this));
-            return goog.Promise.all([goog.Promise.resolve(idb), filedata]);
-          }.bind(this))
-          .then(function(arr) {
-            tachyfont.Reporter.addItem(
-                tachyfont.IncrementalFont.Log.IDB_GET_BASE + this.fontId_,
-                goog.now() - this.startTime);
-            var idb = arr[0];
-            this.fileInfo_ = tachyfont.BinaryFontEditor.parseBaseHeader(arr[1]);
-            var fontData = new DataView(arr[1], this.fileInfo_.headSize);
-            return goog.Promise.resolve([idb, this.fileInfo_, fontData]);
-          }.bind(this))
-          .then(function(arr) {
-            return tachyfont.Persist
-                .getData(arr[0], tachyfont.Define.IDB_CHARLIST)
-                .then(
-                    function(charList) {
-                      return [arr[1], arr[2], charList];
-                    },
-                    function(e) {
-                      tachyfont.IncrementalFont.reportError(
-                          tachyfont.IncrementalFont.Error.GET_CHARLIST_DATA,
-                          this.fontId_, e);
-                      return goog.Promise.reject(e);
-                    }.bind(this));
-          }.bind(this))
-          .then(function(arr) {
-            var isOkay = tachyfont.Cmap.checkCharacters(
-                this.fileInfo_, arr[1], arr[2], this.fontId_, true);
-            if (isOkay) {
-              this.charList.resolve(arr[2]);
-              return goog.Promise.resolve([arr[0], arr[1], arr[2]]);
-            } else {
-              tachyfont.IncrementalFont.reportError(
-                  tachyfont.IncrementalFont.Error.NOT_USING_PERSISTED_DATA,
-                  this.fontId_, '');
-              this.charList.resolve({});
-              return goog.Promise.resolve(null);
-            }
-          }.bind(this))
-          .thenCatch(function(e) {
-            this.charList.resolve({});
-            return goog.Promise.resolve(null);
-          }.bind(this));
-  return persistedBase;
-};
-
-
-/**
  * Gets the compact font base from persistent store.
  * @return {!tachyfont.SynchronousResolutionPromise<
  *               tachyfont.typedef.CompactFontWorkingData,?>}
@@ -609,7 +526,7 @@ tachyfont.IncrementalFont.obj.prototype.getCompactFontFromPersistence =
               (!charList ? 'c' : '_');
           return tachyfont.SynchronousResolutionPromise.reject(missing);
         }
-        // TODO(bstell): remove this after 2016-08-11
+        // TODO(bstell): remove this after 2016-10-11
         if (fontData.byteLength > 3000000) {
           // Due to a bug uncompacted fonts were saved as compacted fonts.
           // Report the data is not there and new data will be fetched.
@@ -626,42 +543,7 @@ tachyfont.IncrementalFont.obj.prototype.getCompactFontFromPersistence =
           return tachyfont.SynchronousResolutionPromise.reject();
         }
         return {fontBytes: fontData, fileInfo: fileInfo, charList: charList};
-      }.bind(this))
-      .then(function(workingCompactData) {
-        // Use the Compact font.
-        return this.setFont(workingCompactData.fontBytes)
-            .then(function() {
-              return workingCompactData;  //
-            }.bind(this))
-            .thenCatch(function(error) {
-              // Report the error.
-              tachyfont.IncrementalFont.reportError(
-                  tachyfont.IncrementalFont.Error.DISPLAY_COMPACT_FONT, fontId,
-                  '');
-              return goog.Promise.reject();
-            }.bind(this));
       }.bind(this));
-};
-
-
-/**
- * Gets the font base from a URL.
- * @param {!Object} backendService The object that interacts with the backend.
- * @param {!tachyfont.FontInfo} fontInfo Info about this font.
- * @return {!goog.Promise} The base bytes in DataView.
- */
-tachyfont.IncrementalFont.obj.prototype.getBaseFontFromUrl = function(
-    backendService, fontInfo) {
-  return backendService.requestFontBase(fontInfo).then(function(urlBaseBytes) {
-    tachyfont.Reporter.addItem(
-        tachyfont.IncrementalFont.Log.URL_GET_BASE + this.fontId_,
-        goog.now() - this.startTime);
-    var results = tachyfont.IncrementalFont.processUrlBase(
-        urlBaseBytes, this.fontId_, false);
-    this.persistDelayed(tachyfont.Define.IDB_CHARLIST);
-    this.persistDelayed(tachyfont.Define.IDB_BASE);
-    return results;
-  }.bind(this));
 };
 
 
@@ -675,6 +557,7 @@ tachyfont.IncrementalFont.obj.prototype.getCompactFont = function() {
   return this
       .getCompactFontFromPersistence()  //
       .then(function(compactWorkingData) {
+        this.fileInfo_ = compactWorkingData.fileInfo;
         this.compactCharList_.resolve(compactWorkingData.charList);
         return compactWorkingData;
       }.bind(this))
@@ -682,6 +565,7 @@ tachyfont.IncrementalFont.obj.prototype.getCompactFont = function() {
         // Not persisted so fetch from the URL.
         return this.getCompactFontFromUrl(this.backendService, this.fontInfo)
             .then(function(compactWorkingData) {
+              this.fileInfo_ = compactWorkingData.fileInfo;
               this.compactCharList_.resolve(compactWorkingData.charList);
               return compactWorkingData;
             }.bind(this))
@@ -1072,51 +956,41 @@ tachyfont.IncrementalFont.obj.prototype.loadChars = function() {
               if (glyphCount != 0) {
                 this.needToSetFont = true;
               }
-              return this.getBase.then(function(array) {
-                var fontData = array[1];
-                var glyphToCodeMap = this.getGlyphToCodeMap(neededCodes);
-                // TODO(bstell): get rid of the non-compact code and data.
-                this.injectChars(
-                    fontData, neededCodes, glyphToCodeMap, bundleResponse);
-                // Make sure the compact font is loaded.
-                // TODO(bstell): remove this when Compact fully enabled.
-                return this.getCompactCharList()
-                    .then(function() {
-                      this.injectCompact(neededCodes, bundleResponse);
-                    }.bind(this))
-                    .thenCatch(function(e) {
-                      // Try fetching the Compact font again and then
-                      // injecting.
-                      if (this.refetchedCompact_) {
-                        return goog.Promise.reject(e);
-                      }
-                      // To avoid an infinite loop limit the retries.
-                      this.refetchedCompact_ = true;
-                      return this
-                          .getCompactFontFromUrl(
-                              this.backendService, this.fontInfo)
-                          .then(function(compactWorkingData) {
-                            this.compactCharList_.resolve(
-                                compactWorkingData.charList);
-                          }.bind(this))
-                          .then(function() {
-                            return this.injectCompact(
-                                neededCodes, bundleResponse);
-                          }.bind(this));
-                    }.bind(this))
-                    .thenCatch(function(e) {
-                      tachyfont.IncrementalFont.reportError(
-                          tachyfont.IncrementalFont.Error.INJECT_COMPACT,
-                          this.fontId_, e);
-                      return tachyfont.CompactCff.clearDataStores(
-                          tachyfont.Define.compactStoreNames, this.fontInfo);
-                    }.bind(this));
-              }.bind(this));
-            }.bind(this))
-            .then(function() {
-              // Persist the data.
-              this.persistDelayed(tachyfont.Define.IDB_BASE);
-              this.persistDelayed(tachyfont.Define.IDB_CHARLIST);
+              // Use getCompactCharList as a lock to wait if the font is not yet
+              // loaded.
+              // TODO(bstell): use a work queue to make sure the operations are
+              // correctly serialized.
+              return this.getCompactCharList()
+                  .then(function() {
+                    this.injectCompact(neededCodes, bundleResponse);
+                  }.bind(this))
+                  .thenCatch(function(e) {
+                    // Try fetching the Compact font again and then
+                    // injecting.
+                    if (this.refetchedCompact_) {
+                      return goog.Promise.reject(e);
+                    }
+                    // To avoid an infinite loop limit the retries.
+                    this.refetchedCompact_ = true;
+                    return this
+                        .getCompactFontFromUrl(
+                            this.backendService, this.fontInfo)
+                        .then(function(compactWorkingData) {
+                          this.compactCharList_.resolve(
+                              compactWorkingData.charList);
+                        }.bind(this))
+                        .then(function() {
+                          return this.injectCompact(
+                              neededCodes, bundleResponse);
+                        }.bind(this));
+                  }.bind(this))
+                  .thenCatch(function(e) {
+                    tachyfont.IncrementalFont.reportError(
+                        tachyfont.IncrementalFont.Error.INJECT_COMPACT,
+                        this.fontId_, e);
+                    return tachyfont.CompactCff.clearDataStores(
+                        tachyfont.Define.compactStoreNames, this.fontInfo);
+                  }.bind(this));
             }.bind(this))
             .thenCatch(function(e) {
               // No chars to fetch.
@@ -1373,127 +1247,6 @@ tachyfont.IncrementalFont.obj.prototype.injectChars = function(
         tachyfont.IncrementalFont.Error.LOAD_CHARS_INJECT_CHARS_2, this.fontId_,
         missingCodes.toString());
   }
-};
-
-
-/**
- * Save data that needs to be persisted.
- * @param {string} name The name of the data item.
- */
-tachyfont.IncrementalFont.obj.prototype.persistDelayed = function(name) {
-  var that = this;
-
-  // Note what needs to be persisted.
-  if (name == tachyfont.Define.IDB_BASE) {
-    this.persistInfo[tachyfont.Define.IDB_BASE_DIRTY] = true;
-  } else if (name == tachyfont.Define.IDB_CHARLIST) {
-    this.persistInfo[tachyfont.Define.IDB_CHARLIST_DIRTY] = true;
-  }
-
-  // In a little bit do the persisting.
-  setTimeout(function() {
-    that.persist_(name);
-  }, tachyfont.IncrementalFont.PERSIST_TIMEOUT);
-};
-
-
-/**
- * Save data that needs to be persisted.
- * @param {string} name The name of the data item.
- * @private
- */
-tachyfont.IncrementalFont.obj.prototype.persist_ = function(name) {
-  var that = this;
-  // Wait for any preceding persist operation to finish.
-  var msg = this.fontInfo.getName() + ' persist_';
-  var finishedPersisting = this.finishPersistingData_.getChainedPromise(msg);
-  finishedPersisting.getPrecedingPromise()
-      .then(function() {
-        // Previous persists may have already saved the data so see if there is
-        // anything still to persist.
-        var base_dirty = that.persistInfo[tachyfont.Define.IDB_BASE_DIRTY];
-        var charlist_dirty =
-            that.persistInfo[tachyfont.Define.IDB_CHARLIST_DIRTY];
-        if (!base_dirty && !charlist_dirty) {
-          // Nothing to persist so release the lock.
-          finishedPersisting.resolve();
-          return;
-        }
-
-        // What ever got in upto this point will get saved.
-        that.persistInfo[tachyfont.Define.IDB_BASE_DIRTY] = false;
-        that.persistInfo[tachyfont.Define.IDB_CHARLIST_DIRTY] = false;
-
-        // Do the persisting.
-        var metadata;
-        return that.getDb()
-            .then(function(db) {
-              // Set the next activity to begin_save.
-              return tachyfont.Metadata.beginSave(db, that.fontId_);
-            })
-            .then(function(storedMetadata) {
-              metadata = storedMetadata;
-              if (base_dirty) {
-                return that.getBase
-                 .then(function(arr) {
-                   return goog.Promise.all([that.getDb(),
-                     goog.Promise.resolve(arr[0]),
-                     goog.Promise.resolve(arr[1])]);
-                 })
-                 .then(function(arr) {
-                   return tachyfont.Persist
-                       .saveData(
-                           arr[0], [tachyfont.Define.IDB_BASE], [arr[2].buffer])
-                       .thenCatch(function(e) {
-                         tachyfont.IncrementalFont.reportError(
-                             tachyfont.IncrementalFont.Error.SAVE_BASE_DATA,
-                             that.fontId_, e);
-                       });
-                 });
-              }
-            })
-            .then(function() {
-              if (charlist_dirty) {
-                return that.getCharList
-                 .then(function(charlist) {
-                   return goog.Promise.all([that.getDb(),
-                     goog.Promise.resolve(charlist)]);
-                 })
-                 .then(function(arr) {
-                   return tachyfont.Persist
-                       .saveData(
-                           arr[0], [tachyfont.Define.IDB_CHARLIST], [arr[1]])
-                       .thenCatch(function(e) {
-                         tachyfont.IncrementalFont.reportError(
-                             tachyfont.IncrementalFont.Error.SAVE_CHARLIST_DATA,
-                             that.fontId_, e);
-                       });
-                 });
-              }
-            })
-            .then(function() {
-              // Set the last activity to save_done.
-              return that.getDb().then(function(db) {
-                return tachyfont.Metadata.saveDone(db, metadata, that.fontId_);
-              });
-            })
-            .thenCatch(function(e) {
-              tachyfont.IncrementalFont.reportError(
-                  tachyfont.IncrementalFont.Error.PERSIST_SAVE_DATA,
-                  that.fontId_, e);
-            })
-            .then(function() {
-              // Done persisting so close the db and release the lock.
-              that.closeDb();
-              finishedPersisting.resolve();
-            });
-      })
-      .thenCatch(function(e) {
-        tachyfont.IncrementalFont.reportError(
-            tachyfont.IncrementalFont.Error.PERSIST_GET_LOCK, that.fontId_, e);
-        // Release the lock.
-        finishedPersisting.resolve('persisting');
-      });
 };
 
 

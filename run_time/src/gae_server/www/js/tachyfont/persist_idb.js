@@ -146,13 +146,6 @@ tachyfont.Persist.openIndexedDb_ = function(dbName, id, resolve, reject) {
           'onupgradeneeded error: ' + e.value);
       reject(e);
     };
-    if (!db.objectStoreNames.contains(tachyfont.Define.IDB_BASE)) {
-      db.createObjectStore(tachyfont.Define.IDB_BASE);
-    }
-    if (!db.objectStoreNames.contains(tachyfont.Define.IDB_CHARLIST)) {
-      var charListStore = db.createObjectStore(tachyfont.Define.IDB_CHARLIST);
-      tachyfont.Persist.initializeCharList(charListStore);
-    }
     if (!db.objectStoreNames.contains(tachyfont.Define.METADATA)) {
       var metadataStore = db.createObjectStore(tachyfont.Define.METADATA);
       tachyfont.Metadata.initializePerFont(metadataStore);
@@ -284,110 +277,6 @@ tachyfont.Metadata.initialize = function(store, createTime) {
   metadata[tachyfont.Define.ACTIVITY_TIME] =
       metadata[tachyfont.Define.CREATED_METADATA_TIME] = createTime;
   store.put(metadata, 0);
-};
-
-
-/**
- * Records that a save data operation is about to begin.
- * @param {!IDBDatabase} db The IndexedDB handle.
- * @param {string} id Identifies the font.
- * @return {!goog.Promise<!Object,?>} Resolves when the metadata has been
- *     recorded.
- */
-// TODO(bstell): this is a 'policy' function so move it out of the db layer;
-// move it to a file like metadata.js
-tachyfont.Metadata.beginSave = function(db, id) {
-  var name = tachyfont.Define.METADATA;
-  return tachyfont.Persist.getData(db, name)
-      .thenCatch(function(e) {
-        // Tolerate missing metadata.
-        return {};
-      })
-      .then(function(storedMetadata) {
-        var metadata = tachyfont.Metadata.cleanUpMetadata(storedMetadata, id);
-        if (metadata[tachyfont.Define.ACTIVITY] !=
-            tachyfont.Define.SAVE_DONE) {
-          if (metadata[tachyfont.Define.ACTIVITY] ==
-              tachyfont.Define.CREATED_METADATA) {
-            tachyfont.Persist.reportError(
-                tachyfont.Persist.Error.SAVE_BEGIN_AFTER_CREATED_METADATA, id,
-                metadata[tachyfont.Define.ACTIVITY]);
-          } else {
-            tachyfont.Persist.reportError(
-                tachyfont.Persist.Error.SAVE_BEGIN_PREVIOUS_ACTIVITY, id,
-                metadata[tachyfont.Define.ACTIVITY]);
-          }
-        }
-        metadata[tachyfont.Define.ACTIVITY] =
-            tachyfont.Define.BEGIN_SAVE;
-        metadata[tachyfont.Define.ACTIVITY_TIME] = goog.now();
-        return tachyfont.Persist.saveData(db, [name], [metadata])
-            .then(function() {
-              return metadata;
-            });
-      })
-      .thenCatch(function(e) {
-        tachyfont.Persist.reportError(
-           tachyfont.Persist.Error.SAVE_BEGIN_METADATA_WRITE, id, e);
-        console.log('beginSave FAILED TO WRITE the activity');
-      });
-};
-
-
-/**
- * Records that a save data operation just finished.
- * @param {!IDBDatabase} db The IndexedDB handle.
- * @param {!Object} metadata The metadata.
- * @param {string} id Identifies the font.
- * @return {!goog.Promise<?,?>} Resolves when the metadata has been recorded.
- */
-// TODO(bstell): this is a 'policy' function so move it out of the db layer;
-// move it to a file like metadata.js
-tachyfont.Metadata.saveDone = function(db, metadata, id) {
-  var name = tachyfont.Define.METADATA;
-  if (metadata[tachyfont.Define.ACTIVITY] !=
-      tachyfont.Define.BEGIN_SAVE) {
-    tachyfont.Persist.reportError(
-        tachyfont.Persist.Error.SAVE_DONE_PREVIOUS_ACTIVITY, id,
-        metadata[tachyfont.Define.ACTIVITY]);
-  }
-  metadata[tachyfont.Define.ACTIVITY] =
-      tachyfont.Define.SAVE_DONE;
-  metadata[tachyfont.Define.ACTIVITY_TIME] = goog.now();
-
-  return tachyfont.Persist.saveData(db, [name], [metadata])
-      .thenCatch(function(e) {
-        tachyfont.Persist.reportError(
-           tachyfont.Persist.Error.SAVE_DONE_METADATA_WRITE, id, e);
-      });
-};
-
-
-/**
- * Cleans up the metadata by:
- *   - removing no longer used fields
- *   - adding missing new fields
- * @param {!Object} inputMetadata The incoming metadata.
- * @param {string} id Identifies the font.
- * @return {!Object}
- */
-// TODO(bstell): this is a 'policy' function so move it out of the db layer;
-// move it to a file like metadata.js
-tachyfont.Metadata.cleanUpMetadata = function(inputMetadata, id) {
-  var outputMetadata = {};
-  if (!inputMetadata[tachyfont.Define.CREATED_METADATA_TIME]) {
-    inputMetadata[tachyfont.Define.CREATED_METADATA_TIME] = goog.now();
-    tachyfont.Persist.reportError(
-        tachyfont.Persist.Error.MISSING_CREATED_METADATA_TIME, id, '');
-  }
-  outputMetadata[tachyfont.Define.CREATED_METADATA_TIME] =
-      inputMetadata[tachyfont.Define.CREATED_METADATA_TIME];
-  outputMetadata[tachyfont.Define.ACTIVITY] =
-      inputMetadata[tachyfont.Define.ACTIVITY] ||
-      tachyfont.Define.CREATED_METADATA;
-  outputMetadata[tachyfont.Define.ACTIVITY_TIME] =
-      inputMetadata[tachyfont.Define.ACTIVITY_TIME] || goog.now();
-  return outputMetadata;
 };
 
 
