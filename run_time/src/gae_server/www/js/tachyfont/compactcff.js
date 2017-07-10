@@ -19,7 +19,6 @@
 goog.provide('tachyfont.CompactCff');
 
 goog.require('tachyfont.BinaryFontEditor');
-goog.require('tachyfont.Browser');
 goog.require('tachyfont.Cff');
 goog.require('tachyfont.CffDict');
 goog.require('tachyfont.Cmap');
@@ -78,7 +77,7 @@ tachyfont.CompactCff = function(fontId) {
  */
 tachyfont.CompactCff.Error = {
   FILE_ID: 'ECC',
-  PRE_INJECT_SET_FONT: '01',
+  // 01 no longer used.
   POST_INJECT_SET_FONT: '02',
   INJECT_CHARS_GET_DB: '03',
   INJECT_CHARS_READ_TABLES: '04',
@@ -267,11 +266,10 @@ tachyfont.CompactCff.injectChars = function(
   var fontId = fontInfo.getFontId();
   var compactCff = new tachyfont.CompactCff(fontId);
   var db = null;
-  var preInjectFontData;  // TODO(bstell): get rid of this.
   // Get the db handle.
   return tachyfont.Persist
       .openIndexedDbSynchronousResolutionPromise(fontInfo.getDbName(), fontId)
-      .thenCatch(function(event) {  // TODO(bstell): remove this debug code
+      .thenCatch(function(event) {
         tachyfont.CompactCff.reportError(
             tachyfont.CompactCff.Error.INJECT_CHARS_GET_DB, fontId, event);
         return tachyfont.SynchronousResolutionPromise.reject(event);
@@ -279,6 +277,12 @@ tachyfont.CompactCff.injectChars = function(
       .then(function(dbHandle) {
         db = dbHandle;
         // Create the transaction.
+        // To keep the transaction from automatically closing IndexedDB requires
+        // continous operations with no breaks. This means goog.Promise cannot
+        // be used since it (at least occasionally) yields the event queue to
+        // avoid excessive stack depth. Instead use
+        // tachyfont.SynchronousResolutionPromise which never yields (but the
+        // programmer must take care to avoid exceeding the stack depth.
         transaction =
             db.transaction(tachyfont.Define.compactStoreNames, 'readwrite');
         transaction.onerror = function(event) {
@@ -286,6 +290,8 @@ tachyfont.CompactCff.injectChars = function(
               tachyfont.CompactCff.Error.INJECT_TRANSACTION, fontId, event);
           return tachyfont.SynchronousResolutionPromise.reject(event);
         };
+      })
+      .then(function() {
         // Get the persisted data.
         return compactCff
             .readDbTables(transaction)  //
@@ -299,36 +305,13 @@ tachyfont.CompactCff.injectChars = function(
       })
       // Inject the glyphs.
       .then(function() {
-        // Save the pre-inject font data. Cannot run checkSetFont here as that
-        // would prematurely end the IndexedDb transaction.
-        var data = compactCff.sfnt_.getFontData();
-        preInjectFontData = new DataView(data.buffer.slice(data.byteOffset));
-        compactCff.injectGlyphBundle(bundleResponse, glyphToCodeMap);
-      })
-      .thenCatch(function(event) {
-        tachyfont.CompactCff.reportError(
-            tachyfont.CompactCff.Error.INJECT_GLYPH_BUNDLE, fontId,
-            event);
-        // TODO(bstell): get rid of this debug info.
-        // For debug see if certain characters are problematic.
-        var chars = '';
-        var glyphDataArray = bundleResponse.getGlyphDataArray();
-        var count = bundleResponse.getGlyphCount();
-        for (var i = 0; i < count; i += 1) {
-          var glyphData = glyphDataArray[i];
-          var id = glyphData.getId();
-          var codes = glyphToCodeMap[id];
-          if (codes) {
-            for (var j = 0; j < codes.length; j++) {
-              var aChar = tachyfont.utils.stringFromCodePoint(codes[j]);
-              chars += aChar;
-            }
-          }
+        try {
+          compactCff.injectGlyphBundle(bundleResponse, glyphToCodeMap);
+        } catch (event) {
+          tachyfont.CompactCff.reportError(
+              tachyfont.CompactCff.Error.INJECT_GLYPH_BUNDLE, fontId, event);
+          return tachyfont.SynchronousResolutionPromise.reject(event);
         }
-        tachyfont.CompactCff.reportError(
-            tachyfont.CompactCff.Error.INJECT_GLYPH_BUNDLE, fontId,
-            chars);
-        return tachyfont.SynchronousResolutionPromise.reject(event);
       })
       .then(function() {
         // Write the persisted data.
@@ -339,25 +322,6 @@ tachyfont.CompactCff.injectChars = function(
                   tachyfont.CompactCff.Error.INJECT_CHARS_WRITE_TABLES, fontId,
                   event);
               return tachyfont.SynchronousResolutionPromise.reject(event);
-            });
-      })
-      .then(function() {
-        // TODO(bstell): remove this debug code.
-        // checkSetFont the pre-inject font
-        // The post-inject font data is checked in the caller.
-        // TODO(bstell): When Compact is fully enabled: remove this debug code.
-        return tachyfont.Browser
-            .checkSetFont(preInjectFontData, fontInfo, /* isTtf */ false, null)
-            .then(function(passesOts) {
-              if (!passesOts) {
-                tachyfont.CompactCff.reportError(
-                    tachyfont.CompactCff.Error.PRE_INJECT_SET_FONT, fontId, '');
-                var event = {};
-                event.target = {};
-                event.target.error = {};
-                event.target.error.name = 'setFont';
-                return tachyfont.SynchronousResolutionPromise.reject(event);
-              }
             });
       })
       .then(function() {
