@@ -479,7 +479,8 @@ tachyfont.TachyFontSet.prototype.updateFonts =
         var fontsData = [];
         for (var i = 0; i < this.fonts.length; i++) {
           var fontObj = this.fonts[i].incrfont;
-          if (fontObj.getNeedToSetFont()) {
+          // Note: Compact fonts are displayed earlier in loadChars.
+          if (fontObj.getNeedToSetFont() && !fontObj.getUseCompact()) {
             fontsData.push(fontObj.getBase);
           } else {
             fontsData.push(goog.Promise.resolve(null));
