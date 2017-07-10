@@ -284,7 +284,7 @@ tachyfont.IncrementalFont.obj = function(fontInfo, params, backendService) {
   // TODO(bstell): remove this when Compact TachyFont is fully enabled.
   // The font weights are: 100, 300, 400, 500, 700.
   // This enables Compact TachyFont for weights greater than the number.
-  this.shouldBeCompact_ = parseInt(weight, 10) > 650;
+  this.shouldBeCompact_ = parseInt(weight, 10) > 450;
 
   /**
    * Whether the font is compacted.
@@ -1228,9 +1228,6 @@ tachyfont.IncrementalFont.obj.prototype.loadChars = function() {
                             .getCompactFontFromUrl(
                                 this.backendService, this.fontInfo)
                             .then(function(compactWorkingData) {
-                              // Replace the previous compact charlist.
-                              this.compactCharList_ =
-                                  new tachyfont.Promise.Encapsulated();
                               this.compactCharList_.resolve(
                                   compactWorkingData.charList);
                             }.bind(this))
