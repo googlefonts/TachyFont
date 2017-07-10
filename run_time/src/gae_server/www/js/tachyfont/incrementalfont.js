@@ -126,11 +126,11 @@ tachyfont.IncrementalFont.CompactRecord = {
   GET_COMPACT_FROM_URL2: 'Gcu2',
   GET_COMPACT_FROM_URL_ERROR: 'Gue',
   GET_COMPACT_CLEAR_STORES: 'Gcs',
+  BEFORE_INJECT_COMPACT: 'Bic',
   INJECT_COMPACT_INJECT: 'Ice',
   INJECT_COMPACT_INJECT_ERROR: 'Icie',
   INJECT_COMPACT_SET_FONT: 'Isf',
   INJECT_COMPACT_SET_FONT_ERROR: 'Isfe',
-  LOAD_CHARS_COMPACT: 'Lc',
   LOAD_CHARS_INJECT_ERROR: 'Lcie',
   PERSISTENCE_DB: 'Ped',
   PERSISTENCE_GET_STORES: 'Pgs',
@@ -1198,7 +1198,7 @@ tachyfont.IncrementalFont.obj.prototype.loadChars = function() {
                     fontData, neededCodes, glyphToCodeMap, bundleResponse);
                 if (this.getShouldBeCompact()) {
                   this.compactRecord_ += tachyfont.IncrementalFont.CompactRecord
-                                             .LOAD_CHARS_COMPACT;
+                                             .BEFORE_INJECT_COMPACT;
                   return this.injectCompact(neededCodes, bundleResponse)
                       .thenCatch(function(e) {
                         // Try fetching the Compact font again and then
