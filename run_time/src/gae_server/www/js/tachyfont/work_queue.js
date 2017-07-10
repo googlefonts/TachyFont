@@ -16,18 +16,18 @@
  * the License.
  */
 
-goog.provide('tachyfont.MessageQueue');
+goog.provide('tachyfont.WorkQueue');
 
 goog.require('tachyfont.Reporter');
 
 
 
 /**
- * This class manages TachyFont message queues.
+ * This class manages TachyFont work queues.
  * @param {string} name An identifier useful for error reports.
  * @constructor @struct @final
  */
-tachyfont.MessageQueue = function(name) {
+tachyfont.WorkQueue = function(name) {
   /**
    * An identifier useful for error reports.
    * @private @const {string}
@@ -40,8 +40,8 @@ tachyfont.MessageQueue = function(name) {
  * Enum for error values.
  * @enum {string}
  */
-tachyfont.MessageQueue.Error = {
-  FILE_ID: 'EMQ',
+tachyfont.WorkQueue.Error = {
+  FILE_ID: 'EWQ',
   END: '00'
 };
 
@@ -52,16 +52,16 @@ tachyfont.MessageQueue.Error = {
  * @param {string} errId Identifies the error.
  * @param {*} errInfo The error object;
  */
-tachyfont.MessageQueue.reportError = function(errNum, errId, errInfo) {
+tachyfont.WorkQueue.reportError = function(errNum, errId, errInfo) {
   tachyfont.Reporter.reportError(
-      tachyfont.MessageQueue.Error.FILE_ID + errNum, errId, errInfo);
+      tachyfont.WorkQueue.Error.FILE_ID + errNum, errId, errInfo);
 };
 
 
 /**
- * Gets the message queue name
+ * Gets the work queue name
  * @return {string}
  */
-tachyfont.MessageQueue.prototype.getName = function() {
+tachyfont.WorkQueue.prototype.getName = function() {
   return this.name_;
 };
