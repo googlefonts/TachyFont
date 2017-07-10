@@ -551,13 +551,15 @@ tachyfont.loadFonts_loadAndUse_ = function(tachyFontSet) {
               waitForPrecedingPromise.resolve();
             })
             .thenCatch(function(e) {
-              waitForPrecedingPromise.reject();
+              waitForPrecedingPromise.resolve();
               tachyfont.reportError(tachyfont.Error.SET_FONT, e);
+              return goog.Promise.reject(e);
             });
       })
       .thenCatch(function(e) {
         tachyfont.reportError(tachyfont.Error.GET_BASE, e);
-        waitForPrecedingPromise.reject();
+        waitForPrecedingPromise.resolve();
+        return goog.Promise.reject(e);
       });
 };
 

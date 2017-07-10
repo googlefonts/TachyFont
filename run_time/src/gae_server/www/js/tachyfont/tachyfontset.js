@@ -462,7 +462,7 @@ tachyfont.TachyFontSet.prototype.updateFonts =
   }
   var msg = 'updateFonts';
   var allUpdated = this.finishPrecedingUpdateFont.getChainedPromise(msg);
-  allUpdated.getPrecedingPromise()
+  return allUpdated.getPrecedingPromise()
       .then(function() {
         var updatingFonts = [];
         for (var i = 0; i < this.fonts.length; i++) {
@@ -496,7 +496,6 @@ tachyfont.TachyFontSet.prototype.updateFonts =
         tachyfont.TachyFontSet.reportError_(
             tachyfont.TachyFontSet.Error.UPDATE_FONT_SET_FONT,
             'failed to load all fonts' + e.stack);
-        allUpdated.reject();
+        allUpdated.resolve();
       });
-  return allUpdated.getPromise();
 };
