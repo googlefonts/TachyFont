@@ -18,6 +18,7 @@
 
 goog.provide('tachyfont.WorkQueue');
 
+goog.require('goog.Promise');
 goog.require('tachyfont.Reporter');
 
 
@@ -38,10 +39,32 @@ tachyfont.WorkQueue = function(name) {
 
 /**
  * Adds a task.
- * @param {!tachyfont.WorkQueue.Task} task The task to add.
+ * @param {function(?)} taskFunction The function to call.
+ * @param {*} data The data to pass to the function.
+ * @return {!tachyfont.WorkQueue.Task} A promise with the task's result.
  */
-tachyfont.WorkQueue.prototype.addTask = function(task) {
+tachyfont.WorkQueue.prototype.addTask = function(taskFunction, data) {
+  var task = new tachyfont.WorkQueue.Task(taskFunction, data);
   this.queue_.push(task);
+  if (this.queue_.length == 1) {
+    this.runNextTask();
+  }
+  return task;
+};
+
+
+/**
+ * Runs a task.
+ */
+tachyfont.WorkQueue.prototype.runNextTask = function() {
+  if (this.queue_.length < 1) {
+    return;
+  }
+  var task = this.queue_[0];
+  task.run().thenAlways(function() {
+    this.queue_.shift();
+    this.runNextTask();
+  }, this);
 };
 
 
@@ -88,32 +111,61 @@ tachyfont.WorkQueue.prototype.getName = function() {
 
 /**
  * A class that holds a task.
- * @param {function(*=)} taskFunction The function to call.
+ * @param {function(?)} taskFunction The function to call.
  * @param {*} data The data to pass to the function.
  * @constructor @struct @final
  */
 tachyfont.WorkQueue.Task = function(taskFunction, data) {
-  /** @private {function(*=)} */
+  var resolver;
+
+  /** @private {function(?)} */
   this.function_ = taskFunction;
 
   /** @private {*} */
   this.data_ = data;
+
+  /** @private {!goog.Promise<?,?>} */
+  this.result_ = new goog.Promise(function(resolve, reject) {  //
+    resolver = resolve;
+  });
+
+  /** @private {function(*=)} */
+  this.resolver_ = resolver;
 };
 
 
 /**
- * Gets the task function.
- * @return {function(*=)}
+ * Gets the task result promise (may be unresolved).
+ * @return {!goog.Promise<?,?>}
  */
-tachyfont.WorkQueue.Task.prototype.getFunction = function() {
-  return this.function_;
+tachyfont.WorkQueue.Task.prototype.getResult = function() {
+  return this.result_;
 };
 
 
 /**
- * Gets the task data.
+ * Resolves the task result promise.
+ * @param {*} result The result of the function. May be any value including a
+ *     resolved/rejected promise.
+ * @return {!goog.Promise<?,?>}
+ * @private
+ */
+tachyfont.WorkQueue.Task.prototype.resolve_ = function(result) {
+  this.resolver_(result);
+  return this.result_;
+};
+
+
+/**
+ * Runs the task.
  * @return {*}
  */
-tachyfont.WorkQueue.Task.prototype.getData = function() {
-  return this.data_;
+tachyfont.WorkQueue.Task.prototype.run = function() {
+  var result;
+  try {
+    result = this.function_(this.data_);
+  } catch (e) {
+    result = goog.Promise.reject(e);
+  }
+  return this.resolve_(result);
 };
