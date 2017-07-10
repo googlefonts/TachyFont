@@ -316,6 +316,7 @@ tachyfont.CompactCff.injectChars = function(
         // TODO(bstell): remove this debug code.
         // checkSetFont the pre-inject font
         // The post-inject font data is checked in the caller.
+        // TODO(bstell): When Compact is fully enabled: remove this debug code.
         return tachyfont.Browser
             .checkSetFont(preInjectFontData, fontInfo, /* isTtf */ false, null)
             .then(function(passesOts) {

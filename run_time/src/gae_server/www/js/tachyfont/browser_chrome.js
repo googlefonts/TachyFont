@@ -25,6 +25,7 @@ goog.require('tachyfont.IncrementalFontUtils');
 goog.require('tachyfont.log');
 
 
+// TODO(bstell): When Compact is fully enabled: remove this function.
 /**
  * Check the font passes OTS (OpenType Sanitizer).
  * @param {!DataView} fontData The font dataview.
