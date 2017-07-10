@@ -43,7 +43,7 @@ tachyfont.WorkQueue = function(name) {
  * @param {*} data The data to pass to the function.
  * @param {string} fontId An identifier useful for error messages.
  * @param {number=} opt_watchDogTime Option watch dog time.
- * @return {!tachyfont.WorkQueue.Task} A promise with the task's result.
+ * @return {!tachyfont.WorkQueue.Task} A task object.
  */
 tachyfont.WorkQueue.prototype.addTask = function(
     taskFunction, data, fontId, opt_watchDogTime) {
