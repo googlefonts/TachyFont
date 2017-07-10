@@ -108,7 +108,7 @@ tachyfont.TachyFontSet.Log = {
 tachyfont.TachyFontSet.Error = {
   FILE_ID: 'ETS',
   UPDATE_FONT_LOAD_CHARS: '01',
-  UPDATE_FONT_SET_FONT: '02',
+  // 02 no longer used.
   SET_FONT: '03'
 };
 

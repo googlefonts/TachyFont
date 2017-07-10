@@ -57,7 +57,7 @@ tachyfont.TachyFont = function(fontInfo, dropData, opt_params) {
 
 
 /**
- * Lazily load the data for these chars.;
+ * Lazily load the data for these chars.
  */
 tachyfont.TachyFont.prototype.loadNeededChars = function() {
   this.incrfont.loadChars();
@@ -81,7 +81,7 @@ tachyfont.TachyFont.GLOBAL_STABLE_DATA_TIME = 24 * 60 * 60 * 1000;
 tachyfont.Error = {
   FILE_ID: 'ETF',
   SET_FONT: '02',
-  GET_BASE: '03',
+  // 03 no longer used.
   KNOWN_WINDOW_ON_ERROR: '05',
   UNKNOWN_WINDOW_ON_ERROR: '06',
   NOT_ENOUGH_STORAGE: '07',
@@ -96,7 +96,7 @@ tachyfont.Error = {
   NO_FONT_LOADER: '16',
   PAGE_LOADED: '17',
   GET_COMPACT_FONT: '18',
-  GET_COMPACT_FONT_SUCCESS: '19',
+  // 19 no longer used.
   END: '00'
 };
 
@@ -515,51 +515,37 @@ tachyfont.loadFonts_loadAndUse_ = function(tachyFontSet) {
         tachyfont.Reporter.addItem(
             tachyfont.Log_.LOAD_FONTS_WAIT_PREVIOUS + '000',
             goog.now() - waitPreviousTime);
-        return goog.Promise.resolve()
-            .then(function() {
-              var serialPromise = goog.Promise.resolve(0);
-              var fonts = tachyFontSet.fonts;
-              for (var i = 0; i < fonts.length; i++) {
-                serialPromise = serialPromise.then(function(index) {
-                  var incrfont = fonts[index].incrfont;
-                  // Load the fonts from persistent store or URL.
-                  // TODO(bstell): get rid of the non-compact code and data.
-                  return tachyfont.loadFonts_getBaseFont_(incrfont)
-                      .then(function(baseFont) {
-                        // Until Compact is fully enabled: limit the weights.
-                        // If necessary fetch the Compact version.
-                        incrfont.getCompactFont().then(  //
-                            function() {
-                              tachyfont.reportError(
-                                  tachyfont.Error.GET_COMPACT_FONT_SUCCESS, '');
-                            },
-                            function(e) {
-                              tachyfont.reportError(
-                                  tachyfont.Error.GET_COMPACT_FONT, e);
-                            });
-                      })
-                      .then(function() {
-                        // Advance to the next font.
-                        return ++index;
+        var serialPromise = goog.Promise.resolve(0);
+        var fonts = tachyFontSet.fonts;
+        for (var i = 0; i < fonts.length; i++) {
+          serialPromise = serialPromise.then(function(index) {
+            var incrfont = fonts[index].incrfont;
+            // Load the fonts from persistent store or URL.
+            // TODO(bstell): get rid of the non-compact code and data.
+            return tachyfont.loadFonts_getBaseFont_(incrfont)
+                .then(function(baseFont) {
+                  // Until Compact is fully enabled: limit the weights.
+                  // If necessary fetch the Compact version.
+                  incrfont.getCompactFont().thenCatch(  //
+                      function(e) {
+                        tachyfont.reportError(
+                            tachyfont.Error.GET_COMPACT_FONT, e);
                       });
+                })
+                .then(function() {
+                  // Advance to the next font.
+                  return ++index;
                 });
-              }
-              return serialPromise;
-            })
-            .then(function(allSetResults) {
-              // Release the lock.
-              waitForPrecedingPromise.resolve();
-            })
-            .thenCatch(function(e) {
-              waitForPrecedingPromise.resolve();
-              tachyfont.reportError(tachyfont.Error.SET_FONT, e);
-              return goog.Promise.reject(e);
-            });
+          });
+        }
+        return serialPromise;
       })
       .thenCatch(function(e) {
-        tachyfont.reportError(tachyfont.Error.GET_BASE, e);
-        waitForPrecedingPromise.resolve();
+        tachyfont.reportError(tachyfont.Error.SET_FONT, e);
         return goog.Promise.reject(e);
+      })
+      .thenAlways(function() {  //
+        waitForPrecedingPromise.resolve();
       });
 };
 

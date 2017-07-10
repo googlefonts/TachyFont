@@ -27,7 +27,6 @@ goog.require('tachyfont.log');
 
 /**
  * A class that holds a promise and the associated resolve and reject functions.
- *
  * @param {!tachyfont.Promise.Chained=} opt_container If used to chain promises
  *     then this holds the object that implements the chaining.
  * @param {string=} opt_msg An optional message useful for debugging.
