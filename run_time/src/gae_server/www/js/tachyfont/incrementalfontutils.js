@@ -136,7 +136,6 @@ tachyfont.IncrementalFontUtils.writeCharsetFormat2 =
 tachyfont.IncrementalFontUtils.fixGlyphOffsets = function(
     headerInfo, baseFont, compact) {
   if (headerInfo.isTtf) {
-    headerInfo.dirty = true;
     var binaryEditor = new tachyfont.BinaryFontEditor(baseFont, 0);
     var glyphOffset = headerInfo.glyphOffset;
     var glyphCount = headerInfo.numGlyphs;
@@ -157,7 +156,6 @@ tachyfont.IncrementalFontUtils.fixGlyphOffsets = function(
       }
     }
   } else {
-    headerInfo.dirty = true;
     var binaryEditor = new tachyfont.BinaryFontEditor(baseFont, 0);
     var glyphOffset = headerInfo.glyphOffset;
     var glyphCount = headerInfo.numGlyphs;
