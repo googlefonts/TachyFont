@@ -521,7 +521,7 @@ tachyfont.loadFonts_loadAndUse_ = function(tachyFontSet) {
                 .then(
                     function(compactFontWorkingData) {
                       // Use the Compact font.
-                      if (incrfont.needToSetFont) {
+                      if (incrfont.getNeedToSetFont()) {
                         return incrfont
                             .setFont(compactFontWorkingData.fontBytes)
                             .thenCatch(function(error) {
