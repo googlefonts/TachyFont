@@ -34,22 +34,46 @@ goog.require('tachyfont.log');
  * @constructor
  */
 tachyfont.Promise.Encapsulated = function(opt_container, opt_msg) {
+  var resolver;
+  var rejecter;
+
+  /**
+   * @private {boolean}
+   */
+  this.isFulfilled_ = false;
+
   /**
    * The promise.
-   *
    * @private {!goog.Promise}
    */
   this.promise_ = new goog.Promise(function(resolve, reject) {
-    this.resolver_ = resolve;
-    this.rejecter_ = reject;
-    this.container_ = opt_container;
-    this.msg_ = opt_msg;
+    resolver = resolve;
+    rejecter = reject;
   }, this);
+
+  /**
+   * @private {!function (?=): ?}
+   */
+  this.resolver_ = resolver;
+
+  /**
+   * @private {!function (?=): ?}
+   */
+  this.rejecter_ = rejecter;
+
+  /**
+   * @private {?tachyfont.Promise.Chained}
+   */
+  this.container_ = opt_container || null;
+
+  /**
+   * @private {string}
+   */
+  this.msg_ = opt_msg || '';
 
   /**
    * If this is being used to serialize promises then this is the preceeding
    * promise that the current thread needs to wait for.
-   *
    * @private {?goog.Promise}
    */
   this.precedingPromise_ = null;
@@ -75,7 +99,6 @@ tachyfont.Promise.Encapsulated.Error_ = {
 
 /**
  * The error reporter for this file.
- *
  * @param {string} errNum The error number;
  * @param {*} errInfo The error object;
  * @private
@@ -87,8 +110,7 @@ tachyfont.Promise.Encapsulated.reportError_ = function(errNum, errInfo) {
 
 
 /**
- * Get the actual goog.Promise.
- *
+ * Gets the actual goog.Promise.
  * @return {!goog.Promise}
  */
 tachyfont.Promise.Encapsulated.prototype.getPromise = function() {
@@ -97,8 +119,7 @@ tachyfont.Promise.Encapsulated.prototype.getPromise = function() {
 
 
 /**
- * Get the preceding/chained goog.Promise.
- *
+ * Gets the preceding/chained goog.Promise.
  * @return {?goog.Promise}
  */
 tachyfont.Promise.Encapsulated.prototype.getPrecedingPromise = function() {
@@ -111,13 +132,18 @@ tachyfont.Promise.Encapsulated.prototype.getPrecedingPromise = function() {
 
 
 /**
- * Reject the promise.
- *
+ * Rejects the promise.
  * @param {*=} opt_value An optional value to pass to the reject function.
  */
 tachyfont.Promise.Encapsulated.prototype.reject = function(opt_value) {
-  // TODO(bstell): reject means all subsequent uses to fail; is this desired?
-  this.rejecter_(opt_value);
+  if (!this.isFulfilled_) {
+    this.rejecter_(opt_value);
+    this.isFulfilled_ = true;
+  } else {
+    this.promise_ = new goog.Promise(function(resolve, reject) {
+      reject(opt_value);  //
+    });
+  }
   if (this.container_) {
     if (this.container_.promises.length <= 1) {
       // We unshift all except the very first manually added promise.
@@ -136,12 +162,18 @@ tachyfont.Promise.Encapsulated.prototype.reject = function(opt_value) {
 
 
 /**
- * Resolve the promise.
- *
+ * Resolves the promise.
  * @param {*=} opt_value An optional value to pass to the resolve function.
  */
 tachyfont.Promise.Encapsulated.prototype.resolve = function(opt_value) {
-  this.resolver_(opt_value);
+  if (!this.isFulfilled_) {
+    this.resolver_(opt_value);
+    this.isFulfilled_ = true;
+  } else {
+    this.promise_ = new goog.Promise(function(resolve, reject) {
+      resolve(opt_value);  //
+    });
+  }
   if (this.container_) {
     if (this.container_.promises.length <= 1) {
       // We unshift all except the very first manually added promise.
@@ -162,38 +194,32 @@ tachyfont.Promise.Encapsulated.prototype.resolve = function(opt_value) {
 
 /**
  * A class that manages chaining promises.
- *
  * This class maintains a queue of promises. As a new request is made it is set
  * to wait for the preceding promise to resolve.
- *
  * @param {string} msg Indicates the caller.
  * @constructor
  */
 tachyfont.Promise.Chained = function(msg) {
   /**
      * For debug: count of total chained promises.
-     *
      * @private {number}
      */
   this.chainedCount_ = 0;
 
   /**
    * For debug: count of pending promises.
-   *
    * @private {number}
    */
   this.pendingCount_ = 0;
 
   /**
    * Info about the code using the chainedPromise.
-   *
    * @private {string}
    */
   this.msg_ = msg + ': ';
 
   /**
    * For debug: an interval timer used to detect deadlock.
-   *
    * @private {number}
    */
   this.intervalId_ = setInterval(function() {
@@ -216,7 +242,6 @@ tachyfont.Promise.Chained = function(msg) {
 
   /**
    * An interval timer used to detect deadlock.
-   *
    * @private {number}
    */
   this.timerReportCount_ = 0;
@@ -229,8 +254,7 @@ tachyfont.Promise.Chained = function(msg) {
 
 
 /**
- * Get a chained promise.
- *
+ * Gets a chained promise.
  * @param {string} msg Information about the caller.
  * @return {!tachyfont.Promise.Encapsulated}
  */

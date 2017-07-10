@@ -499,6 +499,16 @@ tachyfont.IncrementalFont.obj.prototype.getCompactCharList = function() {
 
 
 /**
+ * Sets the compact charList promise.
+ * @param {!Object<string, number>} charList The new char list.
+ */
+tachyfont.IncrementalFont.obj.prototype.setCompactCharList = function(
+    charList) {
+  this.compactCharList_.resolve(charList);
+};
+
+
+/**
  * Gets the database handle.
  * @return {!goog.Promise} The database handle.
  */
@@ -817,7 +827,7 @@ tachyfont.IncrementalFont.obj.prototype.getCompactFont = function() {
 
 
 /**
- * Gets the font base from a URL.
+ * Gets the Compact font base from a URL.
  * @param {!Object} backendService The object that interacts with the backend.
  * @param {!tachyfont.FontInfo} fontInfo Info about this font.
  * @return {!goog.Promise<tachyfont.typedef.CompactFontWorkingData,?>} The
