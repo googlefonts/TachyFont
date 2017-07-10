@@ -50,6 +50,35 @@ tachyfont.IncrementalFontUtils.STYLESHEET_ID =
 
 
 /**
+ * Gets the map of glyphIds to codepoints.
+ * @param {!Array<number>} neededCodes The codes to be injected.
+ * @param {!tachyfont.typedef.CmapMapping} cmapMapping The cmap info.
+ * @return {!Object<number,!Array<number>>}
+ */
+tachyfont.IncrementalFontUtils.getGlyphToCodeMap = function(
+    neededCodes, cmapMapping) {
+  var glyphToCodeMap = {};
+  for (var i = 0; i < neededCodes.length; i++) {
+    var code = neededCodes[i];
+    var charCmapInfo = cmapMapping[code];
+    if (charCmapInfo) {
+      // Handle multiple codes sharing a glyphId.
+      if (glyphToCodeMap[charCmapInfo.glyphId] == undefined) {
+        glyphToCodeMap[charCmapInfo.glyphId] = [];
+      }
+      glyphToCodeMap[charCmapInfo.glyphId].push(code);
+    }
+    if (goog.DEBUG) {
+      if (!charCmapInfo) {
+        tachyfont.log.warning('no glyph for codepoint 0x' + code.toString(16));
+      }
+    }
+  }
+  return glyphToCodeMap;
+};
+
+
+/**
  * Set the Horizontal/Vertical metrics.
  * @param {number} flags Indicates what is in the glyphData.
  * @param {!tachyfont.GlyphBundleResponse.GlyphData} glyphData An object holding

@@ -322,7 +322,7 @@ tachyfont.Cmap.checkCharacters = function(
  * @param {!tachyfont.typedef.FileInfo} fileInfo Info about the font file.
  * @param {!DataView} baseFontView Current base font
  * @param {!Array<number>} glyphIds The glyph Ids to set.
- * @param {!Object<number, Array<number>>} glyphToCodeMap The glyph Id to code
+ * @param {!Object<number, !Array<number>>} glyphToCodeMap The glyph Id to code
  *     point mapping;
  * @param {string} fontId The fontId for error reporting.
  */
@@ -429,7 +429,7 @@ tachyfont.Cmap.setFormat4GlyphIds = function(
  * @param {!tachyfont.typedef.FileInfo} fileInfo Info about the font file.
  * @param {!DataView} baseFontView Current base font
  * @param {!Array<number>} glyphIds The glyph Ids to set.
- * @param {!Object<number, Array<number>>} glyphToCodeMap The glyph Id to code
+ * @param {!Object<number, !Array<number>>} glyphToCodeMap The glyph Id to code
  *     point mapping;
  * @param {string} fontId The fontId of the font.
  */
