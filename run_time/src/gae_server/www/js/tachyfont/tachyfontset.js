@@ -451,6 +451,7 @@ tachyfont.TachyFontSet.prototype.setFont = function(index, loadResult,
  * @return {!goog.Promise}
  *
  */
+// TODO(bstell): check if this routine does anything now.
 tachyfont.TachyFontSet.prototype.updateFonts =
     function(startTime, allowEarlyUse) {
   this.lastRequestUpdateTime_ = goog.now();
@@ -478,13 +479,9 @@ tachyfont.TachyFontSet.prototype.updateFonts =
       .then(function() {
         var fontsData = [];
         for (var i = 0; i < this.fonts.length; i++) {
-          var fontObj = this.fonts[i].incrfont;
           // Note: Compact fonts are displayed earlier in loadChars.
-          if (fontObj.getNeedToSetFont() && !fontObj.getUseCompact()) {
-            fontsData.push(fontObj.getBase);
-          } else {
-            fontsData.push(goog.Promise.resolve(null));
-          }
+          // TODO(bstell): does this routine do anything now?
+          fontsData.push(goog.Promise.resolve(null));
         }
         return goog.Promise.all(fontsData);
       }.bind(this))

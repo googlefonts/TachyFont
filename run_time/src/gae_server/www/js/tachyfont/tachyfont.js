@@ -523,22 +523,20 @@ tachyfont.loadFonts_loadAndUse_ = function(tachyFontSet) {
                 serialPromise = serialPromise.then(function(index) {
                   var incrfont = fonts[index].incrfont;
                   // Load the fonts from persistent store or URL.
+                  // TODO(bstell): get rid of the non-compact code and data.
                   return tachyfont.loadFonts_getBaseFont_(incrfont)
                       .then(function(baseFont) {
                         // Until Compact is fully enabled: limit the weights.
-                        if (incrfont.getCheckCompact()) {
-                          // If necessary fetch the Compact version.
-                          incrfont.getCompactFont().then(  //
-                              function() {
-                                tachyfont.reportError(
-                                    tachyfont.Error.GET_COMPACT_FONT_SUCCESS,
-                                    '');
-                              },
-                              function(e) {
-                                tachyfont.reportError(
-                                    tachyfont.Error.GET_COMPACT_FONT, e);
-                              });
-                        }
+                        // If necessary fetch the Compact version.
+                        incrfont.getCompactFont().then(  //
+                            function() {
+                              tachyfont.reportError(
+                                  tachyfont.Error.GET_COMPACT_FONT_SUCCESS, '');
+                            },
+                            function(e) {
+                              tachyfont.reportError(
+                                  tachyfont.Error.GET_COMPACT_FONT, e);
+                            });
                       })
                       .then(function() {
                         // Advance to the next font.
