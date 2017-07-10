@@ -111,6 +111,9 @@ tachyfont.IncrementalFont.Error = {
   SAVE_NEW_COMPACT: '57',
   DO_NOT_USE_UNCOMPACTED_FONT: '58',
   INJECT_FONT_INJECT_CHARS: '59',
+  BEFORE_GET_COMPACT_CHARLIST: '61',
+  RESOLVED_GET_COMPACT_CHARLIST: '62',
+  REJECTED_GET_COMPACT_CHARLIST: '63',
   END: '00'
 };
 
@@ -356,9 +359,9 @@ tachyfont.IncrementalFont.obj = function(fontInfo, params, backendService) {
   /**
    * A map of the characters that have been incrementally loaded.
    * The string holds the UTF-16 character and the number is always 1.
-   * @private {!Object<string, number>}
+   * @private {!tachyfont.Promise.Encapsulated}
    */
-  this.compactCharList_ = {};
+  this.compactCharList_ = new tachyfont.Promise.Encapsulated();
 
   /**
    * The persist operation takes time so serialize them.
@@ -487,11 +490,11 @@ tachyfont.IncrementalFont.obj.prototype.getNeedToSetFont = function() {
 
 
 /**
- * Gets the compact charList
- * @return {!Object<string, number>}
+ * Gets the compact charList promise.
+ * @return {!goog.Promise<!Object<string, number>,?>}
  */
 tachyfont.IncrementalFont.obj.prototype.getCompactCharList = function() {
-  return this.compactCharList_;
+  return this.compactCharList_.getPromise();
 };
 
 
@@ -776,7 +779,7 @@ tachyfont.IncrementalFont.obj.prototype.getCompactFont = function() {
   return this
       .getCompactFontFromPersistence()  //
       .then(function(compactWorkingData) {
-        this.compactCharList_ = compactWorkingData.charList;
+        this.compactCharList_.resolve(compactWorkingData.charList);
         this.compactRecord_ += tachyfont.IncrementalFont.CompactRecord
                                    .GET_COMPACT_FROM_PERSISTENCE;
         return compactWorkingData;
@@ -785,15 +788,15 @@ tachyfont.IncrementalFont.obj.prototype.getCompactFont = function() {
         // Not persisted so fetch from the URL.
         this.compactRecord_ += tachyfont.IncrementalFont.CompactRecord
                                    .GET_COMPACT_FROM_PERSISTENCE_ERROR;
-        this.compactCharList_ = {};
         return this.getCompactFontFromUrl(this.backendService, this.fontInfo)
             .then(function(compactWorkingData) {
-              this.compactCharList_ = compactWorkingData.charList;
+              this.compactCharList_.resolve(compactWorkingData.charList);
               this.compactRecord_ +=
                   tachyfont.IncrementalFont.CompactRecord.GET_COMPACT_FROM_URL;
               return compactWorkingData;
             }.bind(this))
             .thenCatch(function(e) {
+              this.compactCharList_.reject();
               this.compactRecord_ += tachyfont.IncrementalFont.CompactRecord
                                          .GET_COMPACT_FROM_URL_ERROR;
               tachyfont.IncrementalFont.reportError(
@@ -806,7 +809,7 @@ tachyfont.IncrementalFont.obj.prototype.getCompactFont = function() {
                   .clearDataStores(
                       tachyfont.Define.compactStoreNames, this.fontInfo)
                   .then(function() {
-                    return null;  //
+                    return goog.Promise.reject(e);  //
                   });
             }.bind(this));
       }.bind(this));
@@ -1215,8 +1218,11 @@ tachyfont.IncrementalFont.obj.prototype.loadChars = function() {
                             .getCompactFontFromUrl(
                                 this.backendService, this.fontInfo)
                             .then(function(compactWorkingData) {
+                              // Replace the previous compact charlist.
                               this.compactCharList_ =
-                                  compactWorkingData.charList;
+                                  new tachyfont.Promise.Encapsulated();
+                              this.compactCharList_.resolve(
+                                  compactWorkingData.charList);
                             }.bind(this))
                             .then(function() {
                               return this.injectCompact(
@@ -1323,6 +1329,34 @@ tachyfont.IncrementalFont.obj.prototype.calcNeededChars = function() {
   }
 
   return this.getCharList
+      .then(function(charlist) {
+        if (!this.getShouldBeCompact()) {
+          return charlist;
+        }
+        // Wait for the Compact data to be fetched if needed.
+        // TODO(bstell): use the the compactCharList
+        tachyfont.IncrementalFont.reportError(
+            tachyfont.IncrementalFont.Error.BEFORE_GET_COMPACT_CHARLIST,
+            this.fontId_, this.compactRecord_);
+        return this.getCompactCharList().then(
+            function(compactCharList) {
+              tachyfont.IncrementalFont.reportError(
+                  tachyfont.IncrementalFont.Error.RESOLVED_GET_COMPACT_CHARLIST,
+                  this.fontId_, this.compactRecord_);
+              // Return the non-compact charlist (not using the compact yet).
+              return charlist;
+            },
+            function(compactCharList) {
+              // TODO(bstell): should the one time refresh happen here?
+              tachyfont.IncrementalFont.reportError(
+                  tachyfont.IncrementalFont.Error.REJECTED_GET_COMPACT_CHARLIST,
+                  this.fontId_, this.compactRecord_);
+              // Return the non-compact charlist (not using the compact yet).
+              // injectCompact with refetch the compact data.
+              return charlist;
+            },
+            this);
+      }.bind(this))
       .then(function(charlist) {
         var neededCodes = [];
         // Make a tmp copy in case we are chunking the requests.
