@@ -68,7 +68,7 @@ tachyfont.SynchronousResolutionPromise = function(resolver) {
   /** @private {!Array<!tachyfont.typedef.ThenInfo>} */
   this.deferredThens_ = [];
 
-  try {
+  try {  // Handle throws and exceptions.
     var self = this;
     resolver(
         function(result) {  //
@@ -176,20 +176,29 @@ tachyfont.SynchronousResolutionPromise.prototype.runOrDeferTheThen_ = function(
   // Pass the this Promise's status to the attached then.
   if (this.state_ == SynchronousResolutionPromise.State.RESOLVED) {
     if (thenInfo.thenResolve) {
-      var result = thenInfo.thenResolve(this.result_);
-      // Calling then creates a Promise. If the then resolve code didn't resolve
-      // do it now. If the then did resolve/reject then calling resolve now is
-      // harmless because calling resolve a second time has no effect.
-      thenInfo.resolve(result);
+      try {  // Handle throws and exceptions.
+        var result = thenInfo.thenResolve(this.result_);
+        // Calling then creates a Promise. If the then resolve code didn't
+        // resolve do it now. If the then did resolve/reject then calling
+        // resolve now is harmless because calling resolve a second time has no
+        // effect.
+        thenInfo.resolve(result);
+      } catch (e) {
+        thenInfo.reject(e);
+      }
     } else {
       // Handle an empty then.
       thenInfo.resolve(this.result_);
     }
   } else {
     if (thenInfo.thenReject) {
-      var result = thenInfo.thenReject(this.result_);
-      // See the comment above in the "if (thenInfo.thenResolve)" clause.
-      thenInfo.resolve(result);
+      try {  // Handle throws and exceptions.
+        var result = thenInfo.thenReject(this.result_);
+        // See the comment above in the "if (thenInfo.thenResolve)" clause.
+        thenInfo.resolve(result);
+      } catch (e) {
+        thenInfo.reject(e);
+      }
     } else {
       // Handle an empty reject.
       thenInfo.reject(this.result_);
