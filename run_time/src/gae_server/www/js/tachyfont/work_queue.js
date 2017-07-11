@@ -65,10 +65,13 @@ tachyfont.WorkQueue.prototype.runNextTask = function() {
     return;
   }
   var task = this.queue_[0];
-  task.run().thenAlways(function() {
-    this.queue_.shift();
-    this.runNextTask();
-  }, this);
+  task.run().thenAlways(
+      /** @this {tachyfont.WorkQueue} */
+      function() {
+        this.queue_.shift();
+        this.runNextTask();
+      },
+      this);
 };
 
 

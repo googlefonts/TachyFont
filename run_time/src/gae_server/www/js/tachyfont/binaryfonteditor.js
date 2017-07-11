@@ -65,7 +65,7 @@ tachyfont.BinaryFontEditor.prototype.getElementOffset = function(offSize) {
       offset = this.getUint32();
       break;
     default:
-      throw 'invalid offset size: ' + offSize;
+      throw new Error('invalid offset size: ' + offSize);
   }
   return offset;
 };
@@ -447,8 +447,9 @@ tachyfont.BinaryFontEditor.readOps.CCMP = function(editor, fileInfo) {
       if (gos_type_4_lens.segments[i] == 0) {
         // The only time there is a format 4 segment with no format 12
         // segment is the format 4 end segment 0xFFFF.
-        if (i != fmt4SegCount - 1)
-          throw 'invalid segment';
+        if (i != fmt4SegCount - 1) {
+          throw new Error('invalid segment');
+        }
         // Add the format 4 last segment.
         format_4_arrays.push([0xFFFF, 0xFFFF, 1, 0]);
         continue;
@@ -488,7 +489,7 @@ tachyfont.BinaryFontEditor.readOps.CCMP = function(editor, fileInfo) {
           }
         }
         if (glyphIdIdx != glyphIdArray.length)
-          throw 'glyphIdArray update failure';
+          throw new Error('glyphIdArray update failure');
       }
       format_4_arrays.push([startCode, endCode, idDelta, idRangeOffset]);
     }
@@ -607,17 +608,18 @@ tachyfont.BinaryFontEditor.parseBaseHeader = function(headerBytes) {
 tachyfont.BinaryFontEditor.prototype.parseBaseHeader = function() {
   var magic = this.readString(4);
   if (magic != tachyfont.BinaryFontEditor.magicHead) {
-    throw 'magic number mismatch: expected ' +
-        tachyfont.BinaryFontEditor.magicHead + ' but got ' + magic;
+    throw new Error(
+        'magic number mismatch: expected ' +
+        tachyfont.BinaryFontEditor.magicHead + ' but got ' + magic);
   }
   var fileInfo = {};
   fileInfo.headSize = this.getInt32();
   if (!fileInfo.headSize) {
-    throw 'Invalid head size!';
+    throw new Error('Invalid head size!');
   }
   fileInfo.version = this.getInt32();
   if (fileInfo.version != tachyfont.BinaryFontEditor.BASE_VERSION) {
-    throw 'Incompatible Base Font Version!';
+    throw new Error('Incompatible Base Font Version!');
   }
   var count = this.getUint16();
   var tag;
@@ -628,7 +630,7 @@ tachyfont.BinaryFontEditor.prototype.parseBaseHeader = function() {
     tag = this.readString(4);
     tagOffset = this.getUint32();
     if (!tachyfont.BinaryFontEditor.TAGS.hasOwnProperty(tag)) {//unknown tag
-      throw 'Unknown Base Font Header TAG';
+      throw new Error('Unknown Base Font Header TAG');
     }
     saveOffset = this.tell();
     this.seek(dataStart + tagOffset);
