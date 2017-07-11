@@ -35,6 +35,7 @@ goog.require('tachyfont.Promise');
 goog.require('tachyfont.RLEDecoder');
 goog.require('tachyfont.Reporter');
 goog.require('tachyfont.Sfnt');
+goog.require('tachyfont.SparseBitArray');
 goog.require('tachyfont.SynchronousResolutionPromise');
 goog.require('tachyfont.WorkQueue');
 goog.require('tachyfont.log');
@@ -112,6 +113,7 @@ tachyfont.IncrementalFont.Error = {
   // 65 no longer used.
   SAVE_BASE_DATA: '66',
   SAVE_CHARLIST_DATA: '67',
+  CALC_NEEDED_CHARS: '68',
   END: '00'
 };
 
@@ -239,8 +241,8 @@ tachyfont.IncrementalFont.obj = function(fontInfo, params, backendService) {
   /** @private {string} The sha1 fingerprint of the font. */
   this.sha1_fingerprint_ = '';
 
-  /** @private {!Object<number, boolean>} A map of the loadable codepoints. */
-  this.loadableCodepoints_ = {};
+  /** @private {!tachyfont.SparseBitArray} A map of the loadable codepoints. */
+  this.loadableCodepoints_ = new tachyfont.SparseBitArray();
 
   /** @private {string} */
   this.fontId_ = fontId;
@@ -389,7 +391,7 @@ tachyfont.IncrementalFont.obj.prototype.setFileInfo = function(fileInfo) {
   var codepoints = Object.keys(fileInfo.cmapMapping);
   for (var i = 0; i < codepoints.length; i++) {
     var codepoint = parseInt(codepoints[i], 10);
-    this.loadableCodepoints_[codepoint] = true;
+    this.loadableCodepoints_.setBit(codepoint);
   }
   this.isTtf_ = fileInfo.isTtf;
   this.sha1_fingerprint_ = fileInfo.sha1_fingerprint;
@@ -774,7 +776,7 @@ tachyfont.IncrementalFont.obj.prototype.setFont = function(fontData) {
  * @param {!Array<number>} codes The codepoints to add obusfuscation to.
  * @param {!Object} alreadyRequestedChars The chars that have already been
  *     requested.
- * @param {!Object<number,boolean>} loadableCodepoints A map of the
+ * @param {!tachyfont.SparseBitArray} loadableCodepoints A map of the
  *     codepoints supported in the font.
  * @return {!Array<number>} The codepoints with obusfuscation.
  */
@@ -807,7 +809,7 @@ tachyfont.IncrementalFont.possibly_obfuscate = function(
     }
     var top = code + tachyfont.Define.OBFUSCATION_RANGE / 2;
     var newCode = Math.floor(goog.math.uniformRandom(bottom, top + 1));
-    if (!loadableCodepoints[newCode]) {
+    if (!loadableCodepoints.isSet(newCode)) {
       // This code is not supported in the font.
       continue;
     }
@@ -843,10 +845,24 @@ tachyfont.IncrementalFont.obj.prototype.loadChars = function() {
       .then(function() {
         goog.asserts.assert(this.haveReadFileInfo_);
         return this.calcNeededChars()
-            .then(function(neededCodes_) {
-              neededCodes = neededCodes_;
-              return this.fetchChars(neededCodes_);
-            }.bind(this))
+            .then(
+                function(neededCodes_) {
+                  if (neededCodes_.length == 0) {
+                    return goog.Promise.reject('no chars to load');
+                  }
+                  neededCodes = neededCodes_;
+                  return this.fetchChars(neededCodes_);
+                },
+                function(e) {  //
+                  // Report calcNeededChars asserts.
+                  // TODO(bstell): if this is not reporting then remove it by
+                  // 2016-0-10-01
+                  tachyfont.IncrementalFont.reportError(
+                      tachyfont.IncrementalFont.Error.CALC_NEEDED_CHARS,
+                      this.fontId_, e);
+                  return goog.Promise.reject(e);
+                },
+                this)
             .then(function(bundleResponse) {
               if (bundleResponse == null) {
                 return goog.Promise.reject('bundleResponse == null');
@@ -988,7 +1004,7 @@ tachyfont.IncrementalFont.obj.prototype.calcNeededChars = function() {
           var c = charArray[i];
           var code = tachyfont.utils.charToCode(c);
           // Check if the font supports the char and it is not loaded.
-          if (this.loadableCodepoints_[code] && !tmp_charlist[c]) {
+          if (this.loadableCodepoints_.isSet(code) && !tmp_charlist[c]) {
             neededCodes.push(code);
             tmp_charlist[c] = 1;
           }
@@ -1002,7 +1018,7 @@ tachyfont.IncrementalFont.obj.prototype.calcNeededChars = function() {
         tachyfont.Reporter.addItem(
             tachyfont.IncrementalFont.Log.MISS_RATE + this.fontId_, missRate);
         if (neededCodes.length == 0) {
-          return goog.Promise.reject('no chars to load');
+          return goog.Promise.resolve(neededCodes);
         }
         goog.asserts.assert(this.haveReadFileInfo_);
         neededCodes = tachyfont.IncrementalFont.possibly_obfuscate(
