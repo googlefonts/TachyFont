@@ -21,6 +21,7 @@ goog.provide('tachyfont');
 goog.provide('tachyfont.Error');
 goog.provide('tachyfont.TachyFont');
 
+goog.require('goog.asserts');
 goog.require('goog.Promise');
 goog.require('goog.Uri');
 goog.require('goog.debug.Logger');
@@ -48,7 +49,7 @@ tachyfont.TachyFont = function(fontInfo, dropData, opt_params) {
 
   /**
    * The object that handles the binary manipulation of the font data.
-   *
+   * @type {!tachyfont.IncrementalFont.obj}
    * TODO(bstell): integrate the manager into this object.
    */
   this.incrfont = tachyfont.IncrementalFont.createManager(fontInfo, dropData,
@@ -571,8 +572,9 @@ tachyfont.loadFonts_loadAndUse_ = function(tachyFontSet) {
  *     fonts.
  */
 tachyfont.loadFonts_initFontInfosUrls = function(fontsInfo) {
+  var port = goog.asserts.assertString(window.location.port);
   var serverUrl = window.location.protocol + '//' + window.location.hostname +
-      (window.location.port ? ':' + window.location.port : '');
+      (port ? ':' + port : '');
   if (!fontsInfo.getDataUrl()) {
     fontsInfo.setDataUrl(serverUrl);
   }
