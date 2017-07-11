@@ -125,8 +125,6 @@ SparseBitArray.prototype.isSet = function(index) {
   var pageIndex = index >> SparseBitArray.PAGE_SHIFT;
   var pageBitArray = this.pages_[pageIndex];
   if (!pageBitArray) {
-    goog.asserts.assert(
-        !this.alternateBitInfo_[index], 'bit %s should not be set', index);
     return false;
   }
   var pageBitIndex = index & SparseBitArray.PAGE_MASK;
