@@ -21,9 +21,9 @@ goog.provide('tachyfont');
 goog.provide('tachyfont.Error');
 goog.provide('tachyfont.TachyFont');
 
-goog.require('goog.asserts');
 goog.require('goog.Promise');
 goog.require('goog.Uri');
+goog.require('goog.asserts');
 goog.require('goog.debug.Logger');
 goog.require('tachyfont.Define');
 /** @suppress {extraRequire} */

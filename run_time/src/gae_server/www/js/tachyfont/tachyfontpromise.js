@@ -218,29 +218,12 @@ tachyfont.Promise.Chained = function(msg) {
   this.msg_ = msg + ': ';
 
   /**
-   * For debug: an interval timer used to detect deadlock.
-   * @private {number}
+   * Start a chained timer to detect deadlock.
    */
-  this.intervalId_ = setInterval(function() {
-    if (this.pendingCount_ != 0) {
-      if (goog.DEBUG) {
-        tachyfont.log.warning(
-            this.msg_ + 'lingering pending count: ' + this.pendingCount_);
-      }
-      this.timerReportCount_++;
-      if (this.timerReportCount_ >= 10) {
-        tachyfont.Promise.Encapsulated.reportError_(
-            tachyfont.Promise.Encapsulated.Error_.LINGERING_PROMISE,
-            this.msg_ + 'gave up checking for pending count');
-        clearInterval(this.intervalId_);
-      }
-    } else {
-      this.timerReportCount_ = 0;
-    }
-  }.bind(this), 10000);
+  this.checkForLingeringPromise();
 
   /**
-   * An interval timer used to detect deadlock.
+   * The number of times the timeout has happened.
    * @private {number}
    */
   this.timerReportCount_ = 0;
@@ -270,3 +253,28 @@ tachyfont.Promise.Chained.prototype.getChainedPromise = function(msg) {
   return newPromise;
 };
 
+
+/**
+ * Checks if a promise has not resolved in a reasonable time.
+ * This may indicate slowness or a deadlock.
+ */
+tachyfont.Promise.Chained.prototype.checkForLingeringPromise = function() {
+  setTimeout(function() {
+    if (this.pendingCount_ != 0) {
+      if (goog.DEBUG) {
+        tachyfont.log.warning(
+            this.msg_ + 'lingering pending count: ' + this.pendingCount_);
+      }
+      this.timerReportCount_++;
+      if (this.timerReportCount_ < 10) {
+        this.checkForLingeringPromise();
+      } else {
+        tachyfont.Promise.Encapsulated.reportError_(
+            tachyfont.Promise.Encapsulated.Error_.LINGERING_PROMISE,
+            this.msg_ + 'gave up checking for pending count');
+      }
+    } else {
+      this.timerReportCount_ = 0;
+    }
+  }.bind(this), 10000);
+};
