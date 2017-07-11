@@ -225,6 +225,7 @@ tachyfont.CompactCff.injectChars = function(
     fontInfo, neededCodes, bundleResponse) {
   var transaction;
   var fontId = fontInfo.getFontId();
+  /** @type {!tachyfont.CompactCff} */
   var compactCff;
   var db = null;
   // Get the db handle.

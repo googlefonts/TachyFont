@@ -244,7 +244,10 @@ tachyfont.Promise.Chained = function(msg) {
    * @private {number}
    */
   this.timerReportCount_ = 0;
+
+  /** @type {!Array<!tachyfont.Promise.Encapsulated>} */
   this.promises = [];
+
   var firstPromise = new tachyfont.Promise.Encapsulated(this);
   firstPromise.precedingPromise_ = firstPromise.promise_;
   this.promises.push(firstPromise);
