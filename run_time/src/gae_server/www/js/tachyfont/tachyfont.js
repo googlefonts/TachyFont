@@ -491,7 +491,9 @@ tachyfont.isSupportedBrowser = function(opt_windowObject) {
     isSupported = false;
   }
   if (typeof Uint8Array.from != 'function') {
-    tachyfont.reportError(tachyfont.Error.NO_UINT8ARRAY_FROM);
+    tachyfont.reportError(
+        tachyfont.Error.NO_UINT8ARRAY_FROM,
+        'typeof=' + (typeof Uint8Array.from));
     isSupported = false;
   }
 
