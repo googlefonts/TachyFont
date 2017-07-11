@@ -236,8 +236,9 @@ tachyfont.BinaryEditor.prototype.seek = function(newOffset) {
  * @param {number} len
  */
 tachyfont.BinaryEditor.prototype.skip = function(len) {
-  if (len < 0)
-    throw 'Only nonnegative numbers are accepted';
+  if (len < 0) {
+    throw new Error('Only nonnegative numbers are accepted');
+  }
   this.offset_ += len;
 };
 

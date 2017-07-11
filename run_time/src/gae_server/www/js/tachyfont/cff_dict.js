@@ -384,7 +384,13 @@ tachyfont.CffDict.parseNibbles_ = function(binaryEditor) {
 /**
  * Defines the CFF DICT operators used in by tachyfont when lazily loading glyph
  * data.
- * @const {!Object<string, string>}
+ * @const {{
+ *   FD_ARRAY: string,
+ *   FD_SELECT: string,
+ *   CHAR_STRINGS: string,
+ *   CHARSET: string,
+ *   PRIVATE: string
+ * }}
  */
 tachyfont.CffDict.Operator = {
   FD_ARRAY: '12 36',

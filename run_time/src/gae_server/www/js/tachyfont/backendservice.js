@@ -142,10 +142,10 @@ BackendService.prototype.requestUrl = function(url, method, postData,
     var xhr = new goog.net.XhrIo();
     xhr.setResponseType(goog.net.XhrIo.ResponseType.ARRAY_BUFFER);
     goog.events.listen(xhr, goog.net.EventType.COMPLETE, function(e) {
-      if (this.isSuccess()) {
-        resolve(this.getResponse());
+      if (xhr.isSuccess()) {
+        resolve(xhr.getResponse());
       } else {
-        reject(this.getStatus() + ' ' + this.getStatusText());
+        reject(xhr.getStatus() + ' ' + xhr.getStatusText());
       }
     });
 

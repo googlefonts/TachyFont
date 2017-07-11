@@ -532,21 +532,25 @@ tachyfont.IncrementalFont.obj.prototype.getCompactFontFromPersistence =
             tachyfont.IncrementalFont.Error.COMPACT_GET_DB, fontId, e);
         return tachyfont.SynchronousResolutionPromise.reject(e);
       }.bind(this))
-      .then(function(db) {
-        // TODO(bstell): the concept of a transaction belongs in the
-        // persistence level.
-        var transaction =
-            db.transaction(tachyfont.Define.compactStoreNames, 'readonly');
-        return tachyfont.Persist
-            // TODO(bstell): Reuse code in readDbTable instead of getStores.
-            .getStores(transaction, tachyfont.Define.compactStoreNames)
-            .thenCatch(function(e) {  // TODO(bstell): remove this debug code
-              tachyfont.IncrementalFont.reportError(
-                  tachyfont.IncrementalFont.Error.COMPACT_GET_STORES, fontId,
-                  e);
-              return tachyfont.SynchronousResolutionPromise.reject(e);
-            }.bind(this));
-      })
+      .then(
+          /** @this {tachyfont.IncrementalFont.obj} */
+          function(db) {
+            // TODO(bstell): the concept of a transaction belongs in the
+            // persistence level.
+            var transaction =
+                db.transaction(tachyfont.Define.compactStoreNames, 'readonly');
+            return tachyfont
+                .Persist
+                // TODO(bstell): Reuse code in readDbTable instead of getStores.
+                .getStores(transaction, tachyfont.Define.compactStoreNames)
+                .thenCatch(function(e) {
+                  // TODO(bstell): remove this debug code
+                  tachyfont.IncrementalFont.reportError(
+                      tachyfont.IncrementalFont.Error.COMPACT_GET_STORES,
+                      fontId, e);
+                  return tachyfont.SynchronousResolutionPromise.reject(e);
+                });
+          })
       .then(function(arr) {
         // Check there was data.
         var fontData = arr[0];
