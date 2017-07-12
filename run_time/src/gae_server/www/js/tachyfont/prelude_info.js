@@ -34,7 +34,8 @@ tachyfont.PreludeInfo = function() {
    * more accurate to get this from the prelude code if that is available.
    * @private {number}
    */
-  this.startTime_ = this.tachyfontprelude['startTime'] || Date.now();
+  // this.startTime_ = this.tachyfontprelude['startTime'] || Date.now();
+  this.startTime_ = Date.now();
 
 };
 
@@ -54,7 +55,8 @@ tachyfont.PreludeInfo.prototype.getActualPrelude = function() {
  * @return {boolean}
  */
 tachyfont.PreludeInfo.prototype.getDomContentLoaded = function() {
-  return !!this.tachyfontprelude['DOMContentLoaded'];
+  // return !!this.tachyfontprelude['DOMContentLoaded'];
+  return false;
 };
 
 
@@ -63,7 +65,8 @@ tachyfont.PreludeInfo.prototype.getDomContentLoaded = function() {
  * @return {boolean}
  */
 tachyfont.PreludeInfo.prototype.getDomMutationObserved = function() {
-  return !!this.tachyfontprelude['DomMutationObserved'];
+  // return !!this.tachyfontprelude['DomMutationObserved'];
+  return false;
 };
 
 
