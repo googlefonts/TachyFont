@@ -197,7 +197,6 @@
    * @return {!Promise<boolean>} Resolves true if all the fonts were persisted.
    */
   launcher.loadFonts = function(cssFontFamily, fontFamily, isTtf, weights) {
-    debugger;
     var fontInfos = [];
     for (var i = 0; i < weights.length; i++) {
       fontInfos.push(
@@ -326,7 +325,6 @@
    * @param {string} srcStr The src string for the \@font-face
    */
   function setCssFontRule(sheet, cssFontFamily, weight, srcStr) {
-    debugger;
     var rule_str = '@font-face{' +
         'font-family: ' + cssFontFamily + ';' +
         'font-weight: ' + weight + ';' +
@@ -530,7 +528,6 @@
    */
   launcher.recursivelyAdjustCssFontFamilies = function(
       cssFontFamily, cssFontFamilyToAugment, node) {
-    debugger;
     launcher.adjustCssFontFamilies(cssFontFamily, cssFontFamilyToAugment, node);
     var children = node.childNodes;
     for (var i = 0; i < children.length; i++) {
@@ -549,7 +546,6 @@
    */
   launcher.adjustCssFontFamilies = function(
       cssFontFamily, cssFontFamilyToAugment, node) {
-    debugger;
     if (node.nodeType != Node.ELEMENT_NODE) {
       return;
     }
@@ -614,7 +610,6 @@
    * @return {string} The trimed font-family name.
    */
   launcher.trimCssFontFamily = function(cssFontFamily) {
-    debugger;
     var trimmedName = cssFontFamily.trim();
     var firstChar = trimmedName.charAt(0);
     var lastChar = trimmedName.charAt(trimmedName.length - 1);
