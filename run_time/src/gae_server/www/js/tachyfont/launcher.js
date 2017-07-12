@@ -1,6 +1,7 @@
 'use strict';
 
 /**
+ * @license
  * Copyright 2017 Google Inc. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -61,26 +62,6 @@
   var COMPACT_FONT = 'compact_font';
 
 
-  /** @const {string} The db store name for the metadata. */
-  var COMPACT_META = 'compact_metadata';
-
-
-  /** @const {string} The db store name for the metadata. */
-  var CREATED_METADATA_TIME = 'created_metadata_time';
-
-
-  /**
-   * The persistence 'stable' time in milliseconds.
-   * If the data was only recently created then it could be the first time the
-   * client has ever used TachyFont. This should be fairly infrequent. However,
-   * it is also possible that the data was recently created because the client
-   * has an auto clean feature that is automatically deleting the data. This is
-   * the sum of the global and per font stable times.
-   * @type {number}
-   */
-  var STABLE_DATA_TIME = 24 * 60 * 60 * 1000;
-
-
   /** @const {string} The Style Sheet ID. */
   var STYLESHEET_ID = 'Incremental\u00A0Font\u00A0Utils';
 
@@ -91,17 +72,6 @@
 
   /** @const {string} IndexedDB missing the base field error. */
   var ERROR_LAUNCHER_MISSING_BASE = '02';
-
-
-  /** @const {string} IndexedDB missing the metadata field error. */
-  var ERROR_LAUNCHER_MISSING_METADATA = '06';
-
-
-  /**
-   * Indicates the data is younger than the 'stable' time.
-   * @const {string}
-   */
-  var ERROR_LAUNCHER_BELOW_STABLE_TIME = '07';
 
 
   /**
@@ -303,25 +273,6 @@
    */
   launcher.getFontData = function(fontInfo) {
     return openIDB(fontInfo)
-        .then(function(db) {
-          return launcher.getData(db, COMPACT_META)
-              .then(
-                  function(metadata) {
-                    // Check metadata age.
-                    var age = START_TIME -
-                        (metadata[CREATED_METADATA_TIME] || START_TIME);
-                    if (age < STABLE_DATA_TIME) {
-                      db.close();
-                      return newRejectedPromise(
-                          ERROR_LAUNCHER_BELOW_STABLE_TIME);
-                    }
-                    return db;
-                  },
-                  function() {
-                    db.close();
-                    return newRejectedPromise(ERROR_LAUNCHER_MISSING_METADATA);
-                  });
-        })
         .then(function(db) {
           return launcher.getData(db, COMPACT_FONT)
               .then(
