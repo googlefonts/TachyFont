@@ -20,7 +20,6 @@
 goog.provide('tachyfont.Reporter');
 
 goog.require('goog.userAgent');
-goog.require('tachyfont.log');
 
 
 
@@ -33,10 +32,31 @@ goog.require('tachyfont.log');
 tachyfont.Reporter = function(url) {
 
   /** @private {string} */
-  this.url_ = url;
+  this.url_ = url + tachyfont.Reporter.URL_PATH;
 
   /** @private {!Object<string, (number|string)>} */
   this.items_ = {};
+};
+
+
+/**
+ * The gen_204 path.
+ * @type {string}
+ */
+tachyfont.Reporter.URL_PATH = '/gen_204?id=tf&';
+
+
+/**
+ * Enum for report params.
+ * @enum {string}
+ */
+tachyfont.Reporter.Param = {
+  ERROR_ID: 'ei',
+  ERROR_TYPE: 'er',
+  LOG_TYPE: 'lg',
+  MOBILE: 'm',
+  REPORT_TYPE: 'rt',
+  END: ''
 };
 
 
@@ -119,25 +139,23 @@ tachyfont.Reporter.addItem = function(name, value) {
 
 /**
  * Sends an error report.
- * @param {string} errNum The error number.
- * @param {string} id Identifying information.
+ * @param {string} errorId The error id.
+ * @param {string} fontId Font identifying information.
  * @param {*} errInfo The error information.
  */
-tachyfont.Reporter.reportError = function(errNum, id, errInfo) {
+tachyfont.Reporter.reportError = function(errorId, fontId, errInfo) {
   if (tachyfont.Reporter.instance_ == null) {
-    // Failed to report the error.
-    if (goog.DEBUG) {
-      tachyfont.log.severe(
-          'failed to report error: errNum = ' + errNum + ', id = ' + id +
-          ', errInfo = ' + errInfo);
-    }
     return;
   }
-
-  // Move any pre-existing items aside.
-  var preexistingItems = tachyfont.Reporter.instance_.items_;
-  tachyfont.Reporter.instance_.items_ = {};
-  var name = errNum + '.' + id;
+  var params = [];
+  params.push(
+      tachyfont.Reporter.Param.REPORT_TYPE + '=' +
+      tachyfont.Reporter.Param.ERROR_TYPE);
+  params.push(tachyfont.Reporter.Param.ERROR_ID + '=' + errorId);
+  params.push(
+      tachyfont.Reporter.Param.MOBILE + '=' +
+      (goog.userAgent.MOBILE ? '1' : '0'));
+  var name = errorId + '.' + fontId;
   var msg = '';
 
   // Get the error message out of the error object.
@@ -187,32 +205,14 @@ tachyfont.Reporter.reportError = function(errNum, id, errInfo) {
         }
       }
     }
-    if (goog.DEBUG) {
-      if (!msg) {
-        debugger;
-        tachyfont.log.severe('unsupported error object');
-      }
-    }
   }
-  tachyfont.Reporter.addItem(name, msg);
-  if (goog.DEBUG) {
-    var keys = Object.keys(tachyfont.Reporter.instance_.items_);
-    keys.sort();
-    for (var i = 0; i < keys.length; i++) {
-      name = keys[i];
-    }
-  }
-  tachyfont.Reporter.sendReport();
-
-  // Restore any pre-existing items.
-  tachyfont.Reporter.instance_.items_ = preexistingItems;
-
-
+  params.push(name + '=' + msg);
+  tachyfont.Reporter.sendGen204_(params);
 };
 
 
 /**
- * Sends the report.
+ * Sends a log report.
  */
 tachyfont.Reporter.sendReport = function() {
   var keys = Object.keys(tachyfont.Reporter.instance_.items_);
@@ -221,10 +221,15 @@ tachyfont.Reporter.sendReport = function() {
     return;
   }
 
-  var baseUrl = tachyfont.Reporter.instance_.url_ + '/gen_204?id=tf&';
-  var length = baseUrl.length;
+  var length = tachyfont.Reporter.instance_.url_.length;
   var items = [];
-  var item = 'm=' + (goog.userAgent.MOBILE ? '1' : '0');
+  var item = tachyfont.Reporter.Param.REPORT_TYPE + '=' +
+      tachyfont.Reporter.Param.LOG_TYPE;
+  length += item.length;
+  items.push(item);
+
+  item = tachyfont.Reporter.Param.MOBILE + '=' +
+      (goog.userAgent.MOBILE ? '1' : '0');
   length += item.length;
   items.push(item);
   for (var i = 0; i < keys.length; i++) {
@@ -234,28 +239,25 @@ tachyfont.Reporter.sendReport = function() {
     delete tachyfont.Reporter.instance_.items_[name];
     item = encodeURIComponent(name) + '=' + value;
     if (length + item.length > 2000) {
-      tachyfont.Reporter.sendGen204_(baseUrl, items);
-      length = baseUrl.length;
+      tachyfont.Reporter.sendGen204_(items);
+      length = tachyfont.Reporter.instance_.url_.length;
       items = [];
     }
     length += item.length;
     items.push(item);
   }
-  tachyfont.Reporter.sendGen204_(baseUrl, items);
+  tachyfont.Reporter.sendGen204_(items);
 };
 
 
 /**
  * Sends the gen_204.
- * @param {string} baseUrl The url to send the GET to.
  * @param {!Array<string>} params The URL parameters.
  * @private
  */
-tachyfont.Reporter.sendGen204_ = function(baseUrl, params) {
-  var reportUrl = baseUrl + params.join('&') + '&jsmode=SU';
-  if (goog.DEBUG) {
-    tachyfont.log.info('report: ' + params.join(', '));
-  }
+tachyfont.Reporter.sendGen204_ = function(params) {
+  var reportUrl =
+      tachyfont.Reporter.instance_.url_ + params.join('&') + '&jsmode=SU';
   var image = new Image();
   image.onload = image.onerror = tachyfont.Reporter.cleanUpFunc_(image);
   image.src = reportUrl;
@@ -273,4 +275,3 @@ tachyfont.Reporter.cleanUpFunc_ = function(image) {
     image.onload = image.onerror = null;
   };
 };
-
