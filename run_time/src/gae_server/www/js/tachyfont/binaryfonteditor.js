@@ -721,15 +721,9 @@ tachyfont.BinaryFontEditor.getCmapMapping = function(headerInfo) {
         if (idRangeOffset == 0) {
           glyphId = (code + idDelta) % 65536;
         } else {
-          if (goog.DEBUG) {
-            debugger;  // TODO(bstell): verify this code.
-          }
           glyphId = glyphIdArray[glyphIdIndex++];
           if (glyphId == 0) {
             // This code is not mapped in the font.
-            if (goog.DEBUG) {
-              debugger;  // TODO(bstell): verify this code.
-            }
             continue;
           }
         }
@@ -741,9 +735,6 @@ tachyfont.BinaryFontEditor.getCmapMapping = function(headerInfo) {
 
 
   if (!headerInfo.compact_gos.cmap12) {
-    if (goog.DEBUG) {
-      debugger;  // TODO(bstell): need to handle this.
-    }
     return cmapMapping;
   }
   var n12Groups = headerInfo.cmap12.nGroups;
