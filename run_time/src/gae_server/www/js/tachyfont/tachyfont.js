@@ -160,6 +160,7 @@ tachyfont.TachyFont.GLOBAL_STABLE_DATA_TIME = 24 * 60 * 60 * 1000;
  * Enum for error values.
  * @enum {string}
  */
+// LINT.IfChange
 tachyfont.Error = {
   FILE_ID: 'ETF',
   // 02-03 no longer used.
@@ -182,6 +183,8 @@ tachyfont.Error = {
   NO_UINT8ARRAY_FROM: '21',
   END: '00'
 };
+// LINT.ThenChange(//depot/google3/\
+//     java/com/google/i18n/tachyfont/http/error-reports.properties)
 
 
 /**
@@ -189,11 +192,14 @@ tachyfont.Error = {
  * @enum {string}
  * @private
  */
+// LINT.IfChange
 tachyfont.Log_ = {
   LOAD_FONTS: 'LTFLF.',
   LOAD_FONTS_WAIT_PREVIOUS: 'LTFLW.',
   END: ''
 };
+// LINT.ThenChange(//depot/google3/\
+//     java/com/google/i18n/tachyfont/http/log-reports.properties)
 
 
 /**
@@ -336,7 +342,10 @@ tachyfont.sendLauncherReports = function(launcherInfo) {
       tachyfont.Reporter.reportError('EPL' + errorNumber, id, '');
     } else if (reportType == 'l') {  // Log report.
       var time = report[1];
+      // LINT.IfChange
       tachyfont.Reporter.addItem('LPLLT.' + id, time);
+      // LINT.ThenChange(//depot/google3/\
+      //     java/com/google/i18n/tachyfont/http/error-reports.properties)
     }
   }
 };

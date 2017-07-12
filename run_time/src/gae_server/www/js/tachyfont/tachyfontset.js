@@ -96,24 +96,30 @@ tachyfont.TachyFontSet = function(cssFontFamily, cssFontFamilyToAugment) {
  * Enum for logging values.
  * @enum {string}
  */
+// LINT.IfChange
 tachyfont.TachyFontSet.Log = {
   SET_FONT: 'LTSSF.',
   SET_FONT_PRIORITY: 'LTSSP.',
   SET_FONT_DELAYED: 'LTSSD.',
   SET_FONT_DOM_LOADED: 'LTSSL.'
 };
+// LINT.ThenChange(//depot/google3/\
+//     java/com/google/i18n/tachyfont/http/log-reports.properties)
 
 
 /**
  * Enum for error values.
  * @enum {string}
  */
+// LINT.IfChange
 tachyfont.TachyFontSet.Error = {
   FILE_ID: 'ETS',
   UPDATE_FONT_LOAD_CHARS: '01',
   // 02 no longer used.
   SET_FONT: '03'
 };
+// LINT.ThenChange(//depot/google3/\
+//     java/com/google/i18n/tachyfont/http/error-reports.properties)
 
 
 /**

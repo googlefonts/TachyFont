@@ -31,6 +31,7 @@ goog.require('tachyfont.SyncPromise');
  * Enum for error values.
  * @enum {string}
  */
+// LINT.IfChange
 tachyfont.Persist.Error = {
   FILE_ID: 'EPI',
   IDB_OPEN: '01',
@@ -52,6 +53,8 @@ tachyfont.Persist.Error = {
   DELETE_IDB: '18',
   END_VALUE: '00'
 };
+// LINT.ThenChange(//depot/google3/\
+//     java/com/google/i18n/tachyfont/http/error-reports.properties)
 
 
 /**
