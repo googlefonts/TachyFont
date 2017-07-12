@@ -291,17 +291,16 @@
    * @param {string} cssFontFamily The CSS font-family name.
    * @param {?DataView} fontDataView The font data.
    * @param {!tachyfontprelude.FontInfo} fontInfo Info about this font.
-   * @param {boolean} recordTime Whether the font loading time should be
-   *     recorded.
+   * @param {boolean} reportTime Whether the font loading time should be
+   *     reported.
    * @return {!Promise} The promise resolves when the glyphs are displaying.
    */
   tachyfontprelude.setFontNoFlash = function(
-      cssFontFamily, fontDataView, fontInfo, recordTime) {
+      cssFontFamily, fontDataView, fontInfo, reportTime) {
     var weight = fontInfo.weight;
 
     var mimeType;
     var format;
-    var srcStr;
     if (fontInfo.isTtf) {
       mimeType = 'font/ttf';  // 'application/x-font-ttf';
       format = 'truetype';
@@ -311,7 +310,7 @@
     }
     var blob = new Blob([fontDataView], {type: mimeType});
     var blobUrl = window.URL.createObjectURL(blob);
-    srcStr = 'url("' + blobUrl + '") ' +
+    var srcStr = 'url("' + blobUrl + '") ' +
         'format("' + format + '");';
 
     // Load the font data under a font-face that is not getting used.
@@ -325,13 +324,13 @@
           fontFace.weight = weight;
           document.fonts.add(fontFace);
           return fontFace.load().then(
-              nullFunction, nullFunction)  // Ignore loading errors.
+              nullFunction, nullFunction);  // Ignore loading errors.
         })
         .then(function(value) {
-          if (!recordTime) {
+          if (!reportTime) {
             return;
           }
-          // Record the font ready time.
+          // Report the font ready time.
           reports.push(['l', (new Date()).getTime() - START_TIME, weight]);
           var oldBlobUrl = tachyfontprelude[weight];
           if (oldBlobUrl) {
