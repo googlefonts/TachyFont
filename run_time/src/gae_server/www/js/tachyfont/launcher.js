@@ -471,7 +471,6 @@
           var FontsInfo = tachyfont['FontsInfo'];
           var fontsInfo = new FontsInfo(fontInfos, dataUrl, dataUrl);
           var loadFonts = tachyfont['loadFonts'];
-          debugger;
           loadFonts(cssFontFamily, fontsInfo);
         });
   };
