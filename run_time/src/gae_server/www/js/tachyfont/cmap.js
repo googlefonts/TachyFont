@@ -29,6 +29,7 @@ goog.require('tachyfont.utils');
  * Enum for error values.
  * @enum {string}
  */
+// LINT.IfChange
 tachyfont.Cmap.Error = {
   FILE_ID: 'ECM',
   // The code reporting errors 01-09 commented out.
@@ -56,6 +57,8 @@ tachyfont.Cmap.Error = {
   SET_FORMAT4_GLYPHIDS_UNSUPPORTED: '24',
   END: '00'
 };
+// LINT.ThenChange(//depot/google3/\
+//     java/com/google/i18n/tachyfont/http/error-reports.properties)
 
 
 /**

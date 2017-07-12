@@ -57,6 +57,7 @@ tachyfont.CompactCff = function(fontId, fontTableData) {
  * Enum for error values.
  * @enum {string}
  */
+// LINT.IfChange
 tachyfont.CompactCff.Error = {
   FILE_ID: 'ECC',
   // 01 no longer used.
@@ -74,6 +75,8 @@ tachyfont.CompactCff.Error = {
   UINT8ARRAY_FROM: '13',
   END: '00'
 };
+// LINT.ThenChange(//depot/google3/\
+//     java/com/google/i18n/tachyfont/http/error-reports.properties)
 
 
 /**

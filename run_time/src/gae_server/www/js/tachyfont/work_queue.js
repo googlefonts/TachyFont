@@ -88,11 +88,14 @@ tachyfont.WorkQueue.prototype.getLength = function() {
  * Enum for error values.
  * @enum {string}
  */
+// LINT.IfChange
 tachyfont.WorkQueue.Error = {
   FILE_ID: 'EWQ',
   WATCH_DOG_TIMER: '01',
   END: '00'
 };
+// LINT.ThenChange(//depot/google3/\
+//     java/com/google/i18n/tachyfont/http/error-reports.properties)
 
 
 /**

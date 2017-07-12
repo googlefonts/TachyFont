@@ -80,6 +80,7 @@
   var STABLE_DATA_TIME = 24 * 60 * 60 * 1000;
 
 
+  // LINT.IfChange
   /** @const {string} Failed to open IndexedDB error. */
   var ERROR_PRELUDE_INDEXEDDB_OPEN = '01';
 
@@ -97,6 +98,8 @@
    * @const {string}
    */
   var ERROR_PRELUDE_BELOW_STABLE_TIME = '07';
+  // LINT.ThenChange(//depot/google3/\
+  //     java/com/google/i18n/tachyfont/http/error-reports.properties)
 
 
   /**

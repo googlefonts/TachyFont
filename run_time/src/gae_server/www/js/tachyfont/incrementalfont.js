@@ -47,6 +47,7 @@ goog.require('tachyfont.utils');
  * Enum for logging values.
  * @enum {string}
  */
+// LINT.IfChange
 tachyfont.IncrementalFont.Log = {
   CREATE_TACHYFONT: 'LIFCT.',
   DB_OPEN: 'LIFDO.',
@@ -54,12 +55,15 @@ tachyfont.IncrementalFont.Log = {
   MISS_COUNT: 'LIFMC.',
   MISS_RATE: 'LIFMR.'
 };
+// LINT.ThenChange(//depot/google3/\
+//     java/com/google/i18n/tachyfont/http/log-reports.properties)
 
 
 /**
  * Enum for error values.
  * @enum {string}
  */
+// LINT.IfChange
 tachyfont.IncrementalFont.Error = {
   FILE_ID: 'EIF',
   // 01-16 no longer used.
@@ -89,6 +93,8 @@ tachyfont.IncrementalFont.Error = {
   CALC_NEEDED_CHARS: '68',
   END: '00'
 };
+// LINT.ThenChange(//depot/google3/\
+//     java/com/google/i18n/tachyfont/http/error-reports.properties)
 
 
 /**

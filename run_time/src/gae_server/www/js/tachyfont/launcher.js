@@ -59,12 +59,15 @@
   var COMPACT_FONT = 'compact_font';
 
 
+  // LINT.IfChange
   /** @const {string} Failed to open IndexedDB error. */
   var ERROR_LAUNCHER_INDEXEDDB_OPEN = '01';
 
 
   /** @const {string} IndexedDB missing the base field error. */
   var ERROR_LAUNCHER_MISSING_BASE = '02';
+  // LINT.ThenChange(//depot/google3/\
+  //     java/com/google/i18n/tachyfont/http/error-reports.properties)
 
 
   /**

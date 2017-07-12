@@ -87,6 +87,7 @@ tachyfont.Promise.Encapsulated = function(opt_container, opt_msg) {
  * @enum {string}
  * @private
  */
+// LINT.IfChange
 tachyfont.Promise.Encapsulated.Error_ = {
   FILE_ID: 'ETP',
   PRECEDING_PROMISE: '01',
@@ -94,6 +95,8 @@ tachyfont.Promise.Encapsulated.Error_ = {
   REJECT_CHAINED_COUNT: '03',
   LINGERING_PROMISE: '04'
 };
+// LINT.ThenChange(//depot/google3/\
+//     java/com/google/i18n/tachyfont/http/error-reports.properties)
 
 
 /**
