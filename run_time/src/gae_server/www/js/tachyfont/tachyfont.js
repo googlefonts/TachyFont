@@ -216,12 +216,12 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
   if (goog.DEBUG) {
     tachyfont.debugInitialization_();
   }
+  tachyfont.loadFonts_initFontInfosUrls(fontsInfo);
   tachyfont.loadFonts_initReporter(fontsInfo);
   // Sent an "error" report so the number of page loads can be determined on the
   // dashboard.
   tachyfont.reportError(tachyfont.Error.PAGE_LOADED);
   tachyfont.sendPreludeReports();
-  tachyfont.loadFonts_initFontInfosUrls(fontsInfo);
   return tachyfont.checkSystem()
       .then(function() {
         // Check how much can be stored.
@@ -583,6 +583,12 @@ tachyfont.loadFonts_initFontInfosUrls = function(fontsInfo) {
   var port = goog.asserts.assertString(window.location.port);
   var serverUrl = window.location.protocol + '//' + window.location.hostname +
       (port ? ':' + port : '');
+  var uri = goog.Uri.parse(window.location.href);
+  var tachyFontDataUrl = uri.getParameterValue('TachyFontDataUrl');
+  if (tachyFontDataUrl) {
+    fontsInfo.setDataUrl(tachyFontDataUrl);
+    fontsInfo.setReportUrl(tachyFontDataUrl);
+  }
   if (!fontsInfo.getDataUrl()) {
     fontsInfo.setDataUrl(serverUrl);
   }
@@ -615,9 +621,7 @@ tachyfont.loadFonts_initReporter = function(fontsInfo) {
  * @private
  */
 tachyfont.loadFonts_init_ = function(familyName, fontsInfo, opt_params) {
-  tachyfont.loadFonts_initFontInfosUrls(fontsInfo);
   var dataUrl = fontsInfo.getDataUrl();
-  tachyfont.loadFonts_initReporter(fontsInfo);
 
   // Check if the persistent stores should be dropped.
   var uri = goog.Uri.parse(window.location.href);
