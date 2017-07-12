@@ -30,13 +30,6 @@ goog.provide('tachyfont.LauncherTypedef');
 tachyfont.LauncherTypedef.Launcher;
 
 
-/** @typedef {{
- *     startTime: number,
- *     urls: !Array<string>
- * }} */
-tachyfont.LauncherTypedef.Prelude;
-
-
 
 /**
  * Manages the initial setup data.
@@ -44,10 +37,8 @@ tachyfont.LauncherTypedef.Prelude;
  */
 tachyfont.LauncherInfo = function() {
   /** @type {?tachyfont.LauncherTypedef.Launcher} */
-  this.launcher = window['tachyfont_launcher'] || {};
-
-  /** @type {?tachyfont.LauncherTypedef.Prelude} */
-  this.prelude = window['tachyfontprelude'] || {};
+  this.launcher =
+      window['tachyfont_launcher'] || window['tachyfontprelude'] || {};
 
   /**
    * The TachyFont start time. This is useful for overall speed testing. It is
@@ -60,13 +51,13 @@ tachyfont.LauncherInfo = function() {
    * The font Blob URLs.
    * @private {!Object<string, string>}
    */
-  this.urls_ = this.launcher['urls'] || this.prelude['urls'] || {};
+  this.urls_ = this.launcher['urls'] || {};
 
   /**
    * The launcher/prelude reports.
    * @private {!Array<!Array<string>>}
    */
-  this.reports_ = this.launcher['reports'] || this.prelude['reports'] || [];
+  this.reports_ = this.launcher['reports'] || [];
 };
 
 
@@ -77,6 +68,16 @@ tachyfont.LauncherInfo = function() {
  */
 tachyfont.LauncherInfo.prototype.getActualLauncher = function() {
   return window['tachyfont_launcher'];
+};
+
+
+/**
+ * Gets the actual prelude value.
+ * This is useful for testing.
+ * @return {!Object|undefined}
+ */
+tachyfont.LauncherInfo.prototype.getActualPrelude = function() {
+  return window['tachyfontprelude'];
 };
 
 

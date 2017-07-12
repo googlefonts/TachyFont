@@ -407,6 +407,8 @@
 
     return launcher.loadFonts(cssFontFamily, fontFamily, isTtf, weights)
         .then(function(allLoaded) {
+          launcher.recursivelyAdjustCssFontFamilies(
+              cssFontFamily, cssFontFamilyToAugment, document.documentElement);
           launcher.requestMergedFontbases(allLoaded, mergedFontbasesUrl);
           return tachyfontCodePromise;
         })
@@ -479,6 +481,112 @@
       launcher['mergedFontBases'] =
           launcher.loadUrlArrayBuffer(mergedFontbasesUrl);
     }
+  };
+
+
+  /**
+   * For the node and sub-nodes remove TachyFont from input fields.
+   * @param {string} fontFamily The TachyFont font family.
+   * @param {string} cssFontFamilyToAugment The font family to augment with
+   *     TachyFont
+   * @param {!Node} node The starting point for walking the node/sub-nodes.
+   */
+  launcher.recursivelyAdjustCssFontFamilies = function(
+      fontFamily, cssFontFamilyToAugment, node) {
+    launcher.adjustCssFontFamilies(fontFamily, cssFontFamilyToAugment, node);
+    var children = node.childNodes;
+    for (var i = 0; i < children.length; i++) {
+      launcher.recursivelyAdjustCssFontFamilies(
+          fontFamily, cssFontFamilyToAugment, children[i]);
+    }
+  };
+
+
+  /**
+   * Remove TachyFont from an input field.
+   * @param {string} fontFamily The TachyFont font family.
+   * @param {string} cssFontFamilyToAugment The font family to augment with
+   *     TachyFont
+   * @param {!Node} node The node to work on.
+   */
+  launcher.adjustCssFontFamilies = function(
+      fontFamily, cssFontFamilyToAugment, node) {
+    if (node.nodeType != Node.ELEMENT_NODE) {
+      return;
+    }
+    var needToAdjustedCss = false;
+    var cssFamily =
+        launcher.getComputedFontFamily(/** @type {!Element} */ (node));
+    var families = cssFamily.split(',');
+    var trimmedFamilies = [];
+    for (var i = 0; i < families.length; i++) {
+      var name = launcher.trimFamilyName(families[i]);
+      if (node.nodeName == 'INPUT') {
+        // Drop TachyFont from input fields.
+        if (name == fontFamily) {
+          needToAdjustedCss = true;
+        } else {
+          trimmedFamilies.push(name);
+        }
+        continue;
+      } else {
+        if (!cssFontFamilyToAugment || (name != cssFontFamilyToAugment)) {
+          trimmedFamilies.push(name);
+          continue;
+        }
+        // Check if this font is already augmented by TachyFont.
+        if (i + 1 < families.length) {
+          var nextName = launcher.trimFamilyName(families[i + 1]);
+          if (nextName == fontFamily) {
+            // Already augmented.
+            continue;
+          }
+        }
+      }
+      // Need to augment with TachyFont.
+      needToAdjustedCss = true;
+      trimmedFamilies.push(name);
+      // Add TachyFont for this element.
+      trimmedFamilies.push(fontFamily);
+    }
+    if (needToAdjustedCss) {
+      var newCssFamily = trimmedFamilies.join(', ');
+      node.style.fontFamily = newCssFamily;
+    }
+  };
+
+
+  /**
+   * Trim a CSSStyleSheet font-family string.
+   * @param {!Element} element The element to get the font family.
+   * @return {string} The font-family string.
+   */
+  launcher.getComputedFontFamily = function(element) {
+    var style = getComputedStyle(element);
+    return style.fontFamily;
+  };
+
+
+  /**
+   * Trim a CSSStyleSheet font-family string.
+   *
+   * @param {string} familyName The font-family name to trim.
+   * @return {string} The trimed font-family name.
+   */
+  launcher.trimFamilyName = function(familyName) {
+    var trimmedName = familyName.trim();
+    var firstChar = trimmedName.charAt(0);
+    var lastChar = trimmedName.charAt(trimmedName.length - 1);
+    if (firstChar != lastChar) {
+      // Not wrapped by the same character.
+      return trimmedName;
+    }
+    if ((firstChar != '"') && (firstChar != '\'')) {
+      // Not wrapped by quotes.
+      return trimmedName;
+    }
+    // Remove the wrapping quotes.
+    return trimmedName.substring(1, trimmedName.length - 1);
   };
 
 
