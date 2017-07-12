@@ -59,10 +59,6 @@
   var COMPACT_FONT = 'compact_font';
 
 
-  /** @const {string} The Style Sheet ID. */
-  var STYLESHEET_ID = 'Incremental\u00A0Font\u00A0Utils';
-
-
   /** @const {string} Failed to open IndexedDB error. */
   var ERROR_LAUNCHER_INDEXEDDB_OPEN = '01';
 
@@ -203,15 +199,8 @@
           new launcher.FontInfo(fontFamily, weights[i], false, isTtf));
     }
 
-    var style = document.getElementById(STYLESHEET_ID);
-    if (!style) {
-      style = document.createElement('style');
-      style.id = STYLESHEET_ID;
-      document.head.appendChild(style);
-    }
-    var sheet = style.sheet;
-
     var fontInfos1;
+    var antiFlickerFont = launcher.getPlaceholderFont();
     var promises;
     return newResolvedPromise()
         .then(function() {
@@ -221,7 +210,7 @@
           promises = [];
           for (var i = 0; i < fontInfos1.length; i++) {
             promises.push(launcher.setFontNoFlash(
-                sheet, cssFontFamily, null, fontInfos1[i]));
+                cssFontFamily, antiFlickerFont, fontInfos1[i], false));
           }
           return Promise.all(promises);
         })
@@ -230,8 +219,7 @@
           fontInfos1 = fontInfos.slice();
           promises = [];
           for (var i = 0; i < fontInfos1.length; i++) {
-            promises.push(
-                launcher.useFont(sheet, cssFontFamily, fontInfos1[i]));
+            promises.push(launcher.useFont(cssFontFamily, fontInfos1[i]));
           }
           return Promise.all(promises).then(function(loadedFonts) {
             var allLoaded = true;
@@ -317,24 +305,6 @@
 
 
   /**
-   * Set the CSS \@font-face rule.
-   *
-   * @param {!CSSStyleSheet} sheet The style sheet.
-   * @param {string} cssFontFamily The fontFamily.
-   * @param {string} weight The weight.
-   * @param {string} srcStr The src string for the \@font-face
-   */
-  function setCssFontRule(sheet, cssFontFamily, weight, srcStr) {
-    var rule_str = '@font-face{' +
-        'font-family: ' + cssFontFamily + ';' +
-        'font-weight: ' + weight + ';' +
-        'src: ' + srcStr +  //
-        '}\n';
-    sheet.insertRule(rule_str, sheet.cssRules.length);
-  }
-
-
-  /**
    * A function that does nothing. Useful for places that need a function but
    * that function does not need to do anything.
    */
@@ -342,46 +312,48 @@
 
 
   /**
-   * @param {!CSSStyleSheet} sheet The style sheet.
    * @param {string} cssFontFamily The CSS font-family name.
    * @param {?DataView} fontDataView The font data.
    * @param {!launcher.FontInfo} fontInfo Info about this font.
+   * @param {boolean} reportTime Whether to report the font loading time.
    * @return {!Promise} The promise resolves when the glyphs are displaying.
    */
   launcher.setFontNoFlash = function(
-      sheet, cssFontFamily, fontDataView, fontInfo) {
+      cssFontFamily, fontDataView, fontInfo, reportTime) {
     var weight = fontInfo.weight;
 
     var mimeType;
     var format;
-    var srcStr;
-    if (fontDataView) {
-      if (fontInfo.isTtf) {
-        mimeType = 'font/ttf';  // 'application/x-font-ttf';
-        format = 'truetype';
-      } else {
-        mimeType = 'font/otf';  // 'application/font-sfnt';
-        format = 'opentype';
-      }
-      var blob = new Blob([fontDataView], {type: mimeType});
-      var blobUrl = window.URL.createObjectURL(blob);
-      srcStr = 'url("' + blobUrl + '") ' + 'format("' + format + '");';
+    if (fontInfo.isTtf) {
+      mimeType = 'font/ttf';  // 'application/x-font-ttf';
+      format = 'truetype';
     } else {
-      srcStr = 'local("sans-serif");';
+      mimeType = 'font/otf';  // 'application/font-sfnt';
+      format = 'opentype';
     }
+    var blob = new Blob([fontDataView], {type: mimeType});
+    var blobUrl = window.URL.createObjectURL(blob);
+    var srcStr = 'url("' + blobUrl + '") ' +
+        'format("' + format + '");';
 
-    // Load the font data under a CSS style sheet that is not getting used.
-    var tmpFontFamily = 'tmp-' + weight + '-' + cssFontFamily;
-    setCssFontRule(sheet, tmpFontFamily, weight, srcStr);
-    var fontStr = '400 20px ' + tmpFontFamily;
-    return document.fonts.load(fontStr)
+    // Load the font data under a font-face that is not getting used.
+    var fontFaceTmp =
+        new FontFace('tmp-' + weight + '-' + cssFontFamily, srcStr);
+    document.fonts.add(fontFaceTmp);
+    return fontFaceTmp.load()
         .then(nullFunction, nullFunction)  // Ignore loading errors.
         .then(function(value) {
-          setCssFontRule(sheet, cssFontFamily, weight, srcStr);
-          if (!fontDataView) {
+          var fontFace = new FontFace(cssFontFamily, srcStr);
+          fontFace.weight = weight;
+          document.fonts.add(fontFace);
+          return fontFace.load().then(
+              nullFunction, nullFunction);  // Ignore loading errors.
+        })
+        .then(function(value) {
+          if (!reportTime) {
             return;
           }
-          // Record the font ready time.
+          // Report the font ready time.
           reports.push(['l', (new Date()).getTime() - START_TIME, weight]);
           var oldBlobUrl = launcher[weight];
           if (oldBlobUrl) {
@@ -398,11 +370,11 @@
    * @param {!launcher.FontInfo} fontInfo The info on the font to use.
    * @return {!Promise} This promise resolves when the font is used.
    */
-  launcher.useFont = function(sheet, cssFontFamily, fontInfo) {
+  launcher.useFont = function(cssFontFamily, fontInfo) {
     return launcher.getFontData(fontInfo)
         .then(function(fontDataView) {
           return launcher
-              .setFontNoFlash(sheet, cssFontFamily, fontDataView, fontInfo)
+              .setFontNoFlash(cssFontFamily, fontDataView, fontInfo, true)
               .then(function() {
                 return true;
               });
@@ -646,6 +618,98 @@
   function newRejectedPromise(opt_value) {
     return new Promise(function(resolve, reject) { reject(opt_value); });
   }
+
+
+  /**
+   * The placeholder data needs to be loaded with the launcher
+   * code in the <head> section. Thus the placeholder data needs to be
+   * a small as possible in the Javascript.
+   *
+   * To make the placeholder data as small the data is stored as a
+   * compacted Hex Ascii string.
+   *
+   * A Hex Ascii string is compacted by:
+   *   - encoding the number of '0' characters as 'G' + the number.
+   *     - eg, '00000' is replaced by 'L' (the 5th character after 'G')
+   *   - encoding the number after single '0' as 'a' + the number.
+   *     - eg, '03' is replaced by 'd' (the 3rd character after 'a')
+   */
+
+
+  /**
+   * The start of compacted '0' encodings.
+   * Publically visible so it can be used during testing.
+   * @type {number}
+   */
+  launcher.zeroRunBase = 71;  // 'G'
+
+
+  /**
+   * The maximum number of '0' to encode in a single zeroRunBase.
+   * Publically visible so it can be used during testing.
+   * @type {number}
+   */
+  launcher.zeroRunMax = 10;
+
+
+  /**
+   * The start of compacted '0?' encodings.
+   * Since Hex Ascii has exactly 16 value this range will take 'a'
+   * Publically visible so it can be used during testing.
+   * @type {number}
+   */
+  launcher.singleZeroBase = 103;  // 'g'
+
+
+  /**
+   * Gets a placeholder font.
+   * Publically visible so it can be used during testing.
+   * @return {!DataView} The font's bytes.
+   */
+  launcher.getPlaceholderFont = function() {
+    // Expand the compacted data string.
+    var expandedString = '';
+    for (var i = 0; i < launcher.fontCompacted.length; i++) {
+      var aChar = launcher.fontCompacted[i];
+      var charCode = aChar.charCodeAt(0);
+      if (charCode < launcher.zeroRunBase) {
+        expandedString += aChar;
+      } else if (charCode < launcher.singleZeroBase) {
+        var count = charCode - launcher.zeroRunBase;
+        while (count--) {
+          expandedString += '0';
+        }
+      } else {
+        var secondCharCode = charCode - launcher.singleZeroBase;
+        expandedString += '0' + secondCharCode.toString(16);
+      }
+    }
+    // Convert the data string to a DataView.
+    var length = expandedString.length / 2;
+    var dataBytes = new Uint8Array(length);
+    var byteStrings = expandedString.match(/.{1,2}/g);
+    for (var i = 0; i < byteStrings.length; i++) {
+      dataBytes[i] = parseInt(byteStrings[i], 16);
+    }
+    return new DataView(dataBytes.buffer);
+  };
+
+
+  /**
+   * The compacted font.
+   * Note that the letter case matters.
+   * Publically visible so it can be used during testing.
+   * @type {string}
+   */
+  launcher.fontCompacted =
+      'J1NAI8K3I2kF532F32FBBAE78CL128M6m36D617KBhC9L18CM2C676C79663EABB9C4L1B' +
+      'CM1868656164FC33F49NACM3668686561p4BIANE4M24686D7478hC7I8AL188N46C6F63' +
+      '61NCL1B8N46D61787K7I34L1oM2mE616D65J6P1D4N67mF7374FF2AI96L1DCM2K1N13AE' +
+      '123BB6A955Fv3CF5I1BoQC84v99AOD2FD754BI8AL13ElCCN9J1QL1L73EFE4EI43hC7I8' +
+      'AI89h3EJ1QQQhJ1N1J4J1QhM2FQP4N3k93h9K5J8l9Al33L11Bl9Al33L3D1I66i12olir' +
+      'mkiiiiikEKAFF5J78FFM21O4D4F4E4FI4J2vFFClD3FE51h33n3EhB26K1BFDFF7L43Al8' +
+      '1M2K4hC7I8AN1J3J1NCJ4I2O4J4J1L196FFFFL196FFFFFE6AJ1QLCJ1I8AL13ElCCJ3K3' +
+      '31133118AB4lCCFA34QmN3QIFF27I96QQQQ';
 
 
   /**

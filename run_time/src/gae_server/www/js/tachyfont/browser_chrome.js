@@ -21,7 +21,6 @@ goog.provide('tachyfont.Browser');
 
 goog.require('goog.Promise');
 goog.require('tachyfont.IncrementalFontUtils');
-goog.require('tachyfont.log');
 
 
 /**
@@ -78,69 +77,24 @@ tachyfont.Browser.setFont = function(fontData, fontInfo, isTtf, oldBlobUrl) {
 // TODO(bstell): This is really Chrome specific. Make it more work for other
 // browsers.
 tachyfont.Browser.setFontNoFlash = function(fontInfo, format, blobUrl) {
-  // The desired @font-face font-family.
   var cssFontFamily = fontInfo.getCssFontFamily();
-  // The temporary @font-face font-family.
   var weight = fontInfo.getWeight();
-  var tmpFontFamily = 'tmp-' + weight + '-' + cssFontFamily;
-  var sheet = tachyfont.IncrementalFontUtils.getStyleSheet();
 
-  // Create a temporary @font-face rule to transfer the blobUrl data from
-  // Javascript to the browser side.
-  tachyfont.IncrementalFontUtils.setCssFontRule(sheet, tmpFontFamily, weight,
-      blobUrl, format);
-
-  var setFontPromise =
-      new goog
-          .Promise(function(resolve, reject) {
-            // The document.fonts.load call fails with a weight that is not a
-            // multiple of 100. So use an artifical weight to work around this
-            // problem.
-            var fontStr = '400 20px ' + tmpFontFamily;
-            // Transfer the data.
-            // TODO(bstell): Make this cross platform.
-            document.fonts.load(fontStr).then(
-                function(value) {
-                  resolve();  //
-                },
-                function(e) {
-                  reject(e);  //
-                });
-          })
-          .then(function() {
-            // The font is ready so switch the @font-face to the desired name.
-            tachyfont.Browser.switchFont(
-                sheet, tmpFontFamily, cssFontFamily, weight, blobUrl, format);
-          });
-
-  return setFontPromise;
-};
-
-
-/**
- * Switch from the temporary font to the target font.
- *
- * @param {!CSSStyleSheet} sheet The CSS style sheet.
- * @param {string} tmpFontFamily The temporary font-family that is loading the
- *     blob.
- * @param {string} cssFontFamily The target font-family.
- * @param {string} weight The The target weight
- * @param {string} blobUrl The blob URL for the font data.
- * @param {string} format The font type.
- */
-tachyfont.Browser.switchFont = function(
-    sheet, tmpFontFamily, cssFontFamily, weight, blobUrl, format) {
-  // Set the updated font rule.
-  tachyfont.IncrementalFontUtils.setCssFontRule(
-      sheet, cssFontFamily, weight, blobUrl, format);
-
-  // Delete the temporary rule
-  var ruleToDelete = tachyfont.IncrementalFontUtils.findFontFaceRule(
-      sheet, tmpFontFamily, weight);
-  if (goog.DEBUG) {
-    tachyfont.log.info(
-        '**** switched ' + weight + ' from ' + tmpFontFamily + ' to ' +
-        cssFontFamily + ' ****');
-  }
-  tachyfont.IncrementalFontUtils.deleteCssRule(ruleToDelete, sheet);
+  // Load the font data under a font-face that is not getting used.
+  var srcStr = 'url("' + blobUrl + '") ' +
+      'format("' + format + '");';
+  return goog.Promise.resolve()
+      .then(function() {
+        var fontFaceTmp =
+            new FontFace('tmp-' + weight + '-' + cssFontFamily, srcStr);
+        document.fonts.add(fontFaceTmp);
+        return fontFaceTmp.load();
+      })
+      .then(function(value) {
+        // Show the font now that the data has been transfered to the C++ side.
+        var fontFace = new FontFace(cssFontFamily, srcStr);
+        fontFace.weight = weight;
+        document.fonts.add(fontFace);
+        return fontFace.load();
+      });
 };
