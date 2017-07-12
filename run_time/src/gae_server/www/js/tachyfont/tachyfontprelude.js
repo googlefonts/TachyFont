@@ -278,24 +278,35 @@
   function getFontData(fontInfo) {
     return openIDB(fontInfo)
         .then(function(db) {
-          return getData(db, COMPACT_META).then(
-              function(metadata) {
-                // Check metadata age.
-                var age = START_TIME -
-                    (metadata[CREATED_METADATA_TIME] || START_TIME);
-                if (age < STABLE_DATA_TIME) {
-                  return newRejectedPromise(ERROR_PRELUDE_BELOW_STABLE_TIME);
-                }
-                return db;
-              },
-              function() {
-                return newRejectedPromise(ERROR_PRELUDE_MISSING_METADATA);
-              });
+          return getData(db, COMPACT_META)
+              .then(
+                  function(metadata) {
+                    // Check metadata age.
+                    var age = START_TIME -
+                        (metadata[CREATED_METADATA_TIME] || START_TIME);
+                    if (age < STABLE_DATA_TIME) {
+                      db.close();
+                      return newRejectedPromise(
+                          ERROR_PRELUDE_BELOW_STABLE_TIME);
+                    }
+                    return db;
+                  },
+                  function() {
+                    db.close();
+                    return newRejectedPromise(ERROR_PRELUDE_MISSING_METADATA);
+                  });
         })
         .then(function(db) {
-          return getData(db, COMPACT_FONT).then(undefined, function() {
-            return newRejectedPromise(ERROR_PRELUDE_MISSING_BASE);
-          });
+          return getData(db, COMPACT_FONT)
+              .then(
+                  function(data) {
+                    db.close();
+                    return data;
+                  },
+                  function() {
+                    db.close();
+                    return newRejectedPromise(ERROR_PRELUDE_MISSING_BASE);
+                  });
         });
   }
 
