@@ -27,7 +27,7 @@ goog.require('tachyfont.IncrementalFontUtils');
 goog.require('tachyfont.Persist');
 goog.require('tachyfont.Reporter');
 goog.require('tachyfont.Sfnt');
-goog.require('tachyfont.SynchronousResolutionPromise');
+goog.require('tachyfont.SyncPromise');
 goog.require('tachyfont.utils');
 
 
@@ -216,7 +216,7 @@ tachyfont.CompactCff.prototype.addDataSegment = function(
  * @param {!Array<number>} neededCodes The codes to be injected.
  * @param {!tachyfont.GlyphBundleResponse} bundleResponse New glyph data
  * @return {
- *     (!tachyfont.SynchronousResolutionPromise<!tachyfont.CompactCff,?>|
+ *     (!tachyfont.SyncPromise<!tachyfont.CompactCff,?>|
  *      !goog.Promise<!tachyfont.CompactCff,?>)}
  *    A promise for CompactCff.
  *
@@ -233,7 +233,7 @@ tachyfont.CompactCff.injectChars = function(
       .thenCatch(function(event) {
         tachyfont.CompactCff.reportError(
             tachyfont.CompactCff.Error.INJECT_CHARS_GET_DB, fontId, event);
-        return tachyfont.SynchronousResolutionPromise.reject(event);
+        return tachyfont.SyncPromise.reject(event);
       })
       .then(function(dbHandle) {
         db = dbHandle;
@@ -242,14 +242,14 @@ tachyfont.CompactCff.injectChars = function(
         // continous operations with no breaks. This means goog.Promise cannot
         // be used since it (at least occasionally) yields the event queue to
         // avoid excessive stack depth. Instead use
-        // tachyfont.SynchronousResolutionPromise which never yields (but the
+        // tachyfont.SyncPromise which never yields (but the
         // programmer must take care to avoid exceeding the stack depth.
         transaction =
             db.transaction(tachyfont.Define.compactStoreNames, 'readwrite');
         transaction.onerror = function(event) {
           tachyfont.CompactCff.reportError(
               tachyfont.CompactCff.Error.INJECT_TRANSACTION, fontId, event);
-          return tachyfont.SynchronousResolutionPromise.reject(event);
+          return tachyfont.SyncPromise.reject(event);
         };
       })
       .then(function() {
@@ -261,7 +261,7 @@ tachyfont.CompactCff.injectChars = function(
               tachyfont.CompactCff.reportError(
                   tachyfont.CompactCff.Error.INJECT_CHARS_READ_TABLES, fontId,
                   event);
-              return tachyfont.SynchronousResolutionPromise.reject(event);
+              return tachyfont.SyncPromise.reject(event);
             });
       })
       // Inject the glyphs.
@@ -275,7 +275,7 @@ tachyfont.CompactCff.injectChars = function(
         } catch (event) {
           tachyfont.CompactCff.reportError(
               tachyfont.CompactCff.Error.INJECT_GLYPH_BUNDLE, fontId, event);
-          return tachyfont.SynchronousResolutionPromise.reject(event);
+          return tachyfont.SyncPromise.reject(event);
         }
       })
       .then(function() {
@@ -286,7 +286,7 @@ tachyfont.CompactCff.injectChars = function(
               tachyfont.CompactCff.reportError(
                   tachyfont.CompactCff.Error.INJECT_CHARS_WRITE_TABLES, fontId,
                   event);
-              return tachyfont.SynchronousResolutionPromise.reject(event);
+              return tachyfont.SyncPromise.reject(event);
             });
       })
       .then(function() {
@@ -299,14 +299,14 @@ tachyfont.CompactCff.injectChars = function(
         if (db) {
           db.close();
         }
-        return tachyfont.SynchronousResolutionPromise.reject(e);
+        return tachyfont.SyncPromise.reject(e);
       });
 };
 
 
 /**
  * @param {!IDBTransaction} transaction The current IndexedDB transaction.
- * @return {!tachyfont.SynchronousResolutionPromise<
+ * @return {!tachyfont.SyncPromise<
  *     !tachyfont.typedef.FontTableData,?>}
  */
 tachyfont.CompactCff.readDbTables = function(transaction) {
@@ -315,7 +315,7 @@ tachyfont.CompactCff.readDbTables = function(transaction) {
       .getStores(transaction, tachyfont.Define.compactStoreNames)
       .then(function(dbTables) {
         if (!dbTables[0] || !dbTables[1] || !dbTables[2] || !dbTables[3]) {
-          return tachyfont.SynchronousResolutionPromise.reject(
+          return tachyfont.SyncPromise.reject(
               'missing: ' +                 //
               (!dbTables[0] ? 'D' : '_') +  // fontData
               (!dbTables[1] ? 'I' : '_') +  // fileInfo
@@ -336,7 +336,7 @@ tachyfont.CompactCff.readDbTables = function(transaction) {
 
 /**
  * @param {!IDBTransaction} transaction The current IndexedDB transaction.
- * @return {!tachyfont.SynchronousResolutionPromise<?,?>}
+ * @return {!tachyfont.SyncPromise<?,?>}
  */
 tachyfont.CompactCff.prototype.writeDbTables = function(transaction) {
   // Read the persisted data.
@@ -362,15 +362,15 @@ tachyfont.CompactCff.clearDataStores = function(
     storeNames, fontInfo, opt_rejectOnError) {
   if (storeNames.length == 0) {
     if (opt_rejectOnError) {
-      return tachyfont.SynchronousResolutionPromise.reject();
+      return tachyfont.SyncPromise.reject();
     } else {
-      return tachyfont.SynchronousResolutionPromise.resolve();
+      return tachyfont.SyncPromise.resolve();
     }
   }
   return tachyfont.Persist
       .openIndexedDb(fontInfo.getDbName(), fontInfo.getFontId())
       .then(function(db) {
-        return new tachyfont.SynchronousResolutionPromise(  //
+        return new tachyfont.SyncPromise(  //
             function(resolve, reject) {
               // Create the transaction.
               var transaction = db.transaction(storeNames, 'readwrite');

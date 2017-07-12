@@ -24,7 +24,7 @@ goog.require('goog.Promise');
 goog.require('goog.Uri');
 goog.require('tachyfont.Define');
 goog.require('tachyfont.Reporter');
-goog.require('tachyfont.SynchronousResolutionPromise');
+goog.require('tachyfont.SyncPromise');
 
 
 /**
@@ -92,10 +92,10 @@ tachyfont.Persist.saveData = function(idb, names, datas) {
  * Get the fontDB.
  * @param {string} dbName The name of the database.
  * @param {string} id For error reporting: the id of the font.
- * @return {!tachyfont.SynchronousResolutionPromise} The font DB.
+ * @return {!tachyfont.SyncPromise} The font DB.
  */
 tachyfont.Persist.openIndexedDb = function(dbName, id) {
-  return new tachyfont.SynchronousResolutionPromise(function(resolve, reject) {
+  return new tachyfont.SyncPromise(function(resolve, reject) {
     return tachyfont.Persist.openIndexedDb_(dbName, id, resolve, reject);
   });
 };
@@ -340,17 +340,17 @@ tachyfont.Persist.getData = function(idb, name) {
 
 /**
  * Put data to an object store.
- * @param {!tachyfont.SynchronousResolutionPromise<?,?>} previous The previous
+ * @param {!tachyfont.SyncPromise<?,?>} previous The previous
  *     promise to wait for.
  * @param {!IDBTransaction} transaction The transaction object.
  * @param {string} name The name of the store to retrieve.
  * @param {*} value The value to write to the store.
- * @return {!tachyfont.SynchronousResolutionPromise<*,?>} Promise when the data
+ * @return {!tachyfont.SyncPromise<*,?>} Promise when the data
  *     is written.
  */
 tachyfont.Persist.putStore = function(previous, transaction, name, value) {
   return previous.then(function() {
-    return new tachyfont.SynchronousResolutionPromise(  //
+    return new tachyfont.SyncPromise(  //
         function(resolve, reject) {
           var store = transaction.objectStore(name);
           var request = store.put(value, 0);
@@ -373,12 +373,12 @@ tachyfont.Persist.putStore = function(previous, transaction, name, value) {
  * @param {!IDBTransaction} transaction The transaction object.
  * @param {!Array<string>} names The names of the stores to retrieve.
  * @param {!Array<*>} values The values to write to the stores.
- * @return {!tachyfont.SynchronousResolutionPromise<?,?>} Promise when the data
+ * @return {!tachyfont.SyncPromise<?,?>} Promise when the data
  *     is written.
  */
 tachyfont.Persist.putStores = function(transaction, names, values) {
   var results = [];
-  var lastPromise = tachyfont.SynchronousResolutionPromise.resolve([]);
+  var lastPromise = tachyfont.SyncPromise.resolve([]);
   for (var i = 0; i < names.length; i++) {
     lastPromise = tachyfont.Persist
                       .putStore(lastPromise, transaction, names[i], values[i])
@@ -395,11 +395,11 @@ tachyfont.Persist.putStores = function(transaction, names, values) {
  * Get data from an object store.
  * @param {!IDBTransaction} transaction The transaction object.
  * @param {string} name The name of the store to retrieve.
- * @return {!tachyfont.SynchronousResolutionPromise<*,?>} Promise to return the
+ * @return {!tachyfont.SyncPromise<*,?>} Promise to return the
  *     data.
  */
 tachyfont.Persist.getStore = function(transaction, name) {
-  return new tachyfont.SynchronousResolutionPromise(  //
+  return new tachyfont.SyncPromise(  //
       function(resolve, reject) {
         var store = transaction.objectStore(name);
         var request = store.get(0);
@@ -420,7 +420,7 @@ tachyfont.Persist.getStore = function(transaction, name) {
  * Get data from a group of object stores.
  * @param {!IDBTransaction} transaction An optional transaction object.
  * @param {!Array<string>} names The names of the stores to retrieve.
- * @return {!tachyfont.SynchronousResolutionPromise<!Array<*>,?>} Promise to
+ * @return {!tachyfont.SyncPromise<!Array<*>,?>} Promise to
  *     return the array of data.
  */
 tachyfont.Persist.getStores = function(transaction, names) {
@@ -428,5 +428,5 @@ tachyfont.Persist.getStores = function(transaction, names) {
   for (var i = 0; i < names.length; i++) {
     promises.push(tachyfont.Persist.getStore(transaction, names[i]));
   }
-  return tachyfont.SynchronousResolutionPromise.all(promises);
+  return tachyfont.SyncPromise.all(promises);
 };
