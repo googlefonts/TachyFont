@@ -17,10 +17,10 @@
  * the License.
  */
 
-goog.provide('tachyfont.SynchronousResolutionPromise');
+goog.provide('tachyfont.SyncPromise');
 
 goog.scope(function() {
-var SynchronousResolutionPromise = tachyfont.SynchronousResolutionPromise;
+var SyncPromise = tachyfont.SyncPromise;
 
 
 
@@ -58,9 +58,9 @@ var SynchronousResolutionPromise = tachyfont.SynchronousResolutionPromise;
  *     first argument passed to either function.
  * @constructor @struct @final
  */
-tachyfont.SynchronousResolutionPromise = function(resolver) {
-  /** @private {SynchronousResolutionPromise.State} */
-  this.state_ = SynchronousResolutionPromise.State.PENDING;
+tachyfont.SyncPromise = function(resolver) {
+  /** @private {SyncPromise.State} */
+  this.state_ = SyncPromise.State.PENDING;
 
   /** @private {*} */
   this.result_;
@@ -87,7 +87,7 @@ tachyfont.SynchronousResolutionPromise = function(resolver) {
  * Enum for state values.
  * @enum {number}
  */
-SynchronousResolutionPromise.State = {
+SyncPromise.State = {
   PENDING: 1,
   RESOLVED: 2,
   REJECTED: 3
@@ -98,9 +98,9 @@ SynchronousResolutionPromise.State = {
  * Implements the resolve function.
  * @param {*=} opt_result The resolve value.
  */
-tachyfont.SynchronousResolutionPromise.prototype.resolve = function(
+tachyfont.SyncPromise.prototype.resolve = function(
     opt_result) {
-  if (this.state_ != SynchronousResolutionPromise.State.PENDING) {
+  if (this.state_ != SyncPromise.State.PENDING) {
     return;
   }
 
@@ -118,7 +118,7 @@ tachyfont.SynchronousResolutionPromise.prototype.resolve = function(
   }
 
   this.result_ = opt_result;
-  this.state_ = SynchronousResolutionPromise.State.RESOLVED;
+  this.state_ = SyncPromise.State.RESOLVED;
 
   // Handle attached thens.
   for (var i = 0; i < this.deferredThens_.length; i++) {
@@ -131,8 +131,8 @@ tachyfont.SynchronousResolutionPromise.prototype.resolve = function(
  * Implements the reject function.
  * @param {*=} opt_reason The reject value.
  */
-tachyfont.SynchronousResolutionPromise.prototype.reject = function(opt_reason) {
-  if (this.state_ != SynchronousResolutionPromise.State.PENDING) {
+tachyfont.SyncPromise.prototype.reject = function(opt_reason) {
+  if (this.state_ != SyncPromise.State.PENDING) {
     return;
   }
 
@@ -150,7 +150,7 @@ tachyfont.SynchronousResolutionPromise.prototype.reject = function(opt_reason) {
   }
 
   this.result_ = opt_reason;
-  this.state_ = SynchronousResolutionPromise.State.REJECTED;
+  this.state_ = SyncPromise.State.REJECTED;
 
   // Handle attached thens.
   for (var i = 0; i < this.deferredThens_.length; i++) {
@@ -165,16 +165,16 @@ tachyfont.SynchronousResolutionPromise.prototype.reject = function(opt_reason) {
  *     'then' function.
  * @private
  */
-tachyfont.SynchronousResolutionPromise.prototype.runOrDeferTheThen_ = function(
+tachyfont.SyncPromise.prototype.runOrDeferTheThen_ = function(
     thenInfo) {
-  if (this.state_ == SynchronousResolutionPromise.State.PENDING) {
+  if (this.state_ == SyncPromise.State.PENDING) {
     // Save the then until this resolves or rejects.
     this.deferredThens_.push(thenInfo);
     return;
   }
 
   // Pass the this Promise's status to the attached then.
-  if (this.state_ == SynchronousResolutionPromise.State.RESOLVED) {
+  if (this.state_ == SyncPromise.State.RESOLVED) {
     if (thenInfo.thenResolve) {
       try {  // Handle throws and exceptions.
         var result = thenInfo.thenResolve(this.result_);
@@ -211,9 +211,9 @@ tachyfont.SynchronousResolutionPromise.prototype.runOrDeferTheThen_ = function(
  * Implements the "then" function.
  * @param {?tachyfont.typedef.ThenResolve=} opt_thenResolve The resolve code.
  * @param {?tachyfont.typedef.ThenReject=} opt_thenReject The reject code.
- * @return {!SynchronousResolutionPromise}
+ * @return {!SyncPromise}
  */
-tachyfont.SynchronousResolutionPromise.prototype.then = function(
+tachyfont.SyncPromise.prototype.then = function(
     opt_thenResolve, opt_thenReject) {
   var self = this;
   /**
@@ -231,16 +231,16 @@ tachyfont.SynchronousResolutionPromise.prototype.then = function(
       reject: reject
     });
   };
-  return new tachyfont.SynchronousResolutionPromise(resolver);
+  return new tachyfont.SyncPromise(resolver);
 };
 
 
 /**
  * Implements the "thenCatch" function.
  * @param {?tachyfont.typedef.ThenReject} opt_thenReject The reject code.
- * @return {!SynchronousResolutionPromise}
+ * @return {!SyncPromise}
  */
-tachyfont.SynchronousResolutionPromise.prototype.thenCatch = function(
+tachyfont.SyncPromise.prototype.thenCatch = function(
     opt_thenReject) {
   return this.then(null, opt_thenReject);
 };
@@ -248,12 +248,12 @@ tachyfont.SynchronousResolutionPromise.prototype.thenCatch = function(
 
 /**
  * Returns a resolved Promise.
- * @param {!Array<!tachyfont.SynchronousResolutionPromise>} promises The array
+ * @param {!Array<!tachyfont.SyncPromise>} promises The array
  *     of promises to wait for;
- * @return {!SynchronousResolutionPromise<Array<*>, *>}
+ * @return {!SyncPromise<Array<*>, *>}
  */
-tachyfont.SynchronousResolutionPromise.all = function(promises) {
-  return new tachyfont.SynchronousResolutionPromise(function(resolve, reject) {
+tachyfont.SyncPromise.all = function(promises) {
+  return new tachyfont.SyncPromise(function(resolve, reject) {
     if (promises.length == 0) {
       resolve(promises);
       return;
@@ -286,10 +286,10 @@ tachyfont.SynchronousResolutionPromise.all = function(promises) {
 /**
  * Returns a resolved Promise.
  * @param {*=} value The resolve value;
- * @return {!SynchronousResolutionPromise}
+ * @return {!SyncPromise}
  */
-tachyfont.SynchronousResolutionPromise.resolve = function(value) {
-  return new tachyfont.SynchronousResolutionPromise(function(resolve) {
+tachyfont.SyncPromise.resolve = function(value) {
+  return new tachyfont.SyncPromise(function(resolve) {
     resolve(value);
   });
 };
@@ -298,10 +298,10 @@ tachyfont.SynchronousResolutionPromise.resolve = function(value) {
 /**
  * Returns a rejected Promise.
  * @param {*=} value The reject value;
- * @return {!SynchronousResolutionPromise}
+ * @return {!SyncPromise}
  */
-tachyfont.SynchronousResolutionPromise.reject = function(value) {
-  return new tachyfont.SynchronousResolutionPromise(function(resolve, reject) {
+tachyfont.SyncPromise.reject = function(value) {
+  return new tachyfont.SyncPromise(function(resolve, reject) {
     reject(value);
   });
 };
