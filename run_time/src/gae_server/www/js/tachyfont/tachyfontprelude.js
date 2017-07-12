@@ -32,6 +32,31 @@
   tachyfontprelude['urls'] = {};
 
 
+  /** @type {boolean} Indicates a DOM mutation has occured. */
+  tachyfontprelude['DomMutationObserved'] = false;
+
+
+  // Create a DOM mutation observer.
+  var observer = new MutationObserver(function(mutations) {
+    tachyfontprelude['DomMutationObserved'] = true;
+  });
+  // Watch for these mutations.
+  var config = /** @type {!MutationObserverInit} */ ({ 'childList': true,
+    'subtree': true, 'characterData': true });
+  observer.observe(document.documentElement, config);
+
+
+  /** @type {boolean} Indicates the DOM content is fully loaded. */
+  tachyfontprelude['DomContentLoaded'] = false;
+
+
+  // Check the DOM when it reports loading the page is done.
+  document.addEventListener("DOMContentLoaded", function(event) {
+    tachyfontprelude['DOMContentLoaded'] = true;
+  });
+
+
+
   /** @const {string} The database name prefix. */
   var DB_NAME_PREFIX = 'incrfonts';
 
@@ -124,13 +149,37 @@
 
 
   /**
+   * Loads a file using XHR.
+   * @param {string} url The URL to the file.
+   * @param {string} responseType The requested response type.
+   * @return {!Promise<*>} A promise for the url data.
+   */
+  function loadUrl(url, responseType) {
+    return new Promise(function(resolve, reject) {
+      var xhr = new XMLHttpRequest();
+      xhr.responseType = responseType;
+      xhr.onreadystatechange = function() {
+        if (xhr.readyState == XMLHttpRequest.DONE) {
+          if (xhr.status == 200) {
+            resolve(xhr.response);
+          } else {
+            reject(xhr.statusText);
+          }
+        }
+      };
+      xhr.open('GET', url, true);
+      xhr.send();
+    });
+  }
+
+
+  /**
    * Loads the TachyFonts from persistent store if available.
    * @param {string} cssFontFamily The CSS font-family name.
-   * @param {!Array<!FontInfo>} fontInfos The list of fonts to
-   *     load.
-   * @return {!Promise} A promise that resolves when the loading has finished.
+   * @param {!Array<!FontInfo>} fontInfos The list of fonts to load.
+   * @return {!Promise<boolean>} Resolves true if all the fonts were persisted.
    */
-  function load(cssFontFamily, fontInfos) {
+  function loadFont(cssFontFamily, fontInfos) {
     var style = document.getElementById(STYLESHEET_ID);
     if (!style) {
       style = document.createElement('style');
@@ -149,7 +198,7 @@
           promises = [];
           for (var i = 0; i < fontInfos1.length; i++) {
             promises.push(
-                setFontNoFlash(sheet, cssFontFamily, null, fontInfos1.shift()));
+                setFontNoFlash(sheet, cssFontFamily, null, fontInfos1[i]));
           }
           return Promise.all(promises);
         })
@@ -158,9 +207,15 @@
           fontInfos1 = fontInfos.slice();
           promises = [];
           for (var i = 0; i < fontInfos1.length; i++) {
-            promises.push(useFont(sheet, cssFontFamily, fontInfos1.shift()));
+            promises.push(useFont(sheet, cssFontFamily, fontInfos1[i]));
           }
-          return Promise.all(promises);
+          return Promise.all(promises).then(function(loadedFonts) {
+            var allLoaded = true;
+            for (var i = 0; i < loadedFonts.length; i++) {
+              allLoaded &= loadedFonts[i];
+            }
+            return allLoaded;
+          });
         });
   }
 
@@ -330,12 +385,15 @@
   function useFont(sheet, cssFontFamily, fontInfo) {
     return getFontData(fontInfo)
         .then(function(fontDataView) {
-          return setFontNoFlash(sheet, cssFontFamily, fontDataView, fontInfo);
+          return setFontNoFlash(sheet, cssFontFamily, fontDataView, fontInfo)
+              .then(function() {
+                return true;
+              });
         })
         .then(undefined, function(errorNumber) {
           // Report the error.
           reports.push(['e', errorNumber, fontInfo.weight]);
-          return newResolvedPromise();
+          return newResolvedPromise(false);
         });
   }
 
@@ -363,10 +421,12 @@
 
 
   /**
-   * Do the Exports.
+   * Export the objects and functions. Data exports may be done elsewhere in
+   * this file.
    */
   window['tachyfontprelude'] = tachyfontprelude;
   tachyfontprelude['reports'] = reports;
   tachyfontprelude['FontInfo'] = FontInfo;
-  tachyfontprelude['loadFont'] = load;
+  tachyfontprelude['loadFont'] = loadFont;
+  tachyfontprelude['loadUrl'] = loadUrl;
 })();
