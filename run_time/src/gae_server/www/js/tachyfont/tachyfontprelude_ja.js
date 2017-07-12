@@ -19,20 +19,8 @@
 (function() {
   var fontFamily = 'Noto Sans JP';
   var cssFontFamily = 'UILanguageFont';
-  var weights = [
-    '100',
-    '300',
-    '400',
-    '500',
-    '700'
-  ];
-  var fontInfos = [];
+  var weights = ['100', '300', '400', '500', '700'];
+  var isTtf = false;
   var tachyfontprelude = window['tachyfontprelude'];
-  for (var i = 0; i < weights.length; i++) {
-    fontInfos.push(
-        /* FontInfo */ new tachyfontprelude['FontInfo'](
-            fontFamily, weights[i], false, /* isTtf */ false));
-  }
-  tachyfontprelude['loadFont'](cssFontFamily, fontInfos);
+  tachyfontprelude['loadFonts'](cssFontFamily, fontFamily, isTtf, weights);
 })();
-
