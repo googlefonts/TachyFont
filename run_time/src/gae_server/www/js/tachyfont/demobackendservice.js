@@ -45,7 +45,7 @@ DemoBackendService.prototype.requestCodepoints = function(fontInfo, codes) {
   var that = this;
   return this
       .requestUrl(
-          this.baseUrl + '/characterdata2',  //
+          this.baseUrl + '/characterdata?jsmode=SU',  //
           'POST', JSON.stringify({
             'name': fontInfo.getName(),
             'weight': fontInfo.getWeight(),
@@ -63,8 +63,8 @@ DemoBackendService.prototype.requestCodepoints = function(fontInfo, codes) {
 
 /** @override */
 DemoBackendService.prototype.requestFontBase = function(fontInfo) {
-  var url = this.baseUrl + '/fontbase2?fontname=' + fontInfo.getName() + '&' +
-      'weight=' + fontInfo.getWeight();
+  var url = this.baseUrl + '/fontbase?fontname=' + fontInfo.getName() + '&' +
+      'weight=' + fontInfo.getWeight() + '&jsmode=SU';
   return this.requestUrl(url, 'GET', null, {});
 };
 
