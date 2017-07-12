@@ -264,11 +264,6 @@ tachyfont.checkSystem = function() {
         return tachyfont.Persist.getData(db, tachyfont.Define.METADATA)
             .then(function(metadata) {
               var name = tachyfont.Define.CREATED_METADATA_TIME;
-              var uri = goog.Uri.parse(window.location.href);
-              var tachyFontNoDelay = uri.getParameterValue('TachyFontNoDelay');
-              if (tachyFontNoDelay == 'true') {
-                return;
-              }
               if (metadata && metadata[name]) {
                 var dataAge = goog.now() - metadata[name];
                 // The following commented out code is how to see the times in
