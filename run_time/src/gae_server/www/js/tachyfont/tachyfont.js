@@ -250,16 +250,9 @@ tachyfont.loadFonts = function(cssFamilyName, fontsInfo, opt_params) {
             new tachyfont.MergedData(mergedFontbasesBytes, xdelta3Decoder);
         tachyfont.loadFonts_loadAndUse_(tachyFontSet, fontbases)
             .then(function() {
-              tachyFontSet.hadMutationEvents =
-                  launcherInfo.getDomMutationObserved();
-              // If the page has already loaded then update the TachyFonts.
-              if (launcherInfo.getDomContentLoaded()) {
-                tachyfont.loadFonts_handleDomContentLoaded_(tachyFontSet);
-              }
+              tachyfont.loadFonts_setupTextListeners_(
+                  tachyFontSet, launcherInfo);
             });
-
-        // Run this in parallel with loading the fonts.
-        tachyfont.loadFonts_setupTextListeners_(tachyFontSet);
 
         return tachyFontSet;
       })
@@ -672,18 +665,23 @@ tachyfont.loadFonts_init_ = function(familyName, fontsInfo, params) {
 /**
  * Make use of a list of TachyFonts
  * @param {!tachyfont.TachyFontSet} tachyFontSet The TachyFont objects.
+ * @param {!tachyfont.LauncherInfo} launcherInfo The info from the bootstrap
+ *     code.
  * @private
  */
-tachyfont.loadFonts_setupTextListeners_ = function(tachyFontSet) {
+tachyfont.loadFonts_setupTextListeners_ = function(tachyFontSet, launcherInfo) {
   // Get any characters that are already in the DOM.
   tachyFontSet.recursivelyAddTextToFontGroups(document.documentElement);
 
-  // Remove TachyFont from INPUT fields.
+  // Augment with TachyFont and remove TachyFont from INPUT fields.
   tachyFontSet.recursivelyAdjustCssFontFamilies(document.documentElement);
+
+  tachyFontSet.hadMutationEvents = launcherInfo.getDomMutationObserved();
 
   // Create a DOM mutation observer.
   var observer = new MutationObserver(function(mutations) {
-    tachyfont.loadFonts_domMutationObserver_(tachyFontSet, mutations);
+    // So that testing can disconnect the observer pass it along.
+    tachyfont.loadFonts_domMutationObserver_(tachyFontSet, mutations, observer);
   });
 
   // Watch for these mutations.
@@ -691,10 +689,15 @@ tachyfont.loadFonts_setupTextListeners_ = function(tachyFontSet) {
     'subtree': true, 'characterData': true });
   observer.observe(document.documentElement, config);
 
-  // Check the DOM when it reports loading the page is done.
-  document.addEventListener('DOMContentLoaded', function(event) {
+  // If the page has already loaded then update the TachyFonts.
+  if (launcherInfo.getDomContentLoaded()) {
     tachyfont.loadFonts_handleDomContentLoaded_(tachyFontSet);
-  });
+  } else {
+    // Check the DOM when it reports loading the page is done.
+    document.addEventListener('DOMContentLoaded', function(event) {
+      tachyfont.loadFonts_handleDomContentLoaded_(tachyFontSet);
+    }, false);
+  }
 };
 
 
@@ -706,9 +709,11 @@ tachyfont.loadFonts_setupTextListeners_ = function(tachyFontSet) {
  *
  * @param {!tachyfont.TachyFontSet} tachyFontSet The TachyFont objects.
  * @param {?Array<!MutationRecord>} mutations The mutation records.
+ * @param {!MutationObserver} observer For testing: the observer object.
  * @private
  */
-tachyfont.loadFonts_domMutationObserver_ = function(tachyFontSet, mutations) {
+tachyfont.loadFonts_domMutationObserver_ = function(
+    tachyFontSet, mutations, observer) {
   if (!mutations) {
     return;
   }
