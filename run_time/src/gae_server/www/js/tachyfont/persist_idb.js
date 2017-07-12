@@ -94,22 +94,8 @@ tachyfont.Persist.saveData = function(idb, names, datas) {
  * @param {string} id For error reporting: the id of the font.
  * @return {!tachyfont.SynchronousResolutionPromise} The font DB.
  */
-tachyfont.Persist.openIndexedDbSynchronousResolutionPromise = function(
-    dbName, id) {
+tachyfont.Persist.openIndexedDb = function(dbName, id) {
   return new tachyfont.SynchronousResolutionPromise(function(resolve, reject) {
-    return tachyfont.Persist.openIndexedDb_(dbName, id, resolve, reject);
-  });
-};
-
-
-/**
- * Get the fontDB.
- * @param {string} dbName The name of the database.
- * @param {string} id For error reporting: the id of the font.
- * @return {!goog.Promise} The font DB.
- */
-tachyfont.Persist.openIndexedDB = function(dbName, id) {
-  return new goog.Promise(function(resolve, reject) {
     return tachyfont.Persist.openIndexedDb_(dbName, id, resolve, reject);
   });
 };
