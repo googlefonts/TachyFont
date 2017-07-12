@@ -20,6 +20,7 @@
 goog.provide('tachyfont.Browser');
 
 goog.require('goog.Promise');
+goog.require('tachyfont.Define');
 goog.require('tachyfont.IncrementalFontUtils');
 
 
@@ -42,13 +43,13 @@ tachyfont.Browser.setFont = function(fontData, fontInfo, isTtf, oldBlobUrl) {
     mimeType = 'font/otf';  // 'application/font-sfnt';
     format = 'opentype';
   }
-  if (oldBlobUrl) {
-    window.URL.revokeObjectURL(oldBlobUrl);
-  }
   var blobUrl = tachyfont.IncrementalFontUtils.getBlobUrl(fontData, mimeType);
 
   return tachyfont.Browser.setFontNoFlash(fontInfo, format, blobUrl)
       .then(function() {
+        if (oldBlobUrl) {
+          window.URL.revokeObjectURL(oldBlobUrl);
+        }
         return goog.Promise.resolve(blobUrl);
       });
 };
@@ -83,18 +84,37 @@ tachyfont.Browser.setFontNoFlash = function(fontInfo, format, blobUrl) {
   // Load the font data under a font-face that is not getting used.
   var srcStr = 'url("' + blobUrl + '") ' +
       'format("' + format + '");';
+  var fontFaceTmp;
+  var fontFaceNew;
   return goog.Promise.resolve()
       .then(function() {
-        var fontFaceTmp =
+        fontFaceTmp =
             new FontFace('tmp-' + weight + '-' + cssFontFamily, srcStr);
         document.fonts.add(fontFaceTmp);
         return fontFaceTmp.load();
       })
       .then(function(value) {
-        // Show the font now that the data has been transfered to the C++ side.
-        var fontFace = new FontFace(cssFontFamily, srcStr);
-        fontFace.weight = weight;
-        document.fonts.add(fontFace);
-        return fontFace.load();
+        // The font will display without FOUT now that the data has been
+        // transfered to the C++ side.
+        fontFaceNew = new FontFace(cssFontFamily, srcStr);
+        fontFaceNew.weight = weight;
+        document.fonts.add(fontFaceNew);
+        return fontFaceNew.load();
+      })
+      .then(function(value) {
+        document.fonts.delete(fontFaceTmp);
+        var toBeDeleted = [];
+        document.fonts.forEach(function(fontFace, number, fontFaceSet) {
+          var faceWeight =
+              tachyfont.Define.cssWeightToNumber[fontFace.weight] ||
+              fontFace.weight;
+          if (((faceWeight == weight) && (fontFace != fontFaceNew)) &&
+              fontFace.family.includes(cssFontFamily)) {
+            toBeDeleted.push(fontFace);
+          }
+        });
+        toBeDeleted.forEach(function(fontFace) {
+          document.fonts.delete(fontFace);
+        });
       });
 };
