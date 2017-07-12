@@ -22,7 +22,5 @@
   var weights = ['100', '300', '400', '500', '700'];
   var isTtf = false;
   var tachyfontprelude = window['tachyfontprelude'];
-  var unicodeRange = '';
-  tachyfontprelude['loadFonts'](
-      cssFontFamily, fontFamily, unicodeRange, isTtf, weights);
+  tachyfontprelude['loadFonts'](cssFontFamily, fontFamily, isTtf, weights);
 })();
