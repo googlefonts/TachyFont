@@ -248,6 +248,43 @@ tachyfont.SynchronousResolutionPromise.prototype.thenCatch = function(
 
 /**
  * Returns a resolved Promise.
+ * @param {!Array<!tachyfont.SynchronousResolutionPromise>} promises The array
+ *     of promises to wait for;
+ * @return {!SynchronousResolutionPromise<Array<*>, *>}
+ */
+tachyfont.SynchronousResolutionPromise.all = function(promises) {
+  return new tachyfont.SynchronousResolutionPromise(function(resolve, reject) {
+    if (promises.length == 0) {
+      resolve(promises);
+      return;
+    }
+    var results = new Array(promises.length);
+    var unresolvedPromises = promises.length;
+    // The promises can finish in any order. Need to put each promise result at
+    // the correct index in the results. Use a function to hold a closure
+    // that holds the index for the given promise.
+    function functionHoldingClosureData(index, promise) {
+      promise.then(
+          function(value) {
+            results[index] = value;
+            unresolvedPromises--;
+            if (unresolvedPromises <= 0) {
+              resolve(results);
+            }
+          },
+          function(e) {  //
+            reject(e);
+          });
+    }
+    for (var i = 0; i < promises.length; i++) {
+      functionHoldingClosureData(i, promises[i]);
+    }
+  });
+};
+
+
+/**
+ * Returns a resolved Promise.
  * @param {*=} value The resolve value;
  * @return {!SynchronousResolutionPromise}
  */
