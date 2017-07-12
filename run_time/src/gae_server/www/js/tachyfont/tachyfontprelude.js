@@ -139,27 +139,29 @@
     }
     var sheet = style.sheet;
 
-    // Start a chain of asynchronous operations.
-    var lastPromise = newResolvedPromise();
-
-    // Prevent the browser creating ransom note effects by picking glyphs from
-    // other weights in the family by specifying a placeholder font.
-    var fontInfos1 = fontInfos.slice();
-    for (var i = 0; i < fontInfos.length; i++) {
-      lastPromise = lastPromise.then(function() {
-        return setFontNoFlash(sheet, cssFontFamily, null, fontInfos1.shift());
-      });
-    }
-
-    // Now load whatever fonts are already persisted.
-    var fontInfos2 = fontInfos.slice();
-    for (var i = 0; i < fontInfos.length; i++) {
-      lastPromise = lastPromise.then(function() {
-        return useFont(sheet, cssFontFamily, fontInfos2.shift());
-      });
-    }
-
-    return lastPromise;
+    var fontInfos1;
+    var promises;
+    return newResolvedPromise()
+        .then(function() {
+          // Prevent the browser creating ransom note effects by picking glyphs
+          // from other weights in the family by specifying a placeholder font.
+          fontInfos1 = fontInfos.slice();
+          promises = [];
+          for (var i = 0; i < fontInfos1.length; i++) {
+            promises.push(
+                setFontNoFlash(sheet, cssFontFamily, null, fontInfos1.shift()));
+          }
+          return Promise.all(promises);
+        })
+        .then(function() {
+          // Now load whatever fonts are already persisted.
+          fontInfos1 = fontInfos.slice();
+          promises = [];
+          for (var i = 0; i < fontInfos1.length; i++) {
+            promises.push(useFont(sheet, cssFontFamily, fontInfos1.shift()));
+          }
+          return Promise.all(promises);
+        });
   }
 
 
@@ -262,6 +264,13 @@
 
 
   /**
+   * A function that does nothing. Useful for places that need a function but
+   * that function does not need to do anything.
+   */
+  function nullFunction() {}
+
+
+  /**
    * @param {!CSSStyleSheet} sheet The style sheet.
    * @param {string} cssFontFamily The CSS font-family name.
    * @param {?DataView} fontDataView The font data.
@@ -294,7 +303,7 @@
     setCssFontRule(sheet, tmpFontFamily, weight, srcStr);
     var fontStr = '400 20px ' + tmpFontFamily;
     return document.fonts.load(fontStr)
-        .then(undefined, undefined)  // Ignore errors of fonts that do not load.
+        .then(nullFunction, nullFunction)  // Ignore loading errors.
         .then(function(value) {
           setCssFontRule(sheet, cssFontFamily, weight, srcStr);
           if (!fontDataView) {
@@ -308,7 +317,7 @@
           }
           tachyfontprelude['urls'][weight] = blobUrl;
           tachyfontprelude['loaded'][weight] = true;
-        });
+        }, nullFunction);
   }
 
 
