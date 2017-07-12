@@ -18,6 +18,15 @@
  */
 
 goog.provide('tachyfont.PreludeInfo');
+goog.provide('tachyfont.PreludeTypedef');
+
+
+/** @typedef {{
+ *     startTime: number,
+ *     DOMContentLoaded: boolean,
+ *     DomMutationObserved: boolean
+ * }} */
+tachyfont.PreludeTypedef.tachyfontprelude;
 
 
 
@@ -26,7 +35,7 @@ goog.provide('tachyfont.PreludeInfo');
  * @constructor
  */
 tachyfont.PreludeInfo = function() {
-  /** {!Object} */
+  /** @type {?tachyfont.PreludeTypedef.tachyfontprelude} */
   this.tachyfontprelude = window['tachyfontprelude'] || {};
 
   /**
@@ -34,8 +43,7 @@ tachyfont.PreludeInfo = function() {
    * more accurate to get this from the prelude code if that is available.
    * @private {number}
    */
-  // this.startTime_ = this.tachyfontprelude['startTime'] || Date.now();
-  this.startTime_ = Date.now();
+  this.startTime_ = this.tachyfontprelude['startTime'] || Date.now();
 
 };
 
@@ -55,8 +63,7 @@ tachyfont.PreludeInfo.prototype.getActualPrelude = function() {
  * @return {boolean}
  */
 tachyfont.PreludeInfo.prototype.getDomContentLoaded = function() {
-  // return !!this.tachyfontprelude['DOMContentLoaded'];
-  return false;
+  return !!this.tachyfontprelude['DOMContentLoaded'];
 };
 
 
@@ -65,8 +72,7 @@ tachyfont.PreludeInfo.prototype.getDomContentLoaded = function() {
  * @return {boolean}
  */
 tachyfont.PreludeInfo.prototype.getDomMutationObserved = function() {
-  // return !!this.tachyfontprelude['DomMutationObserved'];
-  return false;
+  return !!this.tachyfontprelude['DomMutationObserved'];
 };
 
 
