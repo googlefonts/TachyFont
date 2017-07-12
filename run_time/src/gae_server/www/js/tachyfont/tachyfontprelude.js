@@ -24,10 +24,6 @@
   var tachyfontprelude = {};
 
 
-  /** @type {!Object} The initial setup information. */
-  var initialSetup = window['tachyfont_initialsetup'] || {};
-
-
   /** @type {!Object} Indicates which fonts were loaded */
   tachyfontprelude['loaded'] = {};
 
