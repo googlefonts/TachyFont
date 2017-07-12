@@ -402,16 +402,16 @@
       cssFontFamily, cssFontFamilyToAugment, fontFamily, isTtf, weights,
       tachyfontCodeUrl, mergedFontbasesUrl, dataUrl) {
 
+    // Start fetching the tachyfont code so it can come in while other things
+    // are being done.
+    var tachyfontCodePromise = launcher.loadUrlText(tachyfontCodeUrl);
+
     // Update the CSS.
     launcher.recursivelyAdjustCssFontFamilies(
         cssFontFamily, cssFontFamilyToAugment, document.documentElement);
     // Now that the cssFontFamily and cssFontFamilyToAugment are available
     // update the Mutation observer to automatically update the CSS.
     launcher.addDomMutationObserver(cssFontFamily, cssFontFamilyToAugment);
-
-    // Start fetching the tachyfont code so it can come in while the fonts are
-    // being loaded from persistence.
-    var tachyfontCodePromise = launcher.loadUrlText(tachyfontCodeUrl);
 
     return launcher.loadFonts(cssFontFamily, fontFamily, isTtf, weights)
         .then(function(allLoaded) {
