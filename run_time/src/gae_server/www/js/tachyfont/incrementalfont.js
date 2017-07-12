@@ -73,7 +73,6 @@ tachyfont.IncrementalFont.Error = {
   // 50 no longer used.
   INJECT_COMPACT: '51',
   COMPACT_GET_DB: '52',
-  COMPACT_GET_STORES: '53',
   COMPACT_CHECK_CMAP: '54',
   // 55 no longer used.
   GET_COMPACT_FROM_URL: '56',
@@ -383,13 +382,15 @@ tachyfont.IncrementalFont.obj.prototype.getCompactFontFromPersistence =
                 .Persist
                 // TODO(bstell): Reuse code in readDbTable instead of getStores.
                 .getStores(transaction, tachyfont.Define.compactStoreNames)
-                .thenCatch(function(e) {
-                  // TODO(bstell): remove this debug code
-                  tachyfont.IncrementalFont.reportError(
-                      tachyfont.IncrementalFont.Error.COMPACT_GET_STORES,
-                      fontId, e);
-                  return tachyfont.SynchronousResolutionPromise.reject(e);
-                });
+                .then(
+                    function(data) {
+                      db.close();
+                      return data;
+                    },
+                    function(e) {
+                      db.close();
+                      return tachyfont.SynchronousResolutionPromise.reject(e);
+                    });
           })
       .then(function(arr) {
         // Check there was data.
@@ -404,15 +405,6 @@ tachyfont.IncrementalFont.obj.prototype.getCompactFontFromPersistence =
               (!fileInfo ? 'i' : '_') +  //
               (!charList ? 'c' : '_');
           return tachyfont.SynchronousResolutionPromise.reject(missing);
-        }
-        // TODO(bstell): remove this after 2016-10-11
-        if (fontData.byteLength > 3000000) {
-          // Due to a bug uncompacted fonts were saved as compacted fonts.
-          // Report the data is not there and new data will be fetched.
-          tachyfont.IncrementalFont.reportError(
-             tachyfont.IncrementalFont.Error.DO_NOT_USE_UNCOMPACTED_FONT,
-             fontId, '');
-          return tachyfont.SynchronousResolutionPromise.reject();
         }
         var isOkay = tachyfont.Cmap.checkCharacters(
             fileInfo, fontData, charList, fontId, true);
@@ -589,7 +581,16 @@ tachyfont.IncrementalFont.obj.prototype.saveNewCompactFont = function(
               ];
               return tachyfont.Persist.putStores(
                   transaction, tachyfont.Define.compactStoreNames, newValues);
-            }.bind(this));
+            }.bind(this))
+            .then(
+                function(data) {
+                  db.close();
+                  return data;
+                },
+                function(e) {
+                  db.close();
+                  tachyfont.SynchronousResolutionPromise.reject(e);
+                });
       }.bind(this));
 };
 
