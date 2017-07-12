@@ -678,6 +678,9 @@ tachyfont.loadFonts_setupTextListeners_ = function(tachyFontSet, launcherInfo) {
 
   tachyFontSet.hadMutationEvents = launcherInfo.getDomMutationObserved();
 
+  // Disconnect the launcher's mutation observer.
+  launcherInfo.disconnectMutationObserver();
+
   // Create a DOM mutation observer.
   var observer = new MutationObserver(function(mutations) {
     // So that testing can disconnect the observer pass it along.
