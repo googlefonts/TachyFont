@@ -140,6 +140,17 @@ tachyfont.LauncherInfo.prototype.getUrl = function(fontId) {
 
 
 /**
+ * Removes the launcher's mutation observer.
+ */
+tachyfont.LauncherInfo.prototype.disconnectMutationObserver = function() {
+  if (this.launcher['mutationObserver']) {
+    this.launcher['mutationObserver'].disconnect();
+    this.launcher['mutationObserver'] = null;
+  }
+};
+
+
+/**
  * Gets the XDelta3 decoder class if available.
  * @return {?Object}
  */

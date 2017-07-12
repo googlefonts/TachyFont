@@ -33,14 +33,11 @@
   launcher['DomMutationObserved'] = false;
 
 
-  // Create a DOM mutation observer.
-  var observer = new MutationObserver(function(mutations) {
-    launcher['DomMutationObserved'] = true;
-  });
-  // Watch for these mutations.
-  var config = /** @type {!MutationObserverInit} */ ({ 'childList': true,
-    'subtree': true, 'characterData': true });
-  observer.observe(document.documentElement, config);
+  /**
+   * The DOM Mutation Observer.
+   * @type {?MutationObserver}
+   */
+  launcher.mutationObserver = null;
 
 
   /** @type {boolean} Indicates the DOM content is fully loaded. */
@@ -85,6 +82,38 @@
 
   /** @const {number} Launcher start time. */
   var START_TIME = (new Date()).getTime();
+
+
+  /**
+   * Adds a DOM MutationObserver.
+   * @param {?string} cssFontFamily The TachyFont's CSS font family.
+   * @param {?string} cssFontFamilyToAugment The CSS font family to
+   *     automatically add TachyFont after.
+   */
+  launcher.addDomMutationObserver = function(
+      cssFontFamily, cssFontFamilyToAugment) {
+    // Stop the old one from firing.
+    if (launcher.mutationObserver) {
+      launcher.mutationObserver.disconnect();
+    }
+    // Create a DOM mutation observer.
+    launcher.mutationObserver = new MutationObserver(function(mutations) {
+      launcher['DomMutationObserved'] = true;
+      if (cssFontFamily && cssFontFamilyToAugment) {
+        launcher.recursivelyAdjustCssFontFamilies(
+            cssFontFamily, cssFontFamilyToAugment, document.documentElement);
+      }
+    });
+    // Watch for these mutations.
+    var config = /** @type {!MutationObserverInit} */ (
+        {'childList': true, 'subtree': true, 'characterData': true});
+    launcher.mutationObserver.observe(document.documentElement, config);
+  };
+
+
+  // Initially add the mutation observer so it can be watching before the the
+  // TachyFonts get loaded.
+  launcher.addDomMutationObserver(null, null);
 
 
   /**
@@ -401,14 +430,20 @@
   launcher.startTachyFont = function(
       cssFontFamily, cssFontFamilyToAugment, fontFamily, isTtf, weights,
       tachyfontCodeUrl, mergedFontbasesUrl, dataUrl) {
+
+    // Update the CSS.
+    launcher.recursivelyAdjustCssFontFamilies(
+        cssFontFamily, cssFontFamilyToAugment, document.documentElement);
+    // Now that the cssFontFamily and cssFontFamilyToAugment are available
+    // update the Mutation observer to automatically update the CSS.
+    launcher.addDomMutationObserver(cssFontFamily, cssFontFamilyToAugment);
+
     // Start fetching the tachyfont code so it can come in while the fonts are
     // being loaded from persistence.
     var tachyfontCodePromise = launcher.loadUrlText(tachyfontCodeUrl);
 
     return launcher.loadFonts(cssFontFamily, fontFamily, isTtf, weights)
         .then(function(allLoaded) {
-          launcher.recursivelyAdjustCssFontFamilies(
-              cssFontFamily, cssFontFamilyToAugment, document.documentElement);
           launcher.requestMergedFontbases(allLoaded, mergedFontbasesUrl);
           return tachyfontCodePromise;
         })
@@ -462,6 +497,7 @@
     var params = {};
     params['cssFontFamilyToAugment'] = cssFontFamilyToAugment;
     params['noStartUpDelay'] = true;
+    params['mutationObserver'] = launcher.mutationObserver;
     var loadTachyFonts = tachyfont['loadFonts'];
     loadTachyFonts(cssFontFamily, fontsInfo, params);
   };
