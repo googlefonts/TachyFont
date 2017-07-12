@@ -437,6 +437,79 @@
 
 
   /**
+   * Loads data and starts TachyFont.
+   * @param {string} cssFontFamily The CSS font-family name.
+   * @param {string} fontFamily The font's family name.
+   * @param {boolean} isTtf Whether is a TrueType or CFF font.
+   * @param {!Array<string>} weights The list of font weights to load.
+   * @param {string} tachyfontCodeUrl The URL of the TachyFont code.
+   * @param {string} mergedFontbasesUrl The URL of the merged fontbases.
+   * @param {string} dataUrl The URL for data and reporting.
+   */
+  launcher.startTachyFont = function(
+      cssFontFamily, fontFamily, isTtf, weights, tachyfontCodeUrl,
+      mergedFontbasesUrl, dataUrl) {
+    // Start fetching the tachyfont code so it can come in while the fonts are
+    // being loaded from persistence.
+    var tachyfontCodePromise = launcher.loadUrlText(tachyfontCodeUrl);
+
+    return launcher.loadFonts(cssFontFamily, fontFamily, isTtf, weights)
+        .then(function(allLoaded) {
+          launcher.requestMergedFontbases(allLoaded, mergedFontbasesUrl);
+          return tachyfontCodePromise;
+        })
+        .then(launcher.loadTachyFontCode)
+        .then(function() {
+          // Load the TachyFonts.
+          var tachyfont = window['tachyfont'];
+          var FontInfo = tachyfont['FontInfo'];
+          var fontInfos = [];
+          for (var i = 0; i < weights.length; i++) {
+            var fontInfo = new FontInfo(fontFamily, weights[i], false);
+            fontInfos.push(fontInfo);
+          }
+          var FontsInfo = tachyfont['FontsInfo'];
+          var fontsInfo = new FontsInfo(fontInfos, dataUrl, dataUrl);
+          var loadFonts = tachyfont['loadFonts'];
+          debugger;
+          loadFonts(cssFontFamily, fontsInfo);
+        });
+  };
+
+
+  /**
+   * Loads the TachyFont code.
+   * @param {!Promise<string, ?>} tachyfontCodePromise A promise for the
+   *     TachyFont code.
+   * @return {!Promise<?, ?>}
+   */
+  launcher.loadTachyFontCode = function(tachyfontCode) {
+    // Load the tachyfont code into the DOM.
+    var script = document.createElement('script');
+    script.type = 'text/javascript';
+    script.text = tachyfontCode;
+    document.getElementsByTagName('head')[0].appendChild(script);
+  };
+
+
+  /**
+   * Starts the loading of the merged fontbases if needed.
+   * @param {boolean} allLoaded Whether all the fontbase were able to be loaded
+   *     from persistent storage.
+   * @param {string} mergedFontbasesUrl The url to the merged fontbases.
+   */
+  launcher.requestMergedFontbases = function(allLoaded, mergedFontbasesUrl) {
+    // If not all the fonts are loaded then load the merged font bases.
+    if (!allLoaded) {
+      // Will need the merged fontbases so start loading them now.
+      // But do not wait for them to load.
+      launcher['mergedFontBases'] =
+          launcher.loadUrlArrayBuffer(mergedFontbasesUrl);
+    }
+  };
+
+
+  /**
    * Gets a resolved promise.
    * @param {*=} opt_value The value the promise resolves to.
    * @return {!Promise}
@@ -465,4 +538,5 @@
   window['tachyfont_launcher'] = launcher;
   launcher['reports'] = reports;
   launcher['loadFonts'] = launcher.loadFonts;
+  launcher['startTachyFont'] = launcher.startTachyFont;
 })();
