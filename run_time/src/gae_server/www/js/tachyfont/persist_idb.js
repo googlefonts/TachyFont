@@ -393,30 +393,26 @@ tachyfont.Persist.putStores = function(transaction, names, values) {
 
 /**
  * Get data from an object store.
- * @param {!tachyfont.SynchronousResolutionPromise<?,?>} previous The previous
- *     promise to wait for.
  * @param {!IDBTransaction} transaction The transaction object.
  * @param {string} name The name of the store to retrieve.
  * @return {!tachyfont.SynchronousResolutionPromise<*,?>} Promise to return the
  *     data.
  */
-tachyfont.Persist.getStore = function(previous, transaction, name) {
-  return previous.then(function() {
-    return new tachyfont.SynchronousResolutionPromise(  //
-        function(resolve, reject) {
-          var store = transaction.objectStore(name);
-          var request = store.get(0);
-          request.onsuccess = function(e) {
-            resolve(e.target.result);  //
-          };
+tachyfont.Persist.getStore = function(transaction, name) {
+  return new tachyfont.SynchronousResolutionPromise(  //
+      function(resolve, reject) {
+        var store = transaction.objectStore(name);
+        var request = store.get(0);
+        request.onsuccess = function(e) {
+          resolve(e.target.result);  //
+        };
 
-          request.onerror = function(e) {
-            tachyfont.Persist.reportError(
-                tachyfont.Persist.Error.GET_STORE, name, e);
-            reject(e);  //
-          };
-        });
-  });
+        request.onerror = function(e) {
+          tachyfont.Persist.reportError(
+              tachyfont.Persist.Error.GET_STORE, name, e);
+          reject(e);  //
+        };
+      });
 };
 
 
@@ -428,14 +424,9 @@ tachyfont.Persist.getStore = function(previous, transaction, name) {
  *     return the array of data.
  */
 tachyfont.Persist.getStores = function(transaction, names) {
-  var results = [];
-  var lastPromise = tachyfont.SynchronousResolutionPromise.resolve([]);
+  var promises = [];
   for (var i = 0; i < names.length; i++) {
-    lastPromise = tachyfont.Persist.getStore(lastPromise, transaction, names[i])
-                      .then(function(value) {
-                        results.push(value);
-                        return results;
-                      });
+    promises.push(tachyfont.Persist.getStore(transaction, names[i]));
   }
-  return lastPromise;
+  return tachyfont.SynchronousResolutionPromise.all(promises);
 };
