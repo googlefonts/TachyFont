@@ -48,7 +48,7 @@ tachyfont.MergedData = function(mergedDataBytes, xdelta3_decoder) {
   /** @type {?tachyfont.MergedData.Info} */
   this.info = null;
 
-  /** @type {?Uint8Array} */
+  /** @type {?ArrayBuffer} */
   this.sourceBytes = null;
 };
 
@@ -58,16 +58,14 @@ tachyfont.MergedData = function(mergedDataBytes, xdelta3_decoder) {
  * BS:Brian Stell TF:TachyFont
  * @type {string}
  */
-// TODO(bstell): change this to 'BSMD'
-tachyfont.MergedData.magicHead = 'BSTF';
+tachyfont.MergedData.magicHead = 'BSMD';
 
 
 /**
  * The major version of the merged data.
  * @type {number}
- * TODO(bstell): change the version
  */
-tachyfont.MergedData.MAJOR_VERSION = 0;
+tachyfont.MergedData.MAJOR_VERSION = 1;
 
 
 /**
@@ -81,7 +79,7 @@ tachyfont.MergedData.MINOR_VERSION = 0;
  * The type for primary (non-diff'd) data.
  * @type {string}
  */
-tachyfont.MergedData.TYPE_PRIMARY = 'COMP';  // 'PRMY';
+tachyfont.MergedData.TYPE_PRIMARY = 'PRMY';
 
 
 /**
@@ -102,7 +100,7 @@ tachyfont.MergedData.prototype.getBinaryEditor = function() {
 
 /**
  * @param {string} name The data identifier.
- * @return {?Uint8Array}
+ * @return {?ArrayBuffer}
  */
 tachyfont.MergedData.prototype.getData = function(name) {
   try {
@@ -130,8 +128,8 @@ tachyfont.MergedData.prototype.getData = function(name) {
 
 /**
  * @param {string} name Name of the data.
- * @param {!Uint8Array=} opt_sourceBytes Source bytes for diffing. Optional.
- * @return {?Uint8Array}
+ * @param {!ArrayBuffer=} opt_sourceBytes Source bytes for diffing. Optional.
+ * @return {?ArrayBuffer}
  * @private
  */
 tachyfont.MergedData.prototype.getBytes_ = function(name, opt_sourceBytes) {
@@ -142,9 +140,13 @@ tachyfont.MergedData.prototype.getBytes_ = function(name, opt_sourceBytes) {
 
   var mergedBytes = this.binaryEditor.getDataView().buffer;
   var delta = new Uint8Array(mergedBytes, record.offset, record.length);
+  var sourceBytes;
+  if (opt_sourceBytes) {
+    sourceBytes = new Uint8Array(opt_sourceBytes);
+  }
+
   try {
-    var data = this.xdelta3_decoder.decode(delta, opt_sourceBytes);
-    return data;
+    return this.xdelta3_decoder.decode(delta, sourceBytes);
   } catch (e) {
     return null;
   }
@@ -152,7 +154,7 @@ tachyfont.MergedData.prototype.getBytes_ = function(name, opt_sourceBytes) {
 
 
 /**
- * @return {?Uint8Array}
+ * @return {?ArrayBuffer}
  * @private
  */
 tachyfont.MergedData.prototype.getSourceBytes_ = function() {
@@ -183,6 +185,7 @@ tachyfont.MergedData.prototype.getInfo_ = function() {
 
 /**
  * Contains info about the merged data.
+ * @param {string} familyName
  * @param {number} majorVersion
  * @param {number} minorVersion
  * @param {number} numberSubtables
@@ -192,7 +195,11 @@ tachyfont.MergedData.prototype.getInfo_ = function() {
  * @constructor @struct
  */
 tachyfont.MergedData.Info = function(
-    majorVersion, minorVersion, numberSubtables, primaryName, subtableRecords) {
+    familyName, majorVersion, minorVersion, numberSubtables, primaryName,
+    subtableRecords) {
+  /** @type {string} */
+  this.familyName = familyName;
+
   /** @type {number} */
   this.majorVersion = majorVersion;
 
@@ -252,10 +259,9 @@ tachyfont.MergedData.prototype.parseMergedData = function() {
   this.binaryEditor.skip(1);  // Unused.
   var numberSubtables = this.binaryEditor.getUint8();
 
-  // TODO(bstell): need to add the font family name to the data
-  // // Read the font family name.
-  // var length = this.binaryEditor.getUint8();
-  // var fontFamilyName = this.binaryEditor.readString(length);
+  // Read the font family name.
+  var familyNamelength = this.binaryEditor.getUint8();
+  var familyName = this.binaryEditor.readString(familyNamelength);
 
   var subtableRecords = {};
   var primaryName = '';
@@ -274,7 +280,7 @@ tachyfont.MergedData.prototype.parseMergedData = function() {
   }
 
   var info = new tachyfont.MergedData.Info(
-      majorVersion, minorVersion, numberSubtables, primaryName,
+      familyName, majorVersion, minorVersion, numberSubtables, primaryName,
       subtableRecords);
   return info;
 };

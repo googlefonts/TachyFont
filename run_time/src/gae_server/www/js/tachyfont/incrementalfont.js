@@ -603,28 +603,34 @@ tachyfont.IncrementalFont.obj.prototype.getCompactFont = function(fontbases) {
       }.bind(this))
       .thenCatch(function() {
         var fontbase = fontbases.getData(this.fontId_);
-        if (fontbase) {
-          return fontbase;
-        }
-        // Not persisted so fetch from the URL.
-        return this.getCompactFontFromUrl(this.backendService_, this.fontInfo_)
-            .then(function(compactWorkingData) {
-              this.setFileInfo(compactWorkingData.fileInfo);
-              this.compactCharList_.resolve(compactWorkingData.charList);
-              return compactWorkingData;
+        return this.getCompactFontFromMergedData(fontbase)
+            .then(function(mergeWorkingData) {
+              this.setFileInfo(mergeWorkingData.fileInfo);
+              this.compactCharList_.resolve(mergeWorkingData.charList);
+              return mergeWorkingData;
             }.bind(this))
-            .thenCatch(function(e) {
-              this.compactCharList_.reject();
-              tachyfont.IncrementalFont.reportError(
-                  tachyfont.IncrementalFont.Error.GET_COMPACT_FROM_URL,
-                  this.fontId_, e);
-              // Clear the font.
-              return tachyfont.CompactCff
-                  .clearDataStores(
-                      tachyfont.Define.compactStoreNames, this.fontInfo_)
-                  .then(function() {
-                    return goog.Promise.reject(e);  //
-                  });
+            .thenCatch(function() {
+              // Not persisted so fetch from the URL.
+              return this
+                  .getCompactFontFromUrl(this.backendService_, this.fontInfo_)
+                  .then(function(compactWorkingData) {
+                    this.setFileInfo(compactWorkingData.fileInfo);
+                    this.compactCharList_.resolve(compactWorkingData.charList);
+                    return compactWorkingData;
+                  }.bind(this))
+                  .thenCatch(function(e) {
+                    this.compactCharList_.reject();
+                    tachyfont.IncrementalFont.reportError(
+                        tachyfont.IncrementalFont.Error.GET_COMPACT_FROM_URL,
+                        this.fontId_, e);
+                    // Clear the font.
+                    return tachyfont.CompactCff
+                        .clearDataStores(
+                            tachyfont.Define.compactStoreNames, this.fontInfo_)
+                        .then(function() {
+                          return goog.Promise.reject(e);  //
+                        });
+                  }.bind(this));
             }.bind(this));
       }.bind(this));
 };
@@ -644,6 +650,23 @@ tachyfont.IncrementalFont.obj.prototype.getCompactFontFromUrl = function(
       .then(function(urlBaseBytes) {
         return this.processFontbase(urlBaseBytes);
       }.bind(this));
+};
+
+
+/**
+ * Gets the Compact font base from a fontbase.
+ * @param {?ArrayBuffer} urlBaseBytes The URL base bytes from the fontbase.
+ * @return {!tachyfont.SynchronousResolutionPromise<
+ *          ?tachyfont.typedef.CompactFontWorkingData,?>} The compact font data,
+ *         fileInfo, and charList.
+ */
+tachyfont.IncrementalFont.obj.prototype.getCompactFontFromMergedData = function(
+    urlBaseBytes) {
+  if (urlBaseBytes) {
+    return this.processFontbase(urlBaseBytes);
+  } else {
+    return tachyfont.SynchronousResolutionPromise.reject();
+  }
 };
 
 
