@@ -29,7 +29,9 @@ goog.require('tachyfont.Define');
 /** @suppress {extraRequire} */
 goog.require('tachyfont.FontsInfo');
 goog.require('tachyfont.IncrementalFont');
+goog.require('tachyfont.MergedData');
 goog.require('tachyfont.Persist');
+goog.require('tachyfont.PreludeInfo');
 goog.require('tachyfont.Reporter');
 goog.require('tachyfont.TachyFontSet');
 goog.require('tachyfont.log');
@@ -228,6 +230,7 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
   // Sent an "error" report so the number of page loads can be determined on the
   // dashboard.
   tachyfont.reportError(tachyfont.Error.PAGE_LOADED);
+  var preludeInfo = new tachyfont.PreludeInfo();
   tachyfont.sendPreludeReports();
   return tachyfont.checkSystem()
       .then(function() {
@@ -236,11 +239,25 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
         return tachyfont.manageStorageUsage(fontInfos);
       })
       .then(function() {
+        return preludeInfo.getMergedFontbasesBytes();
+      })
+      .then(function(mergedFontbasesBytes) {
         // Initialize the objects.
         var tachyFontSet =
             tachyfont.loadFonts_init_(familyName, fontsInfo, opt_params);
         // Load the fonts.
-        tachyfont.loadFonts_loadAndUse_(tachyFontSet);
+        var xdelta3Decoder = preludeInfo.getXDeltaDecoder();
+        var fontbases =
+            new tachyfont.MergedData(mergedFontbasesBytes, xdelta3Decoder);
+        tachyfont.loadFonts_loadAndUse_(tachyFontSet, fontbases)
+            .then(function() {
+              tachyFontSet.hadMutationEvents =
+                  preludeInfo.getDomMutationObserved();
+              // If the page has already loaded then update the TachyFonts.
+              if (preludeInfo.getDomContentLoaded()) {
+                tachyfont.loadFonts_handleDomContentLoaded_(tachyFontSet);
+              }
+            });
 
         // Run this in parallel with loading the fonts.
         tachyfont.loadFonts_setupTextListeners_(tachyFontSet);
@@ -525,10 +542,11 @@ tachyfont.isSupportedBrowser = function(opt_windowObject) {
 /**
  * Load and use a list of TachyFonts
  * @param {!tachyfont.TachyFontSet} tachyFontSet The list of TachyFonts.
+ * @param {!tachyfont.MergedData} fontbases The fontbases object.
  * @return {!goog.Promise}
  * @private
  */
-tachyfont.loadFonts_loadAndUse_ = function(tachyFontSet) {
+tachyfont.loadFonts_loadAndUse_ = function(tachyFontSet, fontbases) {
   var msg = 'loadFonts';
   var hadError = false;
   var waitPreviousTime = goog.now();
@@ -545,7 +563,7 @@ tachyfont.loadFonts_loadAndUse_ = function(tachyFontSet) {
           serialPromise = serialPromise.then(function(index) {
             var incrfont = fonts[index].incrfont_;
             // Load the fonts from persistent store or URL.
-            return incrfont.getCompactFont()
+            return incrfont.getCompactFont(fontbases)
                 .then(
                     function(compactFontWorkingData) {
                       // Use the Compact font.

@@ -588,10 +588,11 @@ tachyfont.IncrementalFont.obj.prototype.getCompactFontFromPersistence =
 
 /**
  * Gets the Compact font for a TachyFont.
+ * @param {!tachyfont.MergedData} fontbases The merged fontbases.
  * @return {!tachyfont.SynchronousResolutionPromise<
  *               ?tachyfont.typedef.CompactFontWorkingData,?>}
  */
-tachyfont.IncrementalFont.obj.prototype.getCompactFont = function() {
+tachyfont.IncrementalFont.obj.prototype.getCompactFont = function(fontbases) {
   // Try to get the base from persistent store.
   return this
       .getCompactFontFromPersistence()  //
@@ -601,6 +602,10 @@ tachyfont.IncrementalFont.obj.prototype.getCompactFont = function() {
         return compactWorkingData;
       }.bind(this))
       .thenCatch(function() {
+        var fontbase = fontbases.getData(this.fontId_);
+        if (fontbase) {
+          return fontbase;
+        }
         // Not persisted so fetch from the URL.
         return this.getCompactFontFromUrl(this.backendService_, this.fontInfo_)
             .then(function(compactWorkingData) {
