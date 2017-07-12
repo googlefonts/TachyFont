@@ -20,7 +20,6 @@
 goog.provide('tachyfont.TachyFontSet');
 
 goog.require('goog.Promise');
-goog.require('goog.array');
 goog.require('goog.style');
 goog.require('tachyfont.Define');
 goog.require('tachyfont.IncrementalFontUtils');
@@ -33,9 +32,10 @@ goog.require('tachyfont.utils');
 /**
  * Manage a group of TachyFonts.
  * @param {string} familyName The font family name for this set.
- * @constructor
+ * @param {string} cssFontFamilyToAugment The cssFontFamily to augment.
+ * @constructor @struct
  */
-tachyfont.TachyFontSet = function(familyName) {
+tachyfont.TachyFontSet = function(familyName, cssFontFamilyToAugment) {
   /**
    * The TachyFonts managed in this set.
    * @type {!Array<!tachyfont.TachyFont>}
@@ -50,6 +50,9 @@ tachyfont.TachyFontSet = function(familyName) {
    * @type {!Object<string, string>}
    */
   this.cssFamilyToTachyFontFamily = {};
+
+  /** @type {string} */
+  this.cssFontFamilyToAugment = cssFontFamilyToAugment;
 
   /** @type {string} */
   this.familyName = familyName;
@@ -205,12 +208,12 @@ tachyfont.TachyFontSet.prototype.addFont = function(font) {
  * For the node and sub-nodes remove TachyFont from input fields.
  * @param {!Node} node The starting point for walking the node/sub-nodes.
  */
-tachyfont.TachyFontSet.prototype.recursivelyRemoveTachyFontFromInputFields =
-    function(node) {
-  this.removeTachyFontFromInputField(node);
+tachyfont.TachyFontSet.prototype.recursivelyAdjustCssFontFamilies = function(
+    node) {
+  this.adjustCssFontFamilies(node);
   var children = node.childNodes;
   for (var i = 0; i < children.length; i++) {
-    this.recursivelyRemoveTachyFontFromInputFields(children[i]);
+    this.recursivelyAdjustCssFontFamilies(children[i]);
   }
 };
 
@@ -219,24 +222,51 @@ tachyfont.TachyFontSet.prototype.recursivelyRemoveTachyFontFromInputFields =
  * Remove TachyFont from an input field.
  * @param {!Node} node The node to work on.
  */
-tachyfont.TachyFontSet.prototype.removeTachyFontFromInputField =
-    function(node) {
-  if (node.nodeName != 'INPUT') {
+tachyfont.TachyFontSet.prototype.adjustCssFontFamilies = function(node) {
+  if (node.nodeType != Node.ELEMENT_NODE) {
     return;
   }
-
-  var cssFamily = goog.style.getComputedStyle(/** @type {!Element} */ (node),
-      'font-family');
-
+  var needToAdjustedCss = false;
+  var cssFamily = goog.style.getComputedStyle(
+      /** @type {!Element} */ (node), 'font-family');
   var families = cssFamily.split(',');
-  // Remove the TachyFont if it is in the family list.
-  goog.array.removeAllIf(families, function(val, index, array) {
-    // Handle extra quotes.
-    val = tachyfont.IncrementalFontUtils.trimFamilyName(val);
-    return this.familyName == val;
-  }, this);
-  var newCssFamily = families.join(', ');
-  node.style.fontFamily = newCssFamily;
+  var trimmedFamilies = [];
+  for (var i = 0; i < families.length; i++) {
+    var name = tachyfont.IncrementalFontUtils.trimFamilyName(families[i]);
+    if (node.nodeName == 'INPUT') {
+      // Drop TachyFont from input fields.
+      if (name == this.familyName) {
+        needToAdjustedCss = true;
+      } else {
+        trimmedFamilies.push(name);
+      }
+      continue;
+    } else {
+      if (!this.cssFontFamilyToAugment ||
+          (name != this.cssFontFamilyToAugment)) {
+        trimmedFamilies.push(name);
+        continue;
+      }
+      // Check if this font is already augmented by TachyFont.
+      if (i + 1 < families.length) {
+        var nextName =
+            tachyfont.IncrementalFontUtils.trimFamilyName(families[i + 1]);
+        if (nextName == this.familyName) {
+          // Already augmented.
+          continue;
+        }
+      }
+    }
+    // Need to augment with TachyFont.
+    needToAdjustedCss = true;
+    trimmedFamilies.push(name);
+    // Add TachyFont for this element.
+    trimmedFamilies.push(this.familyName);
+  }
+  if (needToAdjustedCss) {
+    var newCssFamily = trimmedFamilies.join(', ');
+    node.style.fontFamily = newCssFamily;
+  }
 };
 
 
@@ -322,7 +352,6 @@ tachyfont.TachyFontSet.prototype.addTextToFontGroups = function(node) {
     var c = charArray[i];
     if (charlist[c] != 1) {
       textAdded = true;
-      this.pendingChars_ += 1;
     }
     charlist[c] = 1;
   }

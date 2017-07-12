@@ -349,7 +349,7 @@
     var rule_str = '@font-face{' +
         'font-family: ' + fontFamily + ';' +
         'font-weight: ' + weight + ';' +
-        'src: ' + srcStr + '' +
+        'src: ' + srcStr +  //
         '}\n';
     sheet.insertRule(rule_str, sheet.cssRules.length);
   }
@@ -439,6 +439,7 @@
   /**
    * Loads data and starts TachyFont.
    * @param {string} cssFontFamily The CSS font-family name.
+   * @param {string} cssFontFamilyToAugment Add coverage to this cssFontFamily.
    * @param {string} fontFamily The font's family name.
    * @param {boolean} isTtf Whether is a TrueType or CFF font.
    * @param {!Array<string>} weights The list of font weights to load.
@@ -447,8 +448,8 @@
    * @param {string} dataUrl The URL for data and reporting.
    */
   launcher.startTachyFont = function(
-      cssFontFamily, fontFamily, isTtf, weights, tachyfontCodeUrl,
-      mergedFontbasesUrl, dataUrl) {
+      cssFontFamily, cssFontFamilyToAugment, fontFamily, isTtf, weights,
+      tachyfontCodeUrl, mergedFontbasesUrl, dataUrl) {
     // Start fetching the tachyfont code so it can come in while the fonts are
     // being loaded from persistence.
     var tachyfontCodePromise = launcher.loadUrlText(tachyfontCodeUrl);
@@ -462,7 +463,9 @@
           // Load the TachyFont library.
           launcher.loadTachyFontCode(tachyfontCode);
           // Load the TachyFonts.
-          launcher.loadTachyFonts(fontFamily, cssFontFamily, weights, dataUrl);
+          launcher.loadTachyFonts(
+              cssFontFamily, cssFontFamilyToAugment, fontFamily, weights,
+              dataUrl);
         });
   };
 
@@ -470,7 +473,7 @@
   /**
    * Loads the TachyFont code.
    * @param {string} tachyfontCode The TachyFont code.
-   * @param {string=} id An optional id. Useful for testing.
+   * @param {string=} opt_id An optional id. Useful for testing.
    */
   launcher.loadTachyFontCode = function(tachyfontCode, opt_id) {
     // Load the tachyfont code into the DOM.
@@ -484,13 +487,14 @@
 
   /**
    * Loads the TachyFonts.
-   * @param {string} fontFamily The font's family name.
    * @param {string} cssFontFamily The CSS font-family name.
+   * @param {string} cssFontFamilyToAugment Add coverage to this cssFontFamily.
+   * @param {string} fontFamily The font's family name.
    * @param {!Array<string>} weights The list of font weights to load.
    * @param {string} dataUrl The URL for data and reporting.
    */
   launcher.loadTachyFonts = function(
-      fontFamily, cssFontFamily, weights, dataUrl) {
+      cssFontFamily, cssFontFamilyToAugment, fontFamily, weights, dataUrl) {
     // Load the TachyFonts.
     var tachyfont = window['tachyfont'];
     var FontInfo = tachyfont['FontInfo'];
@@ -502,8 +506,10 @@
     }
     var FontsInfo = tachyfont['FontsInfo'];
     var fontsInfo = new FontsInfo(fontInfos, dataUrl, dataUrl);
+    var params = {};
+    params['cssFontFamilyToAugment'] = cssFontFamilyToAugment;
     var loadTachyFonts = tachyfont['loadFonts'];
-    loadTachyFonts(cssFontFamily, fontsInfo);
+    loadTachyFonts(cssFontFamily, fontsInfo, params);
   };
 
 

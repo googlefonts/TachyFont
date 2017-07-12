@@ -116,11 +116,10 @@ if (goog.DEBUG) {
 /**
  * TachyFont - A namespace.
  * @param {!tachyfont.FontInfo} fontInfo The font info.
- * @param {!Object=} opt_params Optional parameters.
+ * @param {!Object<string, string>} params Optional parameters.
  * @constructor
  */
-tachyfont.TachyFont = function(fontInfo, opt_params) {
-  var params = opt_params || {};
+tachyfont.TachyFont = function(fontInfo, params) {
 
   /**
    * The object that handles the binary manipulation of the font data.
@@ -220,6 +219,7 @@ tachyfont.reportError = function(errNum, opt_errInfo, opt_fontId) {
  *     TachyFontSet object or null if the fonts are not loaded.
  */
 tachyfont.loadFonts = function(cssFamilyName, fontsInfo, opt_params) {
+  var params = opt_params || {};
   if (goog.DEBUG) {
     tachyfont.debugInitialization_();
   }
@@ -242,7 +242,7 @@ tachyfont.loadFonts = function(cssFamilyName, fontsInfo, opt_params) {
       .then(function(mergedFontbasesBytes) {
         // Initialize the objects.
         var tachyFontSet =
-            tachyfont.loadFonts_init_(cssFamilyName, fontsInfo, opt_params);
+            tachyfont.loadFonts_init_(cssFamilyName, fontsInfo, params);
         // Load the fonts.
         var xdelta3Decoder = launcherInfo.getXDeltaDecoder();
         var fontbases =
@@ -638,15 +638,16 @@ tachyfont.loadFonts_initReporter = function(fontsInfo) {
  * TODO(bstell): remove the Object type.
  * @param {!tachyfont.FontsInfo} fontsInfo The information about the
  *     fonts.
- * @param {!Object<string, string>=} opt_params Optional parameters.
+ * @param {!Object<string, string>} params Optional parameters.
  * @return {!tachyfont.TachyFontSet} The TachyFontSet object.
  * @private
  */
-tachyfont.loadFonts_init_ = function(familyName, fontsInfo, opt_params) {
+tachyfont.loadFonts_init_ = function(familyName, fontsInfo, params) {
   var dataUrl = fontsInfo.getDataUrl();
+  var cssFontFamilyToAugment = params['cssFontFamilyToAugment'] || '';
 
-  var tachyFontSet = new tachyfont.TachyFontSet(familyName);
-  var params = opt_params || {};
+  var tachyFontSet =
+      new tachyfont.TachyFontSet(familyName, cssFontFamilyToAugment);
   var fontInfos = fontsInfo.getPrioritySortedFonts();
   for (var i = 0; i < fontInfos.length; i++) {
     var fontInfo = fontInfos[i];
@@ -672,8 +673,7 @@ tachyfont.loadFonts_setupTextListeners_ = function(tachyFontSet) {
   tachyFontSet.recursivelyAddTextToFontGroups(document.documentElement);
 
   // Remove TachyFont from INPUT fields.
-  tachyFontSet.recursivelyRemoveTachyFontFromInputFields(
-      document.documentElement);
+  tachyFontSet.recursivelyAdjustCssFontFamilies(document.documentElement);
 
   // Create a DOM mutation observer.
   var observer = new MutationObserver(function(mutations) {
@@ -713,7 +713,7 @@ tachyfont.loadFonts_domMutationObserver_ = function(tachyFontSet, mutations) {
         var node = mutation.addedNodes[i];
         tachyFontSet.recursivelyAddTextToFontGroups(node);
         // Remove TachyFont from INPUT fields.
-        tachyFontSet.recursivelyRemoveTachyFontFromInputFields(node);
+        tachyFontSet.recursivelyAdjustCssFontFamilies(node);
       }
     } else if (mutation.type == 'characterData') {
       if (goog.DEBUG) {
