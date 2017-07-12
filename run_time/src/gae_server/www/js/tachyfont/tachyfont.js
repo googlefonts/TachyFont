@@ -493,6 +493,7 @@ tachyfont.isFontStored = function(dbName) {
           objectStoreNames.contains(tachyfont.Define.COMPACT_FILE_INFO) &&
           objectStoreNames.contains(tachyfont.Define.COMPACT_CHAR_LIST) &&
           objectStoreNames.contains(tachyfont.Define.COMPACT_METADATA);
+      db.close();
       resolve(isStored);
     };
     request.onerror = function(e) {
