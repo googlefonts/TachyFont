@@ -47,7 +47,7 @@ tachyfont.PreludeInfo = function() {
 
   /**
    * The font Blob URLs.
-   * @private {!Object<(string|undefined), string>}
+   * @private {!Object<string, string>}
    */
   this.urls_ = this.tachyfontprelude['urls'] || {};
 };
