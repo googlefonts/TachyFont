@@ -43,18 +43,18 @@ var DemoBackendService = tachyfont.DemoBackendService;
 /** @override */
 DemoBackendService.prototype.requestCodepoints = function(fontInfo, codes) {
   var that = this;
-  return this.requestUrl(
-      this.baseUrl + '/incremental_fonts/request',
-      'POST',
-      JSON.stringify({
-        'name': fontInfo.getName(),
-        'weight': fontInfo.getWeight(),
-        'arr': codes
-      }),
-      // Google App Engine servers do not support CORS so we cannot say
-      // the 'Content-Type' is 'application/json'.
-      //{'Content-Type': 'application/json'},
-      {'Content-Type': 'text/plain'})
+  return this
+      .requestUrl(
+          this.baseUrl + '/characterdata2',  //
+          'POST', JSON.stringify({
+            'name': fontInfo.getName(),
+            'weight': fontInfo.getWeight(),
+            'arr': codes
+          }),
+          // Google App Engine servers do not support CORS so we cannot say
+          // the 'Content-Type' is 'application/json'.
+          //{'Content-Type': 'application/json'},
+          {'Content-Type': 'text/plain'})
       .then(function(glyphData) {
         return that.parseDataHeader(glyphData);
       });
@@ -63,10 +63,9 @@ DemoBackendService.prototype.requestCodepoints = function(fontInfo, codes) {
 
 /** @override */
 DemoBackendService.prototype.requestFontBase = function(fontInfo) {
-  return this.requestUrl(this.baseUrl + '/incremental_fonts/incrfonts/' +
-      fontInfo.getName() + '/' + fontInfo.getWeight() +
-      '/base', 'GET',
-      null, {});
+  var url = this.baseUrl + '/fontbase2?fontname=' + fontInfo.getName() + '&' +
+      'weight=' + fontInfo.getWeight();
+  return this.requestUrl(url, 'GET', null, {});
 };
 
 
