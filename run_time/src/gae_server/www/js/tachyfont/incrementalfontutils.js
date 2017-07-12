@@ -215,15 +215,22 @@ tachyfont.IncrementalFontUtils.getBlobUrl = function(data, mimeType) {
  */
 tachyfont.IncrementalFontUtils.trimFamilyName = function(familyName) {
   var trimmedName = familyName.trim();
-  // When there are spaces in the font-name, Chromium adds single quotes
+  // When there are spaces in the font-name, Chromium adds quotes
   // around the font name in the style object; eg, "Noto Sans Japanese"
   // becomes "'Noto Sans Japanese'".
   // https://code.google.com/p/chromium/issues/detail?id=368293
-  if (trimmedName.charAt(0) == "'" &&
-      trimmedName.charAt(trimmedName.length - 1) == "'") {
-    trimmedName = trimmedName.substring(1, trimmedName.length - 1);
+  var firstChar = trimmedName.charAt(0);
+  var lastChar = trimmedName.charAt(trimmedName.length - 1);
+  if (firstChar != lastChar) {
+    // Not wrapped by the same character.
+    return trimmedName;
   }
-  return trimmedName;
+  if ((firstChar != '"') && (firstChar != "'")) {
+    // Not wrapped by quotes.
+    return trimmedName;
+  }
+  // Remove the wrapping quotes.
+  return trimmedName.substring(1, trimmedName.length - 1);
 };
 
 
