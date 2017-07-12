@@ -27,5 +27,5 @@
         /* FontInfo */ new tachyfontprelude['FontInfo'](
             fontFamily, weights[i], false, /* isTtf */ false));
   }
-  tachyfontprelude['load'](cssFontFamily, fontInfos);
+  tachyfontprelude['loadFont'](cssFontFamily, fontInfos);
 })();

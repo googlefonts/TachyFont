@@ -368,5 +368,5 @@
   window['tachyfontprelude'] = tachyfontprelude;
   tachyfontprelude['reports'] = reports;
   tachyfontprelude['FontInfo'] = FontInfo;
-  tachyfontprelude['load'] = load;
+  tachyfontprelude['loadFont'] = load;
 })();
