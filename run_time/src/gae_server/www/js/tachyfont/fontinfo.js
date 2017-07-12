@@ -216,3 +216,4 @@ tachyfont.FontInfo.prototype.getFontId = function() {
   return this.weight_;
 };
 
+goog.exportSymbol('tachyfont.FontInfo', tachyfont.FontInfo);

@@ -213,13 +213,13 @@ tachyfont.reportError = function(errNum, opt_errInfo, opt_fontId) {
 
 /**
  * Load a list of TachyFonts
- * @param {string} familyName The font-family name.
+ * @param {string} cssFamilyName The font-family name.
  * @param {!tachyfont.FontsInfo} fontsInfo Information about the fonts.
  * @param {!Object<string, string>=} opt_params Optional parameters.
  * @return {!goog.Promise<?tachyfont.TachyFontSet,?>} A promise that returns the
  *     TachyFontSet object or null if the fonts are not loaded.
  */
-tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
+tachyfont.loadFonts = function(cssFamilyName, fontsInfo, opt_params) {
   if (goog.DEBUG) {
     tachyfont.debugInitialization_();
   }
@@ -242,7 +242,7 @@ tachyfont.loadFonts = function(familyName, fontsInfo, opt_params) {
       .then(function(mergedFontbasesBytes) {
         // Initialize the objects.
         var tachyFontSet =
-            tachyfont.loadFonts_init_(familyName, fontsInfo, opt_params);
+            tachyfont.loadFonts_init_(cssFamilyName, fontsInfo, opt_params);
         // Load the fonts.
         var xdelta3Decoder = preludeInfo.getXDeltaDecoder();
         var fontbases =

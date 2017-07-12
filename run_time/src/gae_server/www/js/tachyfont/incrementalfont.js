@@ -31,6 +31,7 @@ goog.require('tachyfont.DemoBackendService');
 goog.require('tachyfont.GoogleBackendService');
 goog.require('tachyfont.IncrementalFontUtils');
 goog.require('tachyfont.Persist');
+goog.require('tachyfont.PreludeInfo');
 goog.require('tachyfont.Promise');
 goog.require('tachyfont.RLEDecoder');
 goog.require('tachyfont.Reporter');
@@ -144,12 +145,6 @@ tachyfont.IncrementalFont.obj = function(fontInfo, params, backendService) {
   var weight = fontInfo.getWeight();
   var fontId = fontInfo.getFontId();
 
-  // Gets the prelude data.
-  // TODO(bstell): move this to PreludeInfo.
-  var prelude = window['tachyfontprelude'] || {};
-  var preludeUrls = prelude['urls'] || {};
-  var preludeLoaded = prelude['loaded'] || {};
-
   /**
    * Allow a one time refetch of the Compact font base.
    * @private {boolean}
@@ -162,13 +157,22 @@ tachyfont.IncrementalFont.obj = function(fontInfo, params, backendService) {
    */
   this.startTime_ = goog.now();
 
+  // Get the prelude data.
+  var preludeInfo = new tachyfont.PreludeInfo();
+
   /**
    * The current Blob URL. Free this when creating a new one.
    * @private {?string}
    */
-  this.blobUrl_ = preludeUrls[weight] || null;
-  // Clear the 'dangling reference'.
-  preludeUrls[weight] = undefined;
+  this.blobUrl_ = preludeInfo.getUrl(weight);
+
+  /**
+   * True if new characters have been loaded since last setFont.
+   * If the Prelude code did not set the font then set it even if no new
+   * characters are needed.
+   * @private {boolean}
+   */
+  this.needToSetFont_ = !this.blobUrl_;
 
   /**
    * Information about the fonts
@@ -198,14 +202,6 @@ tachyfont.IncrementalFont.obj = function(fontInfo, params, backendService) {
   /** @private {number} */
   //TODO(bstell): need to fix the request size.
   this.maximumRequestSize_ = params['req_size'] || 2200;
-
-  /**
-   * True if new characters have been loaded since last setFont.
-   * If the Prelude code did not set the font then set it even if no new
-   * characters are needed.
-   * @private {boolean}
-   */
-  this.needToSetFont_ = !preludeLoaded[weight];
 
   /** @private {!tachyfont.BackendService} */
   this.backendService_ = backendService;

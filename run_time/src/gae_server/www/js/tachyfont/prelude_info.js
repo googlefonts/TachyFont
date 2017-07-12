@@ -2,7 +2,7 @@
 
 /**
  * @license
- * Copyright 2015 Google Inc. All rights reserved.
+ * Copyright 2017 Google Inc. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -45,6 +45,11 @@ tachyfont.PreludeInfo = function() {
    */
   this.startTime_ = this.tachyfontprelude['startTime'] || Date.now();
 
+  /**
+   * The font Blob URLs.
+   * @private {!Object<(string|undefined), string>}
+   */
+  this.urls_ = this.tachyfontprelude['urls'] || {};
 };
 
 
@@ -87,11 +92,23 @@ tachyfont.PreludeInfo.prototype.getStartTime = function() {
 
 /**
  * Gets the merged fontbase data (promise) if available.
- * @return {?Promise<Uint8Array>}
+ * @return {!Promise<?Uint8Array>}
  */
 tachyfont.PreludeInfo.prototype.getMergedFontbasesBytes = function() {
-  var tachyfont_loader = window['tachyfont_loader'] || {};
-  return tachyfont_loader['mergedFontBases'] || null;
+  return this.tachyfontprelude['mergedFontBases'] ||
+      new Promise(function(resolve) {
+           resolve(null);
+         });
+};
+
+
+/**
+ * Gets the font Blob URLs.
+ * @param {string} fontId The font identifier.
+ * @return {?string}
+ */
+tachyfont.PreludeInfo.prototype.getUrl = function(fontId) {
+  return this.urls_[fontId] || null;
 };
 
 
