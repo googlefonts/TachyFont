@@ -125,7 +125,7 @@
    * @param {boolean} isTtf True is TTF and false if OTF.
    * @constructor
    */
-  function FontInfo(fontFamily, weight, priority, isTtf) {
+  tachyfontprelude.FontInfo = function(fontFamily, weight, priority, isTtf) {
     /** @type {string} The font name. */
     this.fontFamily = fontFamily;
 
@@ -141,7 +141,7 @@
 
     /** @type {boolean} isTtf True is TTF and false if OTF. */
     this.isTtf = isTtf;
-  }
+  };
 
 
   /**
@@ -149,9 +149,9 @@
    * @param {string} url The URL to the file.
    * @return {!Promise<!ArrayBuffer, ?>} A promise for the url data.
    */
-  function loadUrlArrayBuffer(url) {
-    return loadUrl(url, 'arraybuffer');
-  }
+  tachyfontprelude.loadUrlArrayBuffer = function(url) {
+    return tachyfontprelude.loadUrl(url, 'arraybuffer');
+  };
 
 
   /**
@@ -159,9 +159,9 @@
    * @param {string} url The URL to the file.
    * @return {!Promise<string, ?>} A promise for the url data.
    */
-  function loadUrlText(url) {
-    return loadUrl(url, 'text');
-  }
+  tachyfontprelude.loadUrlText = function(url) {
+    return tachyfontprelude.loadUrl(url, 'text');
+  };
 
 
   /**
@@ -170,7 +170,7 @@
    * @param {string} responseType The requested response type.
    * @return {!Promise<?, ?>} A promise for the url data.
    */
-  function loadUrl(url, responseType) {
+  tachyfontprelude.loadUrl = function(url, responseType) {
     return new Promise(function(resolve, reject) {
       var xhr = new XMLHttpRequest();
       xhr.responseType = responseType;
@@ -186,16 +186,25 @@
       xhr.open('GET', url, true);
       xhr.send();
     });
-  }
+  };
 
 
   /**
    * Loads the TachyFonts from persistent store if available.
+   * @param {string} fontFamily The font's family name.
    * @param {string} cssFontFamily The CSS font-family name.
-   * @param {!Array<!FontInfo>} fontInfos The list of fonts to load.
+   * @param {boolean} isTtf Whether is a TrueType or CFF type font.
+   * @param {!Array<string>} weights The list of font weights to load.
    * @return {!Promise<boolean>} Resolves true if all the fonts were persisted.
    */
-  function loadFont(cssFontFamily, fontInfos) {
+  tachyfontprelude.loadFonts = function(
+      cssFontFamily, fontFamily, isTtf, weights) {
+    var fontInfos = [];
+    for (var i = 0; i < weights.length; i++) {
+      fontInfos.push(
+          new tachyfontprelude.FontInfo(fontFamily, weights[i], false, isTtf));
+    }
+
     var style = document.getElementById(STYLESHEET_ID);
     if (!style) {
       style = document.createElement('style');
@@ -213,8 +222,8 @@
           fontInfos1 = fontInfos.slice();
           promises = [];
           for (var i = 0; i < fontInfos1.length; i++) {
-            promises.push(
-                setFontNoFlash(sheet, cssFontFamily, null, fontInfos1[i]));
+            promises.push(tachyfontprelude.setFontNoFlash(
+                sheet, cssFontFamily, null, fontInfos1[i]));
           }
           return Promise.all(promises);
         })
@@ -223,22 +232,23 @@
           fontInfos1 = fontInfos.slice();
           promises = [];
           for (var i = 0; i < fontInfos1.length; i++) {
-            promises.push(useFont(sheet, cssFontFamily, fontInfos1[i]));
+            promises.push(
+                tachyfontprelude.useFont(sheet, cssFontFamily, fontInfos1[i]));
           }
           return Promise.all(promises).then(function(loadedFonts) {
             var allLoaded = true;
             for (var i = 0; i < loadedFonts.length; i++) {
-              allLoaded &= loadedFonts[i];
+              allLoaded = allLoaded && loadedFonts[i];
             }
             return allLoaded;
           });
         });
-  }
+  };
 
 
   /**
    * Uses a TachyFont from persistent store if available.
-   * @param {!FontInfo} fontInfo The info on the font to use.
+   * @param {!tachyfontprelude.FontInfo} fontInfo The info on the font to use.
    * @return {!Promise} This promise resolves when the font is used.
    */
   function openIDB(fontInfo) {
@@ -263,7 +273,7 @@
    * @param {string} name The store name.
    * @return {!Promise<!ArrayBuffer,?>}
    */
-  function getData(db, name) {
+  tachyfontprelude.getData = function(db, name) {
     return new Promise(function(resolve, reject) {
       var trans;
       try {
@@ -283,18 +293,18 @@
       };
       request.onerror = function(e) { reject(); };
     });
-  }
+  };
 
 
   /**
    * Get the font data from the indexedDB.
-   * @param {!FontInfo} fontInfo Info about this font.
+   * @param {!tachyfontprelude.FontInfo} fontInfo Info about this font.
    * @return {!Promise} If success promise resolves the header+font ArrayBuffer.
    */
-  function getFontData(fontInfo) {
+  tachyfontprelude.getFontData = function(fontInfo) {
     return openIDB(fontInfo)
         .then(function(db) {
-          return getData(db, COMPACT_META)
+          return tachyfontprelude.getData(db, COMPACT_META)
               .then(
                   function(metadata) {
                     // Check metadata age.
@@ -313,7 +323,7 @@
                   });
         })
         .then(function(db) {
-          return getData(db, COMPACT_FONT)
+          return tachyfontprelude.getData(db, COMPACT_FONT)
               .then(
                   function(data) {
                     db.close();
@@ -324,7 +334,7 @@
                     return newRejectedPromise(ERROR_PRELUDE_MISSING_BASE);
                   });
         });
-  }
+  };
 
 
   /**
@@ -356,10 +366,11 @@
    * @param {!CSSStyleSheet} sheet The style sheet.
    * @param {string} cssFontFamily The CSS font-family name.
    * @param {?DataView} fontDataView The font data.
-   * @param {!FontInfo} fontInfo Info about this font.
+   * @param {!tachyfontprelude.FontInfo} fontInfo Info about this font.
    * @return {!Promise} The promise resolves when the glyphs are displaying.
    */
-  function setFontNoFlash(sheet, cssFontFamily, fontDataView, fontInfo) {
+  tachyfontprelude.setFontNoFlash = function(
+      sheet, cssFontFamily, fontDataView, fontInfo) {
     var weight = fontInfo.weight;
 
     var mimeType;
@@ -399,19 +410,20 @@
           }
           tachyfontprelude['urls'][weight] = blobUrl;
         }, nullFunction);
-  }
+  };
 
 
   /**
    * Uses a TachyFont from persistent store if available.
    * @param {string} cssFontFamily The CSS font-family name.
-   * @param {!FontInfo} fontInfo The info on the font to use.
+   * @param {!tachyfontprelude.FontInfo} fontInfo The info on the font to use.
    * @return {!Promise} This promise resolves when the font is used.
    */
-  function useFont(sheet, cssFontFamily, fontInfo) {
-    return getFontData(fontInfo)
+  tachyfontprelude.useFont = function(sheet, cssFontFamily, fontInfo) {
+    return tachyfontprelude.getFontData(fontInfo)
         .then(function(fontDataView) {
-          return setFontNoFlash(sheet, cssFontFamily, fontDataView, fontInfo)
+          return tachyfontprelude
+              .setFontNoFlash(sheet, cssFontFamily, fontDataView, fontInfo)
               .then(function() {
                 return true;
               });
@@ -421,7 +433,7 @@
           reports.push(['e', errorNumber, fontInfo.weight]);
           return newResolvedPromise(false);
         });
-  }
+  };
 
 
   /**
@@ -452,9 +464,5 @@
    */
   window['tachyfontprelude'] = tachyfontprelude;
   tachyfontprelude['reports'] = reports;
-  tachyfontprelude['FontInfo'] = FontInfo;
-  tachyfontprelude['loadFont'] = loadFont;
-  tachyfontprelude['loadUrl'] = loadUrl;
-  tachyfontprelude['loadUrlText'] = loadUrlText;
-  tachyfontprelude['loadUrlArrayBuffer'] = loadUrlArrayBuffer;
+  tachyfontprelude['loadFonts'] = tachyfontprelude.loadFonts;
 })();
