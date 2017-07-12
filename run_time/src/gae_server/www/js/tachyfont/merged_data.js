@@ -197,7 +197,6 @@ tachyfont.MergedData.prototype.getInfo_ = function() {
 tachyfont.MergedData.Info = function(
     fontFamily, majorVersion, minorVersion, numberSubtables, primaryName,
     subtableRecords) {
-  debugger;
   /** @type {string} */
   this.fontFamily = fontFamily;
 
@@ -261,7 +260,6 @@ tachyfont.MergedData.prototype.parseMergedData = function() {
   var numberSubtables = this.binaryEditor.getUint8();
 
   // Read the font family name.
-  debugger;
   var fontFamilylength = this.binaryEditor.getUint8();
   var fontFamily = this.binaryEditor.readString(fontFamilylength);
 
