@@ -36,27 +36,59 @@ goog.scope(function() {
 
 /**
  * Handles interacting with the backend server.
- *
  * @param {string} baseUrl URL of the tachyfont server.
  * @constructor
  */
 tachyfont.BackendService = function(baseUrl) {
   /** @type {string} */
   this.baseUrl = baseUrl;
+
+  /**
+   * Request backoff time.
+   * When requests fail add a fuzzy backoff delay so when the request begin
+   * working the servers are not overwhelmed with requests.
+   * @private {number}
+   */
+  this.backOffTime_ = 0;
 };
 var BackendService = tachyfont.BackendService;
 
 
 /**
  * Complete version for the tachyfont client/server protocol.
+ * @type {string}
  */
 tachyfont.BackendService.PROTOCOL_VERSION = '1.0';
 
 
 /**
  * Major version for the tachyfont client/server protocol.
+ * @type {string}
  */
 tachyfont.BackendService.PROTOCOL_MAJOR_VERSION = '1';
+
+
+/**
+ * The base gain for the exponential backoff. Math.random() is added to this to
+ * get a fuzzy gain; eg, a base gain of 1.5 + Math.random would give a gain
+ * between 1.5 to 2.5.
+ * @type {number}
+ */
+tachyfont.BackendService.BACKOFF_TIME_BASE_GAIN = 1.5;
+
+
+/**
+ * The initial backoff time in milliseconds.
+ * @type {number}
+ */
+tachyfont.BackendService.BACKOFF_TIME_INITIAL = 100;
+
+
+/**
+ * The maximum backoff time in milliseconds.
+ * @type {number}
+ */
+tachyfont.BackendService.BACKOFF_TIME_MAX = 10000;
 
 
 /**
@@ -128,6 +160,65 @@ BackendService.prototype.log = goog.functions.NULL;
 
 
 /**
+ * Provides expontential fuzzy backoff for requestUrl failures. The expontential
+ * backoff reduces traffic when the servers are down. The fuzziness evens out
+ * the backed up requests when the servers recover.
+ * @param {string} url Destination url
+ * @param {string} method Request method
+ * @param {?string} postData Request data
+ * @param {?Object} headers Request headers
+ * @return {!goog.Promise} Promise to return response
+ */
+BackendService.prototype.requestUrl = function(url, method, postData, headers) {
+  if (this.backOffTime_ == 0) {
+    return this.requestUrl_(url, method, postData, headers);
+  } else {
+    return new goog
+        .Promise(
+            function(resolve, reject) {
+              setTimeout(function() {
+                resolve();
+              }.bind(this), this.backOffTime_);
+            },
+            this)
+        .then(function() {
+          return this.requestUrl_(url, method, postData, headers);
+        }.bind(this));
+  }
+};
+
+
+/**
+ * Expontentially increases the backoff time with some fuzziness.
+ * @private
+ */
+BackendService.prototype.increaseBackoffTime_ = function() {
+  if (this.backOffTime_ == 0) {
+    this.backOffTime_ = tachyfont.BackendService.BACKOFF_TIME_INITIAL;
+    return;
+  }
+  // Increase the backoff time by 2 with a fuzzyness of + or - 0.5.
+  this.backOffTime_ *=
+      tachyfont.BackendService.BACKOFF_TIME_BASE_GAIN + Math.random();
+  if (this.backOffTime_ > tachyfont.BackendService.BACKOFF_TIME_MAX) {
+    this.backOffTime_ = tachyfont.BackendService.BACKOFF_TIME_MAX;
+  }
+};
+
+
+/**
+ * Expontentially decreases the backoff time.
+ * @private
+ */
+BackendService.prototype.decreaseBackoffTime_ = function() {
+  this.backOffTime_ /= 2;
+  if (this.backOffTime_ < tachyfont.BackendService.BACKOFF_TIME_INITIAL) {
+    this.backOffTime_ = 0;
+  }
+};
+
+
+/**
  * Async XMLHttpRequest to given url using given method, data and header
  *
  * @param {string} url Destination url
@@ -135,22 +226,43 @@ BackendService.prototype.log = goog.functions.NULL;
  * @param {?string} postData Request data
  * @param {?Object} headers Request headers
  * @return {!goog.Promise} Promise to return response
+ * @private
  */
-BackendService.prototype.requestUrl = function(url, method, postData,
-    headers) {
+BackendService.prototype.requestUrl_ = function(
+    url, method, postData, headers) {
   return new goog.Promise(function(resolve, reject) {
     var xhr = new goog.net.XhrIo();
     xhr.setResponseType(goog.net.XhrIo.ResponseType.ARRAY_BUFFER);
     goog.events.listen(xhr, goog.net.EventType.COMPLETE, function(e) {
       if (xhr.isSuccess()) {
+        this.decreaseBackoffTime_();
         resolve(xhr.getResponse());
       } else {
+        this.increaseBackoffTime_();
         reject(xhr.getStatus() + ' ' + xhr.getStatusText());
       }
-    });
+    }.bind(this));
 
     xhr.send(url, method, postData, headers);
-  });
+  }, this);
+};
+
+
+/**
+ * Gets the backoff time.
+ * @return {number}
+ */
+BackendService.prototype.getBackoffTime = function() {
+  return this.backOffTime_;
+};
+
+
+/**
+ * Sets the backoff time.
+ * @param {number} backoffTime The backoff time.
+ */
+BackendService.prototype.setBackoffTime = function(backoffTime) {
+  this.backOffTime_ = backoffTime;
 };
 
 
