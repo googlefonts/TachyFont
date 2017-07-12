@@ -230,7 +230,8 @@ tachyfont.loadFonts = function(cssFamilyName, fontsInfo, opt_params) {
   tachyfont.reportError(tachyfont.Error.PAGE_LOADED);
   var launcherInfo = new tachyfont.LauncherInfo();
   tachyfont.sendLauncherReports(launcherInfo);
-  return tachyfont.checkSystem()
+  var noStartUpDelay = !!params['noStartUpDelay'];
+  return tachyfont.checkSystem(noStartUpDelay)
       .then(function() {
         // Check how much can be stored.
         var fontInfos = fontsInfo.getPrioritySortedFonts();
@@ -271,9 +272,11 @@ tachyfont.loadFonts = function(cssFamilyName, fontsInfo, opt_params) {
 
 /**
  * Checks that the system can use TachyFont.
+ * @param {boolean} noStartUpDelay Whether to delay TachyFont because of excess
+ *     loading concerns.
  * @return {!goog.Promise<?,?>}
  */
-tachyfont.checkSystem = function() {
+tachyfont.checkSystem = function(noStartUpDelay) {
   // Check if this browser has the necessary features to run TachyFont.
   if (!tachyfont.isSupportedBrowser()) {
     return goog.Promise.reject('unsupported browser');
@@ -286,6 +289,9 @@ tachyfont.checkSystem = function() {
         return tachyfont.Persist.getData(db, tachyfont.Define.METADATA)
             .then(function(metadata) {
               db.close();
+              if (noStartUpDelay) {
+                return;
+              }
               var name = tachyfont.Define.CREATED_METADATA_TIME;
               if (metadata && metadata[name]) {
                 var dataAge = goog.now() - metadata[name];
