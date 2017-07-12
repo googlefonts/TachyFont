@@ -252,7 +252,7 @@ tachyfont.Reporter.sendReport = function() {
  * @private
  */
 tachyfont.Reporter.sendGen204_ = function(baseUrl, params) {
-  var reportUrl = baseUrl + params.join('&');
+  var reportUrl = baseUrl + params.join('&') + '&jsmode=SU';
   if (goog.DEBUG) {
     tachyfont.log.info('report: ' + params.join(', '));
   }
