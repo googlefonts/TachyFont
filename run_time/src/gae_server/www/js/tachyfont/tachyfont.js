@@ -670,7 +670,7 @@ tachyfont.loadFonts_setupTextListeners_ = function(tachyFontSet) {
 
   // Check the DOM when it reports loading the page is done.
   document.addEventListener('DOMContentLoaded', function(event) {
-    tachyfont.loadFonts_handleDomContentLoaded_(tachyFontSet, event);
+    tachyfont.loadFonts_handleDomContentLoaded_(tachyFontSet);
   });
 };
 
@@ -736,10 +736,9 @@ tachyfont.loadFonts_domMutationObserver_ = function(tachyFontSet, mutations) {
  * Note: mutation observers do not look at INPUT field changes.
  *
  * @param {!tachyfont.TachyFontSet} tachyFontSet The TachyFont objects.
- * @param {!Event} event The DOMContentLoaded event.
  * @private
  */
-tachyfont.loadFonts_handleDomContentLoaded_ = function(tachyFontSet, event) {
+tachyfont.loadFonts_handleDomContentLoaded_ = function(tachyFontSet) {
   // Update the fonts when the page content is loaded.
   tachyFontSet.domContentLoaded = true;
   // On DOMContentLoaded we want to update the fonts. If there have been
