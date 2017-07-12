@@ -322,6 +322,7 @@ tachyfont.Persist.deleteDatabase = function(dbName, id) {
 tachyfont.Persist.getData = function(idb, name) {
   var getData = new goog.Promise(function(resolve, reject) {
     var trans = idb.transaction([name], 'readwrite');
+    /** @type {IDBObjectStore} */
     var store = trans.objectStore(name);
     var request = store.get(0);
     request.onsuccess = function(e) {
