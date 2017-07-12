@@ -116,11 +116,10 @@ if (goog.DEBUG) {
 /**
  * TachyFont - A namespace.
  * @param {!tachyfont.FontInfo} fontInfo The font info.
- * @param {boolean} dropData If true then drop the persistent store data.
  * @param {!Object=} opt_params Optional parameters.
  * @constructor
  */
-tachyfont.TachyFont = function(fontInfo, dropData, opt_params) {
+tachyfont.TachyFont = function(fontInfo, opt_params) {
   var params = opt_params || {};
 
   /**
@@ -128,8 +127,7 @@ tachyfont.TachyFont = function(fontInfo, dropData, opt_params) {
    * @private {!tachyfont.IncrementalFont.obj}
    * TODO(bstell): integrate the manager into this object.
    */
-  this.incrfont_ = tachyfont.IncrementalFont.createManager(fontInfo, dropData,
-      params);
+  this.incrfont_ = tachyfont.IncrementalFont.createManager(fontInfo, params);
 };
 
 
@@ -654,11 +652,6 @@ tachyfont.loadFonts_initReporter = function(fontsInfo) {
 tachyfont.loadFonts_init_ = function(familyName, fontsInfo, opt_params) {
   var dataUrl = fontsInfo.getDataUrl();
 
-  // Check if the persistent stores should be dropped.
-  var uri = goog.Uri.parse(window.location.href);
-  var dropDataStr = uri.getParameterValue('TachyFontDropData') || '';
-  var dropData = dropDataStr == 'true';
-
   var tachyFontSet = new tachyfont.TachyFontSet(familyName);
   var params = opt_params || {};
   var fontInfos = fontsInfo.getPrioritySortedFonts();
@@ -666,7 +659,7 @@ tachyfont.loadFonts_init_ = function(familyName, fontsInfo, opt_params) {
     var fontInfo = fontInfos[i];
     fontInfo.setFamilyName(familyName);
     fontInfo.setDataUrl(dataUrl);
-    var tachyFont = new tachyfont.TachyFont(fontInfo, dropData, params);
+    var tachyFont = new tachyfont.TachyFont(fontInfo, params);
     tachyFontSet.addFont(tachyFont);
     // TODO(bstell): need to support slant/width/etc.
     var fontId = tachyfont.utils.fontId(familyName, fontInfo.getWeight());

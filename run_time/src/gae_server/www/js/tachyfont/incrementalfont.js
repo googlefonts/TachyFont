@@ -43,31 +43,6 @@ goog.require('tachyfont.utils');
 
 
 /**
- * The maximum time in milliseconds to hide the text to prevent FOUT.
- *
- * @type {number}
- */
-tachyfont.IncrementalFont.MAX_HIDDEN_MILLISECONDS = 3000;
-
-
-/**
- * The persistence 'stable' time.
- * If the data has been in persistent store longer than this then the data is
- * considered to be stable; ie: not being automatically cleared. The time is in
- * milliseconds.
- * @type {number}
- */
-tachyfont.IncrementalFont.STABLE_DATA_TIME = 24 * 60 * 60 * 1000;
-
-
-/**
- * The time in milliseconds to wait before persisting the data.
- * @type {number}
- */
-tachyfont.IncrementalFont.PERSIST_TIMEOUT = 1000;
-
-
-/**
  * Enum for logging values.
  * @enum {string}
  */
@@ -90,11 +65,9 @@ tachyfont.IncrementalFont.Error = {
   LOAD_CHARS_INJECT_CHARS_2: '17',
   LOAD_CHARS_GET_LOCK: '18',
   // 19-24 no longer used.
-  DB_OPEN: '25',
   // 26-41 no longer used.
   FINGERPRINT_MISMATCH: '42',
   DELETE_IDB: '44',
-  BELOW_STABLE_TIME: '45',
   SET_FONT_PRECEEDING_PROMISE: '48',
   INJECT_FONT_COMPACT: '49',
   // 50 no longer used.
@@ -139,11 +112,10 @@ tachyfont.IncrementalFont.reportError = function(errNum, errId, errInfo) {
  * 4. Start the operation to get the list of fetched/not-fetched chars.
  * 5. Create a "@font-face" rule (need the data to make the blob URL).
  * @param {!tachyfont.FontInfo} fontInfo Info about this font.
- * @param {boolean} dropData If true then drop the persistent data.
  * @param {!Object} params Parameters.
  * @return {!tachyfont.IncrementalFont.obj} The incremental font manager object.
  */
-tachyfont.IncrementalFont.createManager = function(fontInfo, dropData, params) {
+tachyfont.IncrementalFont.createManager = function(fontInfo, params) {
   var fontId = fontInfo.getFontId();
   var backendService =
       fontInfo.getFontKit() ?
@@ -155,27 +127,6 @@ tachyfont.IncrementalFont.createManager = function(fontInfo, dropData, params) {
   tachyfont.Reporter.addItem(
       tachyfont.IncrementalFont.Log.CREATE_TACHYFONT + fontId,
       goog.now() - incrFontMgr.startTime_);
-
-  goog.Promise.resolve()
-      .then(function() {
-        if (dropData) {
-          return incrFontMgr.dropDb();
-        }
-      })
-      .then(function() {
-        return incrFontMgr.getDb();
-      })
-      .then(function() {
-        // TODO(bstell): probably want to remove this time reporting code.
-        tachyfont.Reporter.addItem(
-            tachyfont.IncrementalFont.Log.DB_OPEN + fontId,
-            goog.now() - incrFontMgr.startTime_);
-      })
-      .thenCatch(function() {
-        // Failed to get database;
-        tachyfont.IncrementalFont.reportError(
-            tachyfont.IncrementalFont.Error.DB_OPEN, fontId, 'createManager');
-      });
 
   return incrFontMgr;
 };
@@ -195,6 +146,7 @@ tachyfont.IncrementalFont.obj = function(fontInfo, params, backendService) {
   var fontId = fontInfo.getFontId();
 
   // Gets the prelude data.
+  // TODO(bstell): move this to PreludeInfo.
   var prelude = window['tachyfontprelude'] || {};
   var preludeUrls = prelude['urls'] || {};
   var preludeLoaded = prelude['loaded'] || {};
@@ -210,12 +162,6 @@ tachyfont.IncrementalFont.obj = function(fontInfo, params, backendService) {
    * @private {number}
    */
   this.startTime_ = goog.now();
-
-  /**
-   * Indicates whether the data is stable; ie: not being constantly cleared.
-   * @private {boolean}
-   */
-  this.isStableData_ = false;
 
   /**
    * The current Blob URL. Free this when creating a new one.
@@ -264,9 +210,6 @@ tachyfont.IncrementalFont.obj = function(fontInfo, params, backendService) {
 
   /** @private {!tachyfont.BackendService} */
   this.backendService_ = backendService;
-
-  /** @private {?goog.Promise<!IDBDatabase,?>} */
-  this.getIDB_ = null;
 
   /**
    * A map of the characters that have been incrementally loaded.
@@ -327,18 +270,6 @@ tachyfont.IncrementalFont.obj.prototype.getFontInfo = function() {
 
 
 /**
- * Gets the database handle.
- * @return {!goog.Promise} The database handle.
- */
-tachyfont.IncrementalFont.obj.prototype.getDb = function() {
-  if (this.getIDB_) {
-    return this.getIDB_;
-  }
-  return this.accessDb(false);
-};
-
-
-/**
  * Gets the font name.
  * @return {string}
  */
@@ -366,24 +297,6 @@ tachyfont.IncrementalFont.obj.prototype.getFontId = function() {
 
 
 /**
- * Gets the promise that resolves the db handle.
- * @return {?goog.Promise<!IDBDatabase,?>}
- */
-tachyfont.IncrementalFont.obj.prototype.getGetIdb = function() {
-  return this.getIDB_;
-};
-
-
-/**
- * Sets the promise that resolves the db handle.
- * @param {?goog.Promise<!IDBDatabase,?>} getIdb A promise for the Db handle.
- */
-tachyfont.IncrementalFont.obj.prototype.setGetIdb = function(getIdb) {
-  this.getIDB_ = getIdb;
-};
-
-
-/**
  * Set the file information.
  * @param {!tachyfont.typedef.FileInfo} fileInfo The file information.
  */
@@ -404,7 +317,7 @@ tachyfont.IncrementalFont.obj.prototype.setFileInfo = function(fileInfo) {
  * @return {boolean}
  */
 tachyfont.IncrementalFont.obj.prototype.getNeedToSetFont = function() {
-  return this.needToSetFont_ && this.isStableData_;
+  return this.needToSetFont_;
 };
 
 
@@ -428,89 +341,17 @@ tachyfont.IncrementalFont.obj.prototype.setCompactCharList = function(
 
 
 /**
- * Gets the database handle.
- * @return {!goog.Promise} The database handle.
+ * Drops the database for this TachyFont.
+ * @return {!goog.Promise}
  */
 tachyfont.IncrementalFont.obj.prototype.dropDb = function() {
-  return this.accessDb(true);
-};
-
-
-/**
- * Gets the database handle.
- * @param {boolean} dropDb If true then drop the database before opening it.
- * @return {!goog.Promise<!IDBDatabase,string>} The database handle.
- */
-// TODO(bstell): break this apart an put it into getDb/dropDb and adjust
-// callers.
-tachyfont.IncrementalFont.obj.prototype.accessDb = function(dropDb) {
-  // Close the database if it is open.
-  this.closeDb();
   var dbName = this.fontInfo_.getDbName();
-  this.getIDB_ =
-      goog.Promise.resolve()
-          .then(function() {
-            if (dropDb) {
-              return tachyfont.Persist.deleteDatabase(dbName, this.fontId_)
-                  .thenCatch(function() {
-                    tachyfont.IncrementalFont.reportError(
-                        tachyfont.IncrementalFont.Error.DELETE_IDB,
-                        this.fontId_, 'accessDb');
-                    return goog.Promise.reject();
-                  }.bind(this));
-            }
-          }.bind(this))
-          .then(function() {
-            return tachyfont.Persist.openIndexedDB(dbName, this.fontId_)
-                .then(function(db) {
-                  return tachyfont.Persist
-                      .getData(db, tachyfont.Define.METADATA)
-                      .then(function(metadata) {
-                        var name = tachyfont.Define.CREATED_METADATA_TIME;
-                        if (metadata && metadata[name]) {
-                          var dataAge = goog.now() - metadata[name];
-                          if (dataAge >=
-                              tachyfont.IncrementalFont.STABLE_DATA_TIME) {
-                            this.isStableData_ = true;
-                          } else {
-                            tachyfont.IncrementalFont.reportError(
-                                tachyfont.IncrementalFont.Error
-                                    .BELOW_STABLE_TIME,
-                                this.fontId_, '');
-                          }
-                        }
-                        return db;
-                      }.bind(this))
-                      .thenCatch(function() {
-                        // Return the db handle even if there was a problem
-                        // getting the age of the data.
-                        return db;
-                      });
-                }.bind(this))
-                .thenCatch(function() {
-                  tachyfont.IncrementalFont.reportError(
-                      tachyfont.IncrementalFont.Error.DB_OPEN, this.fontId_,
-                      'accessDb');
-                  return goog.Promise.reject('failed to open IDB');
-                }.bind(this));
-
-          }.bind(this));
-
-  return this.getIDB_;
-};
-
-
-/**
- * Close the database handle.
- * Closing the database can cause pending transactions to fail so
- * just drop the handle.
- */
-tachyfont.IncrementalFont.obj.prototype.closeDb = function() {
-  if (!this.getIDB_) {
-    return;
-  }
-  this.getIDB_.then(function(idb) {
-        this.getIDB_ = null;
+  return tachyfont.Persist.deleteDatabase(dbName, this.fontId_)
+      .thenCatch(function() {
+        tachyfont.IncrementalFont.reportError(
+            tachyfont.IncrementalFont.Error.DELETE_IDB, this.fontId_,
+            'accessDb');
+        return goog.Promise.reject();
       }.bind(this));
 };
 
@@ -525,8 +366,7 @@ tachyfont.IncrementalFont.obj.prototype.getCompactFontFromPersistence =
     function() {
   var fontId = this.fontId_;
   var dbName = this.fontInfo_.getDbName();
-  return tachyfont.Persist
-      .openIndexedDbSynchronousResolutionPromise(dbName, fontId)
+  return tachyfont.Persist.openIndexedDb(dbName, fontId)
       .thenCatch(function(e) {  // TODO(bstell): remove this debug code
         tachyfont.IncrementalFont.reportError(
             tachyfont.IncrementalFont.Error.COMPACT_GET_DB, fontId, e);
@@ -731,8 +571,7 @@ tachyfont.IncrementalFont.obj.prototype.saveNewCompactFont = function(
   // Update the data.
   var fontId = this.fontId_;
   var dbName = this.fontInfo_.getDbName();
-  return tachyfont.Persist
-      .openIndexedDbSynchronousResolutionPromise(dbName, fontId)
+  return tachyfont.Persist.openIndexedDb(dbName, fontId)
       .then(function(db) {
         var transaction =
             db.transaction(tachyfont.Define.compactStoreNames, 'readwrite');
@@ -953,7 +792,6 @@ tachyfont.IncrementalFont.obj.prototype.loadChars = function() {
             }.bind(this))
             .thenCatch(function(e) {
               // No chars to fetch.
-              this.closeDb();
             }.bind(this));
       }.bind(this))
       .thenCatch(function(e) {

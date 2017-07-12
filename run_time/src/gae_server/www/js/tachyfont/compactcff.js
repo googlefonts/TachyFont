@@ -229,8 +229,7 @@ tachyfont.CompactCff.injectChars = function(
   var compactCff;
   var db = null;
   // Get the db handle.
-  return tachyfont.Persist
-      .openIndexedDbSynchronousResolutionPromise(fontInfo.getDbName(), fontId)
+  return tachyfont.Persist.openIndexedDb(fontInfo.getDbName(), fontId)
       .thenCatch(function(event) {
         tachyfont.CompactCff.reportError(
             tachyfont.CompactCff.Error.INJECT_CHARS_GET_DB, fontId, event);
@@ -369,8 +368,7 @@ tachyfont.CompactCff.clearDataStores = function(
     }
   }
   return tachyfont.Persist
-      .openIndexedDbSynchronousResolutionPromise(
-          fontInfo.getDbName(), fontInfo.getFontId())
+      .openIndexedDb(fontInfo.getDbName(), fontInfo.getFontId())
       .then(function(db) {
         return new tachyfont.SynchronousResolutionPromise(  //
             function(resolve, reject) {
