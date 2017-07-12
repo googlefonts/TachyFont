@@ -216,28 +216,3 @@ tachyfont.FontInfo.prototype.getFontId = function() {
   return this.weight_;
 };
 
-
-goog.scope(function() {
-goog.exportSymbol('tachyfont.FontInfo', tachyfont.FontInfo);
-goog.exportProperty(tachyfont.FontInfo.prototype, 'getName',
-                    tachyfont.FontInfo.prototype.getName);
-goog.exportProperty(tachyfont.FontInfo.prototype, 'getWeight',
-                    tachyfont.FontInfo.prototype.getWeight);
-goog.exportProperty(tachyfont.FontInfo.prototype, 'getFamilyPath',
-                    tachyfont.FontInfo.prototype.getFamilyPath);
-goog.exportProperty(tachyfont.FontInfo.prototype, 'getVersion',
-                    tachyfont.FontInfo.prototype.getVersion);
-goog.exportProperty(tachyfont.FontInfo.prototype, 'getFontKit',
-                    tachyfont.FontInfo.prototype.getFontKit);
-goog.exportProperty(tachyfont.FontInfo.prototype, 'getFamilyName',
-                    tachyfont.FontInfo.prototype.getFamilyName);
-goog.exportProperty(tachyfont.FontInfo.prototype, 'setFamilyName',
-                    tachyfont.FontInfo.prototype.setFamilyName);
-goog.exportProperty(tachyfont.FontInfo.prototype, 'getDataUrl',
-                    tachyfont.FontInfo.prototype.getDataUrl);
-goog.exportProperty(tachyfont.FontInfo.prototype, 'setDataUrl',
-                    tachyfont.FontInfo.prototype.setDataUrl);
-goog.exportProperty(tachyfont.FontInfo.prototype, 'getPriority',
-                    tachyfont.FontInfo.prototype.getPriority);
-});  // goog.scope
-
