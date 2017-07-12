@@ -144,7 +144,7 @@ tachyfont.Promise.Encapsulated.prototype.reject = function(opt_value) {
     });
   }
   if (this.container_) {
-    if (this.container_.promises.length <= 1) {
+    if (this.container_.promises_.length <= 1) {
       // We unshift all except the very first manually added promise.
       if (this.container_.chainedCount_ != 0) {
         tachyfont.Promise.Encapsulated.reportError_(
@@ -152,8 +152,8 @@ tachyfont.Promise.Encapsulated.prototype.reject = function(opt_value) {
             this.msg_);
       }
     }
-    if (this.container_.promises.length > 1) {
-      this.container_.promises.shift();
+    if (this.container_.promises_.length > 1) {
+      this.container_.promises_.shift();
       this.container_.pendingCount_--;
     }
   }
@@ -174,7 +174,7 @@ tachyfont.Promise.Encapsulated.prototype.resolve = function(opt_value) {
     });
   }
   if (this.container_) {
-    if (this.container_.promises.length <= 1) {
+    if (this.container_.promises_.length <= 1) {
       // We unshift all except the very first manually added promise.
       if (this.container_.chainedCount_ != 0) {
         tachyfont.Promise.Encapsulated.reportError_(
@@ -182,8 +182,8 @@ tachyfont.Promise.Encapsulated.prototype.resolve = function(opt_value) {
             this.msg_);
       }
     }
-    if (this.container_.promises.length > 1) {
-      this.container_.promises.shift();
+    if (this.container_.promises_.length > 1) {
+      this.container_.promises_.shift();
       this.container_.pendingCount_--;
     }
   }
@@ -228,12 +228,12 @@ tachyfont.Promise.Chained = function(msg) {
    */
   this.timerReportCount_ = 0;
 
-  /** @type {!Array<!tachyfont.Promise.Encapsulated>} */
-  this.promises = [];
+  /** @private {!Array<!tachyfont.Promise.Encapsulated>} */
+  this.promises_ = [];
 
   var firstPromise = new tachyfont.Promise.Encapsulated(this);
   firstPromise.precedingPromise_ = firstPromise.promise_;
-  this.promises.push(firstPromise);
+  this.promises_.push(firstPromise);
   firstPromise.resolve();
 };
 
@@ -246,10 +246,10 @@ tachyfont.Promise.Chained = function(msg) {
 tachyfont.Promise.Chained.prototype.getChainedPromise = function(msg) {
   this.chainedCount_++;
   this.pendingCount_++;
-  var precedingPromise = this.promises[this.promises.length - 1];
+  var precedingPromise = this.promises_[this.promises_.length - 1];
   var newPromise = new tachyfont.Promise.Encapsulated(this, msg);
   newPromise.precedingPromise_ = precedingPromise.promise_;
-  this.promises.push(newPromise);
+  this.promises_.push(newPromise);
   return newPromise;
 };
 

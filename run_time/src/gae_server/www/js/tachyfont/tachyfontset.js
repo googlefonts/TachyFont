@@ -317,7 +317,7 @@ tachyfont.TachyFontSet.prototype.addTextToFontGroups = function(node) {
   var charArray = tachyfont.utils.stringToChars(text);
   var textAdded = false;
   // Tell the font it needs these characters.
-  var charlist = tachyFont.incrfont.getCharsToLoad();
+  var charlist = tachyFont.getIncrfont().getCharsToLoad();
   for (var i = 0; i < charArray.length; i++) {
     var c = charArray[i];
     if (charlist[c] != 1) {
@@ -378,7 +378,7 @@ tachyfont.TachyFontSet.prototype.updateFonts =
       .then(function() {
         var updatingFonts = [];
         for (var i = 0; i < this.fonts.length; i++) {
-          var fontObj = this.fonts[i].incrfont;
+          var fontObj = this.fonts[i].getIncrfont();
           // loadChars calls setFont
           var load = fontObj.loadChars();
           updatingFonts.push(load);

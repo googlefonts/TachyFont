@@ -49,10 +49,10 @@ tachyfont.TachyFont = function(fontInfo, dropData, opt_params) {
 
   /**
    * The object that handles the binary manipulation of the font data.
-   * @type {!tachyfont.IncrementalFont.obj}
+   * @private {!tachyfont.IncrementalFont.obj}
    * TODO(bstell): integrate the manager into this object.
    */
-  this.incrfont = tachyfont.IncrementalFont.createManager(fontInfo, dropData,
+  this.incrfont_ = tachyfont.IncrementalFont.createManager(fontInfo, dropData,
       params);
 };
 
@@ -60,8 +60,16 @@ tachyfont.TachyFont = function(fontInfo, dropData, opt_params) {
 /**
  * Lazily load the data for these chars.
  */
+tachyfont.TachyFont.prototype.getIncrfont = function() {
+  return this.incrfont_;
+};
+
+
+/**
+ * Lazily load the data for these chars.
+ */
 tachyfont.TachyFont.prototype.loadNeededChars = function() {
-  this.incrfont.loadChars();
+  this.incrfont_.loadChars();
 };
 
 
@@ -523,7 +531,7 @@ tachyfont.loadFonts_loadAndUse_ = function(tachyFontSet) {
         var fonts = tachyFontSet.fonts;
         for (var i = 0; i < fonts.length; i++) {
           serialPromise = serialPromise.then(function(index) {
-            var incrfont = fonts[index].incrfont;
+            var incrfont = fonts[index].incrfont_;
             // Load the fonts from persistent store or URL.
             return incrfont.getCompactFont()
                 .then(
@@ -743,3 +751,5 @@ tachyfont.loadFonts_handleDomContentLoaded_ = function(tachyFontSet, event) {
 };
 
 goog.exportSymbol('tachyfont.loadFonts', tachyfont.loadFonts);
+
+
