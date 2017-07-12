@@ -21,6 +21,7 @@ goog.provide('tachyfont.Metadata');
 goog.provide('tachyfont.Persist');
 
 goog.require('goog.Promise');
+goog.require('goog.Uri');
 goog.require('tachyfont.Define');
 goog.require('tachyfont.Reporter');
 goog.require('tachyfont.SynchronousResolutionPromise');
@@ -270,6 +271,16 @@ tachyfont.Metadata.initializePerFont = function(store) {
 // TODO(bstell): this is a 'policy' function so move it out of the db layer;
 // move it to a file like metadata.js
 tachyfont.Metadata.initialize = function(store, createTime) {
+  var uri = goog.Uri.parse(window.location.href);
+  var tachyFontNoDelay = uri.getParameterValue('TachyFontNoDelay');
+  if (tachyFontNoDelay == 'true') {
+    // Make it appear that the persistence has been stable for a while. This
+    // needs to be larger than:
+    //     tachyfont.TachyFont.GLOBAL_STABLE_DATA_TIME
+    //     tachyfont.IncrementalFont.STABLE_DATA_TIME
+    createTime = goog.now() - 2 * 24 * 60 * 60 * 1000;
+  }
+
   // TODO(bstell): make the metadata a real object or struct.
   var metadata = {};
   metadata[tachyfont.Define.ACTIVITY] =
