@@ -28,31 +28,6 @@
   tachyfontprelude['urls'] = {};
 
 
-  /** @type {boolean} Indicates a DOM mutation has occured. */
-  tachyfontprelude['DomMutationObserved'] = false;
-
-
-  // Create a DOM mutation observer.
-  var observer = new MutationObserver(function(mutations) {
-    tachyfontprelude['DomMutationObserved'] = true;
-  });
-  // Watch for these mutations.
-  var config = /** @type {!MutationObserverInit} */ ({ 'childList': true,
-    'subtree': true, 'characterData': true });
-  observer.observe(document.documentElement, config);
-
-
-  /** @type {boolean} Indicates the DOM content is fully loaded. */
-  tachyfontprelude['DomContentLoaded'] = false;
-
-
-  // Check the DOM when it reports loading the page is done.
-  document.addEventListener('DOMContentLoaded', function(event) {
-    tachyfontprelude['DOMContentLoaded'] = true;
-  });
-
-
-
   /** @const {string} The database name prefix. */
   var DB_NAME_PREFIX = 'incrfonts';
 

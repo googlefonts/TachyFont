@@ -24,9 +24,17 @@ goog.provide('tachyfont.LauncherTypedef');
 /** @typedef {{
  *     startTime: number,
  *     DOMContentLoaded: boolean,
- *     DomMutationObserved: boolean
+ *     DomMutationObserved: boolean,
+ *     urls: !Object<string, string>
  * }} */
 tachyfont.LauncherTypedef.Launcher;
+
+
+/** @typedef {{
+ *     startTime: number,
+ *     urls: !Array<string>
+ * }} */
+tachyfont.LauncherTypedef.Prelude;
 
 
 
@@ -37,6 +45,9 @@ tachyfont.LauncherTypedef.Launcher;
 tachyfont.LauncherInfo = function() {
   /** @type {?tachyfont.LauncherTypedef.Launcher} */
   this.launcher = window['tachyfont_launcher'] || {};
+
+  /** @type {?tachyfont.LauncherTypedef.Prelude} */
+  this.prelude = window['tachyfontprelude'] || {};
 
   /**
    * The TachyFont start time. This is useful for overall speed testing. It is
@@ -49,7 +60,13 @@ tachyfont.LauncherInfo = function() {
    * The font Blob URLs.
    * @private {!Object<string, string>}
    */
-  this.urls_ = this.launcher['urls'] || {};
+  this.urls_ = this.launcher['urls'] || this.prelude['urls'] || {};
+
+  /**
+   * The launcher/prelude reports.
+   * @private {!Array<!Array<string>>}
+   */
+  this.reports_ = this.launcher['reports'] || this.prelude['reports'] || [];
 };
 
 
@@ -99,6 +116,15 @@ tachyfont.LauncherInfo.prototype.getMergedFontbasesBytes = function() {
       new Promise(function(resolve) {
            resolve(null);
          });
+};
+
+
+/**
+ * Gets the launcher/prelude reports.
+ * @return {!Array<!Array<string>>}
+ */
+tachyfont.LauncherInfo.prototype.getReports = function() {
+  return this.reports_;
 };
 
 

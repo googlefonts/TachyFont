@@ -29,9 +29,9 @@ goog.require('tachyfont.Define');
 /** @suppress {extraRequire} */
 goog.require('tachyfont.FontsInfo');
 goog.require('tachyfont.IncrementalFont');
+goog.require('tachyfont.LauncherInfo');
 goog.require('tachyfont.MergedData');
 goog.require('tachyfont.Persist');
-goog.require('tachyfont.PreludeInfo');
 goog.require('tachyfont.Reporter');
 goog.require('tachyfont.TachyFontSet');
 goog.require('tachyfont.log');
@@ -169,8 +169,8 @@ tachyfont.Error = {
   NOT_ENOUGH_STORAGE: '07',
   STORAGE_INFORMATION_FUNCTION: '08',
   GET_STORAGE_INFORMATION: '09',
-  NO_PRELUDE_REPORTS: '10',
-  PRELUDE_REPORT_TYPE: '11',
+  NO_LAUNCHER_REPORTS: '10',
+  LAUNCHER_REPORT_TYPE: '11',
   BELOW_GLOBAL_STABLE_TIME: '12',
   OPEN_GLOBAL_DATABASE: '13',
   NO_INDEXED_DB: '14',
@@ -228,8 +228,8 @@ tachyfont.loadFonts = function(cssFamilyName, fontsInfo, opt_params) {
   // Sent an "error" report so the number of page loads can be determined on the
   // dashboard.
   tachyfont.reportError(tachyfont.Error.PAGE_LOADED);
-  var preludeInfo = new tachyfont.PreludeInfo();
-  tachyfont.sendPreludeReports();
+  var launcherInfo = new tachyfont.LauncherInfo();
+  tachyfont.sendLauncherReports(launcherInfo);
   return tachyfont.checkSystem()
       .then(function() {
         // Check how much can be stored.
@@ -237,22 +237,22 @@ tachyfont.loadFonts = function(cssFamilyName, fontsInfo, opt_params) {
         return tachyfont.manageStorageUsage(fontInfos);
       })
       .then(function() {
-        return preludeInfo.getMergedFontbasesBytes();
+        return launcherInfo.getMergedFontbasesBytes();
       })
       .then(function(mergedFontbasesBytes) {
         // Initialize the objects.
         var tachyFontSet =
             tachyfont.loadFonts_init_(cssFamilyName, fontsInfo, opt_params);
         // Load the fonts.
-        var xdelta3Decoder = preludeInfo.getXDeltaDecoder();
+        var xdelta3Decoder = launcherInfo.getXDeltaDecoder();
         var fontbases =
             new tachyfont.MergedData(mergedFontbasesBytes, xdelta3Decoder);
         tachyfont.loadFonts_loadAndUse_(tachyFontSet, fontbases)
             .then(function() {
               tachyFontSet.hadMutationEvents =
-                  preludeInfo.getDomMutationObserved();
+                  launcherInfo.getDomMutationObserved();
               // If the page has already loaded then update the TachyFonts.
-              if (preludeInfo.getDomContentLoaded()) {
+              if (launcherInfo.getDomContentLoaded()) {
                 tachyfont.loadFonts_handleDomContentLoaded_(tachyFontSet);
               }
             });
@@ -315,22 +315,19 @@ tachyfont.checkSystem = function() {
 
 
 /**
- * Sends the Prelude logs and errors.
+ * Sends the launcher/prelude logs and errors.
+ * @param {!tachyfont.LauncherInfo} launcherInfo The launcher/prelude info.
  */
-tachyfont.sendPreludeReports = function() {
-  var reports;
-  var prelude = window['tachyfontprelude'];
-  if (prelude) {
-    reports = prelude['reports'];
-  }
-  if (!reports || reports.constructor.name != 'Array') {
-    tachyfont.reportError(tachyfont.Error.NO_PRELUDE_REPORTS);
+tachyfont.sendLauncherReports = function(launcherInfo) {
+  var reports = launcherInfo.getReports();
+  if (reports.length == 0) {
+    tachyfont.reportError(tachyfont.Error.NO_LAUNCHER_REPORTS);
     return;
   }
   for (var i = 0; i < reports.length; i++) {
     var report = reports[i];
     if (!report || report.constructor.name != 'Array' || report.length != 3) {
-      tachyfont.reportError(tachyfont.Error.PRELUDE_REPORT_TYPE);
+      tachyfont.reportError(tachyfont.Error.LAUNCHER_REPORT_TYPE);
       return;
     }
     var reportType = report[0];

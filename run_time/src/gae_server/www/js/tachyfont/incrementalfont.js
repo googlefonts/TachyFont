@@ -30,8 +30,8 @@ goog.require('tachyfont.Define');
 goog.require('tachyfont.DemoBackendService');
 goog.require('tachyfont.GoogleBackendService');
 goog.require('tachyfont.IncrementalFontUtils');
+goog.require('tachyfont.LauncherInfo');
 goog.require('tachyfont.Persist');
-goog.require('tachyfont.PreludeInfo');
 goog.require('tachyfont.Promise');
 goog.require('tachyfont.RLEDecoder');
 goog.require('tachyfont.Reporter');
@@ -157,18 +157,18 @@ tachyfont.IncrementalFont.obj = function(fontInfo, params, backendService) {
    */
   this.startTime_ = goog.now();
 
-  // Get the prelude data.
-  var preludeInfo = new tachyfont.PreludeInfo();
+  // Get the launcher data.
+  var launcherInfo = new tachyfont.LauncherInfo();
 
   /**
    * The current Blob URL. Free this when creating a new one.
    * @private {?string}
    */
-  this.blobUrl_ = preludeInfo.getUrl(weight);
+  this.blobUrl_ = launcherInfo.getUrl(weight);
 
   /**
    * True if new characters have been loaded since last setFont.
-   * If the Prelude code did not set the font then set it even if no new
+   * If the Launcher code did not set the font then set it even if no new
    * characters are needed.
    * @private {boolean}
    */
