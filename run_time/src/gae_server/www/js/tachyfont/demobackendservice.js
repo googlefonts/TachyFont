@@ -47,7 +47,7 @@ DemoBackendService.prototype.requestCodepoints = function(fontInfo, codes) {
       fontInfo.getWeight() + '&codepoints=' + codes.join(',');
   return this
       .requestUrl(
-          this.baseUrl + '/characterdata?jsmode=SU', 'POST', params,
+          this.baseUrl + '/characterdata', 'POST', params,
           {'Content-Type': 'application/x-www-form-urlencoded'})
       .then(function(glyphData) {
         return that.parseDataHeader(glyphData);
@@ -58,7 +58,7 @@ DemoBackendService.prototype.requestCodepoints = function(fontInfo, codes) {
 /** @override */
 DemoBackendService.prototype.requestFontBase = function(fontInfo) {
   var url = this.baseUrl + '/fontbase?fontname=' + fontInfo.getName() + '&' +
-      'weight=' + fontInfo.getWeight() + '&jsmode=SU';
+      'weight=' + fontInfo.getWeight();
   return this.requestUrl(url, 'GET', null, {});
 };
 
