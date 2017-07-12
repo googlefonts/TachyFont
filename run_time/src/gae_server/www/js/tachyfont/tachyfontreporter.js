@@ -53,6 +53,7 @@ tachyfont.Reporter.URL_PATH = '/gen_204?id=tf&';
 tachyfont.Reporter.Param = {
   ERROR_ID: 'ei',
   ERROR_TYPE: 'er',
+  FONT_ID: 'fi',
   LOG_TYPE: 'lg',
   MOBILE: 'm',
   REPORT_TYPE: 'rt',
@@ -152,6 +153,7 @@ tachyfont.Reporter.reportError = function(errorId, fontId, errInfo) {
       tachyfont.Reporter.Param.REPORT_TYPE + '=' +
       tachyfont.Reporter.Param.ERROR_TYPE);
   params.push(tachyfont.Reporter.Param.ERROR_ID + '=' + errorId);
+  params.push(tachyfont.Reporter.Param.FONT_ID + '=' + fontId);
   params.push(
       tachyfont.Reporter.Param.MOBILE + '=' +
       (goog.userAgent.MOBILE ? '1' : '0'));
