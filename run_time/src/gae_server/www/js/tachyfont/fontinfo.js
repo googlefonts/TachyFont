@@ -27,6 +27,7 @@ goog.require('tachyfont.Define');
  * The information for a font.
  * @param {?string} name The font name.
  * @param {?string} weight The font weight.
+ * @param {?string} unicodeRange The Unicode range(s) supported by the font.
  * @param {boolean} priority Indicates whether this font should be
  *     prioritized over other fonts.
  * @param {?string=} opt_familyPath The font family path.
@@ -36,8 +37,8 @@ goog.require('tachyfont.Define');
  * @constructor
  */
 tachyfont.FontInfo = function(
-    name, weight, priority, opt_familyPath, opt_version, opt_fontKit,
-    opt_size) {
+    name, weight, unicodeRange, priority, opt_familyPath, opt_version,
+    opt_fontKit, opt_size) {
 
   /** @private @const {string} */
   this.name_ = name || '';

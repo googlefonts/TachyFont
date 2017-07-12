@@ -121,14 +121,15 @@
 
   /**
    * Loads the TachyFonts from persistent store if available.
-   * @param {string} fontFamily The font's family name.
    * @param {string} cssFontFamily The CSS font-family name.
+   * @param {string} fontFamily The font's family name.
+   * @param {string} unicodeRange The Unicode range supported in the font.
    * @param {boolean} isTtf Whether is a TrueType or CFF type font.
    * @param {!Array<string>} weights The list of font weights to load.
    * @return {!Promise<boolean>} Resolves true if all the fonts were persisted.
    */
   tachyfontprelude.loadFonts = function(
-      cssFontFamily, fontFamily, isTtf, weights) {
+      cssFontFamily, fontFamily, unicodeRange, isTtf, weights) {
     var fontInfos = [];
     for (var i = 0; i < weights.length; i++) {
       fontInfos.push(

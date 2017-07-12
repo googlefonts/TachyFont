@@ -94,6 +94,7 @@ tachyfont.webfonttailor.getTachyFontsInfo =
   var priorityWeights = opt_priorityWeights || [];
   var priorityFonts = [];
   var nonPriorityFonts = [];
+  var unicodeRange = '';
   for (var i = 0; i < fontFamlies.length; i++) {
     var fontFamily = fontFamlies[i];
     var languagesInfo = tachyfont.webfonttailor.FontFamliesInfo_[fontFamily];
@@ -116,8 +117,9 @@ tachyfont.webfonttailor.getTachyFontsInfo =
           var font = weightsInfo[weight];
           if (font) {
             var priority = priorityWeights.indexOf(weight) != -1;
-            var fontInfo = new tachyfont.FontInfo(weightsInfo.familyName.name,
-                font['weight'], priority);
+            var fontInfo = new tachyfont.FontInfo(
+                weightsInfo.familyName.name, font['weight'], unicodeRange,
+                priority);
             if (priority) {
               priorityFonts.push(fontInfo);
             } else {
