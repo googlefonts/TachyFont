@@ -145,51 +145,6 @@
 
 
   /**
-   * Loads an ArrayBuffer using XHR.
-   * @param {string} url The URL to the file.
-   * @return {!Promise<!ArrayBuffer, ?>} A promise for the url data.
-   */
-  tachyfontprelude.loadUrlArrayBuffer = function(url) {
-    return tachyfontprelude.loadUrl(url, 'arraybuffer');
-  };
-
-
-  /**
-   * Loads a text string using XHR.
-   * @param {string} url The URL to the file.
-   * @return {!Promise<string, ?>} A promise for the url data.
-   */
-  tachyfontprelude.loadUrlText = function(url) {
-    return tachyfontprelude.loadUrl(url, 'text');
-  };
-
-
-  /**
-   * Loads a file using XHR.
-   * @param {string} url The URL to the file.
-   * @param {string} responseType The requested response type.
-   * @return {!Promise<?, ?>} A promise for the url data.
-   */
-  tachyfontprelude.loadUrl = function(url, responseType) {
-    return new Promise(function(resolve, reject) {
-      var xhr = new XMLHttpRequest();
-      xhr.responseType = responseType;
-      xhr.onreadystatechange = function() {
-        if (xhr.readyState == XMLHttpRequest.DONE) {
-          if (xhr.status == 200) {
-            resolve(xhr.response);
-          } else {
-            reject(xhr.statusText);
-          }
-        }
-      };
-      xhr.open('GET', url, true);
-      xhr.send();
-    });
-  };
-
-
-  /**
    * Loads the TachyFonts from persistent store if available.
    * @param {string} fontFamily The font's family name.
    * @param {string} cssFontFamily The CSS font-family name.
