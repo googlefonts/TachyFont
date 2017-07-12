@@ -185,7 +185,7 @@ tachyfont.MergedData.prototype.getInfo_ = function() {
 
 /**
  * Contains info about the merged data.
- * @param {string} familyName
+ * @param {string} fontFamily
  * @param {number} majorVersion
  * @param {number} minorVersion
  * @param {number} numberSubtables
@@ -195,10 +195,11 @@ tachyfont.MergedData.prototype.getInfo_ = function() {
  * @constructor @struct
  */
 tachyfont.MergedData.Info = function(
-    familyName, majorVersion, minorVersion, numberSubtables, primaryName,
+    fontFamily, majorVersion, minorVersion, numberSubtables, primaryName,
     subtableRecords) {
+  debugger;
   /** @type {string} */
-  this.familyName = familyName;
+  this.fontFamily = fontFamily;
 
   /** @type {number} */
   this.majorVersion = majorVersion;
@@ -260,8 +261,9 @@ tachyfont.MergedData.prototype.parseMergedData = function() {
   var numberSubtables = this.binaryEditor.getUint8();
 
   // Read the font family name.
-  var familyNamelength = this.binaryEditor.getUint8();
-  var familyName = this.binaryEditor.readString(familyNamelength);
+  debugger;
+  var fontFamilylength = this.binaryEditor.getUint8();
+  var fontFamily = this.binaryEditor.readString(fontFamilylength);
 
   var subtableRecords = {};
   var primaryName = '';
@@ -280,7 +282,7 @@ tachyfont.MergedData.prototype.parseMergedData = function() {
   }
 
   var info = new tachyfont.MergedData.Info(
-      familyName, majorVersion, minorVersion, numberSubtables, primaryName,
+      fontFamily, majorVersion, minorVersion, numberSubtables, primaryName,
       subtableRecords);
   return info;
 };

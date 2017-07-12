@@ -25,7 +25,7 @@ goog.require('tachyfont.Define');
 
 /**
  * The information for a font.
- * @param {?string} name The font name.
+ * @param {?string} fontFamily The font family name.
  * @param {?string} weight The font weight.
  * @param {boolean} priority Indicates whether this font should be
  *     prioritized over other fonts.
@@ -36,11 +36,11 @@ goog.require('tachyfont.Define');
  * @constructor
  */
 tachyfont.FontInfo = function(
-    name, weight, priority, opt_familyPath, opt_version, opt_fontKit,
+    fontFamily, weight, priority, opt_familyPath, opt_version, opt_fontKit,
     opt_size) {
 
   /** @private @const {string} */
-  this.name_ = name || '';
+  this.fontFamily_ = fontFamily || '';
 
   /** @private @const {string} */
   this.weight_ = weight || '';
@@ -74,7 +74,7 @@ tachyfont.FontInfo = function(
   this.size_ = opt_size || 5 * 1000 * 1000;
 
   /** @private {string} */
-  this.familyName_ = '';
+  this.cssFontFamily_ = '';
 
   /** @private {string} */
   this.dataUrl_ = '';
@@ -82,11 +82,11 @@ tachyfont.FontInfo = function(
 
 
 /**
- * Gets the name of the TachyFont.
- * @return {string} The name of the TachyFont.
+ * Gets the font family name of the TachyFont.
+ * @return {string}
  */
-tachyfont.FontInfo.prototype.getName = function() {
-  return this.name_;
+tachyfont.FontInfo.prototype.getFontFamily = function() {
+  return this.fontFamily_;
 };
 
 
@@ -136,20 +136,20 @@ tachyfont.FontInfo.prototype.getSize = function() {
 
 
 /**
- * Gets the family name of the TachyFont.
- * @return {string} The family name of the TachyFont.
+ * Gets the css font family name of the TachyFont.
+ * @return {string}
  */
-tachyfont.FontInfo.prototype.getFamilyName = function() {
-  return this.familyName_;
+tachyfont.FontInfo.prototype.getCssFontFamily = function() {
+  return this.cssFontFamily_;
 };
 
 
 /**
- * Sets the family name of the TachyFont.
- * @param {string} familyName The family name of the TachyFont.
+ * Sets the css font family name of the TachyFont.
+ * @param {string} cssFontFamily The css font family name of the TachyFont.
  */
-tachyfont.FontInfo.prototype.setFamilyName = function(familyName) {
-  this.familyName_ = familyName;
+tachyfont.FontInfo.prototype.setCssFontFamily = function(cssFontFamily) {
+  this.cssFontFamily_ = cssFontFamily;
 };
 
 
@@ -203,7 +203,8 @@ tachyfont.FontInfo.prototype.setShouldLoad = function(setting) {
  * @return {string} The database name.
  */
 tachyfont.FontInfo.prototype.getDbName = function() {
-  return tachyfont.Define.DB_NAME + '/' + this.name_ + '/' + this.getFontId();
+  return tachyfont.Define.DB_NAME + '/' + this.fontFamily_ + '/' +
+      this.getFontId();
 };
 
 

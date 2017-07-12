@@ -212,13 +212,13 @@ tachyfont.reportError = function(errNum, opt_errInfo, opt_fontId) {
 
 /**
  * Load a list of TachyFonts
- * @param {string} cssFamilyName The font-family name.
+ * @param {string} cssFontFamily The CSS font-family name.
  * @param {!tachyfont.FontsInfo} fontsInfo Information about the fonts.
  * @param {!Object<string, string>=} opt_params Optional parameters.
  * @return {!goog.Promise<?tachyfont.TachyFontSet,?>} A promise that returns the
  *     TachyFontSet object or null if the fonts are not loaded.
  */
-tachyfont.loadFonts = function(cssFamilyName, fontsInfo, opt_params) {
+tachyfont.loadFonts = function(cssFontFamily, fontsInfo, opt_params) {
   var params = opt_params || {};
   if (goog.DEBUG) {
     tachyfont.debugInitialization_();
@@ -243,7 +243,7 @@ tachyfont.loadFonts = function(cssFamilyName, fontsInfo, opt_params) {
       .then(function(mergedFontbasesBytes) {
         // Initialize the objects.
         var tachyFontSet =
-            tachyfont.loadFonts_init_(cssFamilyName, fontsInfo, params);
+            tachyfont.loadFonts_init_(cssFontFamily, fontsInfo, params);
         // Load the fonts.
         var xdelta3Decoder = launcherInfo.getXDeltaDecoder();
         var fontbases =
@@ -633,7 +633,7 @@ tachyfont.loadFonts_initReporter = function(fontsInfo) {
 
 /**
  * Initialization before loading a list of TachyFonts
- * @param {string} familyName The font-family name.
+ * @param {string} cssFontFamily The font-family name.
  * TODO(bstell): remove the Object type.
  * @param {!tachyfont.FontsInfo} fontsInfo The information about the
  *     fonts.
@@ -641,21 +641,21 @@ tachyfont.loadFonts_initReporter = function(fontsInfo) {
  * @return {!tachyfont.TachyFontSet} The TachyFontSet object.
  * @private
  */
-tachyfont.loadFonts_init_ = function(familyName, fontsInfo, params) {
+tachyfont.loadFonts_init_ = function(cssFontFamily, fontsInfo, params) {
   var dataUrl = fontsInfo.getDataUrl();
   var cssFontFamilyToAugment = params['cssFontFamilyToAugment'] || '';
 
   var tachyFontSet =
-      new tachyfont.TachyFontSet(familyName, cssFontFamilyToAugment);
+      new tachyfont.TachyFontSet(cssFontFamily, cssFontFamilyToAugment);
   var fontInfos = fontsInfo.getPrioritySortedFonts();
   for (var i = 0; i < fontInfos.length; i++) {
     var fontInfo = fontInfos[i];
-    fontInfo.setFamilyName(familyName);
+    fontInfo.setCssFontFamily(cssFontFamily);
     fontInfo.setDataUrl(dataUrl);
     var tachyFont = new tachyfont.TachyFont(fontInfo, params);
     tachyFontSet.addFont(tachyFont);
     // TODO(bstell): need to support slant/width/etc.
-    var fontId = tachyfont.utils.fontId(familyName, fontInfo.getWeight());
+    var fontId = tachyfont.utils.fontId(cssFontFamily, fontInfo.getWeight());
     tachyFontSet.fontIdToIndex[fontId] = i;
   }
   return tachyFontSet;

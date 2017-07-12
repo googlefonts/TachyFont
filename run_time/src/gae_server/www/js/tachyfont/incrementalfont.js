@@ -268,8 +268,8 @@ tachyfont.IncrementalFont.obj.prototype.getFontInfo = function() {
  * Gets the font name.
  * @return {string}
  */
-tachyfont.IncrementalFont.obj.prototype.getFontName = function() {
-  return this.fontInfo_.getName();
+tachyfont.IncrementalFont.obj.prototype.getFontFamily = function() {
+  return this.fontInfo_.getFontFamily();
 };
 
 
@@ -625,7 +625,7 @@ tachyfont.IncrementalFont.processUrlBase = function(
  * @return {!goog.Promise} The promise resolves when the glyphs are displaying.
  */
 tachyfont.IncrementalFont.obj.prototype.setFont = function(fontData) {
-  var msg = this.fontInfo_.getName() + ' setFont.' + this.fontId_;
+  var msg = this.fontInfo_.getFontFamily() + ' setFont.' + this.fontId_;
   var finishPrecedingSetFont =
       this.finishPrecedingSetFont_.getChainedPromise(msg);
   return finishPrecedingSetFont.getPrecedingPromise()
@@ -718,7 +718,7 @@ tachyfont.IncrementalFont.possibly_obfuscate = function(
 tachyfont.IncrementalFont.obj.prototype.loadChars = function() {
   var neededCodes = [];
 
-  var msg = this.fontInfo_.getName() + ' loadChars';
+  var msg = this.fontInfo_.getFontFamily() + ' loadChars';
   var finishPrecedingCharsRequest =
       this.finishPrecedingCharsRequest_.getChainedPromise(msg);
   return finishPrecedingCharsRequest.getPrecedingPromise()
@@ -904,7 +904,7 @@ tachyfont.IncrementalFont.obj.prototype.calcNeededChars = function() {
             neededCodes, charlist, this.loadableCodepoints_);
         if (goog.DEBUG) {
           tachyfont.log.info(
-              this.fontInfo_.getName() + ' ' + this.fontId_ + ': load ' +
+              this.fontInfo_.getFontFamily() + ' ' + this.fontId_ + ': load ' +
               neededCodes.length + ' codes:');
         }
         var remaining;

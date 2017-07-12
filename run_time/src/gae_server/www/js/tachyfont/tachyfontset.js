@@ -31,11 +31,11 @@ goog.require('tachyfont.utils');
 
 /**
  * Manage a group of TachyFonts.
- * @param {string} familyName The font family name for this set.
+ * @param {string} cssFontFamily The font family name for this set.
  * @param {string} cssFontFamilyToAugment The cssFontFamily to augment.
  * @constructor @struct
  */
-tachyfont.TachyFontSet = function(familyName, cssFontFamilyToAugment) {
+tachyfont.TachyFontSet = function(cssFontFamily, cssFontFamilyToAugment) {
   /**
    * The TachyFonts managed in this set.
    * @type {!Array<!tachyfont.TachyFont>}
@@ -55,7 +55,7 @@ tachyfont.TachyFontSet = function(familyName, cssFontFamilyToAugment) {
   this.cssFontFamilyToAugment = cssFontFamilyToAugment;
 
   /** @type {string} */
-  this.familyName = familyName;
+  this.cssFontFamily = cssFontFamily;
 
   /**
    * Sigh, for really slow sites do not set the CSS until the page is loaded.
@@ -232,26 +232,27 @@ tachyfont.TachyFontSet.prototype.adjustCssFontFamilies = function(node) {
   var families = cssFamily.split(',');
   var trimmedFamilies = [];
   for (var i = 0; i < families.length; i++) {
-    var name = tachyfont.IncrementalFontUtils.trimFamilyName(families[i]);
+    var cssFontFamily =
+        tachyfont.IncrementalFontUtils.trimCssFontFamily(families[i]);
     if (node.nodeName == 'INPUT') {
       // Drop TachyFont from input fields.
-      if (name == this.familyName) {
+      if (cssFontFamily == this.cssFontFamily) {
         needToAdjustedCss = true;
       } else {
-        trimmedFamilies.push(name);
+        trimmedFamilies.push(cssFontFamily);
       }
       continue;
     } else {
       if (!this.cssFontFamilyToAugment ||
-          (name != this.cssFontFamilyToAugment)) {
-        trimmedFamilies.push(name);
+          (cssFontFamily != this.cssFontFamilyToAugment)) {
+        trimmedFamilies.push(cssFontFamily);
         continue;
       }
       // Check if this font is already augmented by TachyFont.
       if (i + 1 < families.length) {
         var nextName =
-            tachyfont.IncrementalFontUtils.trimFamilyName(families[i + 1]);
-        if (nextName == this.familyName) {
+            tachyfont.IncrementalFontUtils.trimCssFontFamily(families[i + 1]);
+        if (nextName == this.cssFontFamily) {
           // Already augmented.
           continue;
         }
@@ -259,9 +260,9 @@ tachyfont.TachyFontSet.prototype.adjustCssFontFamilies = function(node) {
     }
     // Need to augment with TachyFont.
     needToAdjustedCss = true;
-    trimmedFamilies.push(name);
+    trimmedFamilies.push(cssFontFamily);
     // Add TachyFont for this element.
-    trimmedFamilies.push(this.familyName);
+    trimmedFamilies.push(this.cssFontFamily);
   }
   if (needToAdjustedCss) {
     var newCssFamily = trimmedFamilies.join(', ');
@@ -320,9 +321,10 @@ tachyfont.TachyFontSet.prototype.addTextToFontGroups = function(node) {
   if (family == undefined) {
     var families = cssFamily.split(',');
     for (var i = 0; i < families.length; i++) {
-      var aFamily = tachyfont.IncrementalFontUtils.trimFamilyName(families[i]);
-      if (aFamily == this.familyName) {
-        this.cssFamilyToTachyFontFamily[cssFamily] = this.familyName;
+      var aCssFontFamily =
+          tachyfont.IncrementalFontUtils.trimCssFontFamily(families[i]);
+      if (aCssFontFamily == this.cssFontFamily) {
+        this.cssFamilyToTachyFontFamily[cssFamily] = this.cssFontFamily;
         break;
       }
     }

@@ -210,11 +210,11 @@ tachyfont.IncrementalFontUtils.getBlobUrl = function(data, mimeType) {
 /**
  * Trim a CSSStyleSheet font-family string.
  *
- * @param {string} familyName The font-family name to trim.
+ * @param {string} cssFontFamily The font-family name to trim.
  * @return {string} The trimed font-family name.
  */
-tachyfont.IncrementalFontUtils.trimFamilyName = function(familyName) {
-  var trimmedName = familyName.trim();
+tachyfont.IncrementalFontUtils.trimCssFontFamily = function(cssFontFamily) {
+  var trimmedName = cssFontFamily.trim();
   // When there are spaces in the font-name, Chromium adds quotes
   // around the font name in the style object; eg, "Noto Sans Japanese"
   // becomes "'Noto Sans Japanese'".
@@ -255,7 +255,6 @@ tachyfont.IncrementalFontUtils.getStyleSheet = function() {
 
 /**
  * Delete a CSS style rule.
- *
  * @param {number} ruleToDelete The rule to delete.
  * @param {!CSSStyleSheet} sheet The style sheet.
  */
@@ -276,15 +275,14 @@ tachyfont.IncrementalFontUtils.deleteCssRule = function(ruleToDelete, sheet) {
 
 /**
  * Find the \@font-face rule for the given font spec.
- *
  * TODO(bstell): Add slant, width, etc.
  * @param {!CSSStyleSheet} sheet The style sheet.
- * @param {string} fontFamily The fontFamily.
+ * @param {string} cssFontFamily The cssFontFamily.
  * @param {string} weight The weight.
  * @return {number} The rule index; -1 if not found.
  */
-tachyfont.IncrementalFontUtils.findFontFaceRule =
-    function(sheet, fontFamily, weight) {
+tachyfont.IncrementalFontUtils.findFontFaceRule = function(
+    sheet, cssFontFamily, weight) {
   var rule = -1;
   var rules = sheet.cssRules || sheet.rules;
   if (rules) {
@@ -292,11 +290,12 @@ tachyfont.IncrementalFontUtils.findFontFaceRule =
       var this_rule = rules[i];
       if (this_rule.type == CSSRule.FONT_FACE_RULE) {
         var this_style = this_rule.style;
-        var thisFamily = this_style.getPropertyValue('font-family');
-        thisFamily = tachyfont.IncrementalFontUtils.trimFamilyName(thisFamily);
+        var thisCssFontFamily = this_style.getPropertyValue('font-family');
+        thisCssFontFamily =
+            tachyfont.IncrementalFontUtils.trimCssFontFamily(thisCssFontFamily);
         var thisWeight = this_style.getPropertyValue('font-weight');
         // TODO(bstell): consider using slant/width.
-        if (thisFamily == fontFamily && thisWeight == weight) {
+        if (thisCssFontFamily == cssFontFamily && thisWeight == weight) {
           rule = i;
           break;
         }
@@ -311,23 +310,21 @@ tachyfont.IncrementalFontUtils.findFontFaceRule =
  * Set the CSS \@font-face rule.
  *
  * @param {!CSSStyleSheet} sheet The style sheet.
- * @param {string} fontFamily The fontFamily.
+ * @param {string} cssFontFamily The cssFontFamily.
  * @param {string} weight The weight.
  * @param {string} blobUrl The blob URL of the font data.
  * @param {string} format The format (truetype vs opentype) of the font.
  */
-tachyfont.IncrementalFontUtils.setCssFontRule =
-    function(sheet, fontFamily, weight, blobUrl, format) {
+tachyfont.IncrementalFontUtils.setCssFontRule = function(
+    sheet, cssFontFamily, weight, blobUrl, format) {
   var rule_str = '@font-face {\n' +
-      '    font-family: ' + fontFamily + ';\n' +
+      '    font-family: ' + cssFontFamily + ';\n' +
       '    font-weight: ' + weight + ';\n' +
       '    src: url("' + blobUrl + '")' +
       ' format("' + format + '");\n' +
       '}\n';
   var ruleToDelete = tachyfont.IncrementalFontUtils.findFontFaceRule(
-      sheet, fontFamily, weight);
+      sheet, cssFontFamily, weight);
   tachyfont.IncrementalFontUtils.deleteCssRule(ruleToDelete, sheet);
   sheet.insertRule(rule_str, sheet.cssRules.length);
 };
-
-
