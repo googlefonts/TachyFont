@@ -19,6 +19,8 @@
 
 goog.provide('tachyfont.Reporter');
 
+goog.require('goog.log');
+goog.require('goog.log.Level');
 goog.require('goog.userAgent');
 
 
@@ -116,6 +118,19 @@ tachyfont.Reporter.reset = function() {
 
 
 /**
+ * Gets the logger.
+ * @return {?goog.debug.Logger}
+ */
+tachyfont.Reporter.getErrorLogger = function() {
+  if (!tachyfont.Reporter.errorLogger) {
+    tachyfont.Reporter.errorLogger =
+        goog.log.getLogger('tachyfont-error', goog.log.Level.INFO);
+  }
+  return tachyfont.Reporter.errorLogger;
+};
+
+
+/**
  * Adds the time an item happened.
  * @param {string} name The name of the item.
  */
@@ -145,6 +160,8 @@ tachyfont.Reporter.addItem = function(name, value) {
  * @param {*} errInfo The error information.
  */
 tachyfont.Reporter.reportError = function(errorId, fontId, errInfo) {
+  goog.log.error(tachyfont.Reporter.getErrorLogger(), errorId + '.' + fontId);
+
   if (tachyfont.Reporter.instance_ == null) {
     return;
   }
