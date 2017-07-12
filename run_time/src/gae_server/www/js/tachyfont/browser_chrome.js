@@ -79,10 +79,10 @@ tachyfont.Browser.setFont = function(fontData, fontInfo, isTtf, oldBlobUrl) {
 // browsers.
 tachyfont.Browser.setFontNoFlash = function(fontInfo, format, blobUrl) {
   // The desired @font-face font-family.
-  var fontFamily = fontInfo.getFamilyName();
+  var cssFontFamily = fontInfo.getCssFontFamily();
   // The temporary @font-face font-family.
   var weight = fontInfo.getWeight();
-  var tmpFontFamily = 'tmp-' + weight + '-' + fontFamily;
+  var tmpFontFamily = 'tmp-' + weight + '-' + cssFontFamily;
   var sheet = tachyfont.IncrementalFontUtils.getStyleSheet();
 
   // Create a temporary @font-face rule to transfer the blobUrl data from
@@ -110,7 +110,7 @@ tachyfont.Browser.setFontNoFlash = function(fontInfo, format, blobUrl) {
           .then(function() {
             // The font is ready so switch the @font-face to the desired name.
             tachyfont.Browser.switchFont(
-                sheet, tmpFontFamily, fontFamily, weight, blobUrl, format);
+                sheet, tmpFontFamily, cssFontFamily, weight, blobUrl, format);
           });
 
   return setFontPromise;
@@ -123,16 +123,16 @@ tachyfont.Browser.setFontNoFlash = function(fontInfo, format, blobUrl) {
  * @param {!CSSStyleSheet} sheet The CSS style sheet.
  * @param {string} tmpFontFamily The temporary font-family that is loading the
  *     blob.
- * @param {string} fontFamily The target font-family.
+ * @param {string} cssFontFamily The target font-family.
  * @param {string} weight The The target weight
  * @param {string} blobUrl The blob URL for the font data.
  * @param {string} format The font type.
  */
-tachyfont.Browser.switchFont = function(sheet, tmpFontFamily, fontFamily,
-    weight, blobUrl, format) {
+tachyfont.Browser.switchFont = function(
+    sheet, tmpFontFamily, cssFontFamily, weight, blobUrl, format) {
   // Set the updated font rule.
-  tachyfont.IncrementalFontUtils.setCssFontRule(sheet, fontFamily, weight,
-      blobUrl, format);
+  tachyfont.IncrementalFontUtils.setCssFontRule(
+      sheet, cssFontFamily, weight, blobUrl, format);
 
   // Delete the temporary rule
   var ruleToDelete = tachyfont.IncrementalFontUtils.findFontFaceRule(
@@ -140,9 +140,7 @@ tachyfont.Browser.switchFont = function(sheet, tmpFontFamily, fontFamily,
   if (goog.DEBUG) {
     tachyfont.log.info(
         '**** switched ' + weight + ' from ' + tmpFontFamily + ' to ' +
-        fontFamily + ' ****');
+        cssFontFamily + ' ****');
   }
   tachyfont.IncrementalFontUtils.deleteCssRule(ruleToDelete, sheet);
 };
-
-

@@ -43,8 +43,8 @@ var DemoBackendService = tachyfont.DemoBackendService;
 /** @override */
 DemoBackendService.prototype.requestCodepoints = function(fontInfo, codes) {
   var that = this;
-  var params = 'fontName=' + fontInfo.getName() + '&weight=' +
-      fontInfo.getWeight() + '&codepoints=' + codes.join(',');
+  var params = 'fontName=' + fontInfo.getFontFamily() +
+      '&weight=' + fontInfo.getWeight() + '&codepoints=' + codes.join(',');
   return this
       .requestUrl(
           this.baseUrl + '/characterdata', 'POST', params,
@@ -57,7 +57,8 @@ DemoBackendService.prototype.requestCodepoints = function(fontInfo, codes) {
 
 /** @override */
 DemoBackendService.prototype.requestFontBase = function(fontInfo) {
-  var url = this.baseUrl + '/fontbase?fontname=' + fontInfo.getName() + '&' +
+  var url = this.baseUrl + '/fontbase?fontname=' + fontInfo.getFontFamily() +
+      '&' +
       'weight=' + fontInfo.getWeight();
   return this.requestUrl(url, 'GET', null, {});
 };

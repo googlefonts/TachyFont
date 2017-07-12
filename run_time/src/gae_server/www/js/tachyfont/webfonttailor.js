@@ -31,14 +31,14 @@ goog.require('tachyfont.webfonttailor_alternate');
  * @private {!Object<string, !Object<string, string>>}
  */
 tachyfont.webfonttailor.JaNormalInfo_ = {
-  'familyName': { 'name': 'Noto Sans JP' },
-  '100': { 'name': 'NotoSansJP-Thin', 'weight': '100' },
-  '300': { 'name': 'NotoSansJP-Light', 'weight': '300' },
-  '350': { 'name': 'NotoSansJP-DemiLight', 'weight': '350' },
-  '400': { 'name': 'NotoSansJP-Regular', 'weight': '400' },
-  '500': { 'name': 'NotoSansJP-Medium', 'weight': '500' },
-  '700': { 'name': 'NotoSansJP-Bold', 'weight': '700' },
-  '900': { 'name': 'NotoSansJP-Black', 'weight': '900' }
+  'fontFamily': {'name': 'Noto Sans JP'},
+  '100': {'name': 'NotoSansJP-Thin', 'weight': '100'},
+  '300': {'name': 'NotoSansJP-Light', 'weight': '300'},
+  '350': {'name': 'NotoSansJP-DemiLight', 'weight': '350'},
+  '400': {'name': 'NotoSansJP-Regular', 'weight': '400'},
+  '500': {'name': 'NotoSansJP-Medium', 'weight': '500'},
+  '700': {'name': 'NotoSansJP-Bold', 'weight': '700'},
+  '900': {'name': 'NotoSansJP-Black', 'weight': '900'}
 };
 
 
@@ -116,8 +116,8 @@ tachyfont.webfonttailor.getTachyFontsInfo =
           var font = weightsInfo[weight];
           if (font) {
             var priority = priorityWeights.indexOf(weight) != -1;
-            var fontInfo = new tachyfont.FontInfo(weightsInfo.familyName.name,
-                font['weight'], priority);
+            var fontInfo = new tachyfont.FontInfo(
+                weightsInfo.fontFamily.name, font['weight'], priority);
             if (priority) {
               priorityFonts.push(fontInfo);
             } else {

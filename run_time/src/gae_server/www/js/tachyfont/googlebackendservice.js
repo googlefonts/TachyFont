@@ -107,8 +107,8 @@ GoogleBackendService.prototype.getDataUrl =
     function(fontInfo, prefix, suffix) {
   var familyPath = fontInfo.getFamilyPath();
   if (!familyPath) {
-    // Using familyPath is preferred over familyName.
-    familyPath = fontInfo.getFamilyName().replace(/ /g, '').toLowerCase();
+    // Using familyPath is preferred over cssFontFamily.
+    familyPath = fontInfo.getCssFontFamily().replace(/ /g, '').toLowerCase();
   }
   return this.baseUrl + '/' + prefix + '/' +
       'p' + tachyfont.BackendService.PROTOCOL_MAJOR_VERSION +
