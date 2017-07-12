@@ -514,8 +514,7 @@ tachyfont.isSupportedBrowser = function(opt_windowObject) {
     tachyfont.reportError(tachyfont.Error.NO_MUTATION_OBSERVER);
     isSupported = false;
   }
-  if (typeof windowObject.document.fonts != 'object' ||
-      typeof windowObject.document.fonts.load != 'function') {
+  if (typeof windowObject.FontFace != 'function') {
     tachyfont.reportError(tachyfont.Error.NO_FONT_LOADER);
     isSupported = false;
   }
