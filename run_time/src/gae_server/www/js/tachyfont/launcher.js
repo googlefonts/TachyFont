@@ -459,6 +459,7 @@
     var fontsInfo = new FontsInfo(fontInfos, dataUrl, dataUrl);
     var params = {};
     params['cssFontFamilyToAugment'] = cssFontFamilyToAugment;
+    params['noStartUpDelay'] = true;
     var loadTachyFonts = tachyfont['loadFonts'];
     loadTachyFonts(cssFontFamily, fontsInfo, params);
   };
