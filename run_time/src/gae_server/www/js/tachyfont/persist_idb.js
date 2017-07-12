@@ -49,6 +49,7 @@ tachyfont.Persist.Error = {
   // 14-15 no longer used.
   GET_STORE: '16',
   PUT_STORE: '17',
+  DELETE_IDB: '18',
   END_VALUE: '00'
 };
 
@@ -176,44 +177,58 @@ tachyfont.Persist.openIndexedDb_ = function(dbName, id, resolve, reject) {
 
 /**
  * Get the TachyFont global Database.
+ * @param {boolean} dropDb If true then drop the database before opening it.
  * @return {!goog.Promise<!IDBDatabase,?>} A promise for global TachyFont
  *     Database.
  */
-tachyfont.Persist.openGlobalDatabase = function() {
-  var openIdb = new goog.Promise(function(resolve, reject) {
-    var dbOpen = window.indexedDB.open(tachyfont.Define.IDB_GLOBAL_NAME,
-        tachyfont.Define.IDB_GLOBAL_VERSION);
+tachyfont.Persist.openGlobalDatabase = function(dropDb) {
+  var db;
+  if (dropDb) {
+    db = tachyfont.Persist
+             .deleteDatabase(tachyfont.Define.IDB_GLOBAL_NAME, '000')
+             .thenCatch(function() {
+               tachyfont.Persist.reportError(
+                   tachyfont.Persist.Error.DELETE_IDB, '000', 'dropDb');
+               return goog.Promise.reject();
+             });
+  } else {
+    db = goog.Promise.resolve();
+  }
+  return db.then(function() {
+    return new goog.Promise(function(resolve, reject) {
+      var dbOpen = window.indexedDB.open(
+          tachyfont.Define.IDB_GLOBAL_NAME,
+          tachyfont.Define.IDB_GLOBAL_VERSION);
 
-    dbOpen.onsuccess = function(e) {
-      var db = e.target.result;
-      // TODO(bstell): record that the database was accessed.
-      resolve(db);
-    };
+      dbOpen.onsuccess = function(e) {
+        var db = e.target.result;
+        // TODO(bstell): record that the database was accessed.
+        resolve(db);
+      };
 
-    dbOpen.onerror = function(e) {
-      tachyfont.Persist.reportError(
-          tachyfont.Persist.Error.IDB_GLOBAL_OPEN, '',
-          '!!! openIndexedDb_ "' + tachyfont.Define.IDB_GLOBAL_NAME);
-      reject();
-    };
-
-    // Will get called when the version changes.
-    dbOpen.onupgradeneeded = function(e) {
-      var db = e.target.result;
-      e.target.transaction.onerror = function(e) {
+      dbOpen.onerror = function(e) {
         tachyfont.Persist.reportError(
-            tachyfont.Persist.Error.IDB_GLOBAL_ON_UPGRAGE_NEEDED,
-            '', 'onupgradeneeded error: ' + e.value);
+            tachyfont.Persist.Error.IDB_GLOBAL_OPEN, '',
+            '!!! openIndexedDb_ "' + tachyfont.Define.IDB_GLOBAL_NAME);
         reject();
       };
-      if (!db.objectStoreNames.contains(tachyfont.Define.METADATA)) {
-        var metadataStore =
-            db.createObjectStore(tachyfont.Define.METADATA);
-        tachyfont.Metadata.initializeGlobal(metadataStore);
-      }
-    };
+
+      // Will get called when the version changes.
+      dbOpen.onupgradeneeded = function(e) {
+        var db = e.target.result;
+        e.target.transaction.onerror = function(e) {
+          tachyfont.Persist.reportError(
+              tachyfont.Persist.Error.IDB_GLOBAL_ON_UPGRAGE_NEEDED, '',
+              'onupgradeneeded error: ' + e.value);
+          reject();
+        };
+        if (!db.objectStoreNames.contains(tachyfont.Define.METADATA)) {
+          var metadataStore = db.createObjectStore(tachyfont.Define.METADATA);
+          tachyfont.Metadata.initializeGlobal(metadataStore);
+        }
+      };
+    });
   });
-  return openIdb;
 };
 
 

@@ -257,8 +257,13 @@ tachyfont.checkSystem = function() {
     return goog.Promise.reject('unsupported browser');
   }
 
+  // Check if the persistent stores should be dropped.
+  var uri = goog.Uri.parse(window.location.href);
+  var dropDataStr = uri.getParameterValue('TachyFontDropData') || '';
+  var dropData = dropDataStr == 'true';
+
   // Check for TachyFont metadata.
-  return tachyfont.Persist.openGlobalDatabase().then(
+  return tachyfont.Persist.openGlobalDatabase(dropData).then(
       function(db) {
         // Check if storage is stable (ie: is not auto clearing).
         return tachyfont.Persist.getData(db, tachyfont.Define.METADATA)
