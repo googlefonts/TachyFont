@@ -458,36 +458,52 @@
           launcher.requestMergedFontbases(allLoaded, mergedFontbasesUrl);
           return tachyfontCodePromise;
         })
-        .then(launcher.loadTachyFontCode)
-        .then(function() {
+        .then(function(tachyfontCode) {
+          // Load the TachyFont library.
+          launcher.loadTachyFontCode(tachyfontCode);
           // Load the TachyFonts.
-          var tachyfont = window['tachyfont'];
-          var FontInfo = tachyfont['FontInfo'];
-          var fontInfos = [];
-          for (var i = 0; i < weights.length; i++) {
-            var fontInfo = new FontInfo(fontFamily, weights[i], false);
-            fontInfos.push(fontInfo);
-          }
-          var FontsInfo = tachyfont['FontsInfo'];
-          var fontsInfo = new FontsInfo(fontInfos, dataUrl, dataUrl);
-          var loadFonts = tachyfont['loadFonts'];
-          loadFonts(cssFontFamily, fontsInfo);
+          launcher.loadTachyFonts(fontFamily, cssFontFamily, weights, dataUrl);
         });
   };
 
 
   /**
    * Loads the TachyFont code.
-   * @param {!Promise<string, ?>} tachyfontCodePromise A promise for the
-   *     TachyFont code.
-   * @return {!Promise<?, ?>}
+   * @param {string} tachyfontCode The TachyFont code.
+   * @param {string=} id An optional id. Useful for testing.
    */
-  launcher.loadTachyFontCode = function(tachyfontCode) {
+  launcher.loadTachyFontCode = function(tachyfontCode, opt_id) {
     // Load the tachyfont code into the DOM.
     var script = document.createElement('script');
     script.type = 'text/javascript';
     script.text = tachyfontCode;
+    script.id = opt_id || '';
     document.getElementsByTagName('head')[0].appendChild(script);
+  };
+
+
+  /**
+   * Loads the TachyFonts.
+   * @param {string} fontFamily The font's family name.
+   * @param {string} cssFontFamily The CSS font-family name.
+   * @param {!Array<string>} weights The list of font weights to load.
+   * @param {string} dataUrl The URL for data and reporting.
+   */
+  launcher.loadTachyFonts = function(
+      fontFamily, cssFontFamily, weights, dataUrl) {
+    // Load the TachyFonts.
+    var tachyfont = window['tachyfont'];
+    var FontInfo = tachyfont['FontInfo'];
+    var fontInfos = [];
+    var priority = false;
+    for (var i = 0; i < weights.length; i++) {
+      var fontInfo = new FontInfo(fontFamily, weights[i], priority);
+      fontInfos.push(fontInfo);
+    }
+    var FontsInfo = tachyfont['FontsInfo'];
+    var fontsInfo = new FontsInfo(fontInfos, dataUrl, dataUrl);
+    var loadTachyFonts = tachyfont['loadFonts'];
+    loadTachyFonts(cssFontFamily, fontsInfo);
   };
 
 
