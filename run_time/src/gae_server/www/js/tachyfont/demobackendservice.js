@@ -43,18 +43,12 @@ var DemoBackendService = tachyfont.DemoBackendService;
 /** @override */
 DemoBackendService.prototype.requestCodepoints = function(fontInfo, codes) {
   var that = this;
+  var params = 'fontName=' + fontInfo.getName() + '&weight=' +
+      fontInfo.getWeight() + '&codepoints=' + codes.join(',');
   return this
       .requestUrl(
-          this.baseUrl + '/characterdata?jsmode=SU',  //
-          'POST', JSON.stringify({
-            'name': fontInfo.getName(),
-            'weight': fontInfo.getWeight(),
-            'arr': codes
-          }),
-          // Google App Engine servers do not support CORS so we cannot say
-          // the 'Content-Type' is 'application/json'.
-          //{'Content-Type': 'application/json'},
-          {'Content-Type': 'text/plain'})
+          this.baseUrl + '/characterdata?jsmode=SU', 'POST', params,
+          {'Content-Type': 'application/x-www-form-urlencoded'})
       .then(function(glyphData) {
         return that.parseDataHeader(glyphData);
       });
