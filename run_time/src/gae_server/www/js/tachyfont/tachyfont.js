@@ -36,6 +36,80 @@ goog.require('tachyfont.log');
 goog.require('tachyfont.utils');
 
 
+/**
+ * Reports uncaught errors.
+ */
+if (window.addEventListener) {
+  /**
+   * Report any uncaught errors.
+   * @param {!Event} error The error information.
+   * @private
+   */
+  tachyfont.windowOnError_ = function(error) {
+    if (!error['filename']) {
+      // The information is stripped from the report because of CORS issues.
+      tachyfont.reportError(tachyfont.Error.UNKNOWN_WINDOW_ON_ERROR);
+      return;
+    }
+    var errorObj = {};
+    errorObj['message'] = error['message'];
+    errorObj['filename'] = error['filename'];
+    errorObj['lineno'] = error['lineno'];
+    errorObj['colno'] = error['colno'];
+    if (error.error) {
+      errorObj['stack'] = error['error']['stack'].substring(0, 1000);
+    }
+    var errorStr = JSON.stringify(errorObj);
+    tachyfont.reportError(tachyfont.Error.KNOWN_WINDOW_ON_ERROR, errorStr);
+  };
+  window.addEventListener('error', tachyfont.windowOnError_, false);
+}
+
+
+/**
+ * Adds debug functionality.
+ */
+if (goog.DEBUG) {
+  /**
+   * A class variable to limit debug initialization to a single time.
+   * @private {boolean}
+   */
+  tachyfont.hasInitializedDebug_ = false;
+
+  /**
+   * A function to initialize the debug setup.
+   * @private
+   */
+  tachyfont.debugInitialization_ = function() {
+    if (tachyfont.hasInitializedDebug_) {
+      return;
+    }
+
+    tachyfont.hasInitializedDebug_ = true;
+
+    var uri = goog.Uri.parse(window.location.href);
+    var debugLevel;
+    var debugLevelStr =
+        uri.getParameterValue('TachyFontDebugLevel') || 'WARNING';
+    debugLevel = goog.debug.Logger.Level.getPredefinedLevel(debugLevelStr);
+    tachyfont.log.setLogLevel(debugLevel);
+
+    /**
+     * For debugging: option to disable the obfuscation.
+     *
+     * Obfuscation is a security feature. If a page was presenting a short
+     * security key it is possible that a TachyFont server could figure out the
+     * security key from the character request. Obfuscation adds random
+     * characters to small character data requests to make this difficult.
+     *
+     * For debugging this obfuscation adds noise to the characters requests.
+     */
+    var noObfuscateStr = uri.getParameterValue('TachyFontNoObfuscate') || '';
+    tachyfont.utils.noObfuscate = noObfuscateStr.toLowerCase() == 'true';
+  };
+}
+
+
 
 /**
  * TachyFont - A namespace.
@@ -112,6 +186,18 @@ tachyfont.Error = {
 
 
 /**
+ * Enum for logging values.
+ * @enum {string}
+ * @private
+ */
+tachyfont.Log_ = {
+  LOAD_FONTS: 'LTFLF.',
+  LOAD_FONTS_WAIT_PREVIOUS: 'LTFLW.',
+  END: ''
+};
+
+
+/**
  * The error reporter for this file.
  * @param {string} errNum The error number (encoded in a string);
  * @param {*=} opt_errInfo Optional error object;
@@ -122,85 +208,6 @@ tachyfont.reportError = function(errNum, opt_errInfo, opt_fontId) {
   var fontId = opt_fontId || '000';
   tachyfont.Reporter.reportError(
       tachyfont.Error.FILE_ID + errNum, fontId, errInfo);
-};
-
-
-if (window.addEventListener) {
-  /**
-   * Report any uncaught errors.
-   * @param {!Event} error The error information.
-   * @private
-   */
-  tachyfont.windowOnError_ = function(error) {
-    if (!error['filename']) {
-      // The information is stripped from the report because of CORS issues.
-      tachyfont.reportError(tachyfont.Error.UNKNOWN_WINDOW_ON_ERROR);
-      return;
-    }
-    var errorObj = {};
-    errorObj['message'] = error['message'];
-    errorObj['filename'] = error['filename'];
-    errorObj['lineno'] = error['lineno'];
-    errorObj['colno'] = error['colno'];
-    if (error.error) {
-      errorObj['stack'] = error['error']['stack'].substring(0, 1000);
-    }
-    var errorStr = JSON.stringify(errorObj);
-    tachyfont.reportError(tachyfont.Error.KNOWN_WINDOW_ON_ERROR, errorStr);
-  };
-  window.addEventListener('error', tachyfont.windowOnError_, false);
-}
-
-if (goog.DEBUG) {
-  /**
-   * A class variable to limit debug initialization to a single time.
-   * @private {boolean}
-   */
-  tachyfont.hasInitializedDebug_ = false;
-
-  /**
-   * A function to initialize the debug setup.
-   * @private
-   */
-  tachyfont.debugInitialization_ = function() {
-    if (tachyfont.hasInitializedDebug_) {
-      return;
-    }
-
-    tachyfont.hasInitializedDebug_ = true;
-
-    var uri = goog.Uri.parse(window.location.href);
-    var debugLevel;
-    var debugLevelStr =
-        uri.getParameterValue('TachyFontDebugLevel') || 'WARNING';
-    debugLevel = goog.debug.Logger.Level.getPredefinedLevel(debugLevelStr);
-    tachyfont.log.setLogLevel(debugLevel);
-
-    /**
-     * For debugging: option to disable the obfuscation.
-     *
-     * Obfuscation is a security feature. If a page was presenting a short
-     * security key it is possible that a TachyFont server could figure out the
-     * security key from the character request. Obfuscation adds random
-     * characters to small character data requests to make this difficult.
-     *
-     * For debugging this obfuscation adds noise to the characters requests.
-     */
-    var noObfuscateStr = uri.getParameterValue('TachyFontNoObfuscate') || '';
-    tachyfont.utils.noObfuscate = noObfuscateStr.toLowerCase() == 'true';
-  };
-}
-
-
-/**
- * Enum for logging values.
- * @enum {string}
- * @private
- */
-tachyfont.Log_ = {
-  LOAD_FONTS: 'LTFLF.',
-  LOAD_FONTS_WAIT_PREVIOUS: 'LTFLW.',
-  END: ''
 };
 
 
@@ -759,5 +766,3 @@ tachyfont.loadFonts_handleDomContentLoaded_ = function(tachyFontSet) {
 };
 
 goog.exportSymbol('tachyfont.loadFonts', tachyfont.loadFonts);
-
-
