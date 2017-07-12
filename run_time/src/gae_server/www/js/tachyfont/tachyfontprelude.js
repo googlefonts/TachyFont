@@ -24,10 +24,6 @@
   var tachyfontprelude = {};
 
 
-  /** @type {!Object} Indicates which fonts were loaded */
-  tachyfontprelude['loaded'] = {};
-
-
   /** @type {!Object} The URL for the fonts which were loaded */
   tachyfontprelude['urls'] = {};
 
@@ -51,7 +47,7 @@
 
 
   // Check the DOM when it reports loading the page is done.
-  document.addEventListener("DOMContentLoaded", function(event) {
+  document.addEventListener('DOMContentLoaded', function(event) {
     tachyfontprelude['DOMContentLoaded'] = true;
   });
 
@@ -149,10 +145,30 @@
 
 
   /**
+   * Loads an ArrayBuffer using XHR.
+   * @param {string} url The URL to the file.
+   * @return {!Promise<!ArrayBuffer, ?>} A promise for the url data.
+   */
+  function loadUrlArrayBuffer(url) {
+    return loadUrl(url, 'arraybuffer');
+  }
+
+
+  /**
+   * Loads a text string using XHR.
+   * @param {string} url The URL to the file.
+   * @return {!Promise<string, ?>} A promise for the url data.
+   */
+  function loadUrlText(url) {
+    return loadUrl(url, 'text');
+  }
+
+
+  /**
    * Loads a file using XHR.
    * @param {string} url The URL to the file.
    * @param {string} responseType The requested response type.
-   * @return {!Promise<*>} A promise for the url data.
+   * @return {!Promise<?, ?>} A promise for the url data.
    */
   function loadUrl(url, responseType) {
     return new Promise(function(resolve, reject) {
@@ -382,7 +398,6 @@
             URL.revokeObjectURL(oldBlobUrl);
           }
           tachyfontprelude['urls'][weight] = blobUrl;
-          tachyfontprelude['loaded'][weight] = true;
         }, nullFunction);
   }
 
@@ -440,4 +455,6 @@
   tachyfontprelude['FontInfo'] = FontInfo;
   tachyfontprelude['loadFont'] = loadFont;
   tachyfontprelude['loadUrl'] = loadUrl;
+  tachyfontprelude['loadUrlText'] = loadUrlText;
+  tachyfontprelude['loadUrlArrayBuffer'] = loadUrlArrayBuffer;
 })();
