@@ -257,7 +257,7 @@ tachyfont.Reporter.sendReport = function() {
  */
 tachyfont.Reporter.sendGen204_ = function(params) {
   var reportUrl =
-      tachyfont.Reporter.instance_.url_ + params.join('&') + '&jsmode=SU';
+      tachyfont.Reporter.instance_.url_ + params.join('&');
   var image = new Image();
   image.onload = image.onerror = tachyfont.Reporter.cleanUpFunc_(image);
   image.src = reportUrl;
