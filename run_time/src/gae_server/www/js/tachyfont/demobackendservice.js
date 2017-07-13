@@ -47,7 +47,7 @@ DemoBackendService.prototype.requestCodepoints = function(fontInfo, codes) {
       '&weight=' + fontInfo.getWeight() + '&codepoints=' + codes.join(',');
   return this
       .requestUrl(
-          this.baseUrl + '/characterdata', 'POST', params,
+          this.baseUrl + '/characterdata', 'arraybuffer', 'POST', params,
           {'Content-Type': 'application/x-www-form-urlencoded'})
       .then(function(glyphData) {
         return that.parseDataHeader(glyphData);
@@ -60,15 +60,14 @@ DemoBackendService.prototype.requestFontBase = function(fontInfo) {
   var url = this.baseUrl + '/fontbase?fontname=' + fontInfo.getFontFamily() +
       '&' +
       'weight=' + fontInfo.getWeight();
-  return this.requestUrl(url, 'GET', null, {});
+  return this.requestUrl(url, 'arraybuffer', 'GET', null, {});
 };
 
 
 /** @override */
 DemoBackendService.prototype.log = function(message) {
   return this.requestUrl(
-      this.baseUrl + '/incremental_fonts/logger',
-      'POST',
+      this.baseUrl + '/incremental_fonts/logger', 'arraybuffer', 'POST',
       message,
       // Google App Engine servers do not support CORS so we cannot say
       // the 'Content-Type' is 'application/json'.
