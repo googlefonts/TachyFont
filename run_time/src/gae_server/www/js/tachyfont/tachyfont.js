@@ -634,7 +634,7 @@ tachyfont.loadFonts_initFontInfosUrls = function(fontsInfo) {
  */
 tachyfont.loadFonts_initReporter = function(fontsInfo) {
   var reportUrl = fontsInfo.getReportUrl();
-  tachyfont.Reporter.initReporter(reportUrl);
+  tachyfont.Reporter.initReporter(reportUrl, fontsInfo.getReportPath());
   tachyfont.Reporter.addItemTime(tachyfont.Log_.LOAD_FONTS + '000');
 };
 

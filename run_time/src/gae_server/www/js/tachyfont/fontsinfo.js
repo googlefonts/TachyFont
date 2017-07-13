@@ -29,9 +29,10 @@ goog.require('tachyfont.FontInfo');
  * @param {!Array<!tachyfont.FontInfo>} fonts .
  * @param {?string} dataUrl The URL of the Tachyfont server.
  * @param {?string} reportUrl The URL to send logging/error reports to.
+ * @param {string=} reportPath The path to report errors and metrics.
  * @constructor
  */
-tachyfont.FontsInfo = function(fonts, dataUrl, reportUrl) {
+tachyfont.FontsInfo = function(fonts, dataUrl, reportUrl, reportPath) {
   var priorityFonts = [];
   var nonPriorityFonts = [];
   // Sort the priority fonts to the front of the list.
@@ -51,6 +52,9 @@ tachyfont.FontsInfo = function(fonts, dataUrl, reportUrl) {
 
   /** @private {string} */
   this.reportUrl_ = reportUrl || '';
+
+  /** @private {string} */
+  this.reportPath_ = reportPath || '/gen_204?';
 };
 
 
@@ -87,6 +91,15 @@ tachyfont.FontsInfo.prototype.setDataUrl = function(url) {
  */
 tachyfont.FontsInfo.prototype.getReportUrl = function() {
   return this.reportUrl_;
+};
+
+
+/**
+ * The path for reporting errors and metrics.
+ * @return {string} The URL to send logging/error reports to.
+ */
+tachyfont.FontsInfo.prototype.getReportPath = function() {
+  return this.reportPath_;
 };
 
 
