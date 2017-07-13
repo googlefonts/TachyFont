@@ -26,8 +26,10 @@ goog.require('goog.Uri');
 goog.require('goog.asserts');
 goog.require('goog.debug.Logger');
 goog.require('tachyfont.Define');
+goog.require('tachyfont.DemoBackendService');
 /** @suppress {extraRequire} */
 goog.require('tachyfont.FontsInfo');
+goog.require('tachyfont.GoogleBackendService');
 goog.require('tachyfont.IncrementalFont');
 goog.require('tachyfont.LauncherInfo');
 goog.require('tachyfont.MergedData');
@@ -116,17 +118,18 @@ if (goog.DEBUG) {
 /**
  * TachyFont - A namespace.
  * @param {!tachyfont.FontInfo} fontInfo The font info.
+ * @param {!tachyfont.BackendService} backend The backend to use.
  * @param {!Object<string, string>} params Optional parameters.
  * @constructor
  */
-tachyfont.TachyFont = function(fontInfo, params) {
-
+tachyfont.TachyFont = function(fontInfo, backend, params) {
   /**
    * The object that handles the binary manipulation of the font data.
    * @private {!tachyfont.IncrementalFont.obj}
    * TODO(bstell): integrate the manager into this object.
    */
-  this.incrfont_ = tachyfont.IncrementalFont.createManager(fontInfo, params);
+  this.incrfont_ =
+      tachyfont.IncrementalFont.createManager(fontInfo, backend, params);
 };
 
 
@@ -652,15 +655,23 @@ tachyfont.loadFonts_initReporter = function(fontsInfo) {
 tachyfont.loadFonts_init_ = function(cssFontFamily, fontsInfo, params) {
   var dataUrl = fontsInfo.getDataUrl();
   var cssFontFamilyToAugment = params['cssFontFamilyToAugment'] || '';
+  var fontInfos = fontsInfo.getPrioritySortedFonts();
+  var hasFontKit =
+      (fontInfos.length > 0 && fontInfos[0].getFontKit()) ? true : false;
+
+  var backend;
+  if (hasFontKit) {
+    backend = new tachyfont.GoogleBackendService(dataUrl);
+  } else {
+    backend = new tachyfont.DemoBackendService(dataUrl);
+  }
 
   var tachyFontSet =
       new tachyfont.TachyFontSet(cssFontFamily, cssFontFamilyToAugment);
-  var fontInfos = fontsInfo.getPrioritySortedFonts();
   for (var i = 0; i < fontInfos.length; i++) {
     var fontInfo = fontInfos[i];
     fontInfo.setCssFontFamily(cssFontFamily);
-    fontInfo.setDataUrl(dataUrl);
-    var tachyFont = new tachyfont.TachyFont(fontInfo, params);
+    var tachyFont = new tachyfont.TachyFont(fontInfo, backend, params);
     tachyFontSet.addFont(tachyFont);
     // TODO(bstell): need to support slant/width/etc.
     var fontId = tachyfont.utils.fontId(cssFontFamily, fontInfo.getWeight());

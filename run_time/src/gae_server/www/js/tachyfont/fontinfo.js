@@ -75,9 +75,6 @@ tachyfont.FontInfo = function(
 
   /** @private {string} */
   this.cssFontFamily_ = '';
-
-  /** @private {string} */
-  this.dataUrl_ = '';
 };
 
 
@@ -150,24 +147,6 @@ tachyfont.FontInfo.prototype.getCssFontFamily = function() {
  */
 tachyfont.FontInfo.prototype.setCssFontFamily = function(cssFontFamily) {
   this.cssFontFamily_ = cssFontFamily;
-};
-
-
-/**
- * Gets the URL to the TachyFont.
- * @return {string} The URL to the TachyFont server.
- */
-tachyfont.FontInfo.prototype.getDataUrl = function() {
-  return this.dataUrl_;
-};
-
-
-/**
- * Sets the URL to the TachyFont.
- * @param {string} dataUrl The URL to the TachyFont server.
- */
-tachyfont.FontInfo.prototype.setDataUrl = function(dataUrl) {
-  this.dataUrl_ = dataUrl;
 };
 
 

@@ -27,8 +27,6 @@ goog.require('tachyfont.Browser');
 goog.require('tachyfont.Cmap');
 goog.require('tachyfont.CompactCff');
 goog.require('tachyfont.Define');
-goog.require('tachyfont.DemoBackendService');
-goog.require('tachyfont.GoogleBackendService');
 goog.require('tachyfont.IncrementalFontUtils');
 goog.require('tachyfont.LauncherInfo');
 goog.require('tachyfont.Persist');
@@ -118,18 +116,15 @@ tachyfont.IncrementalFont.reportError = function(errNum, errId, errInfo) {
  * 4. Start the operation to get the list of fetched/not-fetched chars.
  * 5. Create a "@font-face" rule (need the data to make the blob URL).
  * @param {!tachyfont.FontInfo} fontInfo Info about this font.
+ * @param {!tachyfont.BackendService} backend The backend to use.
  * @param {!Object} params Parameters.
  * @return {!tachyfont.IncrementalFont.obj} The incremental font manager object.
  */
-tachyfont.IncrementalFont.createManager = function(fontInfo, params) {
+tachyfont.IncrementalFont.createManager = function(fontInfo, backend, params) {
   var fontId = fontInfo.getFontId();
-  var backendService =
-      fontInfo.getFontKit() ?
-      new tachyfont.GoogleBackendService(fontInfo.getDataUrl()) :
-      new tachyfont.DemoBackendService(fontInfo.getDataUrl());
 
   var incrFontMgr =
-      new tachyfont.IncrementalFont.obj(fontInfo, params, backendService);
+      new tachyfont.IncrementalFont.obj(fontInfo, params, backend);
   tachyfont.Reporter.addItem(
       tachyfont.IncrementalFont.Log.CREATE_TACHYFONT + fontId,
       goog.now() - incrFontMgr.startTime_);
