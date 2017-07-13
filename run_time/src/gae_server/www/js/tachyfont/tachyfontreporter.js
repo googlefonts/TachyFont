@@ -29,12 +29,13 @@ goog.require('goog.userAgent');
  * Singleton reporter.
  *
  * @param {string} url The base URL to send reports to.
+ * @param {string} reportPath The path to report errors and metrics.
  * @constructor
  */
-tachyfont.Reporter = function(url) {
+tachyfont.Reporter = function(url, reportPath) {
 
   /** @private {string} */
-  this.url_ = url + tachyfont.Reporter.URL_PATH;
+  this.url_ = url + reportPath + tachyfont.Reporter.TACHYFONT_ID;
 
   /** @private {!Object<string, (number|string)>} */
   this.items_ = {};
@@ -42,10 +43,10 @@ tachyfont.Reporter = function(url) {
 
 
 /**
- * The gen_204 path.
+ * The TachyFont id.
  * @type {string}
  */
-tachyfont.Reporter.URL_PATH = '/gen_204?id=tf&';
+tachyfont.Reporter.TACHYFONT_ID = 'id=tf&';
 
 
 /**
@@ -101,10 +102,11 @@ tachyfont.Reporter.setInstance = function(instance) {
 /**
  * Initializes the reporter singleton.
  * @param {string} url The base URL to send reports to.
+ * @param {string} reportPath The path to report errors and metrics.
  */
-tachyfont.Reporter.initReporter = function(url) {
+tachyfont.Reporter.initReporter = function(url, reportPath) {
   if (tachyfont.Reporter.instance_ == null) {
-    tachyfont.Reporter.instance_ = new tachyfont.Reporter(url);
+    tachyfont.Reporter.instance_ = new tachyfont.Reporter(url, reportPath);
   }
 };
 
