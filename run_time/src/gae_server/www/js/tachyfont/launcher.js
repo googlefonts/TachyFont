@@ -469,7 +469,7 @@
     var FontsInfo = tachyfont['FontsInfo'];
     var fontsInfo = new FontsInfo(
         fontInfos, dataUrl, dataUrl,
-        '/gen204/' /* Use One Platform style query parameters. */);
+        1 /* Use One Platform style query parameters. */);
     var params = {};
     params['cssFontFamilyToAugment'] = cssFontFamilyToAugment;
     params['noStartUpDelay'] = true;

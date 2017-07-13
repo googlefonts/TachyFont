@@ -29,13 +29,20 @@ goog.require('goog.userAgent');
  * Singleton reporter.
  *
  * @param {string} url The base URL to send reports to.
- * @param {string} reportPath The path to report errors and metrics.
+ * @param {number} apiVersion The API version.
  * @constructor
  */
-tachyfont.Reporter = function(url, reportPath) {
+tachyfont.Reporter = function(url, apiVersion) {
+
+  var urlPath;
+  if (apiVersion == 0) {
+    urlPath = tachyfont.Reporter.URL_PATH_V0;
+  } else {
+    urlPath = tachyfont.Reporter.URL_PATH_V1;
+  }
 
   /** @private {string} */
-  this.url_ = url + reportPath + tachyfont.Reporter.TACHYFONT_ID;
+  this.url_ = url + urlPath;
 
   /** @private {!Object<string, (number|string)>} */
   this.items_ = {};
@@ -43,10 +50,17 @@ tachyfont.Reporter = function(url, reportPath) {
 
 
 /**
- * The TachyFont id.
+ * The api version 0 gen_204 path.
  * @type {string}
  */
-tachyfont.Reporter.TACHYFONT_ID = 'id=tf&';
+tachyfont.Reporter.URL_PATH_V0 = '/gen_204?id=tf&';
+
+
+/**
+ * The api version 1 gen_204 path.
+ * @type {string}
+ */
+tachyfont.Reporter.URL_PATH_V1 = '/gen204/id=tf&';
 
 
 /**
@@ -102,11 +116,11 @@ tachyfont.Reporter.setInstance = function(instance) {
 /**
  * Initializes the reporter singleton.
  * @param {string} url The base URL to send reports to.
- * @param {string} reportPath The path to report errors and metrics.
+ * @param {number} apiVersion The API version.
  */
-tachyfont.Reporter.initReporter = function(url, reportPath) {
+tachyfont.Reporter.initReporter = function(url, apiVersion) {
   if (tachyfont.Reporter.instance_ == null) {
-    tachyfont.Reporter.instance_ = new tachyfont.Reporter(url, reportPath);
+    tachyfont.Reporter.instance_ = new tachyfont.Reporter(url, apiVersion);
   }
 };
 
