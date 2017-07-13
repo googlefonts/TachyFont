@@ -30,6 +30,7 @@ goog.require('tachyfont.DemoBackendService');
 /** @suppress {extraRequire} */
 goog.require('tachyfont.FontsInfo');
 goog.require('tachyfont.GoogleBackendService');
+goog.require('tachyfont.GoogleCloudBackend');
 goog.require('tachyfont.IncrementalFont');
 goog.require('tachyfont.LauncherInfo');
 goog.require('tachyfont.MergedData');
@@ -656,11 +657,14 @@ tachyfont.loadFonts_init_ = function(cssFontFamily, fontsInfo, params) {
   var dataUrl = fontsInfo.getDataUrl();
   var cssFontFamilyToAugment = params['cssFontFamilyToAugment'] || '';
   var fontInfos = fontsInfo.getPrioritySortedFonts();
-  var hasFontKit =
+  var useGoogleCloudBackend = fontsInfo.getApiVersion() == 1;
+  var useGoogleWebfontBackend =
       (fontInfos.length > 0 && fontInfos[0].getFontKit()) ? true : false;
 
   var backend;
-  if (hasFontKit) {
+  if (useGoogleCloudBackend) {
+    backend = new tachyfont.GoogleCloudBackend(dataUrl);
+  } else if (useGoogleWebfontBackend) {
     backend = new tachyfont.GoogleBackendService(dataUrl);
   } else {
     backend = new tachyfont.DemoBackendService(dataUrl);
