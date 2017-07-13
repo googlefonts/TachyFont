@@ -164,14 +164,27 @@ BackendService.prototype.log = goog.functions.NULL;
  * backoff reduces traffic when the servers are down. The fuzziness evens out
  * the backed up requests when the servers recover.
  * @param {string} url Destination url
+ * @param {string} responseTypeStr The response type.
  * @param {string} method Request method
  * @param {?string} postData Request data
  * @param {?Object} headers Request headers
- * @return {!goog.Promise} Promise to return response
+ * @return {!goog.Promise<?,?>} Promise to return response
  */
-BackendService.prototype.requestUrl = function(url, method, postData, headers) {
+BackendService.prototype.requestUrl = function(
+    url, responseTypeStr, method, postData, headers) {
+  var responseType;
+  switch (responseTypeStr) {
+    case 'arraybuffer':
+      responseType = goog.net.XhrIo.ResponseType.ARRAY_BUFFER;
+      break;
+    case 'text':
+      responseType = goog.net.XhrIo.ResponseType.TEXT;
+      break;
+    default:
+      responseType = goog.net.XhrIo.ResponseType.DEFAULT;
+  }
   if (this.backOffTime_ == 0) {
-    return this.requestUrl_(url, method, postData, headers);
+    return this.requestUrl_(url, responseType, method, postData, headers);
   } else {
     return new goog
         .Promise(
@@ -182,7 +195,7 @@ BackendService.prototype.requestUrl = function(url, method, postData, headers) {
             },
             this)
         .then(function() {
-          return this.requestUrl_(url, method, postData, headers);
+          return this.requestUrl_(url, responseType, method, postData, headers);
         }.bind(this));
   }
 };
@@ -222,17 +235,18 @@ BackendService.prototype.decreaseBackoffTime_ = function() {
  * Async XMLHttpRequest to given url using given method, data and header
  *
  * @param {string} url Destination url
+ * @param {!goog.net.XhrIo.ResponseType} responseType The response type.
  * @param {string} method Request method
  * @param {?string} postData Request data
  * @param {?Object} headers Request headers
- * @return {!goog.Promise} Promise to return response
+ * @return {!goog.Promise<?,?>} Promise to return response
  * @private
  */
 BackendService.prototype.requestUrl_ = function(
-    url, method, postData, headers) {
+    url, responseType, method, postData, headers) {
   return new goog.Promise(function(resolve, reject) {
     var xhr = new goog.net.XhrIo();
-    xhr.setResponseType(goog.net.XhrIo.ResponseType.ARRAY_BUFFER);
+    xhr.setResponseType(responseType);
     goog.events.listen(xhr, goog.net.EventType.COMPLETE, function(e) {
       if (xhr.isSuccess()) {
         this.decreaseBackoffTime_();

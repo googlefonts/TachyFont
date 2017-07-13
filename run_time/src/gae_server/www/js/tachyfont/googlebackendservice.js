@@ -64,12 +64,14 @@ GoogleBackendService.FRAMEWORK_REQUEST_SUFFIX = 'framework';
 GoogleBackendService.prototype.requestCodepoints = function(
     fontInfo, codes) {
   var self = this;
-  return this.requestUrl(this.getDataUrl(fontInfo,
-      GoogleBackendService.GLYPHS_REQUEST_PREFIX,
-      GoogleBackendService.GLYPHS_REQUEST_SUFFIX),
-      'POST',
-      'glyphs=' + encodeURIComponent(this.compressedGlyphsList_(codes)),
-      {'Content-Type': 'application/x-www-form-urlencoded'})
+  return this
+      .requestUrl(
+          this.getDataUrl(
+              fontInfo, GoogleBackendService.GLYPHS_REQUEST_PREFIX,
+              GoogleBackendService.GLYPHS_REQUEST_SUFFIX),
+          'arraybuffer', 'POST',
+          'glyphs=' + encodeURIComponent(this.compressedGlyphsList_(codes)),
+          {'Content-Type': 'application/x-www-form-urlencoded'})
       .then(function(glyphData) {
         return self.parseDataHeader(glyphData);
       });
@@ -78,10 +80,11 @@ GoogleBackendService.prototype.requestCodepoints = function(
 
 /** @override */
 GoogleBackendService.prototype.requestFontBase = function(fontInfo) {
-  return this.requestUrl(this.getDataUrl(fontInfo,
-      GoogleBackendService.FRAMEWORK_REQUEST_PREFIX,
-      GoogleBackendService.FRAMEWORK_REQUEST_SUFFIX),
-      'GET', null, {});
+  return this.requestUrl(
+      this.getDataUrl(
+          fontInfo, GoogleBackendService.FRAMEWORK_REQUEST_PREFIX,
+          GoogleBackendService.FRAMEWORK_REQUEST_SUFFIX),
+      'arraybuffer', 'GET', null, {});
 };
 
 
