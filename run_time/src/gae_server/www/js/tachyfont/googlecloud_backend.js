@@ -65,6 +65,20 @@ var GoogleCloudBackend = tachyfont.GoogleCloudBackend;
 
 
 /**
+ * The path to the character data API.
+ * @type {string}
+ */
+GoogleCloudBackend.API_CHARACTER_DATA = '/v1/characterdata';
+
+
+/**
+ * The path to the put status API.
+ * @type {string}
+ */
+GoogleCloudBackend.API_PUT_STATUS = '/v1/status:put';
+
+
+/**
  * Send reports it they have been queued for this long.
  * @type {number}
  */
@@ -89,8 +103,8 @@ GoogleCloudBackend.prototype.requestCodepoints = function(fontInfo, codes) {
   var paramsJson = JSON.stringify(paramsObj);
   return this
       .requestUrl(
-          this.baseUrl + '/characterdata', 'text', 'POST', paramsJson,
-          {'Content-Type': 'application/json'})
+          this.baseUrl + GoogleCloudBackend.API_CHARACTER_DATA, 'text', 'POST',
+          paramsJson, {'Content-Type': 'application/json'})
       .then(function(response) {
         var responseObject = goog.json.parse(response);
         var glyphDataUint8Array = goog.crypt.base64.decodeStringToUint8Array(
@@ -164,7 +178,7 @@ GoogleCloudBackend.prototype.sendReports = function() {
   if (!this.errorReports.length && !this.metricReports.length) {
     return;
   }
-  var url = this.baseUrl + '/v1/status:put';
+  var url = this.baseUrl + GoogleCloudBackend.API_PUT_STATUS;
   var putStatusRequestJson = this.buildPutStatusRequest();
   window.navigator.sendBeacon(url, putStatusRequestJson);
 };
