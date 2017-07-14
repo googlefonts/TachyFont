@@ -392,6 +392,7 @@
 
   /**
    * Loads data and starts TachyFont.
+   * @param {string} appName The application's name.
    * @param {string} cssFontFamily The CSS font-family name.
    * @param {string} cssFontFamilyToAugment Add coverage to this cssFontFamily.
    * @param {string} fontFamily The font's family name.
@@ -402,8 +403,8 @@
    * @param {string} dataUrl The URL for data and reporting.
    */
   launcher.startTachyFont = function(
-      cssFontFamily, cssFontFamilyToAugment, fontFamily, isTtf, weights,
-      tachyfontCodeUrl, mergedFontbasesUrl, dataUrl) {
+      appName, cssFontFamily, cssFontFamilyToAugment, fontFamily, isTtf,
+      weights, tachyfontCodeUrl, mergedFontbasesUrl, dataUrl) {
 
     // Start fetching the tachyfont code so it can come in while other things
     // are being done.
@@ -426,8 +427,8 @@
           launcher.loadTachyFontCode(tachyfontCode);
           // Load the TachyFonts.
           launcher.loadTachyFonts(
-              cssFontFamily, cssFontFamilyToAugment, fontFamily, weights,
-              dataUrl);
+              appName, cssFontFamily, cssFontFamilyToAugment, fontFamily,
+              weights, dataUrl);
         });
   };
 
@@ -449,6 +450,7 @@
 
   /**
    * Loads the TachyFonts.
+   * @param {string} appName The application's name.
    * @param {string} cssFontFamily The CSS font-family name.
    * @param {string} cssFontFamilyToAugment Add coverage to this cssFontFamily.
    * @param {string} fontFamily The font's family name.
@@ -456,7 +458,8 @@
    * @param {string} dataUrl The URL for data and reporting.
    */
   launcher.loadTachyFonts = function(
-      cssFontFamily, cssFontFamilyToAugment, fontFamily, weights, dataUrl) {
+      appName, cssFontFamily, cssFontFamilyToAugment, fontFamily, weights,
+      dataUrl) {
     // Load the TachyFonts.
     var tachyfont = window['tachyfont'];
     var FontInfo = tachyfont['FontInfo'];
@@ -471,6 +474,7 @@
         fontInfos, dataUrl, dataUrl,
         1 /* Use One Platform style query parameters. */);
     var params = {};
+    params['appName'] = appName;
     params['cssFontFamilyToAugment'] = cssFontFamilyToAugment;
     params['noStartUpDelay'] = true;
     params['mutationObserver'] = launcher.mutationObserver;
