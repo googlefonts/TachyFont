@@ -44,7 +44,7 @@ tachyfont.LauncherInfo = function() {
    * The applications's name.
    * @private {string}
    */
-  this.appName_ = this.launcher['app_name'] || 'app-name-not-set';
+  this.appName_ = this.launcher['appName'] || 'app-name-not-set';
 
   /**
    * The TachyFont start time. This is useful for overall speed testing. It is
