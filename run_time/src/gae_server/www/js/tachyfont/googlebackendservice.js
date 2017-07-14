@@ -132,7 +132,7 @@ GoogleBackendService.prototype.reportError = function(errorReport) {
  * @param {!tachyfont.MetricReport} metricReport The metric report.
  */
 GoogleBackendService.prototype.reportMetric = function(metricReport) {
-  this.items_[metricReport.getMetricId() + metricReport.getFontId()] =
+  this.items_[metricReport.getMetricId() + '.' + metricReport.getFontId()] =
       metricReport.getMetricValue();
 };
 

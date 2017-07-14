@@ -98,10 +98,10 @@ tachyfont.TachyFontSet = function(cssFontFamily, cssFontFamilyToAugment) {
  */
 // LINT.IfChange
 tachyfont.TachyFontSet.Log = {
-  SET_FONT: 'LTSSF.',
-  SET_FONT_PRIORITY: 'LTSSP.',
-  SET_FONT_DELAYED: 'LTSSD.',
-  SET_FONT_DOM_LOADED: 'LTSSL.'
+  SET_FONT: 'LTSSF',
+  SET_FONT_PRIORITY: 'LTSSP',
+  SET_FONT_DELAYED: 'LTSSD',
+  SET_FONT_DOM_LOADED: 'LTSSL'
 };
 // LINT.ThenChange(//depot/google3/\
 //     java/com/google/i18n/tachyfont/http/log-reports.properties)
