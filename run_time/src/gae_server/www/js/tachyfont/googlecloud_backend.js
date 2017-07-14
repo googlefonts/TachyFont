@@ -39,9 +39,44 @@ goog.scope(function() {
  */
 tachyfont.GoogleCloudBackend = function(appName, baseUrl) {
   tachyfont.GoogleCloudBackend.base(this, 'constructor', appName, baseUrl);
+
+  /**
+   * Send reports it they have been queued for a while. The reports are sent
+   * even if the queued size is small.
+   * @type {number}
+   */
+  this.timeoutId = 0;
+
+  /**
+   * The approximate status length.
+   * @type {number}
+   */
+  this.statusLength = 0;
+
+  /*
+   * Setup an page beforeunload listener to send any queued status.
+   */
+  window.addEventListener('beforeunload', function() {
+    this.handleSendingStatus(true);
+  }.bind(this), false);
 };
 goog.inherits(tachyfont.GoogleCloudBackend, tachyfont.BackendService);
 var GoogleCloudBackend = tachyfont.GoogleCloudBackend;
+
+
+/**
+ * Send reports it they have been queued for this long.
+ * @type {number}
+ */
+GoogleCloudBackend.REPORT_TIMEOUT_MILLISEC = 60000;
+
+
+/**
+ * Send reports whenever the size of the queued status is greater than this. The
+ * reports are send even if they have not been queued very long.
+ * @type {number}
+ */
+GoogleCloudBackend.MAX_STATUS_LENGTH = 5000;
 
 
 /** @override */
@@ -75,12 +110,38 @@ GoogleCloudBackend.prototype.requestFontBase = function(fontInfo) {
 
 
 /**
+ * Handles the sending status reports. The reports will be sent if the amount
+ * queued is large or they have been queued for a long time.
+ * @param {boolean} sendNow Whether to send the report immediately.
+ */
+GoogleCloudBackend.prototype.handleSendingStatus = function(sendNow) {
+  if (this.statusLength >= GoogleCloudBackend.MAX_STATUS_LENGTH) {
+    sendNow = true;
+  }
+  if (sendNow) {
+    if (this.timeoutId) {
+      clearTimeout(this.timeoutId);
+      this.timeoutId = 0;
+    }
+    this.sendReports();
+  } else if (!this.timeoutId) {
+    this.timeoutId = setTimeout(function() {
+      this.timeoutId = 0;
+      this.sendReports();
+    }.bind(this), GoogleCloudBackend.REPORT_TIMEOUT_MILLISEC);
+  }
+};
+
+
+/**
  * Reports an error.
  * @override
  * @param {!tachyfont.ErrorReport} errorReport The error report.
  */
 GoogleCloudBackend.prototype.reportError = function(errorReport) {
   this.errorReports.push(errorReport);
+  this.statusLength += JSON.stringify(errorReport).length;
+  this.handleSendingStatus(false);
 };
 
 
@@ -91,6 +152,8 @@ GoogleCloudBackend.prototype.reportError = function(errorReport) {
  */
 GoogleCloudBackend.prototype.reportMetric = function(metricReport) {
   this.metricReports.push(metricReport);
+  this.statusLength += JSON.stringify(metricReport).length;
+  this.handleSendingStatus(false);
 };
 
 
@@ -113,16 +176,20 @@ GoogleCloudBackend.prototype.sendReports = function() {
  */
 GoogleCloudBackend.prototype.buildPutStatusRequest = function() {
   var putStatusRequest = {};
+  // LINT.IfChange
   putStatusRequest['app_name'] = this.appName;
   putStatusRequest['is_mobile'] = goog.userAgent.MOBILE ? true : false;
   if (this.errorReports.length) {
-    putStatusRequest['error_reports'] = this.errorReports;
+    putStatusRequest['error_report'] = this.errorReports;
     this.errorReports = [];
   }
   if (this.metricReports.length) {
-    putStatusRequest['metric_reports'] = this.metricReports;
+    putStatusRequest['metric_report'] = this.metricReports;
     this.metricReports = [];
   }
+  // LINT.ThenChange(//depot/google3/\
+  //     google/internal/incrementalwebfonts/v1/tachyfont.proto)
+  this.statusLength = 0;
   return JSON.stringify(putStatusRequest);
 };
 
