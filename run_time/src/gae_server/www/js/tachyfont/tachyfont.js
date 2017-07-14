@@ -61,7 +61,7 @@ if (window.addEventListener) {
     errorObj['filename'] = error['filename'];
     errorObj['lineno'] = error['lineno'];
     errorObj['colno'] = error['colno'];
-    if (error.error) {
+    if (error['error'] && error['error']['stack']) {
       errorObj['stack'] = error['error']['stack'].substring(0, 1000);
     }
     var errorStr = JSON.stringify(errorObj);
