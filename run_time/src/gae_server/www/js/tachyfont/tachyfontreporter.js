@@ -30,11 +30,12 @@ goog.require('tachyfont.MetricReport');
 /**
  * Singleton reporter.
  *
+ * @param {!tachyfont.BackendService} backend The backend to use.
  * @param {string} url The base URL to send reports to.
  * @param {number} apiVersion The API version.
  * @constructor
  */
-tachyfont.Reporter = function(url, apiVersion) {
+tachyfont.Reporter = function(backend, url, apiVersion) {
 
   var urlPath;
   if (apiVersion == 0) {
@@ -117,12 +118,14 @@ tachyfont.Reporter.setInstance = function(instance) {
 
 /**
  * Initializes the reporter singleton.
+ * @param {!tachyfont.BackendService} backend The backend to use.
  * @param {string} url The base URL to send reports to.
  * @param {number} apiVersion The API version.
  */
-tachyfont.Reporter.initReporter = function(url, apiVersion) {
+tachyfont.Reporter.initReporter = function(backend, url, apiVersion) {
   if (tachyfont.Reporter.instance_ == null) {
-    tachyfont.Reporter.instance_ = new tachyfont.Reporter(url, apiVersion);
+    tachyfont.Reporter.instance_ =
+        new tachyfont.Reporter(backend, url, apiVersion);
   }
 };
 

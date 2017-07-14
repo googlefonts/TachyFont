@@ -221,7 +221,30 @@ tachyfont.reportError = function(errNum, opt_errInfo, opt_fontId) {
 
 
 /**
- * Load a list of TachyFonts
+ * Gets the backend to use.
+ * @param {!tachyfont.FontsInfo} fontsInfo Information about the fonts.
+ * @return {!tachyfont.BackendService}
+ */
+tachyfont.getBackend = function(fontsInfo) {
+  var useGoogleCloudBackend = fontsInfo.getApiVersion() == 1;
+  var fontInfos = fontsInfo.getPrioritySortedFonts();
+  var useGoogleWebfontBackend =
+      (fontInfos.length > 0 && fontInfos[0].getFontKit()) ? true : false;
+  var dataUrl = fontsInfo.getDataUrl();
+  var backend;
+  if (useGoogleCloudBackend) {
+    backend = new tachyfont.GoogleCloudBackend(dataUrl);
+  } else if (useGoogleWebfontBackend) {
+    backend = new tachyfont.GoogleBackendService(dataUrl);
+  } else {
+    backend = new tachyfont.DemoBackendService(dataUrl);
+  }
+  return backend;
+};
+
+
+/**
+ * Loads a list of TachyFonts
  * @param {string} cssFontFamily The CSS font-family name.
  * @param {!tachyfont.FontsInfo} fontsInfo Information about the fonts.
  * @param {!Object<string, string>=} opt_params Optional parameters.
@@ -233,8 +256,9 @@ tachyfont.loadFonts = function(cssFontFamily, fontsInfo, opt_params) {
   if (goog.DEBUG) {
     tachyfont.debugInitialization_();
   }
+  var backend = tachyfont.getBackend(fontsInfo);
   tachyfont.loadFonts_initFontInfosUrls(fontsInfo);
-  tachyfont.loadFonts_initReporter(fontsInfo);
+  tachyfont.loadFonts_initReporter(backend, fontsInfo);
   // Sent an "error" report so the number of page loads can be determined on the
   // dashboard.
   tachyfont.reportError(tachyfont.Error.PAGE_LOADED);
@@ -252,8 +276,8 @@ tachyfont.loadFonts = function(cssFontFamily, fontsInfo, opt_params) {
       })
       .then(function(mergedFontbasesBytes) {
         // Initialize the objects.
-        var tachyFontSet =
-            tachyfont.loadFonts_init_(cssFontFamily, fontsInfo, params);
+        var tachyFontSet = tachyfont.loadFonts_init_(
+            backend, cssFontFamily, fontsInfo, params);
         // Load the fonts.
         var xdelta3Decoder = launcherInfo.getXDeltaDecoder();
         var fontbases =
@@ -347,7 +371,7 @@ tachyfont.sendLauncherReports = function(launcherInfo) {
     } else if (reportType == 'l') {  // Log report.
       var time = report[1];
       // LINT.IfChange
-      tachyfont.Reporter.addItem('LPLLT.', id, parseInt(time, 10));
+      tachyfont.Reporter.addItem('LPLLT', id, parseInt(time, 10));
       // LINT.ThenChange(//depot/google3/\
       //     java/com/google/i18n/tachyfont/http/error-reports.properties)
     }
@@ -633,18 +657,21 @@ tachyfont.loadFonts_initFontInfosUrls = function(fontsInfo) {
 
 /**
  * Initializes the TachyFont reporter.
+ * @param {!tachyfont.BackendService} backend The backend to use.
  * @param {!tachyfont.FontsInfo} fontsInfo The information about the
  *     fonts.
  */
-tachyfont.loadFonts_initReporter = function(fontsInfo) {
+tachyfont.loadFonts_initReporter = function(backend, fontsInfo) {
   var reportUrl = fontsInfo.getReportUrl();
-  tachyfont.Reporter.initReporter(reportUrl, fontsInfo.getApiVersion());
+  tachyfont.Reporter.initReporter(
+      backend, reportUrl, fontsInfo.getApiVersion());
   tachyfont.Reporter.addItemTime(tachyfont.Log_.LOAD_FONTS, '000');
 };
 
 
 /**
  * Initialization before loading a list of TachyFonts
+ * @param {!tachyfont.BackendService} backend The backend to use.
  * @param {string} cssFontFamily The font-family name.
  * TODO(bstell): remove the Object type.
  * @param {!tachyfont.FontsInfo} fontsInfo The information about the
@@ -653,22 +680,10 @@ tachyfont.loadFonts_initReporter = function(fontsInfo) {
  * @return {!tachyfont.TachyFontSet} The TachyFontSet object.
  * @private
  */
-tachyfont.loadFonts_init_ = function(cssFontFamily, fontsInfo, params) {
-  var dataUrl = fontsInfo.getDataUrl();
+tachyfont.loadFonts_init_ = function(
+    backend, cssFontFamily, fontsInfo, params) {
   var cssFontFamilyToAugment = params['cssFontFamilyToAugment'] || '';
   var fontInfos = fontsInfo.getPrioritySortedFonts();
-  var useGoogleCloudBackend = fontsInfo.getApiVersion() == 1;
-  var useGoogleWebfontBackend =
-      (fontInfos.length > 0 && fontInfos[0].getFontKit()) ? true : false;
-
-  var backend;
-  if (useGoogleCloudBackend) {
-    backend = new tachyfont.GoogleCloudBackend(dataUrl);
-  } else if (useGoogleWebfontBackend) {
-    backend = new tachyfont.GoogleBackendService(dataUrl);
-  } else {
-    backend = new tachyfont.DemoBackendService(dataUrl);
-  }
 
   var tachyFontSet =
       new tachyfont.TachyFontSet(cssFontFamily, cssFontFamilyToAugment);
