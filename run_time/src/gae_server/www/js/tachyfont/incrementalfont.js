@@ -125,7 +125,7 @@ tachyfont.IncrementalFont.createManager = function(fontInfo, backend, params) {
 
   var incrFontMgr =
       new tachyfont.IncrementalFont.obj(fontInfo, params, backend);
-  tachyfont.Reporter.addItem(
+  tachyfont.Reporter.addLog(
       tachyfont.IncrementalFont.Log.CREATE_TACHYFONT, fontId,
       goog.now() - incrFontMgr.startTime_);
 
@@ -508,7 +508,7 @@ tachyfont.IncrementalFont.obj.prototype.getCompactFontFromMergedData = function(
  */
 tachyfont.IncrementalFont.obj.prototype.processFontbase = function(
     urlBaseBytes) {
-  tachyfont.Reporter.addItem(
+  tachyfont.Reporter.addLog(
       tachyfont.IncrementalFont.Log.URL_GET_BASE, this.fontId_,
       goog.now() - this.startTime_);
   var results = tachyfont.IncrementalFont.processUrlBase(
@@ -893,9 +893,9 @@ tachyfont.IncrementalFont.obj.prototype.calcNeededChars = function() {
         // Report the miss rate/count (*before* obfuscation).
         var missCount = neededCodes.length;
         var missRate = (neededCodes.length * 100) / charArray.length;
-        tachyfont.Reporter.addItem(
+        tachyfont.Reporter.addLog(
             tachyfont.IncrementalFont.Log.MISS_COUNT, this.fontId_, missCount);
-        tachyfont.Reporter.addItem(
+        tachyfont.Reporter.addLog(
             tachyfont.IncrementalFont.Log.MISS_RATE, this.fontId_, missRate);
         if (neededCodes.length == 0) {
           return goog.Promise.resolve(neededCodes);

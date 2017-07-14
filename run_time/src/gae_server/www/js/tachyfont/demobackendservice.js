@@ -42,7 +42,7 @@ var DemoBackendService = tachyfont.DemoBackendService;
 
 
 /**
- * The gen204 path.
+ * The metric/error reporting path.
  * @type {string}
  */
 DemoBackendService.REPORTER_PATH = '/gen_204?id=tf&';
@@ -91,7 +91,7 @@ DemoBackendService.prototype.reportError = function(errorReport) {
       tachyfont.BackendService.Param.MOBILE + '=' +
       (goog.userAgent.MOBILE ? '1' : '0'));
   params.push(name + '=' + errorReport.getErrorDetail());
-  this.sendGen204(params);
+  this.sendBeacon(params);
 };
 
 
@@ -109,7 +109,7 @@ DemoBackendService.prototype.reportMetric = function(metricReport) {
  * Sends a set of log reports.
  * @override
  */
-DemoBackendService.prototype.sendReport = function() {
+DemoBackendService.prototype.flushLogs = function() {
   if (this.metricReports.length == 0) {
     return;
   }
@@ -141,23 +141,23 @@ DemoBackendService.prototype.sendReport = function() {
     item = encodeURIComponent(name) + '=' + value;
     if (length + item.length > 2000) {
       this.metricReports.unshift(report);
-      this.sendGen204(items);
-      this.sendReport();
+      this.sendBeacon(items);
+      this.flushLogs();
       return;
     }
     length += item.length;
     items.push(item);
   }
-  this.sendGen204(items);
+  this.sendBeacon(items);
 };
 
 
 /**
- * Sends the gen_204.
+ * Sends the metrics/error report to a url that returns 204.
  * @param {!Array<string>} params The URL parameters.
  * @override
  */
-DemoBackendService.prototype.sendGen204 = function(params) {
+DemoBackendService.prototype.sendBeacon = function(params) {
   var reportUrl =
       this.baseUrl + DemoBackendService.REPORTER_PATH + params.join('&');
   var image = new Image();

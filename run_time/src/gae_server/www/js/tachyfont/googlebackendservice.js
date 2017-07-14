@@ -45,7 +45,7 @@ var GoogleBackendService = tachyfont.GoogleBackendService;
 
 
 /**
- * The gen204 path.
+ * The metric/error reporting path.
  * @type {string}
  */
 GoogleBackendService.REPORTER_PATH = '/gen_204?id=tf&';
@@ -114,7 +114,7 @@ GoogleBackendService.prototype.reportError = function(errorReport) {
       tachyfont.BackendService.Param.MOBILE + '=' +
       (goog.userAgent.MOBILE ? '1' : '0'));
   params.push(name + '=' + errorReport.getErrorDetail());
-  this.sendGen204(params);
+  this.sendBeacon(params);
 };
 
 
@@ -132,7 +132,7 @@ GoogleBackendService.prototype.reportMetric = function(metricReport) {
  * Sends a set of log reports.
  * @override
  */
-GoogleBackendService.prototype.sendReport = function() {
+GoogleBackendService.prototype.flushLogs = function() {
   if (this.metricReports.length == 0) {
     return;
   }
@@ -164,14 +164,14 @@ GoogleBackendService.prototype.sendReport = function() {
     item = encodeURIComponent(name) + '=' + value;
     if (length + item.length > 2000) {
       this.metricReports.unshift(report);
-      this.sendGen204(items);
-      this.sendReport();
+      this.sendBeacon(items);
+      this.flushLogs();
       return;
     }
     length += item.length;
     items.push(item);
   }
-  this.sendGen204(items);
+  this.sendBeacon(items);
 };
 
 
@@ -220,11 +220,11 @@ GoogleBackendService.prototype.compressedGlyphsList_ = function(codes) {
 
 
 /**
- * Sends the gen_204.
+ * Sends the metrics/error report to a url that returns 204.
  * @param {!Array<string>} params The URL parameters.
  * @override
  */
-GoogleBackendService.prototype.sendGen204 = function(params) {
+GoogleBackendService.prototype.sendBeacon = function(params) {
   var reportUrl =
       this.baseUrl + GoogleBackendService.REPORTER_PATH + params.join('&');
   var image = new Image();
