@@ -241,12 +241,19 @@
    */
   launcher.loadAntiFlickerFonts = function(cssFontFamily, fontInfos) {
     var antiFlickerFont = launcher.getPlaceholderFont();
-    var promises = [];
-    for (var i = 0; i < fontInfos.length; i++) {
-      promises.push(launcher.setFontNoFlash(
-          cssFontFamily, antiFlickerFont, fontInfos[i]));
+    if (fontInfos.length == 0) {
+      return newRejectedPromise();
     }
-    return Promise.all(promises);
+    // To avoid a flash preload the font data.
+    return launcher.preloadBlobUrl(cssFontFamily, antiFlickerFont, fontInfos[0])
+        .then(function(srcStr) {
+          var promises = [];
+          for (var i = 0; i < fontInfos.length; i++) {
+            promises.push(
+                launcher.setFont(cssFontFamily, fontInfos[i].weight, srcStr));
+          }
+          return Promise.all(promises);
+        });
   };
 
 
@@ -331,12 +338,13 @@
 
 
   /**
+   * Preloads the Blob data.
    * @param {string} cssFontFamily The CSS font-family name.
    * @param {?DataView} fontDataView The font data.
    * @param {!launcher.FontInfo} fontInfo Info about this font.
-   * @return {!Promise} The promise resolves when the glyphs are displaying.
+   * @return {!Promise<string,?>} A promise for \@font-face src for the blobUrl.
    */
-  launcher.setFontNoFlash = function(cssFontFamily, fontDataView, fontInfo) {
+  launcher.preloadBlobUrl = function(cssFontFamily, fontDataView, fontInfo) {
     var weight = fontInfo.weight;
 
     var mimeType;
@@ -355,18 +363,28 @@
         'format("' + format + '")';
 
     // Load the font data under a font-face that is not getting used.
-    var fontFaceTmp =
-        new FontFace('tmp-' + weight + '-' + cssFontFamily, srcStr);
-    document.fonts.add(fontFaceTmp);
-    return fontFaceTmp.load()
-        .then(nullFunction, nullFunction)  // Ignore loading errors.
-        .then(function(value) {
-          var fontFace = new FontFace(cssFontFamily, srcStr);
-          fontFace.weight = weight;
-          document.fonts.add(fontFace);
-          return fontFace.load();
-        })
-        .then(nullFunction, nullFunction);  // Ignore loading errors.
+    var tmpCssFontFamily = 'tmp-' + weight + '-' + cssFontFamily;
+    return launcher.setFont(tmpCssFontFamily, weight, srcStr).then(function() {
+      return srcStr;
+    });
+  };
+
+
+  /**
+   * Sets the font ignoring any errors.
+   * @param {string} cssFontFamily The CSS font-family name.
+   * @param {string} weight The font weight.
+   * @param {string} srcStr The \@font-face src string.
+   * @return {!Promise} The promise resolves when the glyphs are displaying.
+   */
+  launcher.setFont = function(cssFontFamily, weight, srcStr) {
+    var fontFace = new FontFace(cssFontFamily, srcStr);
+    try {
+      fontFace.weight = weight;
+    } catch (e) {
+    }
+    document.fonts.add(fontFace);
+    return fontFace.load().then(nullFunction, nullFunction);
   };
 
 
@@ -378,7 +396,11 @@
    * @return {!Promise} This promise resolves when the font is used.
    */
   launcher.useFont = function(cssFontFamily, fontInfo, fontData) {
-    return launcher.setFontNoFlash(cssFontFamily, fontData, fontInfo)
+    // To avoid a flash preload the font data.
+    return launcher.preloadBlobUrl(cssFontFamily, fontData, fontInfo)
+        .then(function(srcStr) {
+          return launcher.setFont(cssFontFamily, fontInfo.weight, srcStr);
+        })
         .then(function() {
           // Report the font ready time.
           reports.push(
