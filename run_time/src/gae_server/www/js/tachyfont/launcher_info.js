@@ -41,6 +41,12 @@ tachyfont.LauncherInfo = function() {
       window['tachyfont_launcher'] || window['tachyfontprelude'] || {};
 
   /**
+   * The applications's name.
+   * @private {string}
+   */
+  this.appName_ = this.launcher['app_name'] || 'app-name-not-set';
+
+  /**
    * The TachyFont start time. This is useful for overall speed testing. It is
    * more accurate to get this from the launcher code if that is available.
    * @private {number}
@@ -78,6 +84,15 @@ tachyfont.LauncherInfo.prototype.getActualLauncher = function() {
  */
 tachyfont.LauncherInfo.prototype.getActualPrelude = function() {
   return window['tachyfontprelude'];
+};
+
+
+/**
+ * Gets application's name.
+ * @return {string}
+ */
+tachyfont.LauncherInfo.prototype.getAppName = function() {
+  return this.appName_;
 };
 
 

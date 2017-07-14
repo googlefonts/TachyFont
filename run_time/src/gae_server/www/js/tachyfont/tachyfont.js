@@ -257,14 +257,14 @@ tachyfont.loadFonts = function(cssFontFamily, fontsInfo, opt_params) {
   if (goog.DEBUG) {
     tachyfont.debugInitialization_();
   }
+  var launcherInfo = new tachyfont.LauncherInfo();
   tachyfont.loadFonts_initFontInfosUrls(fontsInfo);
-  var appName = 'app-name-not-set';
+  var appName = launcherInfo.getAppName();
   var backend = tachyfont.getBackend(appName, fontsInfo);
   tachyfont.loadFonts_initReporter(backend, fontsInfo);
   // Sent an "error" report so the number of page loads can be determined on the
   // dashboard.
   tachyfont.reportError(tachyfont.Error.PAGE_LOADED);
-  var launcherInfo = new tachyfont.LauncherInfo();
   tachyfont.sendLauncherReports(launcherInfo);
   var noStartUpDelay = !!params['noStartUpDelay'];
   return tachyfont.checkSystem(noStartUpDelay)
