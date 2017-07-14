@@ -62,12 +62,8 @@
   // LINT.IfChange
   /** @const {string} Failed to open IndexedDB error. */
   var ERROR_LAUNCHER_INDEXEDDB_OPEN = '01';
-
-
-  /** @const {string} IndexedDB missing the base field error. */
-  var ERROR_LAUNCHER_MISSING_BASE = '02';
   // LINT.ThenChange(//depot/google3/\
-  //     java/com/google/i18n/tachyfont/http/error-reports.properties)
+  //     java/com/google/i18n/tachyfont/boq/gen204/error-reports.properties)
 
 
   /**
@@ -77,6 +73,7 @@
    * @type {!Array<!Array<string|number>>}
    */
   var reports = [];
+  launcher['reports'] = reports;
 
 
   /** @const {number} Launcher start time. */
@@ -190,48 +187,61 @@
   /**
    * Loads the TachyFonts from persistent store if available.
    * @param {string} cssFontFamily The font's family name.
-   * @param {string} fontFamily The CSS font-family name.
-   * @param {boolean} isTtf Whether is a TrueType or CFF type font.
-   * @param {!Array<string>} weights The list of font weights to load.
-   * @return {!Promise<boolean>} Resolves true if all the fonts were persisted.
+   * @param {!Array<!launcher.FontInfo>} fontInfos The fonts's info.
+   * @param {!Array<!DataView>} fontDatas The fonts' data.
+   * @return {!Promise<?,?>} Resolves when all the fonts are loaded.
    */
-  launcher.loadFonts = function(cssFontFamily, fontFamily, isTtf, weights) {
-    var fontInfos = [];
-    for (var i = 0; i < weights.length; i++) {
-      fontInfos.push(
-          new launcher.FontInfo(fontFamily, weights[i], false, isTtf));
+  launcher.loadFonts = function(cssFontFamily, fontInfos, fontDatas) {
+    var promises = [];
+    for (var i = 0; i < fontInfos.length; i++) {
+      promises.push(
+          launcher.useFont(cssFontFamily, fontInfos[i], fontDatas[i]));
     }
+    return Promise.all(promises);
+  };
 
-    var fontInfos1;
+
+  /**
+   * Loads the TachyFonts' data from persistent store if available.
+   * @param {!Array<!launcher.FontInfo>} fontInfos The fonts' info.
+   * @return {!Promise<?Array<!DataView,?>>} Resolves a non-null array if all
+   *     the fonts were persisted.
+   */
+  launcher.getPersistedFontData = function(fontInfos) {
+    var promises = [];
+    for (var i = 0; i < fontInfos.length; i++) {
+      promises.push(launcher.getFontData(fontInfos[i]));
+    }
+    return Promise.all(promises).then(function(fontsData) {
+      for (var i = 0; i < fontsData.length; i++) {
+        if (!fontsData[i]) {
+          return null;
+        }
+      }
+      return fontsData;
+    });
+  };
+
+
+  /**
+   * Loads the anti-flicker fonts.
+   * Must to load some font for all the weights. Without placeholders the
+   * browser substitutes nearby weights are they are loaded. For example this
+   * would make the 400 weight text flicker as 100 is used for 400, then 300 is
+   * used for 400, then 350 is used for 400, and then 400 is used for 400. And
+   * so on for the other weights.
+   * @param {string} cssFontFamily The font's family name.
+   * @param {!Array<!launcher.FontInfo>} fontInfos The fonts's info.
+   * @return {!Promise<?,?>} Resolves when the anti-flicker fonts are loaded.
+   */
+  launcher.loadAntiFlickerFonts = function(cssFontFamily, fontInfos) {
     var antiFlickerFont = launcher.getPlaceholderFont();
-    var promises;
-    return newResolvedPromise()
-        .then(function() {
-          // Prevent the browser creating ransom note effects by picking glyphs
-          // from other weights in the family by specifying a placeholder font.
-          fontInfos1 = fontInfos.slice();
-          promises = [];
-          for (var i = 0; i < fontInfos1.length; i++) {
-            promises.push(launcher.setFontNoFlash(
-                cssFontFamily, antiFlickerFont, fontInfos1[i], false));
-          }
-          return Promise.all(promises);
-        })
-        .then(function() {
-          // Now load whatever fonts are already persisted.
-          fontInfos1 = fontInfos.slice();
-          promises = [];
-          for (var i = 0; i < fontInfos1.length; i++) {
-            promises.push(launcher.useFont(cssFontFamily, fontInfos1[i]));
-          }
-          return Promise.all(promises).then(function(loadedFonts) {
-            var allLoaded = true;
-            for (var i = 0; i < loadedFonts.length; i++) {
-              allLoaded = allLoaded && loadedFonts[i];
-            }
-            return allLoaded;
-          });
-        });
+    var promises = [];
+    for (var i = 0; i < fontInfos.length; i++) {
+      promises.push(launcher.setFontNoFlash(
+          cssFontFamily, antiFlickerFont, fontInfos[i]));
+    }
+    return Promise.all(promises);
   };
 
 
@@ -288,7 +298,8 @@
   /**
    * Get the font data from the indexedDB.
    * @param {!launcher.FontInfo} fontInfo Info about this font.
-   * @return {!Promise} If success promise resolves the header+font ArrayBuffer.
+   * @return {!Promise<?DataView,?>} If success promise resolves the
+   *     header+font DataView.
    */
   launcher.getFontData = function(fontInfo) {
     return openIDB(fontInfo)
@@ -301,7 +312,7 @@
                   },
                   function() {
                     db.close();
-                    return newRejectedPromise(ERROR_LAUNCHER_MISSING_BASE);
+                    return null;
                   });
         });
   };
@@ -318,11 +329,9 @@
    * @param {string} cssFontFamily The CSS font-family name.
    * @param {?DataView} fontDataView The font data.
    * @param {!launcher.FontInfo} fontInfo Info about this font.
-   * @param {boolean} reportTime Whether to report the font loading time.
    * @return {!Promise} The promise resolves when the glyphs are displaying.
    */
-  launcher.setFontNoFlash = function(
-      cssFontFamily, fontDataView, fontInfo, reportTime) {
+  launcher.setFontNoFlash = function(cssFontFamily, fontDataView, fontInfo) {
     var weight = fontInfo.weight;
 
     var mimeType;
@@ -335,7 +344,8 @@
       format = 'opentype';
     }
     var blob = new Blob([fontDataView], {type: mimeType});
-    var blobUrl = window.URL.createObjectURL(blob);
+    var blobUrl = URL.createObjectURL(blob);
+    launcher['urls'][weight] = blobUrl;
     var srcStr = 'url("' + blobUrl + '") ' +
         'format("' + format + '");';
 
@@ -349,21 +359,9 @@
           var fontFace = new FontFace(cssFontFamily, srcStr);
           fontFace.weight = weight;
           document.fonts.add(fontFace);
-          return fontFace.load().then(
-              nullFunction, nullFunction);  // Ignore loading errors.
+          return fontFace.load();
         })
-        .then(function(value) {
-          if (!reportTime) {
-            return;
-          }
-          // Report the font ready time.
-          reports.push(['l', (new Date()).getTime() - START_TIME, weight]);
-          var oldBlobUrl = launcher[weight];
-          if (oldBlobUrl) {
-            URL.revokeObjectURL(oldBlobUrl);
-          }
-          launcher['urls'][weight] = blobUrl;
-        }, nullFunction);
+        .then(nullFunction, nullFunction);  // Ignore loading errors.
   };
 
 
@@ -371,21 +369,16 @@
    * Uses a TachyFont from persistent store if available.
    * @param {string} cssFontFamily The CSS font-family name.
    * @param {!launcher.FontInfo} fontInfo The info on the font to use.
+   * @param {!DataView} fontData The font data.
    * @return {!Promise} This promise resolves when the font is used.
    */
-  launcher.useFont = function(cssFontFamily, fontInfo) {
-    return launcher.getFontData(fontInfo)
-        .then(function(fontDataView) {
-          return launcher
-              .setFontNoFlash(cssFontFamily, fontDataView, fontInfo, true)
-              .then(function() {
-                return true;
-              });
-        })
-        .then(undefined, function(errorNumber) {
-          // Report the error.
-          reports.push(['e', errorNumber, fontInfo.weight]);
-          return newResolvedPromise(false);
+  launcher.useFont = function(cssFontFamily, fontInfo, fontData) {
+    return launcher.setFontNoFlash(cssFontFamily, fontData, fontInfo)
+        .then(function() {
+          // Report the font ready time.
+          reports.push(
+              ['l', (new Date()).getTime() - START_TIME, fontInfo.weight]);
+          return true;
         });
   };
 
@@ -406,26 +399,43 @@
       appName, cssFontFamily, cssFontFamilyToAugment, fontFamily, isTtf,
       weights, tachyfontCodeUrl, mergedFontbasesUrl, dataUrl) {
 
-    // Start fetching the tachyfont code so it can come in while other things
-    // are being done.
+    // Will always need the tachyfont code so start fetching it immediately.
+    // Will wait for it to arrive once the other launcher tasks are done.
     var tachyfontCodePromise = launcher.loadUrlText(tachyfontCodeUrl);
 
-    // Update the CSS.
-    launcher.recursivelyAdjustCssFontFamilies(
-        cssFontFamily, cssFontFamilyToAugment, document.documentElement);
-    // Now that the cssFontFamily and cssFontFamilyToAugment are available
-    // update the Mutation observer to automatically update the CSS.
-    launcher.addDomMutationObserver(cssFontFamily, cssFontFamilyToAugment);
+    var fontInfos = [];
+    for (var i = 0; i < weights.length; i++) {
+      fontInfos.push(
+          new launcher.FontInfo(fontFamily, weights[i], false, isTtf));
+    }
 
-    return launcher.loadFonts(cssFontFamily, fontFamily, isTtf, weights)
-        .then(function(allLoaded) {
-          launcher.requestMergedFontbases(allLoaded, mergedFontbasesUrl);
+    return launcher.getPersistedFontData(fontInfos)
+        .then(function(persistedFontData) {
+          if (persistedFontData) {
+            return launcher.loadFonts(
+                cssFontFamily, fontInfos, persistedFontData);
+          } else {
+            // The fontbases are missing so start loading them now. The main
+            // TachyFont code will wait for them to load.
+            launcher['mergedFontBases'] =
+                launcher.loadUrlArrayBuffer(mergedFontbasesUrl);
+            return launcher.loadAntiFlickerFonts(cssFontFamily, fontInfos);
+          }
+        })
+        .then(function() {
+          // Update the CSS.
+          launcher.recursivelyAdjustCssFontFamilies(
+              cssFontFamily, cssFontFamilyToAugment, document.documentElement);
+          // Now that the cssFontFamily and cssFontFamilyToAugment are available
+          // update the Mutation observer to automatically update the CSS.
+          launcher.addDomMutationObserver(
+              cssFontFamily, cssFontFamilyToAugment);
           return tachyfontCodePromise;
         })
         .then(function(tachyfontCode) {
-          // Load the TachyFont library.
+          // Load the string holding the TachyFont library into the DOM.
           launcher.loadTachyFontCode(tachyfontCode);
-          // Load the TachyFonts.
+          // Start the TachyFont code going!
           launcher.loadTachyFonts(
               appName, cssFontFamily, cssFontFamilyToAugment, fontFamily,
               weights, dataUrl);
@@ -483,21 +493,6 @@
   };
 
 
-  /**
-   * Starts the loading of the merged fontbases if needed.
-   * @param {boolean} allLoaded Whether all the fontbase were able to be loaded
-   *     from persistent storage.
-   * @param {string} mergedFontbasesUrl The url to the merged fontbases.
-   */
-  launcher.requestMergedFontbases = function(allLoaded, mergedFontbasesUrl) {
-    // If not all the fonts are loaded then load the merged font bases.
-    if (!allLoaded) {
-      // Will need the merged fontbases so start loading them now.
-      // But do not wait for them to load.
-      launcher['mergedFontBases'] =
-          launcher.loadUrlArrayBuffer(mergedFontbasesUrl);
-    }
-  };
 
 
   /**
@@ -726,7 +721,5 @@
    * this file.
    */
   window['tachyfont_launcher'] = launcher;
-  launcher['reports'] = reports;
-  launcher['loadFonts'] = launcher.loadFonts;
   launcher['startTachyFont'] = launcher.startTachyFont;
 })();
