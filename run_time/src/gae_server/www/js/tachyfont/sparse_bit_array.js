@@ -19,8 +19,6 @@
 
 goog.provide('tachyfont.SparseBitArray');
 
-goog.require('goog.asserts');
-
 
 goog.scope(function() {
 
@@ -37,17 +35,6 @@ goog.scope(function() {
 tachyfont.SparseBitArray = function() {
   /** @private {!Object<number, !Uint8Array>} */
   this.pages_ = {};
-
-  /**
-   * TODO(bstell): if no errors reporting then delete this after 2016-10-01.
-   *
-   * For testing make an alternate recording of the bits.
-   * This is used to verify the correct operation of the sparse bit array.
-   * Note: Storing info this way uses a large amount of memory; eg,20K entries
-   * can take 1.5MB.
-   * @private {!Object<number, boolean>}
-   */
-  this.alternateBitInfo_ = {};
 
   /**
    * For testing record the number of page allocations.
@@ -111,7 +98,6 @@ SparseBitArray.prototype.setBit = function(index) {
   var byteBitIndex = pageBitIndex & SparseBitArray.BYTE_MASK;
   var theBit = 1 << byteBitIndex;
   pageBitArray[pageByteIndex] |= theBit;
-  goog.asserts.assert(this.alternateBitInfo_[index] = true);
 };
 
 
@@ -133,9 +119,6 @@ SparseBitArray.prototype.isSet = function(index) {
   var byteBitIndex = pageBitIndex & SparseBitArray.BYTE_MASK;
   var theBit = 1 << byteBitIndex;
   var bitIsSet = !!(theByte & theBit);
-  goog.asserts.assert(
-      bitIsSet == !!this.alternateBitInfo_[index], 'bit %s should be %s', index,
-      !!this.alternateBitInfo_[index]);
   return bitIsSet;
 };
 
@@ -147,46 +130,6 @@ SparseBitArray.prototype.isSet = function(index) {
  */
 SparseBitArray.prototype.getNumberOfPageAllocations = function() {
   return this.numberOfPageAllocations_;
-};
-
-
-/**
- * Compares the sparse bit array against the alternate bit info.
- * This is useful for testing.
- * @return {boolean}
- */
-SparseBitArray.prototype.compareAlternateBitInfo = function() {
-  var pageKeys = Object.keys(this.pages_);
-  for (var i = 0; i < pageKeys.length; i++) {
-    // Need parseInt because Object.keys() always returns strings.
-    var pageKey = parseInt(pageKeys[i], 10);
-    var page = this.pages_[pageKey];
-    for (var j = 0; j < SparseBitArray.BYTES_PER_PAGE; j++) {
-      var theByte = page[j];
-      for (var k = 0; k < SparseBitArray.BITS_PER_BYTE; k++) {
-        var theBit = 1 << k;
-        var bitIsSet = !!(theByte & theBit);
-        var index =  //
-            (pageKey * SparseBitArray.BYTES_PER_PAGE *
-             SparseBitArray.BITS_PER_BYTE) +
-            (j * SparseBitArray.BITS_PER_BYTE) + k;
-        goog.asserts.assert(
-            bitIsSet == !!this.alternateBitInfo_[index], 'bit %s should be %s',
-            index, !!this.alternateBitInfo_[index]);
-        goog.asserts.assert(
-            (!!this.alternateBitInfo_[index] ?
-                 delete (this.alternateBitInfo_[index]) :
-                 0) ||
-            true);
-      }
-    }
-  }
-  goog.asserts.assert(
-      Object.keys(this.alternateBitInfo_).length == 0,
-      'number of alternateBitInfo bits set differs from the sparse array by ' +
-          '%s bits',
-      Object.keys(this.alternateBitInfo_).length);
-  return true;
 };
 
 });  // goog.scope
