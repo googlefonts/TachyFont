@@ -72,11 +72,6 @@ DemoBackendService.prototype.requestFontBase = function(fontInfo) {
 };
 
 
-/** @override */
-DemoBackendService.prototype.log = function(message) {
-};
-
-
 /**
  * Reports an error.
  * @override
