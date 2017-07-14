@@ -83,7 +83,7 @@ tachyfont.Browser.setFontNoFlash = function(fontInfo, format, blobUrl) {
 
   // Load the font data under a font-face that is not getting used.
   var srcStr = 'url("' + blobUrl + '") ' +
-      'format("' + format + '");';
+      'format("' + format + '")';
   var fontFaceTmp;
   var fontFaceNew;
   return goog.Promise.resolve()
