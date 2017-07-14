@@ -116,9 +116,9 @@ tachyfont.Reporter.getErrorLogger = function() {
  * @param {string} errorId The name of the item.
  * @param {string} fontId The font identifier.
  */
-tachyfont.Reporter.addItemTime = function(errorId, fontId) {
+tachyfont.Reporter.addLogTime = function(errorId, fontId) {
   var deltaTime = goog.now() - tachyfont.Reporter.startTime_;
-  tachyfont.Reporter.addItem(errorId, fontId, deltaTime);
+  tachyfont.Reporter.addLog(errorId, fontId, deltaTime);
 };
 
 
@@ -128,9 +128,9 @@ tachyfont.Reporter.addItemTime = function(errorId, fontId) {
  * @param {string} fontId The font identifier.
  * @param {number} value The value of the item.
  */
-tachyfont.Reporter.addItem = function(errorId, fontId, value) {
+tachyfont.Reporter.addLog = function(errorId, fontId, value) {
   var metricReport = new tachyfont.MetricReport(errorId, fontId, value);
-  tachyfont.Reporter.addItem_(metricReport);
+  tachyfont.Reporter.addLog_(metricReport);
 };
 
 
@@ -140,7 +140,7 @@ tachyfont.Reporter.addItem = function(errorId, fontId, value) {
  * @private
  */
 // TODO(bstell): move this into the backend code so it can be backend specific.
-tachyfont.Reporter.addItem_ = function(metricReport) {
+tachyfont.Reporter.addLog_ = function(metricReport) {
   tachyfont.Reporter.instance_.backend_.reportMetric(metricReport);
 };
 
@@ -215,6 +215,6 @@ tachyfont.Reporter.reportError = function(errorId, fontId, errInfo) {
 /**
  * Sends a log report.
  */
-tachyfont.Reporter.sendReport = function() {
-  tachyfont.Reporter.instance_.backend_.sendReport();
+tachyfont.Reporter.flushLogs = function() {
+  tachyfont.Reporter.instance_.backend_.flushLogs();
 };

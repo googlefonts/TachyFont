@@ -309,13 +309,13 @@ BackendService.prototype.reportMetric = goog.functions.NULL;
 /**
  * Sends a log report.
  */
-BackendService.prototype.sendReport = goog.functions.NULL;
+BackendService.prototype.flushLogs = goog.functions.NULL;
 
 
 /**
- * Sends the gen_204.
+ * Sends the metrics/error report to a url that returns 204.
  * @param {!Array<string>} params The URL parameters.
  */
-BackendService.prototype.sendGen204 = goog.functions.NULL;
+BackendService.prototype.sendBeacon = goog.functions.NULL;
 
 });  // goog.scope

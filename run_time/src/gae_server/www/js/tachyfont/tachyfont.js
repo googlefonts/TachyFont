@@ -371,7 +371,7 @@ tachyfont.sendLauncherReports = function(launcherInfo) {
     } else if (reportType == 'l') {  // Log report.
       var time = report[1];
       // LINT.IfChange
-      tachyfont.Reporter.addItem('LPLLT', id, parseInt(time, 10));
+      tachyfont.Reporter.addLog('LPLLT', id, parseInt(time, 10));
       // LINT.ThenChange(//depot/google3/\
       //     java/com/google/i18n/tachyfont/http/error-reports.properties)
     }
@@ -581,7 +581,7 @@ tachyfont.loadFonts_loadAndUse_ = function(tachyFontSet, fontbases) {
       tachyFontSet.finishPrecedingUpdateFont.getChainedPromise(msg);
   return waitForPrecedingPromise.getPrecedingPromise()
       .then(function() {
-        tachyfont.Reporter.addItem(
+        tachyfont.Reporter.addLog(
             tachyfont.Log_.LOAD_FONTS_WAIT_PREVIOUS, '000',
             goog.now() - waitPreviousTime);
         var serialPromise = goog.Promise.resolve(0);
@@ -665,7 +665,7 @@ tachyfont.loadFonts_initReporter = function(backend, fontsInfo) {
   var reportUrl = fontsInfo.getReportUrl();
   tachyfont.Reporter.initReporter(
       backend, reportUrl, fontsInfo.getApiVersion());
-  tachyfont.Reporter.addItemTime(tachyfont.Log_.LOAD_FONTS, '000');
+  tachyfont.Reporter.addLogTime(tachyfont.Log_.LOAD_FONTS, '000');
 };
 
 
