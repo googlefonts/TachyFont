@@ -314,7 +314,8 @@ BackendService.prototype.flushLogs = goog.functions.NULL;
 
 /**
  * Sends the metrics/error report to a url that returns 204.
- * @param {!Array<string>} params The URL parameters.
+ * @param {string} url The URL.
+ * @param {*=} opt_postData Optional POST data.
  */
 BackendService.prototype.sendBeacon = goog.functions.NULL;
 

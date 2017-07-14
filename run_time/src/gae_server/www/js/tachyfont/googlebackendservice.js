@@ -114,7 +114,7 @@ GoogleBackendService.prototype.reportError = function(errorReport) {
       tachyfont.BackendService.Param.MOBILE + '=' +
       (goog.userAgent.MOBILE ? '1' : '0'));
   params.push(name + '=' + errorReport.getErrorDetail());
-  this.sendBeacon(params);
+  this.sendToBeacon(params);
 };
 
 
@@ -164,14 +164,14 @@ GoogleBackendService.prototype.flushLogs = function() {
     item = encodeURIComponent(name) + '=' + value;
     if (length + item.length > 2000) {
       this.metricReports.unshift(report);
-      this.sendBeacon(items);
+      this.sendToBeacon(items);
       this.flushLogs();
       return;
     }
     length += item.length;
     items.push(item);
   }
-  this.sendBeacon(items);
+  this.sendToBeacon(items);
 };
 
 
@@ -222,14 +222,24 @@ GoogleBackendService.prototype.compressedGlyphsList_ = function(codes) {
 /**
  * Sends the metrics/error report to a url that returns 204.
  * @param {!Array<string>} params The URL parameters.
+ */
+GoogleBackendService.prototype.sendToBeacon = function(params) {
+  var url =
+      this.baseUrl + GoogleBackendService.REPORTER_PATH + params.join('&');
+  this.sendBeacon(url);
+};
+
+
+/**
+ * Sends the metrics/error report to a url that returns 204.
+ * @param {string} url The url to send the reports to.
+ * @param {*=} opt_postData Optional POST data.
  * @override
  */
-GoogleBackendService.prototype.sendBeacon = function(params) {
-  var reportUrl =
-      this.baseUrl + GoogleBackendService.REPORTER_PATH + params.join('&');
+GoogleBackendService.prototype.sendBeacon = function(url, opt_postData) {
   var image = new Image();
   image.onload = image.onerror = GoogleBackendService.cleanUpFunc_(image);
-  image.src = reportUrl;
+  image.src = url;
 };
 
 

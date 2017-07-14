@@ -91,7 +91,7 @@ DemoBackendService.prototype.reportError = function(errorReport) {
       tachyfont.BackendService.Param.MOBILE + '=' +
       (goog.userAgent.MOBILE ? '1' : '0'));
   params.push(name + '=' + errorReport.getErrorDetail());
-  this.sendBeacon(params);
+  this.sendToBeacon(params);
 };
 
 
@@ -141,28 +141,38 @@ DemoBackendService.prototype.flushLogs = function() {
     item = encodeURIComponent(name) + '=' + value;
     if (length + item.length > 2000) {
       this.metricReports.unshift(report);
-      this.sendBeacon(items);
+      this.sendToBeacon(items);
       this.flushLogs();
       return;
     }
     length += item.length;
     items.push(item);
   }
-  this.sendBeacon(items);
+  this.sendToBeacon(items);
 };
 
 
 /**
  * Sends the metrics/error report to a url that returns 204.
  * @param {!Array<string>} params The URL parameters.
- * @override
  */
-DemoBackendService.prototype.sendBeacon = function(params) {
+DemoBackendService.prototype.sendToBeacon = function(params) {
   var reportUrl =
       this.baseUrl + DemoBackendService.REPORTER_PATH + params.join('&');
+  this.sendBeacon(reportUrl);
+};
+
+
+/**
+ * Sends the metrics/error report to a url that returns 204.
+ * @param {string} url The URL to send the report to.
+ * @param {*=} opt_postData Optional POST data.
+ * @override
+ */
+DemoBackendService.prototype.sendBeacon = function(url, opt_postData) {
   var image = new Image();
   image.onload = image.onerror = DemoBackendService.cleanUpFunc_(image);
-  image.src = reportUrl;
+  image.src = url;
 };
 
 
