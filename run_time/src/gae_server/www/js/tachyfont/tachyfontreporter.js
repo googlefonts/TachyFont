@@ -22,6 +22,8 @@ goog.provide('tachyfont.Reporter');
 goog.require('goog.log');
 goog.require('goog.log.Level');
 goog.require('goog.userAgent');
+goog.require('tachyfont.ErrorReport');
+goog.require('tachyfont.MetricReport');
 
 
 
@@ -44,7 +46,7 @@ tachyfont.Reporter = function(url, apiVersion) {
   /** @private {string} */
   this.url_ = url + urlPath;
 
-  /** @private {!Object<string, (number|string)>} */
+  /** @private {!Object<string, number>} */
   this.items_ = {};
 };
 
@@ -148,24 +150,37 @@ tachyfont.Reporter.getErrorLogger = function() {
 
 /**
  * Adds the time an item happened.
- * @param {string} name The name of the item.
+ * @param {string} errorId The name of the item.
+ * @param {string} fontId The font identifier.
  */
-tachyfont.Reporter.addItemTime = function(name) {
+tachyfont.Reporter.addItemTime = function(errorId, fontId) {
   var deltaTime = goog.now() - tachyfont.Reporter.startTime_;
-  tachyfont.Reporter.addItem(name, deltaTime);
+  tachyfont.Reporter.addItem(errorId, fontId, deltaTime);
 };
 
 
 /**
  * Adds an item to report.
- * @param {string} name The name of the item.
- * @param {string|number} value The value of the item.
+ * @param {string} errorId The name of the item.
+ * @param {string} fontId The font identifier.
+ * @param {number} value The value of the item.
  */
-tachyfont.Reporter.addItem = function(name, value) {
-  if (typeof value == 'number') {
-    value = Math.round(value);
-  }
-  tachyfont.Reporter.instance_.items_[name] = value;
+tachyfont.Reporter.addItem = function(errorId, fontId, value) {
+  var metricReport = new tachyfont.MetricReport(errorId, fontId, value);
+  tachyfont.Reporter.addItem_(metricReport);
+};
+
+
+/**
+ * Adds an item to report.
+ * @param {!tachyfont.MetricReport} metricReport The metric report.
+ * @private
+ */
+// TODO(bstell): move this into the backend code so it can be backend specific.
+tachyfont.Reporter.addItem_ = function(metricReport) {
+  tachyfont.Reporter.instance_
+      .items_[metricReport.getMetricId() + metricReport.getFontId()] =
+      metricReport.getMetricValue();
 };
 
 
@@ -181,18 +196,8 @@ tachyfont.Reporter.reportError = function(errorId, fontId, errInfo) {
   if (tachyfont.Reporter.instance_ == null) {
     return;
   }
-  var params = [];
-  params.push(
-      tachyfont.Reporter.Param.REPORT_TYPE + '=' +
-      tachyfont.Reporter.Param.ERROR_TYPE);
-  params.push(tachyfont.Reporter.Param.ERROR_ID + '=' + errorId);
-  params.push(tachyfont.Reporter.Param.FONT_ID + '=' + fontId);
-  params.push(
-      tachyfont.Reporter.Param.MOBILE + '=' +
-      (goog.userAgent.MOBILE ? '1' : '0'));
-  var name = errorId + '.' + fontId;
-  var msg = '';
 
+  var msg = '';
   // Get the error message out of the error object.
   if (typeof errInfo == 'string') {
     msg += errInfo;
@@ -241,7 +246,30 @@ tachyfont.Reporter.reportError = function(errorId, fontId, errInfo) {
       }
     }
   }
-  params.push(name + '=' + msg);
+  var errorReport = new tachyfont.ErrorReport(errorId, fontId, msg);
+  tachyfont.Reporter.reportError_(errorReport);
+};
+
+
+/**
+ * Sends an error report.
+ * @param {!tachyfont.ErrorReport} errorReport The error report.
+ * @private
+ */
+// TODO(bstell): move this into the backend code so it can be backend specific.
+tachyfont.Reporter.reportError_ = function(errorReport) {
+  var name = errorReport.getErrorId() + '.' + errorReport.getFontId();
+  var params = [];
+  params.push(
+      tachyfont.Reporter.Param.REPORT_TYPE + '=' +
+      tachyfont.Reporter.Param.ERROR_TYPE);
+  params.push(
+      tachyfont.Reporter.Param.ERROR_ID + '=' + errorReport.getErrorId());
+  params.push(tachyfont.Reporter.Param.FONT_ID + '=' + errorReport.getFontId());
+  params.push(
+      tachyfont.Reporter.Param.MOBILE + '=' +
+      (goog.userAgent.MOBILE ? '1' : '0'));
+  params.push(name + '=' + errorReport.getErrorDetail());
   tachyfont.Reporter.sendGen204_(params);
 };
 
