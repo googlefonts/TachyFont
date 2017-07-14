@@ -585,6 +585,11 @@ tachyfont.loadFonts_loadAndUse_ = function(tachyFontSet, fontbases) {
         tachyfont.Reporter.addLog(
             tachyfont.Log_.LOAD_FONTS_WAIT_PREVIOUS, '000',
             goog.now() - waitPreviousTime);
+        // Load the fonts in serial. Loading them in serial gives small gaps
+        // between each which allows the UI to remain responsive. It is faster
+        // to load the fonts in parallel but with the merged fontbases they can
+        // load without any gaps (eg, from downloading data). Without the gaps
+        // the UI would appear to freeze.
         var serialPromise = goog.Promise.resolve(0);
         var fonts = tachyFontSet.fonts;
         for (var i = 0; i < fonts.length; i++) {

@@ -43,7 +43,7 @@ tachyfont.MergedData = function(mergedDataBytes, xdelta3_decoder) {
   this.xdelta3_decoder = xdelta3_decoder;
 
   /** @type {boolean} */
-  this.canProduceFontbases = !!dataView && !!xdelta3_decoder;
+  this.canProduceFontbases = !!editor && !!xdelta3_decoder;
 
   /** @type {?tachyfont.MergedData.Info} */
   this.info = null;
