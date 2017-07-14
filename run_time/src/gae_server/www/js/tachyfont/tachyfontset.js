@@ -424,9 +424,18 @@ tachyfont.TachyFontSet.prototype.updateFonts =
       }.bind(this))
       .then(
           function() {
-            tachyfont.Reporter.addItem(
-                tachyfont.TachyFontSet.Log.SET_FONT, '000',
-                goog.now() - startTime);
+            if (startTime == 0) {
+              tachyfont.Reporter.addItemTime(
+                  tachyfont.TachyFontSet.Log.SET_FONT_DOM_LOADED, '000');
+            } else if (startTime >= 0) {
+              tachyfont.Reporter.addItem(
+                  tachyfont.TachyFontSet.Log.SET_FONT, '000',
+                  goog.now() - startTime);
+            } else {
+              tachyfont.Reporter.addItem(
+                  tachyfont.TachyFontSet.Log.SET_FONT_DELAYED, '000',
+                  goog.now() + startTime);
+            }
             tachyfont.Reporter.sendReport();
           },
           function(error) {
