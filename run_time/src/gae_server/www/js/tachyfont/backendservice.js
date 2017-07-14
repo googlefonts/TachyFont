@@ -36,10 +36,14 @@ goog.scope(function() {
 
 /**
  * Handles interacting with the backend server.
+ * @param {string} appName The application's name.
  * @param {string} baseUrl URL of the tachyfont server.
  * @constructor
  */
-tachyfont.BackendService = function(baseUrl) {
+tachyfont.BackendService = function(appName, baseUrl) {
+  /** @type {string} */
+  this.appName = appName;
+
   /** @type {string} */
   this.baseUrl = baseUrl;
 

@@ -29,13 +29,13 @@ goog.scope(function() {
 
 /**
  * Handles interacting with the backend server.
- *
+ * @param {string} appName The application's name.
  * @param {string} baseUrl of the backend server.
  * @constructor
  * @extends {tachyfont.BackendService}
  */
-tachyfont.DemoBackendService = function(baseUrl) {
-  tachyfont.DemoBackendService.base(this, 'constructor', baseUrl);
+tachyfont.DemoBackendService = function(appName, baseUrl) {
+  tachyfont.DemoBackendService.base(this, 'constructor', appName, baseUrl);
 };
 goog.inherits(tachyfont.DemoBackendService, tachyfont.BackendService);
 var DemoBackendService = tachyfont.DemoBackendService;
