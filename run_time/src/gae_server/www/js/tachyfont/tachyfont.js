@@ -257,7 +257,7 @@ tachyfont.loadFonts = function(cssFontFamily, fontsInfo, opt_params) {
   if (goog.DEBUG) {
     tachyfont.debugInitialization_();
   }
-  var launcherInfo = new tachyfont.LauncherInfo();
+  var launcherInfo = new tachyfont.LauncherInfo(params);
   tachyfont.loadFonts_initFontInfosUrls(fontsInfo);
   var appName = launcherInfo.getAppName();
   var backend = tachyfont.getBackend(appName, fontsInfo);

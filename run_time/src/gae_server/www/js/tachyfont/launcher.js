@@ -25,10 +25,12 @@
   var launcher = {};
 
 
+  // TODO(bstell): pass via params
   /** @type {!Object} The URL for the fonts which were loaded */
   launcher['urls'] = {};
 
 
+  // TODO(bstell): pass via params
   /** @type {boolean} Indicates a DOM mutation has occured. */
   launcher['DomMutationObserved'] = false;
 
@@ -40,6 +42,7 @@
   launcher.mutationObserver = null;
 
 
+  // TODO(bstell): pass via params
   /** @type {boolean} Indicates the DOM content is fully loaded. */
   launcher['DomContentLoaded'] = false;
 
@@ -73,6 +76,7 @@
    * @type {!Array<!Array<string|number>>}
    */
   var reports = [];
+  // TODO(bstell): pass via params
   launcher['reports'] = reports;
 
 
@@ -94,6 +98,7 @@
     }
     // Create a DOM mutation observer.
     launcher.mutationObserver = new MutationObserver(function(mutations) {
+      // TODO(bstell): pass via params
       launcher['DomMutationObserved'] = true;
       if (cssFontFamily && cssFontFamilyToAugment) {
         launcher.recursivelyAdjustCssFontFamilies(
@@ -417,6 +422,7 @@
           } else {
             // The fontbases are missing so start loading them now. The main
             // TachyFont code will wait for them to load.
+            // TODO(bstell): pass via params
             launcher['mergedFontBases'] =
                 launcher.loadUrlArrayBuffer(mergedFontbasesUrl);
             return launcher.loadAntiFlickerFonts(cssFontFamily, fontInfos);
