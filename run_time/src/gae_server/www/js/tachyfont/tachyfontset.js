@@ -425,7 +425,7 @@ tachyfont.TachyFontSet.prototype.updateFonts =
       .then(
           function() {
             tachyfont.Reporter.addItem(
-                tachyfont.TachyFontSet.Log.SET_FONT + '000',
+                tachyfont.TachyFontSet.Log.SET_FONT, '000',
                 goog.now() - startTime);
             tachyfont.Reporter.sendReport();
           },
