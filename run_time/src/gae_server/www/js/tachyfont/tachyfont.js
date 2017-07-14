@@ -245,7 +245,7 @@ tachyfont.getBackend = function(appName, fontsInfo) {
 
 
 /**
- * Loads a list of TachyFonts
+ * Loads and services a list of TachyFonts
  * @param {string} cssFontFamily The CSS font-family name.
  * @param {!tachyfont.FontsInfo} fontsInfo Information about the fonts.
  * @param {!Object<string, string>=} opt_params Optional parameters.
@@ -284,13 +284,12 @@ tachyfont.loadFonts = function(cssFontFamily, fontsInfo, opt_params) {
         var xdelta3Decoder = launcherInfo.getXDeltaDecoder();
         var fontbases =
             new tachyfont.MergedData(mergedFontbasesBytes, xdelta3Decoder);
-        tachyfont.loadFonts_loadAndUse_(tachyFontSet, fontbases)
+        return tachyfont.loadFonts_loadAndUse_(tachyFontSet, fontbases)
             .then(function() {
               tachyfont.loadFonts_setupTextListeners_(
                   tachyFontSet, launcherInfo);
+              return tachyFontSet;
             });
-
-        return tachyFontSet;
       })
       .thenCatch(function() {
         // Catch any errors.
@@ -593,27 +592,12 @@ tachyfont.loadFonts_loadAndUse_ = function(tachyFontSet, fontbases) {
             var incrfont = fonts[index].incrfont_;
             // Load the fonts from persistent store or URL.
             return incrfont.getCompactFont(fontbases)
-                .then(
-                    function(compactFontWorkingData) {
-                      // Use the Compact font.
-                      if (incrfont.getNeedToSetFont()) {
-                        return incrfont
-                            .setFont(compactFontWorkingData.fontBytes)
-                            .thenCatch(function(error) {
-                              // Report the error.
-                              tachyfont.reportError(
-                                  tachyfont.Error.DISPLAY_COMPACT_FONT,
-                                  incrfont.getFontId());
-                            });
-                      }
-                    },
-                    function(e) {
-                      // Record and report an error happened.
-                      hadError = true;
-                      tachyfont.reportError(
-                          tachyfont.Error.GET_COMPACT_FONT,
-                          incrfont.getFontId());
-                    })
+                .thenCatch(function(e) {
+                  // Report an error happened.
+                  hadError = true;
+                  tachyfont.reportError(
+                      tachyfont.Error.GET_COMPACT_FONT, incrfont.getFontId());
+                })
                 .then(function() {
                   // Advance to the next font.
                   return ++index;
@@ -734,11 +718,11 @@ tachyfont.loadFonts_setupTextListeners_ = function(tachyFontSet, launcherInfo) {
 
   // If the page has already loaded then update the TachyFonts.
   if (launcherInfo.getDomContentLoaded()) {
-    tachyfont.loadFonts_handleDomContentLoaded_(tachyFontSet);
+    tachyFontSet.updateFonts(0, true);
   } else {
     // Check the DOM when it reports loading the page is done.
     document.addEventListener('DOMContentLoaded', function(event) {
-      tachyfont.loadFonts_handleDomContentLoaded_(tachyFontSet);
+      tachyFontSet.updateFonts(0, true);
     }, false);
   }
 };
@@ -799,29 +783,5 @@ tachyfont.loadFonts_domMutationObserver_ = function(
   }
 };
 
-
-/**
- * TachyFont DOM Mutation Observer
- *
- * This records the changes on a per-font basis.
- * Note: mutation observers do not look at INPUT field changes.
- *
- * @param {!tachyfont.TachyFontSet} tachyFontSet The TachyFont objects.
- * @private
- */
-tachyfont.loadFonts_handleDomContentLoaded_ = function(tachyFontSet) {
-  // Update the fonts when the page content is loaded.
-  tachyFontSet.domContentLoaded = true;
-  // On DOMContentLoaded we want to update the fonts. If there have been
-  // mutation events then do the update now. Characters should be in the DOM
-  // now but the order of DOMContentLoaded and mutation events is not defined
-  // and a mutation event should be coming right after this. We could scan the
-  // DOM and do the update right now but scanning the DOM is expensive. So
-  // instead wait for the mutation event.
-  if (tachyFontSet.hadMutationEvents) {
-    // We have characters so update the fonts.
-    tachyFontSet.updateFonts(0, true);
-  }
-};
 
 goog.exportSymbol('tachyfont.loadFonts', tachyfont.loadFonts);
