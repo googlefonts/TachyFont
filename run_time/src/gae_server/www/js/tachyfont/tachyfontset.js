@@ -64,30 +64,11 @@ tachyfont.TachyFontSet = function(cssFontFamily, cssFontFamilyToAugment) {
   this.domContentLoaded = false;
 
   /**
-   * Do not need to scan the DOM if there have been mutation events before
-   * DOMContentLoaded.
-   * @type {boolean}
-   */
-  this.hadMutationEvents = false;
-
-  /**
    * The updateFont operation takes time so serialize them.
    * @type {!tachyfont.Promise.Chained}
    */
   this.finishPrecedingUpdateFont =
       new tachyfont.Promise.Chained('finishPrecedingUpdateFont');
-
-  /**
-   * Timeout indicating there is a pending update fonts request.
-   * @private {?number} The timerID from setTimeout.
-   */
-  this.pendingUpdateRequest_ = null;
-
-  /**
-   * Time of the last request update fonts.
-   * @private {number} The timerID from setTimeout.
-   */
-  this.lastRequestUpdateTime_ = 0;
 
 };
 
@@ -100,11 +81,10 @@ tachyfont.TachyFontSet = function(cssFontFamily, cssFontFamilyToAugment) {
 tachyfont.TachyFontSet.Log = {
   SET_FONT: 'LTSSF',
   SET_FONT_PRIORITY: 'LTSSP',
-  SET_FONT_DELAYED: 'LTSSD',
   SET_FONT_DOM_LOADED: 'LTSSL'
 };
 // LINT.ThenChange(//depot/google3/\
-//     java/com/google/i18n/tachyfont/http/log-reports.properties)
+//     java/com/google/i18n/tachyfont/boq/gen204/log-reports.properties)
 
 
 /**
@@ -119,7 +99,7 @@ tachyfont.TachyFontSet.Error = {
   SET_FONT: '03'
 };
 // LINT.ThenChange(//depot/google3/\
-//     java/com/google/i18n/tachyfont/http/error-reports.properties)
+//     java/com/google/i18n/tachyfont/boq/gen204/error-reports.properties)
 
 
 /**
@@ -192,13 +172,6 @@ tachyfont.TachyFontSet.reportError_ = function(errNum, errObj) {
  *      * After DOMContentLoaded only fetch characters and set the font every
  *        few seconds to balance keeping the display correct vs CPU loading.
  */
-
-
-/**
- * Maximum time in milliseconds to wait before doing a character update.
- * @type {number}
- */
-tachyfont.TachyFontSet.TIMEOUT = 3000;
 
 
 /**
@@ -368,48 +341,14 @@ tachyfont.TachyFontSet.prototype.addTextToFontGroups = function(node) {
 
 
 /**
- * Request an update of a group of TachyFonts.
- * @param {number} startTime The time when the chars were added to the DOM.
- */
-tachyfont.TachyFontSet.prototype.requestUpdateFonts = function(startTime) {
-
-  // There is already a pending update.
-  if (this.pendingUpdateRequest_ != null) {
-    return;
-  }
-
-  // If the last update font was long ago then do one now.
-  var now = goog.now();
-  var timeSinceLastRequestUpdate = now - this.lastRequestUpdateTime_;
-  if (timeSinceLastRequestUpdate > tachyfont.TachyFontSet.TIMEOUT) {
-    this.updateFonts(startTime, false);
-    return;
-  }
-
-  // There was a recent update so delay this one.
-  this.pendingUpdateRequest_ = setTimeout(function() {
-    this.updateFonts(-startTime, false);
-  }.bind(this), tachyfont.TachyFontSet.TIMEOUT);
-};
-
-
-/**
  * Update a group of TachyFonts
  * @param {number} startTime The time when the chars were added to the DOM. If
  *     the number is negative then an intentional delay was happened.
- * @param {boolean} allowEarlyUse Allow the font to be used before the page has
- *     finished loading.
  * @return {!goog.Promise}
  */
-tachyfont.TachyFontSet.prototype.updateFonts =
-    function(startTime, allowEarlyUse) {
-  this.lastRequestUpdateTime_ = goog.now();
-  // Clear any pending request.
-  if (this.pendingUpdateRequest_ != null) {
-    clearTimeout(this.pendingUpdateRequest_);
-    this.pendingUpdateRequest_ = null;
-  }
+tachyfont.TachyFontSet.prototype.updateFonts = function(startTime) {
   var msg = 'updateFonts';
+  // finishPrecedingUpdateFont blocks loadChars until the fonts are loaded.
   var allUpdated = this.finishPrecedingUpdateFont.getChainedPromise(msg);
   return allUpdated.getPrecedingPromise()
       .then(function() {
@@ -427,14 +366,10 @@ tachyfont.TachyFontSet.prototype.updateFonts =
             if (startTime == 0) {
               tachyfont.Reporter.addLogTime(
                   tachyfont.TachyFontSet.Log.SET_FONT_DOM_LOADED, '000');
-            } else if (startTime >= 0) {
+            } else {
               tachyfont.Reporter.addLog(
                   tachyfont.TachyFontSet.Log.SET_FONT, '000',
                   goog.now() - startTime);
-            } else {
-              tachyfont.Reporter.addLog(
-                  tachyfont.TachyFontSet.Log.SET_FONT_DELAYED, '000',
-                  goog.now() + startTime);
             }
             tachyfont.Reporter.flushLogs();
           },

@@ -188,7 +188,7 @@ tachyfont.Error = {
   END: '00'
 };
 // LINT.ThenChange(//depot/google3/\
-//     java/com/google/i18n/tachyfont/http/error-reports.properties)
+//     java/com/google/i18n/tachyfont/boq/gen204/error-reports.properties)
 
 
 /**
@@ -203,7 +203,7 @@ tachyfont.Log_ = {
   END: ''
 };
 // LINT.ThenChange(//depot/google3/\
-//     java/com/google/i18n/tachyfont/http/log-reports.properties)
+//     java/com/google/i18n/tachyfont/boq/gen204/log-reports.properties)
 
 
 /**
@@ -374,7 +374,7 @@ tachyfont.sendLauncherReports = function(launcherInfo) {
       // LINT.IfChange
       tachyfont.Reporter.addLog('LPLLT', id, parseInt(time, 10));
       // LINT.ThenChange(//depot/google3/\
-      //     java/com/google/i18n/tachyfont/http/error-reports.properties)
+      //     java/com/google/i18n/tachyfont/boq/gen204/error-reports.properties)
     }
   }
 };
@@ -705,8 +705,6 @@ tachyfont.loadFonts_setupTextListeners_ = function(tachyFontSet, launcherInfo) {
   // Augment with TachyFont and remove TachyFont from INPUT fields.
   tachyFontSet.recursivelyAdjustCssFontFamilies(document.documentElement);
 
-  tachyFontSet.hadMutationEvents = launcherInfo.getDomMutationObserved();
-
   // Disconnect the launcher's mutation observer.
   launcherInfo.disconnectMutationObserver();
 
@@ -723,11 +721,11 @@ tachyfont.loadFonts_setupTextListeners_ = function(tachyFontSet, launcherInfo) {
 
   // If the page has already loaded then update the TachyFonts.
   if (launcherInfo.getDomContentLoaded()) {
-    tachyFontSet.updateFonts(0, true);
+    tachyFontSet.updateFonts(0);
   } else {
     // Check the DOM when it reports loading the page is done.
     document.addEventListener('DOMContentLoaded', function(event) {
-      tachyFontSet.updateFonts(0, true);
+      tachyFontSet.updateFonts(0);
     }, false);
   }
 };
@@ -767,25 +765,7 @@ tachyfont.loadFonts_domMutationObserver_ = function(
       tachyFontSet.recursivelyAddTextToFontGroups(mutation.target);
     }
   });
-  // If this is the 1st mutation event and it happened after DOMContentLoaded
-  // then do the update now.
-  var immediateUpdate;
-  if (!tachyFontSet.hadMutationEvents && tachyFontSet.domContentLoaded) {
-    immediateUpdate = true;
-  } else {
-    immediateUpdate = false;
-  }
-  tachyFontSet.hadMutationEvents = true;
-  if (immediateUpdate) {
-    tachyFontSet.updateFonts(mutationTime, true);
-  } else {
-    // For pages that load new data slowly: request the fonts be updated soon.
-    // This attempts to minimize expensive operations:
-    //     1. The round trip delays to fetch data.
-    //     2. The set @font-family time (it takes significant time to pass the
-    //        blobUrl data from Javascript to C++).
-    tachyFontSet.requestUpdateFonts(mutationTime);
-  }
+  tachyFontSet.updateFonts(mutationTime);
 };
 
 

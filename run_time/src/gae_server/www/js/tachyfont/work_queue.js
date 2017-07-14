@@ -95,7 +95,7 @@ tachyfont.WorkQueue.Error = {
   END: '00'
 };
 // LINT.ThenChange(//depot/google3/\
-//     java/com/google/i18n/tachyfont/http/error-reports.properties)
+//     java/com/google/i18n/tachyfont/boq/gen204/error-reports.properties)
 
 
 /**

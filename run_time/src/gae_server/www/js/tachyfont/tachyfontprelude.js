@@ -99,7 +99,7 @@
    */
   var ERROR_PRELUDE_BELOW_STABLE_TIME = '07';
   // LINT.ThenChange(//depot/google3/\
-  //     java/com/google/i18n/tachyfont/http/error-reports.properties)
+  //     java/com/google/i18n/tachyfont/boq/gen204/error-reports.properties)
 
 
   /**
