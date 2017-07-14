@@ -352,7 +352,7 @@
     var blobUrl = URL.createObjectURL(blob);
     launcher['urls'][weight] = blobUrl;
     var srcStr = 'url("' + blobUrl + '") ' +
-        'format("' + format + '");';
+        'format("' + format + '")';
 
     // Load the font data under a font-face that is not getting used.
     var fontFaceTmp =
