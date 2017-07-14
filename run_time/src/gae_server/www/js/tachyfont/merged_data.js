@@ -103,6 +103,10 @@ tachyfont.MergedData.prototype.getBinaryEditor = function() {
  * @return {?ArrayBuffer}
  */
 tachyfont.MergedData.prototype.getData = function(name) {
+  if (!this.canProduceFontbases) {
+    return null;
+  }
+
   try {
     // Get the source bytes in case they are needed for a diff.
     var sourceBytes = this.sourceBytes;
@@ -246,6 +250,10 @@ tachyfont.MergedData.SubtableRecord = function(name, type, offset, length) {
  * @return {?tachyfont.MergedData.Info}
  */
 tachyfont.MergedData.prototype.parseMergedData = function() {
+  if (!this.canProduceFontbases) {
+    return null;
+  }
+
   var magic = this.binaryEditor.readString(4);
   if (magic != tachyfont.MergedData.magicHead) {
     return null;
