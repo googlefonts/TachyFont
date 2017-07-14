@@ -36,9 +36,6 @@ goog.scope(function() {
  */
 tachyfont.DemoBackendService = function(baseUrl) {
   tachyfont.DemoBackendService.base(this, 'constructor', baseUrl);
-
-  /** @private {!Object<string, number>} */
-  this.items_ = {};
 };
 goog.inherits(tachyfont.DemoBackendService, tachyfont.BackendService);
 var DemoBackendService = tachyfont.DemoBackendService;
@@ -109,8 +106,7 @@ DemoBackendService.prototype.reportError = function(errorReport) {
  * @param {!tachyfont.MetricReport} metricReport The metric report.
  */
 DemoBackendService.prototype.reportMetric = function(metricReport) {
-  this.items_[metricReport.getMetricId() + '.' + metricReport.getFontId()] =
-      metricReport.getMetricValue();
+  this.metricReports.push(metricReport);
 };
 
 
@@ -119,11 +115,17 @@ DemoBackendService.prototype.reportMetric = function(metricReport) {
  * @override
  */
 DemoBackendService.prototype.sendReport = function() {
-  var keys = Object.keys(this.items_);
-  keys.sort();
-  if (keys.length == 0) {
+  if (this.metricReports.length == 0) {
     return;
   }
+  this.metricReports.sort(function(a, b) {
+    if (a.getMetricId() > b.getMetricId()) {
+      return 1;
+    } else if (a.getFontId() > b.getFontId()) {
+      return 1;
+    }
+    return -1;
+  });
 
   var reportUrl = this.baseUrl + DemoBackendService.REPORTER_PATH;
   var length = reportUrl.length;
@@ -137,12 +139,13 @@ DemoBackendService.prototype.sendReport = function() {
       (goog.userAgent.MOBILE ? '1' : '0');
   length += item.length;
   items.push(item);
-  for (var i = 0; i < keys.length; i++) {
-    var name = keys[i];
-    var value = encodeURIComponent((this.items_[name]).toString());
-    delete this.items_[name];
+  while (this.metricReports.length > 0) {
+    var report = this.metricReports.shift();
+    var name = report.getMetricId() + '.' + report.getFontId();
+    var value = report.getMetricValue().toString(10);
     item = encodeURIComponent(name) + '=' + value;
     if (length + item.length > 2000) {
+      this.metricReports.unshift(report);
       this.sendGen204(items);
       this.sendReport();
       return;

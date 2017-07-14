@@ -50,6 +50,12 @@ tachyfont.BackendService = function(baseUrl) {
    * @private {number}
    */
   this.backOffTime_ = 0;
+
+  /** @type {!Array<!tachyfont.MetricReport>} */
+  this.metricReports = [];
+
+  /** @type {!Array<!tachyfont.ErrorReport>} */
+  this.errorReports = [];
 };
 var BackendService = tachyfont.BackendService;
 
