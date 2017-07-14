@@ -172,15 +172,6 @@ BackendService.prototype.parseDataHeader = function(glyphData) {
 
 
 /**
- * Send a log message to the server
- *
- * @param {string} message The message to log.
- * @return {?goog.Promise} Promise to return ArrayBuffer for the response.
- */
-BackendService.prototype.log = goog.functions.NULL;
-
-
-/**
  * Provides expontential fuzzy backoff for requestUrl failures. The expontential
  * backoff reduces traffic when the servers are down. The fuzziness evens out
  * the backed up requests when the servers recover.

@@ -95,11 +95,6 @@ GoogleBackendService.prototype.requestFontBase = function(fontInfo) {
 };
 
 
-/** @override */
-GoogleBackendService.prototype.log = function(message) {
-};
-
-
 /**
  * Reports an error.
  * @override

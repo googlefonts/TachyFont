@@ -73,18 +73,6 @@ GoogleCloudBackend.prototype.requestFontBase = function(fontInfo) {
 };
 
 
-/** @override */
-// TODO(bstell): determine if this function is dead and if so delete it.
-GoogleCloudBackend.prototype.log = function(message) {
-  return this.requestUrl(
-      this.baseUrl + '/incremental_fonts/logger', 'text', 'POST', message,
-      // Google App Engine servers do not support CORS so we cannot say
-      // the 'Content-Type' is 'application/json'.
-      //{'Content-Type': 'application/json'},
-      {'Content-Type': 'text/plain'});
-};
-
-
 /**
  * Reports an error.
  * @override
