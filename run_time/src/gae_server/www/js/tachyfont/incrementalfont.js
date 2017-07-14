@@ -54,7 +54,7 @@ tachyfont.IncrementalFont.Log = {
   MISS_RATE: 'LIFMR'
 };
 // LINT.ThenChange(//depot/google3/\
-//     java/com/google/i18n/tachyfont/http/log-reports.properties)
+//     java/com/google/i18n/tachyfont/boq/gen204/log-reports.properties)
 
 
 /**
@@ -71,7 +71,7 @@ tachyfont.IncrementalFont.Error = {
   // 26-41 no longer used.
   FINGERPRINT_MISMATCH: '42',
   DELETE_IDB: '44',
-  SET_FONT_PRECEEDING_PROMISE: '48',
+  // 45-48 no longer used.
   INJECT_FONT_COMPACT: '49',
   // 50 no longer used.
   INJECT_COMPACT: '51',
@@ -92,7 +92,7 @@ tachyfont.IncrementalFont.Error = {
   END: '00'
 };
 // LINT.ThenChange(//depot/google3/\
-//     java/com/google/i18n/tachyfont/http/error-reports.properties)
+//     java/com/google/i18n/tachyfont/boq/gen204/error-reports.properties)
 
 
 /**
@@ -221,13 +221,6 @@ tachyfont.IncrementalFont.obj = function(fontInfo, params, backendService) {
    */
   this.finishPrecedingCharsRequest_ =
       new tachyfont.Promise.Chained('finishPrecedingCharsRequest_');
-
-  /**
-   * The setFont operation takes time so serialize them.
-   * @private {!tachyfont.Promise.Chained}
-   */
-  this.finishPrecedingSetFont_ =
-      new tachyfont.Promise.Chained('finishPrecedingSetFont_');
 
   /**
    * The worker queue that makes sure the operations are done in order and
@@ -448,6 +441,12 @@ tachyfont.IncrementalFont.obj.prototype.getCompactFont = function(fontbases) {
                     return compactWorkingData;
                   }.bind(this))
                   .thenCatch(function(e) {
+                    // Keep the browser from complaining that the reject is not
+                    // handled. This is not actually a problem but when
+                    // debugging this message seems like a serious issue and is
+                    // very hard to track down. This has wasted a lot of
+                    // developer time.
+                    this.compactCharList_.getPromise().thenCatch(function() {});
                     this.compactCharList_.reject();
                     tachyfont.IncrementalFont.reportError(
                         tachyfont.IncrementalFont.Error.GET_COMPACT_FROM_URL,
@@ -618,37 +617,6 @@ tachyfont.IncrementalFont.processUrlBase = function(
 
 // The non-compact TTF injection code was removed.
 // TODO(bstell): need to add compact TTF injection code.
-
-
-/**
- * Set the \@font-face rule.
- * @param {!DataView} fontData The font dataview.
- * @return {!goog.Promise} The promise resolves when the glyphs are displaying.
- */
-tachyfont.IncrementalFont.obj.prototype.setFont = function(fontData) {
-  var msg = this.fontInfo_.getFontFamily() + ' setFont.' + this.fontId_;
-  var finishPrecedingSetFont =
-      this.finishPrecedingSetFont_.getChainedPromise(msg);
-  return finishPrecedingSetFont.getPrecedingPromise()
-      .then(function() {
-        this.needToSetFont_ = false;
-        goog.asserts.assert(this.haveReadFileInfo_);
-        return tachyfont.Browser
-            .setFont(fontData, this.fontInfo_, this.isTtf_, this.blobUrl_)
-            .then(function(newBlobUrl) {
-              this.blobUrl_ = newBlobUrl;
-            }.bind(this));
-      }.bind(this))
-      .thenCatch(function(e) {
-        tachyfont.IncrementalFont.reportError(
-            tachyfont.IncrementalFont.Error.SET_FONT_PRECEEDING_PROMISE,
-            this.fontId_, e);
-        return goog.Promise.reject(e);
-      }.bind(this))
-      .thenAlways(function() {  //
-        finishPrecedingSetFont.resolve();
-      });
-};
 
 
 /**
