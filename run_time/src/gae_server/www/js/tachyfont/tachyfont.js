@@ -256,8 +256,8 @@ tachyfont.loadFonts = function(cssFontFamily, fontsInfo, opt_params) {
   if (goog.DEBUG) {
     tachyfont.debugInitialization_();
   }
-  var backend = tachyfont.getBackend(fontsInfo);
   tachyfont.loadFonts_initFontInfosUrls(fontsInfo);
+  var backend = tachyfont.getBackend(fontsInfo);
   tachyfont.loadFonts_initReporter(backend, fontsInfo);
   // Sent an "error" report so the number of page loads can be determined on the
   // dashboard.
