@@ -48,7 +48,7 @@ GoogleCloudBackend.prototype.requestCodepoints = function(fontInfo, codes) {
   var that = this;
   var paramsObj = {};
   paramsObj['font_name'] = fontInfo.getFontFamily();
-  paramsObj['weight'] = fontInfo.getWeight();
+  paramsObj['weight'] = parseInt(fontInfo.getWeight(), 10);
   paramsObj['code_points'] = codes;
   var paramsJson = JSON.stringify(paramsObj);
   return this
@@ -56,9 +56,9 @@ GoogleCloudBackend.prototype.requestCodepoints = function(fontInfo, codes) {
           this.baseUrl + '/characterdata', 'text', 'POST', paramsJson,
           {'Content-Type': 'application/json'})
       .then(function(response) {
-        var responseJson = goog.json.parse(response);
+        var responseObject = goog.json.parse(response);
         var glyphDataUint8Array = goog.crypt.base64.decodeStringToUint8Array(
-            responseJson['glyphData']);
+            responseObject['glyphData']);
         return that.parseDataHeader(glyphDataUint8Array.buffer);
       });
 };
