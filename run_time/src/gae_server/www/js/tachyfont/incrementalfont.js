@@ -159,7 +159,7 @@ tachyfont.IncrementalFont.obj = function(fontInfo, params, backendService) {
   this.startTime_ = goog.now();
 
   // Get the launcher data.
-  var launcherInfo = new tachyfont.LauncherInfo();
+  var launcherInfo = new tachyfont.LauncherInfo(params);
 
   /**
    * The current Blob URL. Free this when creating a new one.
