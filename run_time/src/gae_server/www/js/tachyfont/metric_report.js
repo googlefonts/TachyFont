@@ -27,7 +27,7 @@ goog.provide('tachyfont.MetricReport');
  * @param {string} metricId The metric identifier.
  * @param {string} fontId The font identifier.
  * @param {number} metricValue The metric value. This will be rounded.
- * @constructor @struct @final
+ * @constructor @final
  */
 tachyfont.MetricReport = function(metricId, fontId, metricValue) {
   // LINT.IfChange
@@ -36,21 +36,21 @@ tachyfont.MetricReport = function(metricId, fontId, metricValue) {
    * Note: this field name needs to match the proto's field name.
    * @type {string}
    */
-  this.metric_id = metricId;
+  this['metric_id'] = metricId;
 
   /**
    * The font identifier.
    * Note: this field name needs to match the proto's field name.
    * @type {string}
    */
-  this.font_id = fontId;
+  this['font_id'] = fontId;
 
   /**
    * The metric value.
    * Note: this field name needs to match the proto's field name.
    * @type {number}
    */
-  this.value = Math.round(metricValue);
+  this['value'] = Math.round(metricValue);
   // LINT.ThenChange(//depot/google3/\
   //     google/internal/incrementalwebfonts/v1/tachyfont.proto)
 };
@@ -61,7 +61,7 @@ tachyfont.MetricReport = function(metricId, fontId, metricValue) {
  * @return {string}
  */
 tachyfont.MetricReport.prototype.getMetricId = function() {
-  return this.metric_id;
+  return this['metric_id'];
 };
 
 
@@ -70,7 +70,7 @@ tachyfont.MetricReport.prototype.getMetricId = function() {
  * @return {string}
  */
 tachyfont.MetricReport.prototype.getFontId = function() {
-  return this.font_id;
+  return this['font_id'];
 };
 
 
@@ -79,5 +79,5 @@ tachyfont.MetricReport.prototype.getFontId = function() {
  * @return {number}
  */
 tachyfont.MetricReport.prototype.getMetricValue = function() {
-  return this.value;
+  return this['value'];
 };
