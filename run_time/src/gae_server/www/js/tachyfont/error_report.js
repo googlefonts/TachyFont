@@ -27,7 +27,7 @@ goog.provide('tachyfont.ErrorReport');
  * @param {string} errorId The error identifier.
  * @param {string} fontId The font identifier.
  * @param {string} errorDetail The error details.
- * @constructor @struct @final
+ * @constructor @final
  */
 tachyfont.ErrorReport = function(errorId, fontId, errorDetail) {
   // LINT.IfChange
@@ -36,21 +36,21 @@ tachyfont.ErrorReport = function(errorId, fontId, errorDetail) {
    * Note: this field name needs to match the proto's field name.
    * @type {string}
    */
-  this.error_id = errorId;
+  this['error_id'] = errorId;
 
   /**
    * The font identifier.
    * Note: this field name needs to match the proto's field name.
    * @type {string}
    */
-  this.font_id = fontId;
+  this['font_id'] = fontId;
 
   /**
    * Details about the error.
    * Note: this field name needs to match the proto's field name.
    * @type {string}
    */
-  this.error_info = errorDetail;
+  this['error_info'] = errorDetail;
   // LINT.ThenChange(//depot/google3/\
   //     google/internal/incrementalwebfonts/v1/tachyfont.proto)
 };
@@ -61,7 +61,7 @@ tachyfont.ErrorReport = function(errorId, fontId, errorDetail) {
  * @return {string}
  */
 tachyfont.ErrorReport.prototype.getErrorId = function() {
-  return this.error_id;
+  return this['error_id'];
 };
 
 
@@ -70,7 +70,7 @@ tachyfont.ErrorReport.prototype.getErrorId = function() {
  * @return {string}
  */
 tachyfont.ErrorReport.prototype.getFontId = function() {
-  return this.font_id;
+  return this['font_id'];
 };
 
 
@@ -79,5 +79,5 @@ tachyfont.ErrorReport.prototype.getFontId = function() {
  * @return {string}
  */
 tachyfont.ErrorReport.prototype.getErrorDetail = function() {
-  return this.error_info;
+  return this['error_info'];
 };
