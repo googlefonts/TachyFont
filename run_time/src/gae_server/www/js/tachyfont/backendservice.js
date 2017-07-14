@@ -92,6 +92,21 @@ tachyfont.BackendService.BACKOFF_TIME_MAX = 10000;
 
 
 /**
+ * Enum for report params.
+ * @enum {string}
+ */
+tachyfont.BackendService.Param = {
+  ERROR_ID: 'ei',
+  ERROR_TYPE: 'er',
+  FONT_ID: 'fi',
+  LOG_TYPE: 'lg',
+  MOBILE: 'm',
+  REPORT_TYPE: 'rt',
+  END: ''
+};
+
+
+/**
  * Request codepoints from the backend server.
  *
  * @param {!tachyfont.FontInfo} fontInfo containing info on the font; ie:
@@ -279,5 +294,31 @@ BackendService.prototype.setBackoffTime = function(backoffTime) {
   this.backOffTime_ = backoffTime;
 };
 
+
+/**
+ * Reports an error.
+ * @param {!tachyfont.ErrorReport} errorReport The error report.
+ */
+BackendService.prototype.reportError = goog.functions.NULL;
+
+
+/**
+ * Reports an metric.
+ * @param {!tachyfont.MetricReport} metricReport The metric report.
+ */
+BackendService.prototype.reportMetric = goog.functions.NULL;
+
+
+/**
+ * Sends a log report.
+ */
+BackendService.prototype.sendReport = goog.functions.NULL;
+
+
+/**
+ * Sends the gen_204.
+ * @param {!Array<string>} params The URL parameters.
+ */
+BackendService.prototype.sendGen204 = goog.functions.NULL;
 
 });  // goog.scope
