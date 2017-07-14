@@ -47,11 +47,11 @@ goog.require('tachyfont.utils');
  */
 // LINT.IfChange
 tachyfont.IncrementalFont.Log = {
-  CREATE_TACHYFONT: 'LIFCT.',
-  DB_OPEN: 'LIFDO.',
-  URL_GET_BASE: 'LIFUB.',
-  MISS_COUNT: 'LIFMC.',
-  MISS_RATE: 'LIFMR.'
+  CREATE_TACHYFONT: 'LIFCT',
+  DB_OPEN: 'LIFDO',
+  URL_GET_BASE: 'LIFUB',
+  MISS_COUNT: 'LIFMC',
+  MISS_RATE: 'LIFMR'
 };
 // LINT.ThenChange(//depot/google3/\
 //     java/com/google/i18n/tachyfont/http/log-reports.properties)

@@ -198,8 +198,8 @@ tachyfont.Error = {
  */
 // LINT.IfChange
 tachyfont.Log_ = {
-  LOAD_FONTS: 'LTFLF.',
-  LOAD_FONTS_WAIT_PREVIOUS: 'LTFLW.',
+  LOAD_FONTS: 'LTFLF',
+  LOAD_FONTS_WAIT_PREVIOUS: 'LTFLW',
   END: ''
 };
 // LINT.ThenChange(//depot/google3/\
