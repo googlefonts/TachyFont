@@ -19,7 +19,7 @@
 
 goog.provide('tachyfont.GoogleBackendService');
 
-goog.require('goog.Promise');
+goog.require('goog.userAgent');
 goog.require('tachyfont.BackendService');
 /** @suppress {extraRequire} */
 goog.require('tachyfont.FontInfo');
@@ -39,9 +39,19 @@ goog.scope(function() {
  */
 tachyfont.GoogleBackendService = function(baseUrl) {
   tachyfont.GoogleBackendService.base(this, 'constructor', baseUrl);
+
+  /** @private {!Object<string, number>} */
+  this.items_ = {};
 };
 goog.inherits(tachyfont.GoogleBackendService, tachyfont.BackendService);
 var GoogleBackendService = tachyfont.GoogleBackendService;
+
+
+/**
+ * The gen204 path.
+ * @type {string}
+ */
+GoogleBackendService.REPORTER_PATH = '/gen_204?id=tf&';
 
 
 /** @type {string} */
@@ -90,10 +100,80 @@ GoogleBackendService.prototype.requestFontBase = function(fontInfo) {
 
 /** @override */
 GoogleBackendService.prototype.log = function(message) {
-  // Not implemented yet.
-  return new goog.Promise(function(resolve, reject) {
-    resolve(new ArrayBuffer(0));
-  });
+};
+
+
+/**
+ * Reports an error.
+ * @override
+ * @param {!tachyfont.ErrorReport} errorReport The error report.
+ */
+GoogleBackendService.prototype.reportError = function(errorReport) {
+  var name = errorReport.getErrorId() + '.' + errorReport.getFontId();
+  var params = [];
+  params.push(
+      tachyfont.BackendService.Param.REPORT_TYPE + '=' +
+      tachyfont.BackendService.Param.ERROR_TYPE);
+  params.push(
+      tachyfont.BackendService.Param.ERROR_ID + '=' + errorReport.getErrorId());
+  params.push(
+      tachyfont.BackendService.Param.FONT_ID + '=' + errorReport.getFontId());
+  params.push(
+      tachyfont.BackendService.Param.MOBILE + '=' +
+      (goog.userAgent.MOBILE ? '1' : '0'));
+  params.push(name + '=' + errorReport.getErrorDetail());
+  this.sendGen204(params);
+};
+
+
+/**
+ * Reports a metric.
+ * @override
+ * @param {!tachyfont.MetricReport} metricReport The metric report.
+ */
+GoogleBackendService.prototype.reportMetric = function(metricReport) {
+  this.items_[metricReport.getMetricId() + metricReport.getFontId()] =
+      metricReport.getMetricValue();
+};
+
+
+/**
+ * Sends a log report.
+ * @override
+ */
+GoogleBackendService.prototype.sendReport = function() {
+  var keys = Object.keys(this.items_);
+  keys.sort();
+  if (keys.length == 0) {
+    return;
+  }
+
+  var reportUrl = this.baseUrl + GoogleBackendService.REPORTER_PATH;
+  var length = reportUrl.length;
+  var items = [];
+  var item = tachyfont.BackendService.Param.REPORT_TYPE + '=' +
+      tachyfont.BackendService.Param.LOG_TYPE;
+  length += item.length;
+  items.push(item);
+
+  item = tachyfont.BackendService.Param.MOBILE + '=' +
+      (goog.userAgent.MOBILE ? '1' : '0');
+  length += item.length;
+  items.push(item);
+  for (var i = 0; i < keys.length; i++) {
+    var name = keys[i];
+    var value = encodeURIComponent((this.items_[name]).toString());
+    delete this.items_[name];
+    item = encodeURIComponent(name) + '=' + value;
+    if (length + item.length > 2000) {
+      this.sendGen204(items);
+      this.sendReport();
+      return;
+    }
+    length += item.length;
+    items.push(item);
+  }
+  this.sendGen204(items);
 };
 
 
@@ -140,5 +220,31 @@ GoogleBackendService.prototype.compressedGlyphsList_ = function(codes) {
   return result;
 };
 
+
+/**
+ * Sends the gen_204.
+ * @param {!Array<string>} params The URL parameters.
+ * @override
+ */
+GoogleBackendService.prototype.sendGen204 = function(params) {
+  var reportUrl =
+      this.baseUrl + GoogleBackendService.REPORTER_PATH + params.join('&');
+  var image = new Image();
+  image.onload = image.onerror = GoogleBackendService.cleanUpFunc_(image);
+  image.src = reportUrl;
+};
+
+
+/**
+ * Clears references off the Image so it can be garbage collected.
+ * @param {!Image} image The image to clean up.
+ * @return {!function()} Function that cleans up the image.
+ * @private
+ */
+GoogleBackendService.cleanUpFunc_ = function(image) {
+  return function() {
+    image.onload = image.onerror = null;
+  };
+};
 
 });  // goog.scope

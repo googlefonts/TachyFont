@@ -85,4 +85,11 @@ GoogleCloudBackend.prototype.log = function(message) {
 };
 
 
+/**
+ * Reports an error.
+ * @override
+ * @param {!tachyfont.ErrorReport} errorReport The error report.
+ */
+GoogleCloudBackend.prototype.reportError = function(errorReport) {};
+
 });  // goog.scope
