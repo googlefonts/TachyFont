@@ -22,6 +22,7 @@ goog.provide('tachyfont.GoogleCloudBackend');
 goog.require('goog.Promise');
 goog.require('goog.crypt.base64');
 goog.require('goog.json');
+goog.require('goog.userAgent');
 goog.require('tachyfont.BackendService');
 
 
@@ -31,13 +32,13 @@ goog.scope(function() {
 
 /**
  * Handles interacting with the backend server.
- *
+ * @param {string} appName The application's name.
  * @param {string} baseUrl URL of the tachyfont server.
  * @constructor
  * @extends {tachyfont.BackendService}
  */
-tachyfont.GoogleCloudBackend = function(baseUrl) {
-  tachyfont.GoogleCloudBackend.base(this, 'constructor', baseUrl);
+tachyfont.GoogleCloudBackend = function(appName, baseUrl) {
+  tachyfont.GoogleCloudBackend.base(this, 'constructor', appName, baseUrl);
 };
 goog.inherits(tachyfont.GoogleCloudBackend, tachyfont.BackendService);
 var GoogleCloudBackend = tachyfont.GoogleCloudBackend;
@@ -78,6 +79,51 @@ GoogleCloudBackend.prototype.requestFontBase = function(fontInfo) {
  * @override
  * @param {!tachyfont.ErrorReport} errorReport The error report.
  */
-GoogleCloudBackend.prototype.reportError = function(errorReport) {};
+GoogleCloudBackend.prototype.reportError = function(errorReport) {
+  this.errorReports.push(errorReport);
+};
+
+
+/**
+ * Reports an metric.
+ * @override
+ * @param {!tachyfont.MetricReport} metricReport The metric report.
+ */
+GoogleCloudBackend.prototype.reportMetric = function(metricReport) {
+  this.metricReports.push(metricReport);
+};
+
+
+/**
+ * Sends the queued metric/error reports.
+ */
+GoogleCloudBackend.prototype.sendReports = function() {
+  if (!this.errorReports.length && !this.metricReports.length) {
+    return;
+  }
+  var url = this.baseUrl + '/v1/status:put';
+  var putStatusRequestJson = this.buildPutStatusRequest();
+  window.navigator.sendBeacon(url, putStatusRequestJson);
+};
+
+
+/**
+ * Builds the TachyFont PutStatusRequest.
+ * @return {string} The Json string.
+ */
+GoogleCloudBackend.prototype.buildPutStatusRequest = function() {
+  var putStatusRequest = {};
+  putStatusRequest['app_name'] = this.appName;
+  putStatusRequest['is_mobile'] = goog.userAgent.MOBILE ? true : false;
+  if (this.errorReports.length) {
+    putStatusRequest['error_reports'] = this.errorReports;
+    this.errorReports = [];
+  }
+  if (this.metricReports.length) {
+    putStatusRequest['metric_reports'] = this.metricReports;
+    this.metricReports = [];
+  }
+  return JSON.stringify(putStatusRequest);
+};
 
 });  // goog.scope

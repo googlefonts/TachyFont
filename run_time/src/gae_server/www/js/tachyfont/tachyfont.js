@@ -222,10 +222,11 @@ tachyfont.reportError = function(errNum, opt_errInfo, opt_fontId) {
 
 /**
  * Gets the backend to use.
+ * @param {string} appName The application's name.
  * @param {!tachyfont.FontsInfo} fontsInfo Information about the fonts.
  * @return {!tachyfont.BackendService}
  */
-tachyfont.getBackend = function(fontsInfo) {
+tachyfont.getBackend = function(appName, fontsInfo) {
   var useGoogleCloudBackend = fontsInfo.getApiVersion() == 1;
   var fontInfos = fontsInfo.getPrioritySortedFonts();
   var useGoogleWebfontBackend =
@@ -233,11 +234,11 @@ tachyfont.getBackend = function(fontsInfo) {
   var dataUrl = fontsInfo.getDataUrl();
   var backend;
   if (useGoogleCloudBackend) {
-    backend = new tachyfont.GoogleCloudBackend(dataUrl);
+    backend = new tachyfont.GoogleCloudBackend(appName, dataUrl);
   } else if (useGoogleWebfontBackend) {
-    backend = new tachyfont.GoogleBackendService(dataUrl);
+    backend = new tachyfont.GoogleBackendService(appName, dataUrl);
   } else {
-    backend = new tachyfont.DemoBackendService(dataUrl);
+    backend = new tachyfont.DemoBackendService(appName, dataUrl);
   }
   return backend;
 };
@@ -257,7 +258,8 @@ tachyfont.loadFonts = function(cssFontFamily, fontsInfo, opt_params) {
     tachyfont.debugInitialization_();
   }
   tachyfont.loadFonts_initFontInfosUrls(fontsInfo);
-  var backend = tachyfont.getBackend(fontsInfo);
+  var appName = 'app-name-not-set';
+  var backend = tachyfont.getBackend(appName, fontsInfo);
   tachyfont.loadFonts_initReporter(backend, fontsInfo);
   // Sent an "error" report so the number of page loads can be determined on the
   // dashboard.
